@@ -1,0 +1,19 @@
+package io.github.leawind.perspectiveapi.internal.bridge.events;
+
+import io.github.leawind.inventory.event.SingleEventEmitter;
+import io.github.leawind.perspectiveapi.internal.bridge.events.context.CameraSetupContext;
+import io.github.leawind.perspectiveapi.internal.bridge.events.context.ModifyFiedOfViewContext;
+import net.minecraft.client.Minecraft;
+
+public final class GameClientEvents {
+  private GameClientEvents() {}
+
+  public static final SingleEventEmitter<Minecraft> HANDLE_KEYBINDS_START =
+      new SingleEventEmitter<>();
+
+  public static final SingleEventEmitter<CameraSetupContext> SETUP_CAMERA =
+      new SingleEventEmitter<>();
+
+  public static final SingleEventEmitter<ModifyFiedOfViewContext> MODIFY_FIELD_OF_VIEW =
+      new SingleEventEmitter<>();
+}

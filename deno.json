@@ -1,0 +1,5 @@
+{
+  "tasks": {
+    "publishToMavenLocal": "./gradlew publishToMavenLocal --no-parallel"
+  }
+}

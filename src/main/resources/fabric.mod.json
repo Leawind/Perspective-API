@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "${description}",
+  "authors": ["${author}"],
+  "contact": {
+    "homepage": "${home_url}",
+    "issues": "${issues_url}",
+    "sources": "${source_url}",
+    "email": "leawind@yeah.net"
+  },
+  "license": "${license}",
+  "icon": "${logo_file}",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["${group}.platform.fabric.Entrypoint"]
+  },
+  "mixins": [
+    "${id}.mixins.json",
+    "${id}.fabric.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": ">=${minecraftVersion}"
+  },
+  "recommends": {
+    "modmenu": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "GitHub": "https://github.com/Leawind/PerspectiveAPI"
+      }
+    },
+    "modmenu:clientsideOnly": true
+  }
+}
