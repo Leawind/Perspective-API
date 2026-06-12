@@ -1,0 +1,55 @@
+# eclipse
+eclipse
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# idea
+.idea/
+out
+*.ipr
+*.iws
+*.iml
+
+# vscode
+.vscode/
+
+# visual studio
+.vs/
+
+# gradle
+build/
+.gradle/
+.kotlin/
+
+# other
+bin/
+run/
+.architectury-transformer/
+*.log
+*.log.gz
+
+# Forge MDK
+forge*changelog.txt
+
+# JFR
+.profileconfig.json
+*.jfr
+
+# AI tools
+/.ai/
+.claude/
+.clinerules/
+.codebuddy/
+.cursorrules/
+.kilo/
+.kilocode/
+.lingma/
+.marscode/
+.opencode/
+.trae/
+
+# stonecraft
+/versions/*-*/
