@@ -69,9 +69,8 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   private void setActivePerspective(@Nullable Perspective perspective) {
-    if (perspective == null) {
-      return;
-    }
+    if (perspective == null) return;
+    if (perspective == activePerspective) return;
 
     try (var ignored = LockUtils.writeLock(lock)) {
       Perspective ap = activePerspective;
@@ -92,22 +91,22 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
   public void updateCamera(float partialTicks, Camera camera) {
     Perspective perspective = activePerspective;
-    if (perspective instanceof VanillaPerspective) {
-      return;
+
+    if (perspective instanceof VanillaPerspective) return;
+    if (perspective == null) return;
+
+    // Perspective render tick
+    {
+      Entity entity = ((CameraAccessor) camera).getEntity();
+      if (entity == null) {
+        LOGGER.warn("Somehow camera entity is null");
+        return;
+      }
+      renderTickContext.setup(partialTicks, entity);
+      perspective.renderTick(renderTickContext);
     }
 
-    if (perspective == null) {
-      return;
-    }
-
-    Entity entity = ((CameraAccessor) camera).getEntity();
-    if (entity == null) {
-      LOGGER.warn("Somehow camera entity is null");
-      return;
-    }
-    renderTickContext.setup(partialTicks, entity);
-    perspective.renderTick(renderTickContext);
-
+    // Apply perspective to camera
     PerspectiveUtils.applyPerspectiveToCamera(perspective, camera);
   }
 }
