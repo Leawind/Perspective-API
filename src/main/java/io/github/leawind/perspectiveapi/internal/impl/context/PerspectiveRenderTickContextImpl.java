@@ -1,9 +1,9 @@
 package io.github.leawind.perspectiveapi.internal.impl.context;
 
-import io.github.leawind.perspectiveapi.api.context.PerspectiveTickContext;
+import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
 import net.minecraft.world.entity.Entity;
 
-public class PerspectiveTickContextImpl implements PerspectiveTickContext {
+public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickContext {
 
   private float particalTicks;
   private Entity cameraEntity;

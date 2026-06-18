@@ -8,6 +8,8 @@ import net.minecraft.client.Minecraft;
 public final class GameClientEvents {
   private GameClientEvents() {}
 
+  public static final SingleEventEmitter<Minecraft> CLIENT_TICK_START = new SingleEventEmitter<>();
+
   public static final SingleEventEmitter<Minecraft> HANDLE_KEYBINDS_START =
       new SingleEventEmitter<>();
 

@@ -5,7 +5,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
-import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveTickContextImpl;
+import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.utils.PerspectiveUtils;
 import net.minecraft.client.CameraType;
 import net.minecraft.world.entity.Entity;
@@ -16,6 +16,16 @@ public final class ModEvents {
   private static final Logger LOGGER = LoggerFactory.getLogger((ModEvents.class));
 
   public static void register() {
+
+    GameClientEvents.CLIENT_TICK_START.on(
+        minecraft -> {
+          if (minecraft.level != null && minecraft.player != null) {
+            var active = PerspectiveManager.get().getActivePerspective();
+            if (active != null) {
+              active.clientTick(minecraft);
+            }
+          }
+        });
 
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         (minecraft) -> {
@@ -29,7 +39,7 @@ public final class ModEvents {
 
     // region camera
 
-    var context = new PerspectiveTickContextImpl();
+    var context = new PerspectiveRenderTickContextImpl();
     GameClientEvents.SETUP_CAMERA.on(
         (ctx) -> {
           Perspective perspective = PerspectiveManager.get().getActivePerspective();
@@ -47,7 +57,7 @@ public final class ModEvents {
             return;
           }
           context.setup(ctx.partialTicks, entity);
-          perspective.tick(context);
+          perspective.renderTick(context);
 
           PerspectiveUtils.applyPerspectiveToCamera(perspective, ctx.camera);
 

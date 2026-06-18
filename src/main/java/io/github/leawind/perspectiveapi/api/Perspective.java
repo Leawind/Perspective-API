@@ -1,7 +1,8 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.context.PerspectiveTickContext;
+import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import org.joml.Quaternionfc;
 import org.joml.Vector3dc;
@@ -37,8 +38,10 @@ public interface Perspective {
 
   // region events
 
+  default void clientTick(Minecraft minecraft) {}
+
   /// Called on render tick while this perspective is active.
-  default void tick(PerspectiveTickContext context) {}
+  default void renderTick(PerspectiveRenderTickContext context) {}
 
   default void onActivate() {}
 
