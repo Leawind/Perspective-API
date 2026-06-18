@@ -31,6 +31,12 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   private @Nullable volatile Identifier active;
   private @Nullable volatile Perspective activePerspective;
 
+  // region transition
+
+  private final Transition transition = new Transition();
+
+  // endregion
+
   private PerspectiveManagerImpl() {
     registry.onUpdate().on(() -> setActivePerspective(registry.get(active)));
   }
@@ -72,6 +78,8 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     if (perspective == null) return;
     if (perspective == activePerspective) return;
 
+    transition.start();
+
     try (var ignored = LockUtils.writeLock(lock)) {
       Perspective ap = activePerspective;
       if (perspective != ap) {
@@ -106,8 +114,17 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
       perspective.renderTick(renderTickContext);
     }
 
-    // Apply perspective to camera
-    PerspectiveUtils.setCameraTransform(
-        camera, perspective.getPosition(), perspective.getRotation());
+    long now = System.currentTimeMillis();
+
+    if (transition.isInTransition(now)) {
+      // Apply transition
+      transition.update(now, perspective);
+      PerspectiveUtils.setCameraTransform(
+          camera, transition.getPosition(), transition.getRotation());
+    } else {
+      // Apply perspective to camera
+      PerspectiveUtils.setCameraTransform(
+          camera, perspective.getPosition(), perspective.getRotation());
+    }
   }
 }

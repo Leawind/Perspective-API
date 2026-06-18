@@ -21,6 +21,10 @@ public interface Perspective {
     return true;
   }
 
+  default boolean isTransitionEnabled() {
+    return true;
+  }
+
   // endregion
 
   // region dynamic
