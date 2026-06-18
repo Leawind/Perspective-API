@@ -40,6 +40,11 @@ public interface Perspective {
 
   default void clientTick(Minecraft minecraft) {}
 
+  /// Returns whether this perspective is currently available.
+  default boolean isAvailable() {
+    return true;
+  }
+
   /// Called on render tick while this perspective is active.
   default void renderTick(PerspectiveRenderTickContext context) {}
 

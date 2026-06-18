@@ -20,9 +20,14 @@ public final class ModEvents {
     GameClientEvents.CLIENT_TICK_START.on(
         minecraft -> {
           if (minecraft.level != null && minecraft.player != null) {
-            var active = PerspectiveManager.get().getActivePerspective();
+            var manager = PerspectiveManager.get();
+            var active = manager.getActivePerspective();
             if (active != null) {
               active.clientTick(minecraft);
+
+              if (!active.isAvailable()) {
+                manager.switchToPreviousAvailable();
+              }
             }
           }
         });
