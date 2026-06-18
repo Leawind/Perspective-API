@@ -16,11 +16,11 @@ public final class ModEvents {
   private static final Logger LOGGER = LoggerFactory.getLogger((ModEvents.class));
 
   public static void register() {
+    var manager = PerspectiveManager.get();
 
     GameClientEvents.CLIENT_TICK_START.on(
         minecraft -> {
           if (minecraft.level != null && minecraft.player != null) {
-            var manager = PerspectiveManager.get();
             var active = manager.getActivePerspective();
             if (active != null) {
               active.clientTick(minecraft);
@@ -35,7 +35,6 @@ public final class ModEvents {
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         (minecraft) -> {
           var options = minecraft.options;
-          var manager = PerspectiveManager.get();
 
           while (options.keyTogglePerspective.consumeClick()) {
             manager.switchToNextAvailable();
@@ -47,7 +46,7 @@ public final class ModEvents {
     var context = new PerspectiveRenderTickContextImpl();
     GameClientEvents.SETUP_CAMERA.on(
         (ctx) -> {
-          Perspective perspective = PerspectiveManager.get().getActivePerspective();
+          Perspective perspective = manager.getActivePerspective();
           if (perspective instanceof VanillaPerspective) {
             return;
           }
@@ -71,7 +70,7 @@ public final class ModEvents {
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
         (ctx) -> {
-          Perspective perspective = PerspectiveManager.get().getActivePerspective();
+          Perspective perspective = manager.getActivePerspective();
           if (perspective != null) {
             ctx.fieldOfView = perspective.getFieldOfView(ctx.fieldOfView);
           }
