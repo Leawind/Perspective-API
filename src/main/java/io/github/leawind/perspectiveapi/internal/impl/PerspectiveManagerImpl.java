@@ -6,6 +6,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.VanillaPerspective;
@@ -33,7 +34,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
   // region transition
 
-  private final Transition transition = new Transition();
+  private final TransitionImpl transition = new TransitionImpl();
 
   // endregion
 
@@ -56,6 +57,11 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   @Override
   public @NonNull PerspectiveCycler cycler() {
     return cycler;
+  }
+
+  @Override
+  public @NonNull Transition transition() {
+    return transition;
   }
 
   @Override

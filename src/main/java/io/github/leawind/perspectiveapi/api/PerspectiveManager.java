@@ -12,6 +12,8 @@ public interface PerspectiveManager {
   @NonNull PerspectiveRegistry registry();
 
   @NonNull PerspectiveCycler cycler();
+  
+  @NonNull Transition transition();
 
   @Nullable Identifier getActiveId();
 
