@@ -107,6 +107,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     // Apply perspective to camera
-    PerspectiveUtils.applyPerspectiveToCamera(perspective, camera);
+    PerspectiveUtils.setCameraTransform(
+        camera, perspective.getPosition(), perspective.getRotation());
   }
 }

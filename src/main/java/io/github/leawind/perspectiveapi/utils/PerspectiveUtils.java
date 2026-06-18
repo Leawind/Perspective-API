@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.utils;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
 import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import net.minecraft.client.Camera;
@@ -16,33 +15,29 @@ import org.joml.Vector3dc;
 public final class PerspectiveUtils {
   private PerspectiveUtils() {}
 
-  public static void applyPerspectiveToCamera(Perspective perspective, Camera camera) {
+  public static void setCameraTransform(Camera camera, Vector3dc position, Quaternionfc rotation) {
     CameraAccessor cameraAccessor = (CameraAccessor) camera;
 
     // Apply the custom spatial position to the camera.
     {
-      Vector3dc perspectivePosition = perspective.getPosition();
-      cameraAccessor.invokeSetPosition(
-          perspectivePosition.x(), perspectivePosition.y(), perspectivePosition.z());
+      cameraAccessor.invokeSetPosition(position.x(), position.y(), position.z());
     }
 
-    // Apply the custom orientation to the camera.
+    // Apply the custom rotation to the camera.
     // refer to net.minecraft.client.Camera#setRotation
     {
-      Quaternionfc perspectiveRotation = perspective.getRotation();
-
       // update field rotation: Quaternionf
-      cameraAccessor.getRotation().set(perspectiveRotation);
+      cameraAccessor.getRotation().set(rotation);
 
       // update field xRot, yRot
-      Vector2f orientation = PerspectiveHelper.getOrientation(perspectiveRotation, new Vector2f());
+      Vector2f orientation = PerspectiveHelper.getOrientation(rotation, new Vector2f());
       cameraAccessor.setXRot(orientation.x());
       cameraAccessor.setYRot(orientation.y());
 
       // update field forwards, up, left
-      PerspectiveHelper.getForwardVector(perspectiveRotation, cameraAccessor.getForwards());
-      PerspectiveHelper.getUpVector(perspectiveRotation, cameraAccessor.getUp());
-      PerspectiveHelper.getLeftVector(perspectiveRotation, cameraAccessor.getLeft());
+      PerspectiveHelper.getForwardVector(rotation, cameraAccessor.getForwards());
+      PerspectiveHelper.getUpVector(rotation, cameraAccessor.getUp());
+      PerspectiveHelper.getLeftVector(rotation, cameraAccessor.getLeft());
     }
   }
 
