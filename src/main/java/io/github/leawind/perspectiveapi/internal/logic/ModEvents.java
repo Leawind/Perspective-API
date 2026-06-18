@@ -1,22 +1,18 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
-import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.utils.PerspectiveUtils;
 import net.minecraft.client.CameraType;
-import net.minecraft.world.entity.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class ModEvents {
-  private static final Logger LOGGER = LoggerFactory.getLogger((ModEvents.class));
+  private static final Logger LOGGER = LoggerFactory.getLogger(ModEvents.class);
 
   public static void register() {
-    var manager = PerspectiveManager.get();
+    PerspectiveManagerImpl manager = PerspectiveManagerImpl.INSTANCE;
 
     GameClientEvents.CLIENT_TICK_START.on(
         minecraft -> {
@@ -43,28 +39,9 @@ public final class ModEvents {
 
     // region camera
 
-    var context = new PerspectiveRenderTickContextImpl();
     GameClientEvents.SETUP_CAMERA.on(
         (ctx) -> {
-          Perspective perspective = manager.getActivePerspective();
-          if (perspective instanceof VanillaPerspective) {
-            return;
-          }
-
-          if (perspective == null) {
-            return;
-          }
-
-          Entity entity = ((CameraAccessor) ctx.camera).getEntity();
-          if (entity == null) {
-            LOGGER.warn("Somehow camera entity is null");
-            return;
-          }
-          context.setup(ctx.partialTicks, entity);
-          perspective.renderTick(context);
-
-          PerspectiveUtils.applyPerspectiveToCamera(perspective, ctx.camera);
-
+          manager.updateCamera(ctx.partialTicks, ctx.camera);
           ctx.cancelDefault();
         });
 
