@@ -1,12 +1,23 @@
 package io.github.leawind.perspectiveapi.internal.impl.context;
 
+import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
 import net.minecraft.world.entity.Entity;
 
 public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickContext {
 
+  private final PerspectiveManager manager;
   private float particalTicks;
   private Entity cameraEntity;
+
+  public PerspectiveRenderTickContextImpl(PerspectiveManager manager) {
+    this.manager = manager;
+  }
+
+  @Override
+  public PerspectiveManager manager() {
+    return manager;
+  }
 
   @Override
   public float partialTicks() {

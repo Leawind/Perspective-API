@@ -101,7 +101,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   private final PerspectiveRenderTickContextImpl renderTickContext =
-      new PerspectiveRenderTickContextImpl();
+      new PerspectiveRenderTickContextImpl(this);
 
   public void updateCamera(float partialTicks, Camera camera) {
     Perspective perspective = activePerspective;
