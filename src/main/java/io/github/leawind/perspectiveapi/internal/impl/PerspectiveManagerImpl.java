@@ -103,18 +103,18 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   private final PerspectiveRenderTickContextImpl renderTickContext =
       new PerspectiveRenderTickContextImpl(this);
 
-  public void updateCamera(float partialTicks, Camera camera) {
+  public boolean updateCamera(float partialTicks, Camera camera) {
     Perspective perspective = activePerspective;
 
-    if (perspective instanceof VanillaPerspective) return;
-    if (perspective == null) return;
+    if (perspective instanceof VanillaPerspective) return false;
+    if (perspective == null) return false;
 
     // Perspective render tick
     {
       Entity entity = ((CameraAccessor) camera).getEntity();
       if (entity == null) {
         LOGGER.warn("Somehow camera entity is null");
-        return;
+        return false;
       }
       renderTickContext.setup(partialTicks, entity);
       perspective.renderTick(renderTickContext);
@@ -132,5 +132,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
       PerspectiveUtils.setCameraTransform(
           camera, perspective.getPosition(), perspective.getRotation());
     }
+    
+    return true;
   }
 }

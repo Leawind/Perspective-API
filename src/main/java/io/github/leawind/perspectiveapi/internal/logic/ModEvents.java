@@ -37,8 +37,9 @@ public final class ModEvents {
 
     GameClientEvents.SETUP_CAMERA.on(
         (ctx) -> {
-          manager.updateCamera(ctx.partialTicks, ctx.camera);
-          ctx.cancelDefault();
+          if (manager.updateCamera(ctx.partialTicks, ctx.camera)) {
+            ctx.cancelDefault();
+          }
         });
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
