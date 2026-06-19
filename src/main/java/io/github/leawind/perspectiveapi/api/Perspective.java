@@ -21,7 +21,7 @@ public interface Perspective {
     return true;
   }
 
-  default boolean isTransitionEnabled() {
+  default boolean allowTransition() {
     return true;
   }
 
