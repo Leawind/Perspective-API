@@ -122,7 +122,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
     long now = System.currentTimeMillis();
 
-    if (transition.isInTransition(now)) {
+    if (transition.isInTransition(now) && perspective.allowTransition()) {
       // Apply transition
       transition.update(now, perspective);
       PerspectiveUtils.setCameraTransform(
