@@ -15,6 +15,8 @@ import org.jspecify.annotations.Nullable;
 
 public class TransitionImpl implements Transition {
 
+  private static final long MIN_DELTA_MS = 1;
+
   // region settings
   private long duration = 200;
   private Blender blender = Blender::easeOut;
@@ -61,9 +63,12 @@ public class TransitionImpl implements Transition {
   }
 
   public void update(long now, Perspective perspective) {
-    var deltaTime = now - startTime;
+    long deltaMs = now - startTime;
+    deltaMs = Math.max(deltaMs, MIN_DELTA_MS);
 
-    float x = blender.blend((float) deltaTime / (float) duration);
+    float x = (float) deltaMs / (float) duration;
+    x = PerspectiveUtils.clamp(x, 0, 1);
+    x = blender.blend(x);
 
     startPosition.lerp(perspective.getPosition(), x, position);
     startRotation.slerp(perspective.getRotation(), x, rotation);
