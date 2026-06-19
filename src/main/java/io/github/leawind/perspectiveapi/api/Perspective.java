@@ -42,17 +42,17 @@ public interface Perspective {
 
   // region events
 
-  default void clientTick(Minecraft minecraft) {}
-
   /// Returns whether this perspective is currently available.
   default boolean isAvailable() {
     return true;
   }
 
+  default void onActivate() {}
+
+  default void clientTick(Minecraft minecraft) {}
+
   /// Called on render tick while this perspective is active.
   default void renderTick(@NonNull PerspectiveRenderTickContext context) {}
-
-  default void onActivate() {}
 
   default void onDeactivate() {}
 
