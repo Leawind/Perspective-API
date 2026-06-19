@@ -14,12 +14,16 @@ public interface PerspectiveManager {
   @NonNull PerspectiveCycler cycler();
   
   @NonNull Transition transition();
-
+  
+  void setDefaultPerspective(@NonNull Perspective perspective);
+  
   @Nullable Identifier getActiveId();
-
+  
   void setActive(@Nullable Identifier identifier);
+  
+  @NonNull Perspective getActivePerspective();
 
-  @Nullable Perspective getActivePerspective();
+  @NonNull Perspective getDefaultPerspective();
 
   default void switchToNextAvailable() {
     var active = getActiveId();

@@ -11,6 +11,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.VanillaPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
+import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.minecraft.client.Camera;
@@ -23,14 +24,17 @@ import org.slf4j.LoggerFactory;
 
 public class PerspectiveManagerImpl implements PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManagerImpl.class);
-  public static final PerspectiveManagerImpl INSTANCE = new PerspectiveManagerImpl();
+  public static final PerspectiveManagerImpl INSTANCE =
+      new PerspectiveManagerImpl(VanillaPerspective.FIRST_PERSON);
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   private final PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl(lock);
   private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl(lock);
 
   private @Nullable volatile Identifier active;
-  private @Nullable volatile Perspective activePerspective;
+  // TODO MAKE it not null
+  private @NonNull volatile Perspective activePerspective;
+  private volatile @NonNull Perspective defaultPerspective;
 
   // region transition
 
@@ -38,8 +42,12 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
   // endregion
 
-  private PerspectiveManagerImpl() {
-    registry.onUpdate().on(() -> setActivePerspective(registry.get(active)));
+  private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
+    Objects.requireNonNull(defaultPerspective);
+
+    registry.onUpdate().on(() -> setActivePerspectiveOrDefault(registry.get(active)));
+    this.defaultPerspective = defaultPerspective;
+    activePerspective = defaultPerspective;
   }
 
   // region internal events
@@ -65,6 +73,11 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   @Override
+  public void setDefaultPerspective(@NonNull Perspective perspective) {
+    defaultPerspective = Objects.requireNonNull(perspective);
+  }
+
+  @Override
   public @Nullable Identifier getActiveId() {
     return active;
   }
@@ -72,32 +85,38 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   @Override
   public void setActive(@Nullable Identifier identifier) {
     active = identifier;
-    setActivePerspective(registry.get(active));
+    setActivePerspectiveOrDefault(registry.get(active));
   }
 
   @Override
-  public @Nullable Perspective getActivePerspective() {
+  public @NonNull Perspective getActivePerspective() {
     return activePerspective;
   }
 
-  private void setActivePerspective(@Nullable Perspective perspective) {
-    if (perspective == null) return;
-    if (perspective == activePerspective) return;
+  @Override
+  public @NonNull Perspective getDefaultPerspective() {
+    return defaultPerspective;
+  }
 
+  /// @param perspective new perspective to set, null means set to default
+  private void setActivePerspective(@NonNull Perspective perspective) {
+    Objects.requireNonNull(perspective);
+    if (perspective == activePerspective) return;
     transition.start(System.currentTimeMillis());
 
     try (var ignored = LockUtils.writeLock(lock)) {
-      Perspective ap = activePerspective;
-      if (perspective != ap) {
-        if (ap != null) {
-          ap.onDeactivate();
-        }
-        perspective.onActivate();
+      if (perspective == activePerspective) return;
 
-        activePerspective = perspective;
-        onActivePerspectiveChanged.emit(perspective);
-      }
+      activePerspective.onDeactivate();
+      perspective.onActivate();
+
+      activePerspective = perspective;
+      onActivePerspectiveChanged.emit(perspective);
     }
+  }
+
+  public void setActivePerspectiveOrDefault(@Nullable Perspective perspective) {
+    setActivePerspective(perspective == null ? getDefaultPerspective() : perspective);
   }
 
   private final PerspectiveRenderTickContextImpl renderTickContext =
@@ -107,7 +126,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     Perspective perspective = activePerspective;
 
     if (perspective instanceof VanillaPerspective) return false;
-    if (perspective == null) return false;
 
     long now = System.currentTimeMillis();
     boolean isInTransition = transition.isInTransition(now) && perspective.allowTransition();
