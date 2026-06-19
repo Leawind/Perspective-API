@@ -101,12 +101,11 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   /// @param perspective new perspective to set, null means set to default
   private void setCurrentPerspective(@NonNull Perspective perspective) {
     Objects.requireNonNull(perspective);
-    if (perspective == currentPerspective) return;
-    transition.start(System.currentTimeMillis());
 
     try (var ignored = LockUtils.writeLock(lock)) {
       if (perspective == currentPerspective) return;
 
+      transition.start(System.currentTimeMillis());
       currentPerspective.onDeactivate();
       perspective.onActivate();
 
@@ -122,7 +121,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   private final PerspectiveRenderTickContextImpl renderTickContext =
       new PerspectiveRenderTickContextImpl(this);
 
-  
   public boolean updateCamera(float partialTicks, Camera camera) {
     Perspective perspective = currentPerspective;
 
