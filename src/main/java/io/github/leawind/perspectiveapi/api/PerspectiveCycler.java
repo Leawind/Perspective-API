@@ -37,6 +37,9 @@ public interface PerspectiveCycler {
 
   default @Nullable Identifier getNextAvailable(
       @NonNull PerspectiveRegistry registry, @NonNull Identifier current) {
+    Identifier first = getFirst();
+    if (first == null) return null;
+
     Identifier next = current;
     do {
       next = getNext(next);
@@ -50,6 +53,9 @@ public interface PerspectiveCycler {
 
   default @Nullable Identifier getPreviousAvailable(
       @NonNull PerspectiveRegistry registry, @NonNull Identifier current) {
+    Identifier first = getFirst();
+    if (first == null) return null;
+
     Identifier previous = current;
     do {
       previous = getPrevious(previous);
