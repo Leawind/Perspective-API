@@ -52,11 +52,11 @@ public class TransitionImpl implements Transition {
     return blender;
   }
 
-  public void start() {
+  public void start(long now) {
     var camera = getCamera();
     if (camera == null) return;
 
-    startTime = System.currentTimeMillis();
+    startTime = now;
     PerspectiveUtils.extractCameraTransform(camera, startPosition, startRotation);
   }
 

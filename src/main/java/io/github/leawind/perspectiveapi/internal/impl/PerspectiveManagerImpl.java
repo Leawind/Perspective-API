@@ -84,7 +84,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     if (perspective == null) return;
     if (perspective == activePerspective) return;
 
-    transition.start();
+    transition.start(System.currentTimeMillis());
 
     try (var ignored = LockUtils.writeLock(lock)) {
       Perspective ap = activePerspective;
