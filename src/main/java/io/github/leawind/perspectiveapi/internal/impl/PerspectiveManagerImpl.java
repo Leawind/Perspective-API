@@ -28,34 +28,11 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
       new PerspectiveManagerImpl(VanillaPerspective.FIRST_PERSON);
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+  // region componenets
   private final PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl(lock);
   private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl(lock);
-
-  private @Nullable volatile Identifier active;
-  // TODO MAKE it not null
-  private @NonNull volatile Perspective activePerspective;
-  private volatile @NonNull Perspective defaultPerspective;
-
-  // region transition
-
   private final TransitionImpl transition = new TransitionImpl();
-
-  // endregion
-
-  private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
-    Objects.requireNonNull(defaultPerspective);
-
-    registry.onUpdate().on(() -> setActivePerspectiveOrDefault(registry.get(active)));
-    this.defaultPerspective = defaultPerspective;
-    activePerspective = defaultPerspective;
-  }
-
-  // region internal events
-
-  public final SimpleEventEmitter.Owned<@Nullable Perspective> onActivePerspectiveChanged =
-      SimpleEventEmitter.create();
-
-  // endregion
 
   @Override
   public @NonNull PerspectiveRegistry registry() {
@@ -72,6 +49,29 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     return transition;
   }
 
+  // endregion
+
+  private volatile @NonNull Perspective defaultPerspective;
+
+  /// Identifier of the active perspective
+  ///
+  /// `null` means default
+  private volatile @Nullable Identifier active;
+
+  /// Currently used perspective
+  private volatile @NonNull Perspective currentPerspective;
+
+  public final SimpleEventEmitter.Owned<@Nullable Perspective> onActivePerspectiveChanged =
+      SimpleEventEmitter.create();
+
+  private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
+    Objects.requireNonNull(defaultPerspective);
+
+    registry.onUpdate().on(() -> setCurrentPerspectiveOrDefault(registry.get(active)));
+    this.defaultPerspective = defaultPerspective;
+    currentPerspective = defaultPerspective;
+  }
+
   @Override
   public void setDefaultPerspective(@NonNull Perspective perspective) {
     defaultPerspective = Objects.requireNonNull(perspective);
@@ -85,12 +85,12 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   @Override
   public void setActive(@Nullable Identifier identifier) {
     active = identifier;
-    setActivePerspectiveOrDefault(registry.get(active));
+    setCurrentPerspectiveOrDefault(registry.get(active));
   }
 
   @Override
-  public @NonNull Perspective getActivePerspective() {
-    return activePerspective;
+  public @NonNull Perspective getCurrentPerspective() {
+    return currentPerspective;
   }
 
   @Override
@@ -99,31 +99,32 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   /// @param perspective new perspective to set, null means set to default
-  private void setActivePerspective(@NonNull Perspective perspective) {
+  private void setCurrentPerspective(@NonNull Perspective perspective) {
     Objects.requireNonNull(perspective);
-    if (perspective == activePerspective) return;
+    if (perspective == currentPerspective) return;
     transition.start(System.currentTimeMillis());
 
     try (var ignored = LockUtils.writeLock(lock)) {
-      if (perspective == activePerspective) return;
+      if (perspective == currentPerspective) return;
 
-      activePerspective.onDeactivate();
+      currentPerspective.onDeactivate();
       perspective.onActivate();
 
-      activePerspective = perspective;
+      currentPerspective = perspective;
       onActivePerspectiveChanged.emit(perspective);
     }
   }
 
-  public void setActivePerspectiveOrDefault(@Nullable Perspective perspective) {
-    setActivePerspective(perspective == null ? getDefaultPerspective() : perspective);
+  public void setCurrentPerspectiveOrDefault(@Nullable Perspective perspective) {
+    setCurrentPerspective(perspective == null ? getDefaultPerspective() : perspective);
   }
 
   private final PerspectiveRenderTickContextImpl renderTickContext =
       new PerspectiveRenderTickContextImpl(this);
 
+  
   public boolean updateCamera(float partialTicks, Camera camera) {
-    Perspective perspective = activePerspective;
+    Perspective perspective = currentPerspective;
 
     if (!perspective.shouldOverrideVanillaCamera()) return false;
 

@@ -21,7 +21,7 @@ public interface PerspectiveManager {
   
   void setActive(@Nullable Identifier identifier);
   
-  @NonNull Perspective getActivePerspective();
+  @NonNull Perspective getCurrentPerspective();
 
   @NonNull Perspective getDefaultPerspective();
 

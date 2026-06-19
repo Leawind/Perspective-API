@@ -14,7 +14,7 @@ public final class ModEvents {
         minecraft -> {
           if (minecraft.level == null || minecraft.player == null) return;
 
-          var active = manager.getActivePerspective();
+          var active = manager.getCurrentPerspective();
 
           active.clientTick(minecraft);
 
@@ -43,7 +43,7 @@ public final class ModEvents {
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
         (ctx) -> {
-          Perspective perspective = manager.getActivePerspective();
+          Perspective perspective = manager.getCurrentPerspective();
           ctx.fieldOfView = perspective.getFieldOfView(ctx.fieldOfView);
         });
 
