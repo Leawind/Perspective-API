@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi;
+package io.github.leawind.perspectiveapi.api;
 
 public final class PerspectiveAPI {
   private PerspectiveAPI() {}

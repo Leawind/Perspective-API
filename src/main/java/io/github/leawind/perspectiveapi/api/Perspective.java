@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;

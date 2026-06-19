@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.platform.neoforge;
 
 /*? if neoforge {*/
-/*import io.github.leawind.perspectiveapi.PerspectiveAPI;
+/*import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.logic.ModEntrypoint;
 /^?   if >=1.21.11 {^/
 import net.neoforged.api.distmarker.Dist;

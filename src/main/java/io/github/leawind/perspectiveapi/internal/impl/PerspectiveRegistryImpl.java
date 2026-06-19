@@ -2,7 +2,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.inventory.event.SimpleEventEmitter;
 import io.github.leawind.inventory.lock.LockUtils;
-import io.github.leawind.perspectiveapi.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import java.util.HashMap;

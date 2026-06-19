@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.platform.forge;
 
 /*? if forge {*/
-/*import io.github.leawind.perspectiveapi.PerspectiveAPI;
+/*import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.logic.ModEntrypoint;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.common.Mod;
