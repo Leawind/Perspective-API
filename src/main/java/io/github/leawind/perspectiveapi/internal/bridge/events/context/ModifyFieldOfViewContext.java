@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.bridge.events.context;
 
-public class ModifyFiedOfViewContext {
+public class ModifyFieldOfViewContext {
   public float fieldOfView;
 
   public void setup(float fieldOfView) {

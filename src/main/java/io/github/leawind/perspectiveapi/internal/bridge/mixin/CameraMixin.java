@@ -3,7 +3,7 @@ package io.github.leawind.perspectiveapi.internal.bridge.mixin;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.events.context.CameraSetupContext;
-import io.github.leawind.perspectiveapi.internal.bridge.events.context.ModifyFiedOfViewContext;
+import io.github.leawind.perspectiveapi.internal.bridge.events.context.ModifyFieldOfViewContext;
 import net.minecraft.client.Camera;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -79,7 +79,8 @@ public abstract class CameraMixin {
       ci.cancel();
     }
   }
-  *//*? } */
+  */
+  /*? } */
 
   // endregion
 
@@ -87,13 +88,13 @@ public abstract class CameraMixin {
 
   /*? if >=26.1 {*/
   @Unique
-  private final ModifyFiedOfViewContext modifyFiedOfViewContext = new ModifyFiedOfViewContext();
+  private final ModifyFieldOfViewContext modifyFieldOfViewContext = new ModifyFieldOfViewContext();
 
   @ModifyReturnValue(method = "calculateFov", at = @At(value = "RETURN"))
   private float modifyFov(float fov) {
-    modifyFiedOfViewContext.setup(fov);
-    GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(modifyFiedOfViewContext);
-    return modifyFiedOfViewContext.fieldOfView;
+    modifyFieldOfViewContext.setup(fov);
+    GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(modifyFieldOfViewContext);
+    return modifyFieldOfViewContext.fieldOfView;
   }
   /*? }*/
 
