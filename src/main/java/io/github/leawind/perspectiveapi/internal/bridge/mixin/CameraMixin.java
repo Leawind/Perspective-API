@@ -63,11 +63,11 @@ public abstract class CameraMixin {
       },
       cancellable = true)
   private void beforeMoveCamera(
-    /^? if >= 1.21 {^/
-    net.minecraft.world.level.BlockGetter blockGetter,
+    /^? if >= 1.21.11 {^/
+    net.minecraft.world.level.Level blockGetter,
     /^? } else {^/
-    /^net.minecraft.world.level.Level blockGetter,^/
-    /^? }^/
+    /^net.minecraft.world.level.BlockGetter blockGetter,
+    ^//^? }^/
     net.minecraft.world.entity.Entity entity,
     boolean detached,
     boolean mirror,
