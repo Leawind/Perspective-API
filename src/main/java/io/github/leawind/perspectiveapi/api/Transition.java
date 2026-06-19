@@ -16,10 +16,12 @@ public interface Transition {
       return x;
     }
 
+    /// $ 3x^2 - 2x^3 $
     static float easeInOut(float x) {
       return 3 * x * x - 2 * x * x * x;
     }
 
+    /// $ x^2 $
     static float easeIn(float x) {
       return x * x;
     }
@@ -28,8 +30,19 @@ public interface Transition {
       return x * (2 - x);
     }
 
+    /// $ 1 - cos(PI/2 * x) $
+    static float sineIn(float x) {
+      return (float) (1 - Math.cos(x * 1.5707963267948966));
+    }
+
+    /// $ sin(PI/2 * x) $
     static float sineOut(float x) {
-      return (float) Math.sin(x * 1.5707963267948966f);
+      return (float) Math.sin(x * 1.5707963267948966);
+    }
+
+    /// $ sin(PI/2 * x) ^ 2 $
+    static float sineInOut(float x) {
+      return (float) Math.pow(Math.sin(x * 1.5707963267948966), 2);
     }
   }
 }
