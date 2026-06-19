@@ -5,22 +5,18 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public interface PerspectiveManager {
-  static @NonNull PerspectiveManager get() {
-    return Factory.getPerspectiveManager();
-  }
-
   @NonNull PerspectiveRegistry registry();
 
   @NonNull PerspectiveCycler cycler();
-  
+
   @NonNull Transition transition();
-  
+
   void setDefaultPerspective(@NonNull Perspective perspective);
-  
+
   @Nullable Identifier getActiveId();
-  
+
   void setActive(@Nullable Identifier identifier);
-  
+
   @NonNull Perspective getCurrentPerspective();
 
   @NonNull Perspective getDefaultPerspective();

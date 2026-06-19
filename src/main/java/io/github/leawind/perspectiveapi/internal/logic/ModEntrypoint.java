@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveManager;
+import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.spi.PerspectiveSPI;
 
 public final class ModEntrypoint {
@@ -13,7 +13,7 @@ public final class ModEntrypoint {
   }
 
   private static void registerVanillaPerspectives() {
-    var manager = PerspectiveManager.get();
+    var manager = PerspectiveAPI.getManager();
 
     manager
         .registry()
