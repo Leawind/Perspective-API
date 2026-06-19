@@ -50,7 +50,7 @@ public interface Perspective {
   }
 
   /// Called on render tick while this perspective is active.
-  default void renderTick(PerspectiveRenderTickContext context) {}
+  default void renderTick(@NonNull PerspectiveRenderTickContext context) {}
 
   default void onActivate() {}
 

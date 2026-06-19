@@ -3,12 +3,14 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.utils.PerspectiveUtils;
+import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class TransitionImpl implements Transition {
@@ -41,12 +43,12 @@ public class TransitionImpl implements Transition {
   }
 
   @Override
-  public void setBlender(Blender blender) {
-    this.blender = blender;
+  public void setBlender(@NonNull Blender blender) {
+    this.blender = Objects.requireNonNull(blender);
   }
 
   @Override
-  public Blender getBlender() {
+  public @NonNull Blender getBlender() {
     return blender;
   }
 

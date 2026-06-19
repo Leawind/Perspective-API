@@ -1,14 +1,17 @@
 package io.github.leawind.perspectiveapi.api;
 
+import org.jspecify.annotations.NonNull;
+
 public interface Transition {
   boolean isInTransition(long now);
 
   void setDuration(long duration);
 
-  void setBlender(Blender blender);
+  void setBlender(@NonNull Blender blender);
 
-  Blender getBlender();
+  @NonNull Blender getBlender();
 
+  @FunctionalInterface
   interface Blender {
     float blend(float x);
 

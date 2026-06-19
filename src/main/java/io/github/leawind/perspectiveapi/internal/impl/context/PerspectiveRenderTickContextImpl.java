@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.impl.context;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
 import net.minecraft.world.entity.Entity;
+import org.jspecify.annotations.NonNull;
 
 public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickContext {
 
@@ -15,7 +16,7 @@ public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickCo
   }
 
   @Override
-  public PerspectiveManager manager() {
+  public @NonNull PerspectiveManager manager() {
     return manager;
   }
 
