@@ -3,7 +3,7 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
-import io.github.leawind.perspectiveapi.utils.PerspectiveUtils;
+import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import net.minecraft.client.CameraType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

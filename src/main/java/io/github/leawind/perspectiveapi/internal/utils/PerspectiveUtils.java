@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.utils;
+package io.github.leawind.perspectiveapi.internal.utils;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
 import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;

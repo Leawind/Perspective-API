@@ -10,7 +10,7 @@ import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.VanillaPerspective;
-import io.github.leawind.perspectiveapi.utils.PerspectiveUtils;
+import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.minecraft.client.Camera;

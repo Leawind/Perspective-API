@@ -2,7 +2,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.utils.PerspectiveUtils;
+import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
