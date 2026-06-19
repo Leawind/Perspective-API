@@ -109,6 +109,9 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     if (perspective instanceof VanillaPerspective) return false;
     if (perspective == null) return false;
 
+    long now = System.currentTimeMillis();
+    boolean isInTransition = transition.isInTransition(now) && perspective.allowTransition();
+
     // Perspective render tick
     {
       Entity entity = ((CameraAccessor) camera).getEntity();
@@ -116,13 +119,11 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
         LOGGER.warn("Somehow camera entity is null");
         return false;
       }
-      renderTickContext.setup(partialTicks, entity);
+      renderTickContext.setup(partialTicks, entity, isInTransition);
       perspective.renderTick(renderTickContext);
     }
 
-    long now = System.currentTimeMillis();
-
-    if (transition.isInTransition(now) && perspective.allowTransition()) {
+    if (isInTransition) {
       // Apply transition
       transition.update(now, perspective);
       PerspectiveUtils.setCameraTransform(
@@ -132,7 +133,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
       PerspectiveUtils.setCameraTransform(
           camera, perspective.getPosition(), perspective.getRotation());
     }
-    
+
     return true;
   }
 }

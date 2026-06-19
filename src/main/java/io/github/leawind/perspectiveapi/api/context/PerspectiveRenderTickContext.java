@@ -11,4 +11,6 @@ public interface PerspectiveRenderTickContext {
   float partialTicks();
 
   @Nullable Entity entity();
+  
+  boolean isInTransition();
 }

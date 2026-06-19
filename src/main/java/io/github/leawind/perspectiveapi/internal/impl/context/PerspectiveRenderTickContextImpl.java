@@ -10,6 +10,7 @@ public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickCo
   private final PerspectiveManager manager;
   private float particalTicks;
   private Entity cameraEntity;
+  private boolean isInTransition;
 
   public PerspectiveRenderTickContextImpl(PerspectiveManager manager) {
     this.manager = manager;
@@ -30,8 +31,14 @@ public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickCo
     return cameraEntity;
   }
 
-  public void setup(float particalTicks, Entity cameraEntity) {
+  @Override
+  public boolean isInTransition() {
+    return isInTransition;
+  }
+
+  public void setup(float particalTicks, Entity cameraEntity, boolean isInTransition) {
     this.particalTicks = particalTicks;
     this.cameraEntity = cameraEntity;
+    this.isInTransition = isInTransition;
   }
 }
