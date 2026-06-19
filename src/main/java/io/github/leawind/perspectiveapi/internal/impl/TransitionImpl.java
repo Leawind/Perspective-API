@@ -18,7 +18,7 @@ public class TransitionImpl implements Transition {
   private static final long MIN_DELTA_MS = 1;
 
   // region settings
-  private long duration = 200;
+  private long duration = 300;
   private Blender blender = Blender::easeOut;
   // endregion
 
