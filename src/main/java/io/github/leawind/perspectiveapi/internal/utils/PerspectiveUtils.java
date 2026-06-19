@@ -70,4 +70,20 @@ public final class PerspectiveUtils {
       levelRenderer.needsUpdate();
     }
   }
+
+  /// Copied from `java.lang.Math#clamp`
+  public static float clamp(float value, float min, float max) {
+    if (!(min < max)) {
+      if (Float.isNaN(min)) {
+        throw new IllegalArgumentException("min is NaN");
+      }
+      if (Float.isNaN(max)) {
+        throw new IllegalArgumentException("max is NaN");
+      }
+      if (Float.compare(min, max) > 0) {
+        throw new IllegalArgumentException(min + " > " + max);
+      }
+    }
+    return Math.min(max, Math.max(value, min));
+  }
 }
