@@ -125,7 +125,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   public boolean updateCamera(float partialTicks, Camera camera) {
     Perspective perspective = activePerspective;
 
-    if (perspective instanceof VanillaPerspective) return false;
+    if (!perspective.shouldOverrideVanillaCamera()) return false;
 
     long now = System.currentTimeMillis();
     boolean isInTransition = transition.isInTransition(now) && perspective.allowTransition();
