@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
+import io.github.leawind.perspectiveapi.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -16,7 +17,15 @@ public interface Perspective {
 
   @NonNull CameraType cameraType();
 
-  @Deprecated(since = "1.0.0")
+  /// Determines whether it should override the vanilla camera logic for this perspective.
+  ///
+  /// Returning `false` disables all camera modifications provided by {@link PerspectiveAPI},
+  /// allowing your mod to apply its own camera modifications through Mixin or something.
+  /// Just remember to check if the current perspective is which you are working on.
+  ///
+  /// ```java
+  /// if (PerspectiveManager.get().getCurrentPerspective() != ExamplePerspective.INSTANCE) return;
+  /// ```
   default boolean shouldOverrideVanillaCamera() {
     return true;
   }
