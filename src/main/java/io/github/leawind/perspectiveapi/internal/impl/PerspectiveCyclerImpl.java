@@ -37,61 +37,70 @@ public class PerspectiveCyclerImpl implements PerspectiveCycler {
   public @NonNull PerspectiveCycler add(@NonNull Identifier id, int priority) {
     Objects.requireNonNull(id);
 
-    entries.removeIf(e -> e.id().equals(id));
-    entries.add(new Entry(id, priority));
-    entries.sort(Comparator.comparingInt(Entry::priority));
+    try (var ignored = LockUtils.writeLock(lock)) {
+      entries.removeIf(e -> e.id().equals(id));
+      entries.add(new Entry(id, priority));
+      entries.sort(Comparator.comparingInt(Entry::priority));
+    }
     return this;
   }
 
   @Override
   public void remove(@Nullable Identifier id) {
-    if (id == null) {
-      return;
+    try (var ignored = LockUtils.writeLock(lock)) {
+      if (id == null) return;
+
+      entries.removeIf(e -> e.id().equals(id));
     }
-    entries.removeIf(e -> e.id().equals(id));
   }
 
   @Override
   public void clear() {
-    entries.clear();
+    try (var ignored = LockUtils.writeLock(lock)) {
+      entries.clear();
+    }
   }
 
   @Override
   public @NonNull Stream<Identifier> stream() {
-    return entries.stream().map(Entry::id);
+    try (var ignored = LockUtils.readLock(lock)) {
+      return entries.stream().map(Entry::id).toList().stream();
+    }
   }
 
   @Override
   public @Nullable Identifier getNext(@Nullable Identifier current) {
-    if (entries.isEmpty()) {
-      return null;
-    }
+    try (var ignored = LockUtils.readLock(lock)) {
+      if (entries.isEmpty()) return null;
 
-    int idx = indexOf(current);
-    if (idx < 0) {
-      return getFirst();
-    }
+      int idx = indexOf(current);
+      if (idx < 0) {
+        return entries.get(0).id();
+      }
 
-    return entries.get((idx + 1) % entries.size()).id();
+      return entries.get((idx + 1) % entries.size()).id();
+    }
   }
 
   @Override
   public @Nullable Identifier getPrevious(@Nullable Identifier current) {
-    if (entries.isEmpty()) {
-      return null;
-    }
+    try (var ignored = LockUtils.readLock(lock)) {
+      if (entries.isEmpty()) return null;
 
-    int idx = indexOf(current);
-    if (idx < 0) {
-      return getLast();
-    }
+      int idx = indexOf(current);
+      if (idx < 0) {
+        return entries.get(entries.size() - 1).id();
+      }
 
-    return entries.get((idx - 1 + entries.size()) % entries.size()).id();
+      return entries.get((idx - 1 + entries.size()) % entries.size()).id();
+    }
   }
 
   @Override
   public @Nullable Identifier getFirst() {
-    return entries.isEmpty() ? null : entries.get(0).id();
+    try (var ignored = LockUtils.readLock(lock)) {
+      return entries.isEmpty() ? null : entries.get(0).id();
+    }
   }
 
   private @Nullable Identifier getLast() {
