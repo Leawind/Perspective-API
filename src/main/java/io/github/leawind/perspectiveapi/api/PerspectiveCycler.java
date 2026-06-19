@@ -20,6 +20,8 @@ public interface PerspectiveCycler {
 
   @NonNull Stream<Identifier> stream();
 
+  boolean isEmpty();
+
   /// Returns the next cycable perspective after {@code current}.
   ///
   /// Looks up the perspective in {@link PerspectiveRegistry}; skips non-cycable entries.
@@ -37,8 +39,7 @@ public interface PerspectiveCycler {
 
   default @Nullable Identifier getNextAvailable(
       @NonNull PerspectiveRegistry registry, @NonNull Identifier current) {
-    Identifier first = getFirst();
-    if (first == null) return null;
+    if (isEmpty()) return null;
 
     Identifier next = current;
     do {
@@ -53,8 +54,7 @@ public interface PerspectiveCycler {
 
   default @Nullable Identifier getPreviousAvailable(
       @NonNull PerspectiveRegistry registry, @NonNull Identifier current) {
-    Identifier first = getFirst();
-    if (first == null) return null;
+    if (isEmpty()) return null;
 
     Identifier previous = current;
     do {

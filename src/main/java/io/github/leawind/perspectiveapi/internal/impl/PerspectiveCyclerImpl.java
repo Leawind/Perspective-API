@@ -69,6 +69,11 @@ public class PerspectiveCyclerImpl implements PerspectiveCycler {
   }
 
   @Override
+  public boolean isEmpty() {
+    return entries.isEmpty();
+  }
+
+  @Override
   public @Nullable Identifier getNext(@Nullable Identifier current) {
     try (var ignored = LockUtils.readLock(lock)) {
       if (entries.isEmpty()) return null;
