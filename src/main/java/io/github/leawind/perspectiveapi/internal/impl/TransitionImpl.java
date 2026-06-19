@@ -77,6 +77,7 @@ public class TransitionImpl implements Transition {
     return rotation;
   }
 
+  @SuppressWarnings("ConstantConditions")
   private static @Nullable Camera getCamera() {
     var minecraft = Minecraft.getInstance();
     if (minecraft == null) return null;

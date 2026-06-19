@@ -49,6 +49,7 @@ public final class PerspectiveUtils {
     rotation.set(camera.rotation());
   }
 
+  @SuppressWarnings("ConstantConditions")
   public static void updateCameraType(CameraType newCameraType) {
     // similar to vanilla: `Minecraft#handleKeybinds()`
 
