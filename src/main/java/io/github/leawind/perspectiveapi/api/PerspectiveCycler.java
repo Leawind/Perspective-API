@@ -31,53 +31,24 @@ public interface PerspectiveCycler {
   boolean isEmpty();
 
   /// Returns the next cycable perspective after {@code current}.
-  ///
-  /// Looks up the perspective in {@link PerspectiveRegistry}; skips non-cycable entries.
-  /// If {@code current} is not in the list, returns the first entry.
   @Nullable Identifier getNext(@Nullable Identifier current);
 
   /// Returns the previous cycable perspective before {@code current}.
-  ///
-  /// Looks up the perspective in {@link PerspectiveRegistry}; skips non-cycable entries.
-  /// If {@code current} is not in the list, returns the last entry.
   @Nullable Identifier getPrevious(@Nullable Identifier current);
 
   /// Returns the first (lowest-priority) cycable perspective, or {@code null} if the list is empty.
   @Nullable Identifier getFirst();
 
-  /// Returns the next available (registered) perspective after `current`, wrapping around the
-  /// cycle.
-  /// Returns `null` if the cycle is empty or no available perspective is found.
-  default @Nullable Identifier getNextAvailable(
-      @NonNull PerspectiveRegistry registry, @NonNull Identifier current) {
-    if (isEmpty()) return null;
+  /// Returns the player's currently selected perspective id in the cycle list, or {@code null} if
+  /// none is selected.
+  @Nullable Identifier getActive();
 
-    Identifier next = current;
-    do {
-      next = getNext(next);
-      var perspective = registry.get(next);
-      if (perspective != null) {
-        return next;
-      }
-    } while (next != current);
-    return null;
-  }
+  /// Sets the player's selected perspective id in the cycle list.
+  void setActive(@Nullable Identifier id);
 
-  /// Returns the previous available (registered) perspective before `current`, wrapping around the
-  /// cycle.
-  /// Returns `null` if the cycle is empty or no registered perspective is found.
-  default @Nullable Identifier getPreviousAvailable(
-      @NonNull PerspectiveRegistry registry, @NonNull Identifier current) {
-    if (isEmpty()) return null;
+  /// Cycles to the next available perspective
+  void switchToNextAvailable(@NonNull PerspectiveRegistry registry);
 
-    Identifier previous = current;
-    do {
-      previous = getPrevious(previous);
-      var perspective = registry.get(previous);
-      if (perspective != null) {
-        return previous;
-      }
-    } while (previous != current);
-    return null;
-  }
+  /// Cycles to the previous available perspective
+  void switchToPreviousAvailable(@NonNull PerspectiveRegistry registry);
 }

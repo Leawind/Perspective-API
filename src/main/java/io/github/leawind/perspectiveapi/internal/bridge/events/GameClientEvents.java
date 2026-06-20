@@ -10,6 +10,9 @@ public final class GameClientEvents {
 
   public static final SingleEventEmitter<Minecraft> CLIENT_TICK_START = new SingleEventEmitter<>();
 
+  public static final SingleEventEmitter<Minecraft> PLAYER_JOIN_LEVEL = new SingleEventEmitter<>();
+  public static final SingleEventEmitter<Minecraft> PLAYER_EXIT_LEVEL = new SingleEventEmitter<>();
+
   public static final SingleEventEmitter<Minecraft> HANDLE_KEYBINDS_START =
       new SingleEventEmitter<>();
 

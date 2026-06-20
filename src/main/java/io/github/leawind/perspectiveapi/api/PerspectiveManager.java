@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
+import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -20,13 +21,23 @@ public interface PerspectiveManager {
 
   @NonNull Identifier getDefault();
 
-  /// Returns the id of the active perspective, or `null` if the default is active.
-  @Nullable Identifier getActive();
+  /// Pushes an override entry into the override chain.
+  ///
+  /// If an entry with the same key already exists, it is replaced.
+  /// Higher priority values take precedence (are evaluated first).
+  void pushOverride(
+      @NonNull Identifier key,
+      int priority,
+      @NonNull Supplier<@Nullable Identifier> supplier);
 
-  /// Sets the active perspective by id. Pass `null` to revert to the default perspective.
-  void setActive(@Nullable Identifier identifier);
+  /// Removes the override entry with the given key from the override chain.
+  void popOverride(@NonNull Identifier key);
 
-  /// Returns the current active perspective. Never returns `null`.
+  /// Returns {@code true} if an override entry with the given key exists.
+  boolean hasOverride(@NonNull Identifier key);
+
+  /// Returns the current active perspective after resolving the override chain.
+  /// Never returns `null`.
   @NonNull Perspective getCurrentPerspective();
 
   /// Returns the default perspective.
@@ -34,18 +45,5 @@ public interface PerspectiveManager {
     Perspective perspective = registry().get(getDefault());
     assert perspective != null;
     return perspective;
-  }
-
-  /// Cycles to the next available perspective in the cycle list.
-  default void switchToNextAvailable() {
-    var active = getActive();
-    setActive(active == null ? cycler().getFirst() : cycler().getNextAvailable(registry(), active));
-  }
-
-  /// Cycles to the previous available perspective in the cycle list.
-  default void switchToPreviousAvailable() {
-    var active = getActive();
-    setActive(
-        active == null ? cycler().getFirst() : cycler().getPreviousAvailable(registry(), active));
   }
 }

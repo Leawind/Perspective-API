@@ -11,9 +11,12 @@ import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.VanillaPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import net.minecraft.client.Camera;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
@@ -29,7 +32,25 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-  // region componenets
+  private final @NonNull Identifier defaultId;
+
+  /// Currently used perspective
+  private volatile @NonNull Perspective currentPerspective;
+
+  public final SimpleEventEmitter.Owned<@Nullable Perspective> onActivePerspectiveChanged =
+      SimpleEventEmitter.create();
+
+  private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
+    Objects.requireNonNull(defaultPerspective);
+    registry.register(defaultPerspective);
+    defaultId = defaultPerspective.id();
+
+    currentPerspective = defaultPerspective;
+
+    pushOverride(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActive);
+  }
+
+  // region components
   private final PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl(lock);
   private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl(lock);
   private final TransitionImpl transition = new TransitionImpl();
@@ -51,38 +72,54 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
   // endregion
 
-  private volatile @NonNull Identifier defaultId;
+  // region override chain
 
-  /// Identifier of the active perspective
-  ///
-  /// `null` means default
-  private volatile @Nullable Identifier active;
+  /// Override chain sorted by priority descending (highest priority first).
+  private final List<OverrideEntry> overrideChain = new ArrayList<>();
 
-  /// Currently used perspective
-  private volatile @NonNull Perspective currentPerspective;
+  @Override
+  public void pushOverride(
+      @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier) {
+    Objects.requireNonNull(key);
+    Objects.requireNonNull(supplier);
 
-  public final SimpleEventEmitter.Owned<@Nullable Perspective> onActivePerspectiveChanged =
-      SimpleEventEmitter.create();
+    try (var ignored = LockUtils.writeLock(lock)) {
+      overrideChain.removeIf(e -> e.key().equals(key));
 
-  private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
-    Objects.requireNonNull(defaultPerspective);
-    registry.register(defaultPerspective);
-    defaultId = defaultPerspective.id();
-
-    registry.onUpdate().on(() -> setCurrentPerspectiveOrDefault(registry.get(active)));
-    currentPerspective = defaultPerspective;
+      var entry = new OverrideEntry(key, priority, supplier);
+      int insertIdx = 0;
+      for (int i = 0; i < overrideChain.size(); i++) {
+        if (overrideChain.get(i).priority() >= priority) {
+          insertIdx = i + 1;
+        } else {
+          break;
+        }
+      }
+      overrideChain.add(insertIdx, entry);
+    }
   }
 
   @Override
-  public @Nullable Identifier getActive() {
-    return active;
+  public void popOverride(@NonNull Identifier key) {
+    Objects.requireNonNull(key);
+
+    try (var ignored = LockUtils.writeLock(lock)) {
+      overrideChain.removeIf(e -> e.key().equals(key));
+    }
   }
 
   @Override
-  public void setActive(@Nullable Identifier identifier) {
-    active = identifier;
-    setCurrentPerspectiveOrDefault(registry.get(active));
+  public boolean hasOverride(@NonNull Identifier key) {
+    Objects.requireNonNull(key);
+
+    try (var ignored = LockUtils.readLock(lock)) {
+      return overrideChain.stream().anyMatch(e -> e.key().equals(key));
+    }
   }
+
+  // endregion
+
+  // region perspective management
 
   @Override
   public @NonNull Perspective getCurrentPerspective() {
@@ -94,7 +131,33 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     return defaultId;
   }
 
-  /// @param perspective new perspective to set, null means set to default
+  /// Removes all override entries except the cycler node.
+  public void clearOverridesExceptCycler() {
+    try (var ignored = LockUtils.writeLock(lock)) {
+      overrideChain.removeIf(e -> !e.key().equals(PerspectiveCyclerImpl.KEY));
+    }
+  }
+
+  public void resolveAndUpdatePerspective() {
+    setCurrentPerspective(resolveCurrentPerspective());
+  }
+
+  private @NonNull Perspective resolveCurrentPerspective() {
+    try (var ignored = LockUtils.readLock(lock)) {
+      for (OverrideEntry entry : overrideChain) {
+        Identifier id = entry.supplier().get();
+        if (id == null) continue;
+
+        Perspective perspective = registry.get(id);
+        if (perspective == null) continue;
+        if (!perspective.isAvailable()) continue;
+
+        return perspective;
+      }
+    }
+    return getDefaultPerspective();
+  }
+
   private void setCurrentPerspective(@NonNull Perspective perspective) {
     Objects.requireNonNull(perspective);
 
@@ -110,9 +173,9 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     }
   }
 
-  public void setCurrentPerspectiveOrDefault(@Nullable Perspective perspective) {
-    setCurrentPerspective(perspective == null ? getDefaultPerspective() : perspective);
-  }
+  // endregion
+
+  // region camera update
 
   private final PerspectiveRenderTickContextImpl renderTickContext =
       new PerspectiveRenderTickContextImpl(this);
@@ -125,7 +188,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     long now = System.currentTimeMillis();
     boolean isInTransition = transition.isInTransition(now) && perspective.allowTransition();
 
-    // Perspective render tick
     {
       Entity entity = ((CameraAccessor) camera).getEntity();
       if (entity == null) {
@@ -137,16 +199,16 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     if (isInTransition) {
-      // Apply transition
       transition.update(now, perspective);
       PerspectiveUtils.setCameraTransform(
           camera, transition.getPosition(), transition.getRotation());
     } else {
-      // Apply perspective to camera
       PerspectiveUtils.setCameraTransform(
           camera, perspective.getPosition(), perspective.getRotation());
     }
 
     return true;
   }
+
+  // endregion
 }

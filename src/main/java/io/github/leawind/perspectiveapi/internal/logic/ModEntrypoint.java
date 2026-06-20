@@ -21,13 +21,14 @@ public final class ModEntrypoint {
         .register(VanillaPerspective.THIRD_PERSON_BACK)
         .register(VanillaPerspective.THIRD_PERSON_FRONT);
 
-    manager
-        .cycler()
-        .add(VanillaPerspective.FIRST_PERSON.id(), 0)
-        .add(VanillaPerspective.THIRD_PERSON_BACK.id(), 1)
-        .add(VanillaPerspective.THIRD_PERSON_FRONT.id(), 2);
-
-    manager.setActive(VanillaPerspective.FIRST_PERSON.id());
+    {
+      manager
+          .cycler()
+          .add(VanillaPerspective.FIRST_PERSON.id(), 0)
+          .add(VanillaPerspective.THIRD_PERSON_BACK.id(), 1)
+          .add(VanillaPerspective.THIRD_PERSON_FRONT.id(), 2);
+      manager.cycler().setActive(VanillaPerspective.FIRST_PERSON.id());
+    }
 
     PerspectiveSPI.load().forEach(registrar -> registrar.register(manager));
   }

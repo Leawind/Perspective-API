@@ -14,12 +14,14 @@ public final class ModEvents {
         minecraft -> {
           if (minecraft.level == null || minecraft.player == null) return;
 
+          manager.resolveAndUpdatePerspective();
+
           var current = manager.getCurrentPerspective();
 
           current.clientTick(minecraft);
 
           if (!current.isAvailable()) {
-            manager.switchToPreviousAvailable();
+            manager.cycler().switchToPreviousAvailable(manager.registry());
           }
         });
 
@@ -28,9 +30,15 @@ public final class ModEvents {
           var options = minecraft.options;
 
           while (options.keyTogglePerspective.consumeClick()) {
-            manager.switchToNextAvailable();
+            manager.cycler().switchToNextAvailable(manager.registry());
           }
         });
+
+    GameClientEvents.PLAYER_JOIN_LEVEL.on(
+        minecraft -> manager.clearOverridesExceptCycler());
+
+    GameClientEvents.PLAYER_EXIT_LEVEL.on(
+        minecraft -> manager.clearOverridesExceptCycler());
 
     // region camera
 
