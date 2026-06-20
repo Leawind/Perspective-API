@@ -14,11 +14,11 @@ public final class ModEvents {
         minecraft -> {
           if (minecraft.level == null || minecraft.player == null) return;
 
-          var active = manager.getCurrentPerspective();
+          var current = manager.getCurrentPerspective();
 
-          active.clientTick(minecraft);
+          current.clientTick(minecraft);
 
-          if (!active.isAvailable()) {
+          if (!current.isAvailable()) {
             manager.switchToPreviousAvailable();
           }
         });

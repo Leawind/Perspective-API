@@ -36,8 +36,10 @@ public interface PerspectiveRegistry {
   ///   - id is null
   @Nullable Perspective get(@Nullable Identifier id);
 
+  /// Returns all registered perspectives as an unmodifiable list.
   @NonNull List<Perspective> getAll();
 
+  /// Returns {@code true} if the given perspective instance is registered.
   default boolean contains(@NonNull Perspective perspective) {
     return get(perspective.id()) == perspective;
   }

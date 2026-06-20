@@ -2,19 +2,32 @@ package io.github.leawind.perspectiveapi.api;
 
 import org.jspecify.annotations.NonNull;
 
+/// Controls smooth camera transitions between perspectives.
+///
+/// When a perspective switch occurs, the camera interpolates from its previous position/rotation
+/// to the new perspective's values
 public interface Transition {
+
+  /// Returns `true` if a transition is currently in progress at the given timestamp.
   boolean isInTransition(long now);
-
+  
+  /// Sets the transition duration in milliseconds.
   void setDuration(long duration);
-
+  
+  /// Sets the blending function used for easing.
   void setBlender(@NonNull Blender blender);
 
+  /// Returns the current blending function.
   @NonNull Blender getBlender();
 
+  /// A blending function that maps a normalized time value `[0, 1]` to an eased output `[0, 1]`.
   @FunctionalInterface
   interface Blender {
+
+    /// Applies the easing function to the given input.
     float blend(float x);
 
+    /// No easing: linear interpolation.
     static float linear(float x) {
       return x;
     }
@@ -29,6 +42,7 @@ public interface Transition {
       return x * x;
     }
 
+    /// $ x(2 - x) $
     static float easeOut(float x) {
       return x * (2 - x);
     }

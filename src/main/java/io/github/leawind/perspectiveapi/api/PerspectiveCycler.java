@@ -6,10 +6,16 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+/// Manages an ordered list of perspective ids for cycling via keybind
+///
+/// Perspectives are ordered by priority. Lower priority values appear earlier in the cycle.
 public interface PerspectiveCycler {
 
+  /// Replaces the entire cycle list with the given ids, assigned priorities by their index order.
   void set(@NonNull List<Identifier> list);
 
+  /// Adds a perspective id to the cycle list with the given priority. Replaces any existing entry
+  /// with the same id.
   @NonNull PerspectiveCycler add(@NonNull Identifier id, int priority);
 
   /// Removes a perspective id from the cycle list. Does nothing if the id is not present.
@@ -18,8 +24,10 @@ public interface PerspectiveCycler {
   /// Removes all entries from the cycle list and resets the default perspective.
   void clear();
 
+  /// Returns a stream of all perspective ids in priority order.
   @NonNull Stream<Identifier> stream();
 
+  /// Returns {@code true} if the cycle list is empty.
   boolean isEmpty();
 
   /// Returns the next cycable perspective after {@code current}.
@@ -37,6 +45,9 @@ public interface PerspectiveCycler {
   /// Returns the first (lowest-priority) cycable perspective, or {@code null} if the list is empty.
   @Nullable Identifier getFirst();
 
+  /// Returns the next available (registered) perspective after `current`, wrapping around the
+  /// cycle.
+  /// Returns `null` if the cycle is empty or no available perspective is found.
   default @Nullable Identifier getNextAvailable(
       @NonNull PerspectiveRegistry registry, @NonNull Identifier current) {
     if (isEmpty()) return null;
@@ -52,6 +63,9 @@ public interface PerspectiveCycler {
     return null;
   }
 
+  /// Returns the previous available (registered) perspective before `current`, wrapping around the
+  /// cycle.
+  /// Returns `null` if the cycle is empty or no registered perspective is found.
   default @Nullable Identifier getPreviousAvailable(
       @NonNull PerspectiveRegistry registry, @NonNull Identifier current) {
     if (isEmpty()) return null;

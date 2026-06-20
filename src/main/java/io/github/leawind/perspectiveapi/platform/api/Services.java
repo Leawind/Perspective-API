@@ -4,6 +4,7 @@ import java.util.ServiceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/// Loads platform-specific service implementations via {@link ServiceLoader}.
 public class Services {
   private static final Logger LOGGER = LoggerFactory.getLogger(Services.class);
 

@@ -29,6 +29,7 @@ public interface Perspective {
     return true;
   }
 
+  /// Whether camera transition is enabled when switching to this perspective.
   default boolean allowTransition() {
     return true;
   }
@@ -37,11 +38,14 @@ public interface Perspective {
 
   // region dynamic
 
+  /// Returns the camera position in world coordinates when this perspective is active.
   @NonNull Vector3dc getPosition();
 
   /// Returns the rotation of the camera when this perspective is active.
   @NonNull Quaternionfc getRotation();
 
+  /// Modifies the field of view. Return the modified value, or `vanillaFieldOfView` to keep
+  /// vanilla behavior.
   default float getFieldOfView(float vanillaFieldOfView) {
     return vanillaFieldOfView;
   }
@@ -51,12 +55,16 @@ public interface Perspective {
   // region events
 
   /// Returns whether this perspective is currently available.
+  ///
+  /// Checked on every client tick.
   default boolean isAvailable() {
     return true;
   }
 
+  /// Called when this perspective becomes the active perspective.
   default void onActivate() {}
 
+  /// Called every client tick while this perspective is active.
   default void clientTick(Minecraft minecraft) {}
 
   /// Called on render tick while this perspective is active.

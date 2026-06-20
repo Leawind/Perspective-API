@@ -9,7 +9,7 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /// Provides utilities for converting between rotation, orientation, and view vector in Minecraft's
-// coordinate system.
+/// coordinate system.
 public final class PerspectiveHelper {
   private PerspectiveHelper() {}
 

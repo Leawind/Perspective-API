@@ -23,6 +23,7 @@ public interface PlatformHelper {
     return createIdentifier("minecraft", path);
   }
 
+  /// Creates an {@link Identifier} with the given namespace and path.
   default Identifier createIdentifier(String namespace, String path) {
     /*? if >1.20.4 {*/
     return Identifier.fromNamespaceAndPath(namespace, path);
