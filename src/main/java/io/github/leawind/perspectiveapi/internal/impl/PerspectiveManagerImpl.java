@@ -51,7 +51,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
   // endregion
 
-  private volatile @NonNull Perspective defaultPerspective;
+  private volatile @NonNull Identifier defaultId;
 
   /// Identifier of the active perspective
   ///
@@ -66,19 +66,15 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
   private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
+    registry.register(defaultPerspective);
+    defaultId = defaultPerspective.id();
 
     registry.onUpdate().on(() -> setCurrentPerspectiveOrDefault(registry.get(active)));
-    this.defaultPerspective = defaultPerspective;
     currentPerspective = defaultPerspective;
   }
 
   @Override
-  public void setDefaultPerspective(@NonNull Perspective perspective) {
-    defaultPerspective = Objects.requireNonNull(perspective);
-  }
-
-  @Override
-  public @Nullable Identifier getActiveId() {
+  public @Nullable Identifier getActive() {
     return active;
   }
 
@@ -94,8 +90,8 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   @Override
-  public @NonNull Perspective getDefaultPerspective() {
-    return defaultPerspective;
+  public @NonNull Identifier getDefault() {
+    return defaultId;
   }
 
   /// @param perspective new perspective to set, null means set to default

@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.inventory.event.EventEmitter;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -19,12 +18,10 @@ public interface PerspectiveManager {
   /// @return the transition controller.
   @NonNull Transition transition();
 
-  /// Sets the default perspective used when no active perspective is set or the active one is
-  /// unregistered.
-  void setDefaultPerspective(@NonNull Perspective perspective);
+  @NonNull Identifier getDefault();
 
   /// Returns the id of the active perspective, or `null` if the default is active.
-  @Nullable Identifier getActiveId();
+  @Nullable Identifier getActive();
 
   /// Sets the active perspective by id. Pass `null` to revert to the default perspective.
   void setActive(@Nullable Identifier identifier);
@@ -33,17 +30,21 @@ public interface PerspectiveManager {
   @NonNull Perspective getCurrentPerspective();
 
   /// Returns the default perspective.
-  @NonNull Perspective getDefaultPerspective();
+  default @NonNull Perspective getDefaultPerspective() {
+    Perspective perspective = registry().get(getDefault());
+    assert perspective != null;
+    return perspective;
+  }
 
   /// Cycles to the next available perspective in the cycle list.
   default void switchToNextAvailable() {
-    var active = getActiveId();
+    var active = getActive();
     setActive(active == null ? cycler().getFirst() : cycler().getNextAvailable(registry(), active));
   }
 
   /// Cycles to the previous available perspective in the cycle list.
   default void switchToPreviousAvailable() {
-    var active = getActiveId();
+    var active = getActive();
     setActive(
         active == null ? cycler().getFirst() : cycler().getPreviousAvailable(registry(), active));
   }

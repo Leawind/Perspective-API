@@ -50,25 +50,6 @@ public class PerspectiveRegistryImpl implements PerspectiveRegistry {
   }
 
   @Override
-  public @Nullable Perspective unregister(@NonNull Identifier id) {
-    Perspective removed;
-    try (var ignored = LockUtils.writeLock(lock)) {
-      removed = perspectives.remove(id);
-      onUpdate.emit();
-    }
-    LOGGER.info("Unregistering perspective with id '{}': {}", id, removed);
-    return removed;
-  }
-
-  @Override
-  public void clear() {
-    try (var ignored = LockUtils.writeLock(lock)) {
-      perspectives.clear();
-      onUpdate.emit();
-    }
-  }
-
-  @Override
   public boolean contains(Identifier id) {
     try (var ignored = LockUtils.readLock(lock)) {
       return get(id) != null;
