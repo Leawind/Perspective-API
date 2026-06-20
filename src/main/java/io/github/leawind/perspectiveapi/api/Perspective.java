@@ -38,6 +38,13 @@ public interface Perspective {
 
   // region dynamic
 
+  /// Returns whether this perspective is currently available.
+  ///
+  /// Checked on every client tick.
+  default boolean isAvailable() {
+    return true;
+  }
+
   /// Returns the camera position in world coordinates when this perspective is active.
   @NonNull Vector3dc getPosition();
 
@@ -53,13 +60,6 @@ public interface Perspective {
   // endregion
 
   // region events
-
-  /// Returns whether this perspective is currently available.
-  ///
-  /// Checked on every client tick.
-  default boolean isAvailable() {
-    return true;
-  }
 
   /// Called when this perspective becomes the active perspective.
   default void onActivate() {}
