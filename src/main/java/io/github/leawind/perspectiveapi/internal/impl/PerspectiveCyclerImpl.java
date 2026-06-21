@@ -134,11 +134,9 @@ public class PerspectiveCyclerImpl implements PerspectiveCycler {
       Identifier next = current;
       do {
         next = getNext(next);
-        var perspective = registry.get(next);
-        if (perspective != null) {
-          activeId = next;
-          return;
-        }
+        if (!registry.contains(next)) continue;
+        activeId = next;
+        return;
       } while (next != current);
     }
   }
@@ -152,11 +150,9 @@ public class PerspectiveCyclerImpl implements PerspectiveCycler {
       Identifier previous = current;
       do {
         previous = getPrevious(previous);
-        var perspective = registry.get(previous);
-        if (perspective != null) {
-          activeId = previous;
-          return;
-        }
+        if (!registry.contains(previous)) continue;
+        activeId = previous;
+        return;
       } while (previous != current);
     }
   }
