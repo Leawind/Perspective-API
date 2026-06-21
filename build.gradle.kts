@@ -119,7 +119,11 @@ dependencies {
     // region test
     testCompileOnly("org.jspecify:jspecify:1.0.0")
 
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
+    if(mod.isFabric){
+        testImplementation( "net.fabricmc:fabric-loader-junit:${props["loader_version"]}")
+    }else{
+        testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
+    }
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 
