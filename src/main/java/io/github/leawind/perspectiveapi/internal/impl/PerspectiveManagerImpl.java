@@ -190,6 +190,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     long now = System.currentTimeMillis();
     boolean isInTransition = transition.isInTransition(now) && perspective.allowTransition();
 
+    // trigger perspective render tick
     {
       Entity entity = ((CameraAccessor) camera).getEntity();
       if (entity == null) {
@@ -200,6 +201,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
       perspective.renderTick(renderTickContext);
     }
 
+    // modify camera position and rotation
     if (isInTransition) {
       transition.update(now, perspective);
       PerspectiveUtils.setCameraTransform(
