@@ -1,6 +1,8 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.internal.logic.vanilla.VanillaFirstPersonPerspective;
+import io.github.leawind.perspectiveapi.internal.logic.vanilla.VanillaThirdPersonPerspective;
 import io.github.leawind.perspectiveapi.spi.PerspectiveSPI;
 
 public final class ModEntrypoint {
@@ -17,17 +19,17 @@ public final class ModEntrypoint {
 
     manager
         .registry()
-        .register(VanillaPerspective.FIRST_PERSON)
-        .register(VanillaPerspective.THIRD_PERSON_BACK)
-        .register(VanillaPerspective.THIRD_PERSON_FRONT);
+        .register(VanillaFirstPersonPerspective.INSTANCE)
+        .register(VanillaThirdPersonPerspective.BACK)
+        .register(VanillaThirdPersonPerspective.FRONT);
 
     {
       manager
           .cycler()
-          .add(VanillaPerspective.FIRST_PERSON.id(), 0)
-          .add(VanillaPerspective.THIRD_PERSON_BACK.id(), 1)
-          .add(VanillaPerspective.THIRD_PERSON_FRONT.id(), 2);
-      manager.cycler().setActive(VanillaPerspective.FIRST_PERSON.id());
+          .add(VanillaFirstPersonPerspective.INSTANCE.id(), 0)
+          .add(VanillaThirdPersonPerspective.BACK.id(), 1)
+          .add(VanillaThirdPersonPerspective.FRONT.id(), 2);
+      manager.cycler().setActive(VanillaFirstPersonPerspective.INSTANCE.id());
     }
 
     PerspectiveSPI.load().forEach(registrar -> registrar.register(manager));

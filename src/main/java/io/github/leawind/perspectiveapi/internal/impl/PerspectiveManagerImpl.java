@@ -9,7 +9,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
-import io.github.leawind.perspectiveapi.internal.logic.VanillaPerspective;
+import io.github.leawind.perspectiveapi.internal.logic.vanilla.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public class PerspectiveManagerImpl implements PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManagerImpl.class);
   public static final PerspectiveManagerImpl INSTANCE =
-      new PerspectiveManagerImpl(VanillaPerspective.FIRST_PERSON);
+      new PerspectiveManagerImpl(VanillaFirstPersonPerspective.INSTANCE);
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
