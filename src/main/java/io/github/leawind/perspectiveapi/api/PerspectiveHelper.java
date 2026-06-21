@@ -10,6 +10,13 @@ import org.joml.Vector3fc;
 
 /// Provides utilities for converting between rotation, orientation, and view vector in Minecraft's
 /// coordinate system.
+///
+/// | | | | |
+/// |-|-|-|-|
+/// | Euler Degree | `Vector2d`, `Vec2` | `eulerDeg` | (pitch, yaw) or (xRot, yRot) |
+/// | Quaternion | `Quaternionf` | `quat` | (x, y, z, w) |
+/// | View Vector | `Vector3f` | `viewVector` | (x, y, z) |
+///
 public final class PerspectiveHelper {
   private PerspectiveHelper() {}
 
@@ -39,33 +46,33 @@ public final class PerspectiveHelper {
 
   // region local vector
   /// Transforms the forward direction by the given rotation.
-  public static Vector3f getForwardVector(Quaternionfc rotation, Vector3f dest) {
-    return rotation.transform(FORWARD, dest);
+  public static Vector3f getForwardVector(Quaternionfc quat, Vector3f dest) {
+    return quat.transform(FORWARD, dest);
   }
 
   /// Transforms the backward direction by the given rotation.
-  public static Vector3f getBackwardVector(Quaternionfc rotation, Vector3f dest) {
-    return rotation.transform(BACKWARD, dest);
+  public static Vector3f getBackwardVector(Quaternionfc quat, Vector3f dest) {
+    return quat.transform(BACKWARD, dest);
   }
 
   /// Transforms the up direction by the given rotation.
-  public static Vector3f getUpVector(Quaternionfc rotation, Vector3f dest) {
-    return rotation.transform(UP, dest);
+  public static Vector3f getUpVector(Quaternionfc quat, Vector3f dest) {
+    return quat.transform(UP, dest);
   }
 
   /// Transforms the down direction by the given rotation.
-  public static Vector3f getDownVector(Quaternionfc rotation, Vector3f dest) {
-    return rotation.transform(DOWN, dest);
+  public static Vector3f getDownVector(Quaternionfc quat, Vector3f dest) {
+    return quat.transform(DOWN, dest);
   }
 
   /// Transforms the left direction by the given rotation.
-  public static Vector3f getLeftVector(Quaternionfc rotation, Vector3f dest) {
-    return rotation.transform(LEFT, dest);
+  public static Vector3f getLeftVector(Quaternionfc quat, Vector3f dest) {
+    return quat.transform(LEFT, dest);
   }
 
   /// Transforms the right direction by the given rotation.
-  public static Vector3f getRightVector(Quaternionfc rotation, Vector3f dest) {
-    return rotation.transform(RIGHT, dest);
+  public static Vector3f getRightVector(Quaternionfc quat, Vector3f dest) {
+    return quat.transform(RIGHT, dest);
   }
 
   // endregion
@@ -73,15 +80,15 @@ public final class PerspectiveHelper {
   // region view vector
 
   /// Computes the view vector from a quaternion rotation.
-  public static Vector3f getViewVector(Quaternionfc rotation, Vector3f dest) {
-    return rotation.transform(FORWARD, dest);
+  public static Vector3f getViewVector(Quaternionfc quat, Vector3f dest) {
+    return quat.transform(FORWARD, dest);
   }
 
   /// Computes the view vector from JOML orientation angles.
-  /// @param orientation The orientation as (pitch, yaw) in degrees.
-  public static Vector3f getViewVector(Vector2fc orientation, Vector3f dest) {
-    float pitchRad = orientation.x() * DEG_TO_RAD;
-    float yawRad = orientation.y() * DEG_TO_RAD;
+  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
+  public static Vector3f getViewVector(Vector2fc eulerDeg, Vector3f dest) {
+    float pitchRad = eulerDeg.x() * DEG_TO_RAD;
+    float yawRad = eulerDeg.y() * DEG_TO_RAD;
 
     float cosPitch = (float) Math.cos(pitchRad);
     float sinPitch = (float) Math.sin(pitchRad);
@@ -92,9 +99,9 @@ public final class PerspectiveHelper {
   }
 
   /// Computes the view vector from Minecraft's native orientation angles.
-  /// @param orientation The orientation as (pitch, yaw) in degrees.
-  public static Vector3f getViewVector(Vec2 orientation, Vector3f dest) {
-    return getViewVector(new Vector2f(orientation.x, orientation.y), dest);
+  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
+  public static Vector3f getViewVector(Vec2 eulerDeg, Vector3f dest) {
+    return getViewVector(new Vector2f(eulerDeg.x, eulerDeg.y), dest);
   }
 
   // endregion
@@ -102,26 +109,26 @@ public final class PerspectiveHelper {
   // region orientation
   /// Extracts orientation angles from a quaternion rotation.
   /// @return The orientation as (pitch, yaw) in degrees.
-  public static Vector2f getOrientation(Quaternionfc rotation, Vector2f dest) {
-    final Vector3f eulerAngles = new Vector3f();
-    rotation.getEulerAnglesYXZ(eulerAngles);
-    
+  public static Vector2f getEulerDeg(Quaternionfc rotation, Vector2f dest) {
+    final Vector3f eulerAng = new Vector3f();
+    rotation.getEulerAnglesYXZ(eulerAng);
+
     // >=1.21  : rotationYXZ(PI - yaw, -pitch, 0)
-    //   eulerAngles.x = -pitch, eulerAngles.y = PI - yaw
+    //   eulerAng.x = -pitch, eulerAng.y = PI - yaw
     // <=1.20.4: rotationYXZ(-yaw, pitch, 0)
-    //   eulerAngles.x = pitch, eulerAngles.y = -yaw
+    //   eulerAng.x = pitch, eulerAng.y = -yaw
     /*? if >=1.21 {*/
-    return dest.set(-eulerAngles.x * RAD_TO_DEG, (float) ((Math.PI - eulerAngles.y) * RAD_TO_DEG));
+    return dest.set(-eulerAng.x * RAD_TO_DEG, (float) ((Math.PI - eulerAng.y) * RAD_TO_DEG));
     /*? } else {*/
     /*
-    return dest.set(eulerAngles.x * RAD_TO_DEG, -eulerAngles.y * RAD_TO_DEG);
+    return dest.set(eulerAng.x * RAD_TO_DEG, -eulerAng.y * RAD_TO_DEG);
     */
     /*? }*/
   }
 
   /// Computes orientation angles from a view vector.
   /// @return The orientation as (pitch, yaw) in degrees.
-  public static Vector2f getOrientation(Vector3fc viewVector, Vector2f dest) {
+  public static Vector2f getEulerDeg(Vector3fc viewVector, Vector2f dest) {
     float x = viewVector.x();
     float y = viewVector.y();
     float z = viewVector.z();
@@ -136,27 +143,28 @@ public final class PerspectiveHelper {
 
   // region rotation
   /// Constructs a quaternion rotation from JOML orientation angles.
-  /// @param orientation The orientation as (pitch, yaw) in degrees.
-  public static Quaternionf getRotation(Vector2fc orientation, Quaternionf dest) {
+  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
+  public static Quaternionf getQuat(Vector2fc eulerDeg, Quaternionf dest) {
     /*? if >=1.21 {*/
-    float pitchRad = -orientation.x() * DEG_TO_RAD;
-    float yawRad = (float) Math.PI - orientation.y() * DEG_TO_RAD;
+    float pitchRad = -eulerDeg.x() * DEG_TO_RAD;
+    float yawRad = (float) Math.PI - eulerDeg.y() * DEG_TO_RAD;
     /*? } else {*/
     /*
-    float pitchRad = orientation.x() * DEG_TO_RAD;
-    float yawRad = -orientation.y() * DEG_TO_RAD;
-    *//*? }*/
+    float pitchRad = eulerDeg.x() * DEG_TO_RAD;
+    float yawRad = -eulerDeg.y() * DEG_TO_RAD;
+    */
+    /*? }*/
     return dest.rotationYXZ(yawRad, pitchRad, 0.0f);
   }
 
   /// Constructs a quaternion rotation from Minecraft's native orientation angles.
-  /// @param orientation The orientation as (pitch, yaw) in degrees.
-  public static Quaternionf getRotation(Vec2 orientation, Quaternionf dest) {
-    return getRotation(new Vector2f(orientation.x, orientation.y), dest);
+  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
+  public static Quaternionf getQuat(Vec2 eulerDeg, Quaternionf dest) {
+    return getQuat(new Vector2f(eulerDeg.x, eulerDeg.y), dest);
   }
 
   /// Constructs a quaternion rotation from a view vector.
-  public static Quaternionf getRotation(Vector3fc viewVector, Quaternionf dest) {
+  public static Quaternionf getQuat(Vector3fc viewVector, Quaternionf dest) {
     float x = viewVector.x();
     float y = viewVector.y();
     float z = viewVector.z();
@@ -170,7 +178,8 @@ public final class PerspectiveHelper {
     /*? } else {*/
     /*
     return dest.rotationYXZ(-yawRad, pitchRad, 0.0f);
-    *//*? }*/
+    */
+    /*? }*/
   }
   // endregion
 }

@@ -30,7 +30,7 @@ class PerspectiveHelperTest {
           Quaternionf expected = cameraAccessor.getRotation();
 
           Quaternionf actual =
-              PerspectiveHelper.getRotation(new Vector2f(xRot, yRot), new Quaternionf());
+              PerspectiveHelper.getQuat(new Vector2f(xRot, yRot), new Quaternionf());
 
           TestUtils.assertQuatEquals(expected, actual);
         }
@@ -94,10 +94,10 @@ class PerspectiveHelperTest {
                     (float) Math.toRadians(yawDeg), (float) Math.toRadians(pitchDeg), 0.0f);
 
         Vector2f orientation = new Vector2f();
-        PerspectiveHelper.getOrientation(original, orientation);
+        PerspectiveHelper.getEulerDeg(original, orientation);
 
         Quaternionf reconstructed = new Quaternionf();
-        PerspectiveHelper.getRotation(orientation, reconstructed);
+        PerspectiveHelper.getQuat(orientation, reconstructed);
 
         assertTrue(
             original.equals(reconstructed, DELTA),
@@ -116,12 +116,12 @@ class PerspectiveHelperTest {
             .rotationYXZ((float) Math.toRadians(yawDeg), (float) Math.toRadians(pitchDeg), 0.0f);
 
     Vector2f tempVector = new Vector2f();
-    PerspectiveHelper.getOrientation(original, tempVector);
+    PerspectiveHelper.getEulerDeg(original, tempVector);
 
     Vec2 mcVec2 = new Vec2(tempVector.x, tempVector.y);
 
     Quaternionf reconstructed = new Quaternionf();
-    PerspectiveHelper.getRotation(mcVec2, reconstructed);
+    PerspectiveHelper.getQuat(mcVec2, reconstructed);
 
     assertTrue(original.equals(reconstructed, DELTA), "Round trip with Minecraft Vec2 failed");
   }
@@ -170,7 +170,7 @@ class PerspectiveHelperTest {
         PerspectiveHelper.getViewVector(originalOrientation, viewVector);
 
         Vector2f reconstructedOrientation = new Vector2f();
-        PerspectiveHelper.getOrientation(viewVector, reconstructedOrientation);
+        PerspectiveHelper.getEulerDeg(viewVector, reconstructedOrientation);
 
         assertEquals(
             originalOrientation.x,
@@ -199,7 +199,7 @@ class PerspectiveHelperTest {
     // Using JOML's rotationYXZ directly would lose the 180° Y-axis rotation offset
     // in the MC coordinate system where Yaw=0 corresponds to JOML's Y-axis rotation of 180°.
     Quaternionf rotation = new Quaternionf();
-    PerspectiveHelper.getRotation(orientation, rotation);
+    PerspectiveHelper.getQuat(orientation, rotation);
 
     Vector3f vecFromQuat = new Vector3f();
     Vector3f vecFromOri = new Vector3f();

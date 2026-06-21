@@ -18,7 +18,7 @@ public final class PerspectiveUtils {
   private PerspectiveUtils() {}
 
   public static void getEntityRotation(Entity entity, float partialTicks, Quaternionf rotation) {
-    PerspectiveHelper.getRotation(
+    PerspectiveHelper.getQuat(
         new Vec2(entity.getViewXRot(partialTicks), entity.getViewYRot(partialTicks)), rotation);
   }
 
@@ -34,7 +34,7 @@ public final class PerspectiveUtils {
     // refer to net.minecraft.client.Camera#setRotation
     // Refer to Camera#setRotation
     {
-      Vector2f orientation = PerspectiveHelper.getOrientation(rotation, new Vector2f());
+      Vector2f orientation = PerspectiveHelper.getEulerDeg(rotation, new Vector2f());
 
       // #xRot, #yRot: float
       cameraAccessor.setXRot(orientation.x());
