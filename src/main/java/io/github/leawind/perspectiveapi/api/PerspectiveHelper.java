@@ -15,20 +15,20 @@ public final class PerspectiveHelper {
 
   // region const fields
   // UP and DOWN are consistent across versions
-  private static final Vector3fc UP = new Vector3f(0.0F, 1.0F, 0.0F);
-  private static final Vector3fc DOWN = new Vector3f(0.0F, -1.0F, 0.0F);
+  public static final Vector3fc UP = new Vector3f(0.0F, 1.0F, 0.0F);
+  public static final Vector3fc DOWN = new Vector3f(0.0F, -1.0F, 0.0F);
 
   /*? if >=1.21 {*/
-  private static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, -1.0F);
-  private static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, 1.0F);
-  private static final Vector3fc LEFT = new Vector3f(-1.0F, 0.0F, 0.0F);
-  private static final Vector3fc RIGHT = new Vector3f(1.0F, 0.0F, 0.0F);
+  public static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, -1.0F);
+  public static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, 1.0F);
+  public static final Vector3fc LEFT = new Vector3f(-1.0F, 0.0F, 0.0F);
+  public static final Vector3fc RIGHT = new Vector3f(1.0F, 0.0F, 0.0F);
   /*? } else {*/
   /*
-  private static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, 1.0F);
-  private static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, -1.0F);
-  private static final Vector3fc LEFT = new Vector3f(1.0F, 0.0F, 0.0F);
-  private static final Vector3fc RIGHT = new Vector3f(-1.0F, 0.0F, 0.0F);
+  public static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, 1.0F);
+  public static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, -1.0F);
+  public static final Vector3fc LEFT = new Vector3f(1.0F, 0.0F, 0.0F);
+  public static final Vector3fc RIGHT = new Vector3f(-1.0F, 0.0F, 0.0F);
   */
   /*? }*/
 
