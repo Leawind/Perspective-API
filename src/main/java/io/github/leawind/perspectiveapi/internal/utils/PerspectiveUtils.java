@@ -32,19 +32,25 @@ public final class PerspectiveUtils {
 
     // Apply the custom rotation to the camera.
     // refer to net.minecraft.client.Camera#setRotation
+    // Refer to Camera#setRotation
     {
-      // update field rotation: Quaternionf
-      cameraAccessor.getRotation().set(rotation);
-
-      // update field xRot, yRot
       Vector2f orientation = PerspectiveHelper.getOrientation(rotation, new Vector2f());
+
+      // #xRot, #yRot: float
       cameraAccessor.setXRot(orientation.x());
       cameraAccessor.setYRot(orientation.y());
 
-      // update field forwards, up, left
+      // #rotation: Quaternionf
+      cameraAccessor.getRotation().set(rotation);
+
+      // #forwards, #up, #left: Vector3f
       PerspectiveHelper.getForwardVector(rotation, cameraAccessor.getForwards());
       PerspectiveHelper.getUpVector(rotation, cameraAccessor.getUp());
       PerspectiveHelper.getLeftVector(rotation, cameraAccessor.getLeft());
+
+      /*? if >=26.1 {*/
+      cameraAccessor.setMatrixPropertiesDirty(cameraAccessor.getMatrixPropertiesDirty() | 3);
+      /*? }*/
     }
   }
 

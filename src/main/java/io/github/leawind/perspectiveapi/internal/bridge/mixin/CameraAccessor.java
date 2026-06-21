@@ -37,4 +37,12 @@ public interface CameraAccessor {
 
   @Accessor("entity")
   Entity getEntity();
+
+  /*? if >=26.1 {*/
+  @Accessor("matrixPropertiesDirty")
+  int getMatrixPropertiesDirty();
+
+  @Accessor("matrixPropertiesDirty")
+  void setMatrixPropertiesDirty(int dirty);
+  /*? }*/
 }
