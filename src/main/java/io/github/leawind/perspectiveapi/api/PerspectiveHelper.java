@@ -125,10 +125,10 @@ public final class PerspectiveHelper {
   /// Constructs a quaternion rotation from JOML orientation angles.
   /// @param orientation The orientation as (pitch, yaw) in degrees.
   public static Quaternionf getRotation(Vector2fc orientation, Quaternionf dest) {
-    float pitchRad = orientation.x() * DEG_TO_RAD;
-    float yawRad = orientation.y() * DEG_TO_RAD;
+    float pitchRad = -orientation.x() * DEG_TO_RAD;
+    float yawRad = (float) Math.PI - orientation.y() * DEG_TO_RAD;
 
-    return dest.rotationYXZ((float) Math.PI - yawRad, -pitchRad, 0.0f);
+    return dest.rotationYXZ(yawRad, pitchRad, 0.0f);
   }
 
   /// Constructs a quaternion rotation from Minecraft's native orientation angles.
