@@ -164,6 +164,8 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     try (var ignored = LockUtils.writeLock(lock)) {
       if (perspective == currentPerspective) return;
 
+      LOGGER.debug("Switching perspective to {}", perspective.id());
+
       transition.start(System.currentTimeMillis());
       currentPerspective.onDeactivate();
       perspective.onActivate();
