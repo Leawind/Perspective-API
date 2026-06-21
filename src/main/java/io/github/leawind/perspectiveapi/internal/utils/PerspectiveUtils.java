@@ -5,6 +5,8 @@ import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
@@ -14,6 +16,11 @@ import org.joml.Vector3dc;
 
 public final class PerspectiveUtils {
   private PerspectiveUtils() {}
+
+  public static void getEntityRotation(Entity entity, float partialTicks, Quaternionf rotation) {
+    PerspectiveHelper.getRotation(
+        new Vec2(entity.getViewXRot(partialTicks), entity.getViewYRot(partialTicks)), rotation);
+  }
 
   public static void setCameraTransform(Camera camera, Vector3dc position, Quaternionfc rotation) {
     CameraAccessor cameraAccessor = (CameraAccessor) camera;

@@ -1,6 +1,9 @@
 package io.github.leawind.perspectiveapi.internal.logic.vanilla;
 
+import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
+import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import net.minecraft.client.CameraType;
+import org.jspecify.annotations.NonNull;
 
 public final class VanillaFirstPersonPerspective extends VanillaPerspective {
   public static final VanillaFirstPersonPerspective INSTANCE = new VanillaFirstPersonPerspective();
@@ -11,6 +14,19 @@ public final class VanillaFirstPersonPerspective extends VanillaPerspective {
 
   @Override
   public boolean shouldOverrideVanillaCamera() {
-    return false;
+    return true;
+  }
+
+  @Override
+  public void renderTick(@NonNull PerspectiveRenderTickContext context) {
+    var entity = context.entity();
+    if (entity == null) {
+      return;
+    }
+
+    var pos = entity.getEyePosition(context.partialTicks());
+    position.set(pos.x, pos.y, pos.z);
+
+    PerspectiveUtils.getEntityRotation(entity, context.partialTicks(), rotation);
   }
 }
