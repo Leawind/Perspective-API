@@ -37,7 +37,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   /// Currently used perspective
   private volatile @NonNull Perspective currentPerspective;
 
-  public final SimpleEventEmitter.Owned<@Nullable Perspective> onActivePerspectiveChanged =
+  public final SimpleEventEmitter.Owned<Perspective> onCurrentPerspectiveChanged =
       SimpleEventEmitter.create();
 
   private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
@@ -164,14 +164,12 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     try (var ignored = LockUtils.writeLock(lock)) {
       if (perspective == currentPerspective) return;
 
-      LOGGER.debug("Switching perspective to {}", perspective.id());
-
       transition.start(System.currentTimeMillis());
       currentPerspective.onDeactivate();
       perspective.onActivate();
 
       currentPerspective = perspective;
-      onActivePerspectiveChanged.emit(perspective);
+      onCurrentPerspectiveChanged.emit(perspective);
     }
   }
 

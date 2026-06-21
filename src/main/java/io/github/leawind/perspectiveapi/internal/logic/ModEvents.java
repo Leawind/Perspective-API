@@ -4,9 +4,12 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
-import net.minecraft.client.CameraType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class ModEvents {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ModEvents.class);
+
   public static void register() {
     PerspectiveManagerImpl manager = PerspectiveManagerImpl.INSTANCE;
 
@@ -46,10 +49,11 @@ public final class ModEvents {
 
     // region internal events
 
-    PerspectiveManagerImpl.INSTANCE.onActivePerspectiveChanged.on(
-        perspective ->
-            PerspectiveUtils.updateCameraType(
-                perspective == null ? CameraType.FIRST_PERSON : perspective.cameraType()));
+    PerspectiveManagerImpl.INSTANCE.onCurrentPerspectiveChanged.on(
+        perspective -> {
+          LOGGER.debug("Switching current perspective to {}", perspective.id());
+          PerspectiveUtils.updateCameraType(perspective.cameraType());
+        });
 
     // endregion
   }
