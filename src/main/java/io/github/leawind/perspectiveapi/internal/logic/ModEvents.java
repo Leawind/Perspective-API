@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
@@ -15,11 +14,8 @@ public final class ModEvents {
           if (minecraft.level == null || minecraft.player == null) return;
 
           manager.resolveAndUpdatePerspective();
-
           var current = manager.getCurrentPerspective();
-
           current.clientTick(minecraft);
-
           if (!current.isAvailable()) {
             manager.cycler().switchToPreviousAvailable(manager.registry());
           }
@@ -27,29 +23,19 @@ public final class ModEvents {
 
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         (minecraft) -> {
-          var options = minecraft.options;
-
-          while (options.keyTogglePerspective.consumeClick()) {
+          while (minecraft.options.keyTogglePerspective.consumeClick()) {
             manager.cycler().switchToNextAvailable(manager.registry());
           }
         });
 
-    GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(level -> manager.clearOverridesExceptCycler());
+    GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(ignored -> manager.clearOverridesExceptCycler());
 
     // region camera
 
-    GameClientEvents.SETUP_CAMERA.on(
-        (ctx) -> {
-          if (manager.updateCamera(ctx.partialTicks, ctx.camera)) {
-            ctx.cancelDefault();
-          }
-        });
+    GameClientEvents.SETUP_CAMERA.on((ctx) -> manager.updateCamera(ctx.partialTicks, ctx.camera));
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
-        (ctx) -> {
-          Perspective perspective = manager.getCurrentPerspective();
-          ctx.fieldOfView = perspective.getFieldOfView(ctx.fieldOfView);
-        });
+        (ctx) -> ctx.fieldOfView = manager.getCurrentPerspective().getFieldOfView(ctx.fieldOfView));
 
     // endregion
 

@@ -17,20 +17,13 @@ public abstract class CameraMixin {
   @Unique private final CameraSetupContext cameraSetupContext = new CameraSetupContext();
 
   /*? if >=26.1 {*/
-  @Inject(method = "alignWithEntity", at = @At("RETURN"), cancellable = true)
+  @Inject(method = "alignWithEntity", at = @At("RETURN"))
   private void beforeCameraUpdate(float partialTicks, CallbackInfo ci) {
     Camera camera = (Camera) (Object) this;
-
-    if (!camera.isInitialized()) {
-      return;
-    }
+    if (!camera.isInitialized()) return;
 
     cameraSetupContext.setup(camera, partialTicks);
     GameClientEvents.SETUP_CAMERA.emit(cameraSetupContext);
-
-    if (cameraSetupContext.cancelDefault) {
-      ci.cancel();
-    }
   }
 
   /*? } else {*/
@@ -75,9 +68,6 @@ public abstract class CameraMixin {
     CallbackInfo ci) {
     cameraSetupContext.setup((Camera) (Object) this, partialTicks);
     GameClientEvents.SETUP_CAMERA.emit(cameraSetupContext);
-    if (cameraSetupContext.cancelDefault) {
-      ci.cancel();
-    }
   }
   */
   /*? } */
