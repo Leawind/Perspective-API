@@ -34,11 +34,7 @@ public final class ModEvents {
           }
         });
 
-    GameClientEvents.PLAYER_JOIN_LEVEL.on(
-        minecraft -> manager.clearOverridesExceptCycler());
-
-    GameClientEvents.PLAYER_EXIT_LEVEL.on(
-        minecraft -> manager.clearOverridesExceptCycler());
+    GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(level -> manager.clearOverridesExceptCycler());
 
     // region camera
 

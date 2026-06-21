@@ -4,14 +4,15 @@ import io.github.leawind.inventory.event.SingleEventEmitter;
 import io.github.leawind.perspectiveapi.internal.bridge.events.context.CameraSetupContext;
 import io.github.leawind.perspectiveapi.internal.bridge.events.context.ModifyFieldOfViewContext;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 
 public final class GameClientEvents {
   private GameClientEvents() {}
 
   public static final SingleEventEmitter<Minecraft> CLIENT_TICK_START = new SingleEventEmitter<>();
 
-  public static final SingleEventEmitter<Minecraft> PLAYER_JOIN_LEVEL = new SingleEventEmitter<>();
-  public static final SingleEventEmitter<Minecraft> PLAYER_EXIT_LEVEL = new SingleEventEmitter<>();
+  public static final SingleEventEmitter<ClientLevel> AFTER_CLIENT_LEVEL_CHANGE =
+      new SingleEventEmitter<>();
 
   public static final SingleEventEmitter<Minecraft> HANDLE_KEYBINDS_START =
       new SingleEventEmitter<>();
