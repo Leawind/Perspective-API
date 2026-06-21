@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
@@ -35,7 +36,11 @@ public final class ModEvents {
     GameClientEvents.SETUP_CAMERA.on((ctx) -> manager.updateCamera(ctx.partialTicks, ctx.camera));
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
-        (ctx) -> ctx.fieldOfView = manager.getCurrentPerspective().getFieldOfView(ctx.fieldOfView));
+        (ctx) -> {
+          Perspective perspective = manager.getCurrentPerspective();
+          if (!perspective.shouldOverrideVanillaCamera()) return;
+          ctx.fieldOfView = perspective.getFieldOfView(ctx.fieldOfView);
+        });
 
     // endregion
 
