@@ -14,13 +14,23 @@ public final class PerspectiveHelper {
   private PerspectiveHelper() {}
 
   // region const fields
-
-  private static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, -1.0F);
-  private static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, 1.0F);
+  // UP and DOWN are consistent across versions
   private static final Vector3fc UP = new Vector3f(0.0F, 1.0F, 0.0F);
   private static final Vector3fc DOWN = new Vector3f(0.0F, -1.0F, 0.0F);
+
+  /*? if >=1.21 {*/
+  private static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, -1.0F);
+  private static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, 1.0F);
   private static final Vector3fc LEFT = new Vector3f(-1.0F, 0.0F, 0.0F);
   private static final Vector3fc RIGHT = new Vector3f(1.0F, 0.0F, 0.0F);
+  /*? } else {*/
+  /*
+  private static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, 1.0F);
+  private static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, -1.0F);
+  private static final Vector3fc LEFT = new Vector3f(1.0F, 0.0F, 0.0F);
+  private static final Vector3fc RIGHT = new Vector3f(-1.0F, 0.0F, 0.0F);
+  */
+  /*? }*/
 
   private static final float DEG_TO_RAD = (float) Math.PI / 180.0F;
   private static final float RAD_TO_DEG = 180.0F / (float) Math.PI;
@@ -28,7 +38,6 @@ public final class PerspectiveHelper {
   // endregion
 
   // region local vector
-
   /// Transforms the forward direction by the given rotation.
   public static Vector3f getForwardVector(Quaternionfc rotation, Vector3f dest) {
     return rotation.transform(FORWARD, dest);
@@ -78,8 +87,7 @@ public final class PerspectiveHelper {
     float sinPitch = (float) Math.sin(pitchRad);
     float cosYaw = (float) Math.cos(yawRad);
     float sinYaw = (float) Math.sin(yawRad);
-
-    // Corresponds to Minecraft's native calculateViewVector logic
+    // Corresponds to Minecraft's native calculateViewVector logic (World Space)
     return dest.set(-sinYaw * cosPitch, -sinPitch, cosYaw * cosPitch);
   }
 
@@ -92,15 +100,23 @@ public final class PerspectiveHelper {
   // endregion
 
   // region orientation
-
   /// Extracts orientation angles from a quaternion rotation.
   /// @return The orientation as (pitch, yaw) in degrees.
   public static Vector2f getOrientation(Quaternionfc rotation, Vector2f dest) {
     final Vector3f eulerAngles = new Vector3f();
     rotation.getEulerAnglesYXZ(eulerAngles);
-
-    // eulerAngles.x is Pitch, eulerAngles.y is Yaw (in radians)
+    
+    // >=1.21  : rotationYXZ(PI - yaw, -pitch, 0)
+    //   eulerAngles.x = -pitch, eulerAngles.y = PI - yaw
+    // <=1.20.4: rotationYXZ(-yaw, pitch, 0)
+    //   eulerAngles.x = pitch, eulerAngles.y = -yaw
+    /*? if >=1.21 {*/
     return dest.set(-eulerAngles.x * RAD_TO_DEG, (float) ((Math.PI - eulerAngles.y) * RAD_TO_DEG));
+    /*? } else {*/
+    /*
+    return dest.set(eulerAngles.x * RAD_TO_DEG, -eulerAngles.y * RAD_TO_DEG);
+    */
+    /*? }*/
   }
 
   /// Computes orientation angles from a view vector.
@@ -110,24 +126,26 @@ public final class PerspectiveHelper {
     float y = viewVector.y();
     float z = viewVector.z();
     float horizontalLength = (float) Math.sqrt(x * x + z * z);
-
     // Use atan2 for numerical stability, avoiding asin overflow
     float pitch = (float) (Math.atan2(-y, horizontalLength) * RAD_TO_DEG);
     float yaw = (float) (-Math.atan2(x, z) * RAD_TO_DEG);
-
     return dest.set(pitch, yaw);
   }
 
   // endregion
 
   // region rotation
-
   /// Constructs a quaternion rotation from JOML orientation angles.
   /// @param orientation The orientation as (pitch, yaw) in degrees.
   public static Quaternionf getRotation(Vector2fc orientation, Quaternionf dest) {
+    /*? if >=1.21 {*/
     float pitchRad = -orientation.x() * DEG_TO_RAD;
     float yawRad = (float) Math.PI - orientation.y() * DEG_TO_RAD;
-
+    /*? } else {*/
+    /*
+    float pitchRad = orientation.x() * DEG_TO_RAD;
+    float yawRad = -orientation.y() * DEG_TO_RAD;
+    *//*? }*/
     return dest.rotationYXZ(yawRad, pitchRad, 0.0f);
   }
 
@@ -144,13 +162,15 @@ public final class PerspectiveHelper {
     float z = viewVector.z();
     float horizontalLength = (float) Math.sqrt(x * x + z * z);
 
-    // Directly compute radian Euler angles and construct quaternion to avoid precision loss and
-    // temporary object allocation
     float pitchRad = (float) Math.atan2(-y, horizontalLength);
     float yawRad = (float) -Math.atan2(x, z);
 
+    /*? if >=1.21 {*/
     return dest.rotationYXZ((float) Math.PI - yawRad, -pitchRad, 0.0f);
+    /*? } else {*/
+    /*
+    return dest.rotationYXZ(-yawRad, pitchRad, 0.0f);
+    *//*? }*/
   }
-
   // endregion
 }

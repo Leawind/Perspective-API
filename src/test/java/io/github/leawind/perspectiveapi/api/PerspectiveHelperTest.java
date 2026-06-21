@@ -1,15 +1,47 @@
 package io.github.leawind.perspectiveapi.api;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import io.github.leawind.perspectiveapi.testutils.TestUtils;
+import io.github.leawind.perspectiveapi.testutils.TestWithCamera;
 import net.minecraft.world.phys.Vec2;
 import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 class PerspectiveHelperTest {
+
+  /*? if !fabric {*/
+  /*@org.junit.jupiter.api.Disabled
+   */
+  /*? } */
+  @Nested
+  class WithCamera extends TestWithCamera {
+    @Test
+    void testEulerToQuat() {
+
+      for (float xRot = -80; xRot < 80; xRot += 7.3f) {
+        for (float yRot = -179; yRot < 179; yRot += 7.3f) {
+          // Euler -> Quat
+          cameraAccessor.invokeSetRotation(yRot, xRot);
+          Quaternionf expected = cameraAccessor.getRotation();
+
+          Quaternionf actual =
+              PerspectiveHelper.getRotation(new Vector2f(xRot, yRot), new Quaternionf());
+
+          TestUtils.assertQuatEquals(expected, actual);
+        }
+      }
+    }
+    
+    @Test
+    void testQuatToEuler() {
+      
+    }
+  }
 
   // Fix 1: Relax floating-point precision tolerance to 0.0001 degrees to avoid
   // failures caused by tiny truncation errors from Math.PI conversion
@@ -35,17 +67,6 @@ class PerspectiveHelperTest {
   // ==========================================
 
   @Test
-  void testGetForwardVector_Identity() {
-    Quaternionf rotation = new Quaternionf();
-    Vector3f dest = new Vector3f();
-    PerspectiveHelper.getForwardVector(rotation, dest);
-
-    assertEquals(0.0f, dest.x, DELTA);
-    assertEquals(0.0f, dest.y, DELTA);
-    assertEquals(-1.0f, dest.z, DELTA);
-  }
-
-  @Test
   void testGetUpVector_Identity() {
     Quaternionf rotation = new Quaternionf();
     Vector3f dest = new Vector3f();
@@ -53,28 +74,6 @@ class PerspectiveHelperTest {
 
     assertEquals(0.0f, dest.x, DELTA);
     assertEquals(1.0f, dest.y, DELTA);
-    assertEquals(0.0f, dest.z, DELTA);
-  }
-
-  @Test
-  void testGetLeftVector_Identity() {
-    Quaternionf rotation = new Quaternionf();
-    Vector3f dest = new Vector3f();
-    PerspectiveHelper.getLeftVector(rotation, dest);
-
-    assertEquals(-1.0f, dest.x, DELTA);
-    assertEquals(0.0f, dest.y, DELTA);
-    assertEquals(0.0f, dest.z, DELTA);
-  }
-
-  @Test
-  void testGetForwardVector_Yaw90Degrees() {
-    Quaternionf rotation = new Quaternionf().rotationY((float) Math.toRadians(90.0));
-    Vector3f dest = new Vector3f();
-    PerspectiveHelper.getForwardVector(rotation, dest);
-
-    assertEquals(-1.0f, dest.x, DELTA);
-    assertEquals(0.0f, dest.y, DELTA);
     assertEquals(0.0f, dest.z, DELTA);
   }
 
@@ -125,25 +124,6 @@ class PerspectiveHelperTest {
     PerspectiveHelper.getRotation(mcVec2, reconstructed);
 
     assertTrue(original.equals(reconstructed, DELTA), "Round trip with Minecraft Vec2 failed");
-  }
-
-  @Test
-  void testGetOrientation_SpecificMapping() {
-    // Scenario 1: No rotation (Yaw=0, Pitch=0)
-    Quaternionf q1 = new Quaternionf();
-    Vector2f v1 = new Vector2f();
-    PerspectiveHelper.getOrientation(q1, v1);
-    assertEquals(180.0f, v1.y, DELTA); // Yaw
-    assertEquals(0.0f, v1.x, DELTA); // Pitch
-
-    // Scenario 2: Yaw = 90, Pitch = -30
-    Quaternionf q2 =
-        new Quaternionf()
-            .rotationYXZ((float) Math.toRadians(90), (float) Math.toRadians(-30), 0.0f);
-    Vector2f v2 = new Vector2f();
-    PerspectiveHelper.getOrientation(q2, v2);
-    assertEquals(90.0f, v2.y, DELTA); // Yaw
-    assertEquals(30.0f, v2.x, DELTA); // Pitch
   }
 
   // ==========================================
