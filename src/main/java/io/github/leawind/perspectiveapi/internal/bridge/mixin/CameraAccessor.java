@@ -14,6 +14,9 @@ public interface CameraAccessor {
   @Invoker("setPosition")
   void invokeSetPosition(double x, double y, double z);
 
+  @Invoker("setRotation")
+  void invokeSetRotation(float yRot, float xRot);
+
   @Accessor("rotation")
   Quaternionf getRotation();
 
