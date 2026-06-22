@@ -13,11 +13,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Camera.class)
 public abstract class CameraMixin {
+  /*? if >=26.1 {*/
+  @Unique private static final String SETUP_CAMERA_METHOD = "alignWithEntity";
+  /*? } else {*/
+  /*@Unique private static final String SETUP_CAMERA_METHOD = "setup";
+   *//*? } */
+  
   // region setup camera
   @Unique private final CameraSetupContext cameraSetupContext = new CameraSetupContext();
 
   /*? if >=26.1 {*/
-  @Inject(method = "alignWithEntity", at = @At("RETURN"))
+  @Inject(method = SETUP_CAMERA_METHOD, at = @At("RETURN"))
   private void beforeCameraUpdate(float partialTicks, CallbackInfo ci) {
     Camera camera = (Camera) (Object) this;
     if (!camera.isInitialized()) return;
@@ -27,34 +33,7 @@ public abstract class CameraMixin {
   }
 
   /*? } else {*/
-  /*@Inject(
-      method = "setup",
-      at = {
-        /^? if >= 1.21 {^/
-        @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/Camera;move(FFF)V",
-            ordinal = 0,
-            shift = At.Shift.BEFORE),
-        @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/Camera;move(FFF)V",
-            ordinal = 1,
-            shift = At.Shift.BEFORE)
-        /^? } else {^/
-        /^@At(
-          value = "INVOKE",
-          target = "Lnet/minecraft/client/Camera;move(DDD)V",
-          ordinal = 0,
-          shift = At.Shift.BEFORE),
-        @At(
-          value = "INVOKE",
-          target = "Lnet/minecraft/client/Camera;move(DDD)V",
-          ordinal = 1,
-          shift = At.Shift.BEFORE)
-        ^//^? }^/
-      },
-      cancellable = true)
+  /*@Inject(method = SETUP_CAMERA_METHOD, at = @At("RETURN"), cancellable = true)
   private void beforeMoveCamera(
     /^? if >= 1.21.11 {^/
     net.minecraft.world.level.Level blockGetter,
