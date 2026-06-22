@@ -25,7 +25,7 @@ public interface PlatformHelper {
 
   /// Creates an {@link Identifier} with the given namespace and path.
   default Identifier createIdentifier(String namespace, String path) {
-    /*? if >1.20.4 {*/
+    /*? if >=1.21 {*/
     return Identifier.fromNamespaceAndPath(namespace, path);
     /*? } else {*/
     /*return new Identifier(namespace, path);
