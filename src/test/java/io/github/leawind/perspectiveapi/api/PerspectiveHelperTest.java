@@ -72,9 +72,9 @@ class PerspectiveHelperTest {
     Vector3f dest = new Vector3f();
     PerspectiveHelper.getUpVector(rotation, dest);
 
-    assertEquals(0.0f, dest.x, DELTA);
-    assertEquals(1.0f, dest.y, DELTA);
-    assertEquals(0.0f, dest.z, DELTA);
+    assertEquals(0.0f, dest.x(), DELTA);
+    assertEquals(1.0f, dest.y(), DELTA);
+    assertEquals(0.0f, dest.z(), DELTA);
   }
 
   // ==========================================

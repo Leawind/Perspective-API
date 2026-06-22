@@ -110,18 +110,18 @@ public final class PerspectiveHelper {
   /// Extracts orientation angles from a quaternion rotation.
   /// @return The orientation as (pitch, yaw) in degrees.
   public static Vector2f getEulerDeg(Quaternionfc rotation, Vector2f dest) {
-    final Vector3f eulerAng = new Vector3f();
-    rotation.getEulerAnglesYXZ(eulerAng);
-
     // >=1.21  : rotationYXZ(PI - yaw, -pitch, 0)
     //   eulerAng.x = -pitch, eulerAng.y = PI - yaw
     // <=1.20.4: rotationYXZ(-yaw, pitch, 0)
     //   eulerAng.x = pitch, eulerAng.y = -yaw
+
+    final Vector3f eulerAng = new Vector3f();
+    rotation.getEulerAnglesYXZ(eulerAng);
     /*? if >=1.21 {*/
-    return dest.set(-eulerAng.x * RAD_TO_DEG, (float) ((Math.PI - eulerAng.y) * RAD_TO_DEG));
+    return dest.set(-eulerAng.x() * RAD_TO_DEG, (float) ((Math.PI - eulerAng.y()) * RAD_TO_DEG));
     /*? } else {*/
     /*
-    return dest.set(eulerAng.x * RAD_TO_DEG, -eulerAng.y * RAD_TO_DEG);
+    return dest.set(eulerAng.x() * RAD_TO_DEG, -eulerAng.y() * RAD_TO_DEG);
     */
     /*? }*/
   }
