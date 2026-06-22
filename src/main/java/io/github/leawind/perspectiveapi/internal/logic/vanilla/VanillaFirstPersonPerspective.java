@@ -14,7 +14,7 @@ public final class VanillaFirstPersonPerspective extends VanillaPerspective {
 
   @Override
   public boolean shouldOverrideVanillaCamera() {
-    return true;
+    return false;
   }
 
   @Override
