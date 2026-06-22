@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
+import io.github.leawind.perspectiveapi.internal.bridge.CameraAdapter;
 import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -11,55 +12,73 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector2f;
+import org.joml.Vector2fc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
 public final class PerspectiveUtils {
   private PerspectiveUtils() {}
 
-  public static void getEntityRotation(Entity entity, float partialTicks, Quaternionf rotation) {
+  public static void getEntityRotation(Entity entity, float partialTicks, Quaternionf quat) {
     PerspectiveHelper.getQuat(
-        new Vec2(entity.getViewXRot(partialTicks), entity.getViewYRot(partialTicks)), rotation);
+        new Vec2(entity.getViewXRot(partialTicks), entity.getViewYRot(partialTicks)), quat);
   }
 
-  public static void setCameraTransform(Camera camera, Vector3dc position, Quaternionfc rotation) {
-    CameraAccessor cameraAccessor = (CameraAccessor) camera;
-
+  public static void setCameraPosition(Camera camera, Vector3dc position) {
     // Apply the custom spatial position to the camera.
-    {
-      cameraAccessor.invokeSetPosition(position.x(), position.y(), position.z());
-    }
+    ((CameraAccessor) camera).invokeSetPosition(position.x(), position.y(), position.z());
+  }
 
+  public static void setCameraRotation(Camera camera, Quaternionfc rotation) {
     // Apply the custom rotation to the camera.
     // refer to net.minecraft.client.Camera#setRotation
-    // Refer to Camera#setRotation
-    {
-      Vector2f orientation = PerspectiveHelper.getEulerDeg(rotation, new Vector2f());
+    var cameraAccessor = (CameraAccessor) camera;
+    var cameraAdapter = CameraAdapter.of(camera);
 
-      // #xRot, #yRot: float
-      cameraAccessor.setXRot(orientation.x());
-      cameraAccessor.setYRot(orientation.y());
+    Vector2f orientation = PerspectiveHelper.getEulerDeg(rotation, new Vector2f());
 
-      // #rotation: Quaternionf
-      cameraAccessor.getRotation().set(rotation);
+    // #xRot, #yRot: float
+    cameraAccessor.setXRot(orientation.x());
+    cameraAccessor.setYRot(orientation.y());
 
-      // #forwards, #up, #left: Vector3f
-      PerspectiveHelper.getForwardVector(rotation, cameraAccessor.getForwards());
-      PerspectiveHelper.getUpVector(rotation, cameraAccessor.getUp());
-      PerspectiveHelper.getLeftVector(rotation, cameraAccessor.getLeft());
+    // #rotation: Quaternionf
+    cameraAccessor.getRotation().set(rotation);
 
-      /*? if >=26.1 {*/
-      cameraAccessor.setMatrixPropertiesDirty(cameraAccessor.getMatrixPropertiesDirty() | 3);
-      /*? }*/
-    }
+    // #forwards, #up, #left: Vector3f
+    PerspectiveHelper.getForwardVector(rotation, cameraAdapter.perspective_api$accessForwards());
+    PerspectiveHelper.getUpVector(rotation, cameraAdapter.perspective_api$accessUp());
+    PerspectiveHelper.getLeftVector(rotation, cameraAdapter.perspective_api$accessLeft());
+
+    /*? if >=26.1 {*/
+    cameraAccessor.setMatrixPropertiesDirty(cameraAccessor.getMatrixPropertiesDirty() | 3);
+    /*? }*/
+
+    //    CameraAccessor cameraAccessor = (CameraAccessor) camera;
+    //    var eulerDeg = PerspectiveHelper.getEulerDeg(quat, new Vector2f());
+    //
+    //    cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
   }
 
-  public static void extractCameraTransform(
-      Camera camera, Vector3d position, Quaternionf rotation) {
-    Vec3 pos = ((CameraAccessor) camera).getPosition();
-    position.set(pos.x, pos.y, pos.z);
+  public static void setCameraRotation(Camera camera, float xRot, float yRot) {
+    ((CameraAccessor) camera).invokeSetRotation(yRot, xRot);
+  }
 
-    rotation.set(camera.rotation());
+  public static void setCameraRotation(Camera camera, Vector2fc eulerDeg) {
+    setCameraRotation(camera, eulerDeg.x(), eulerDeg.y());
+  }
+
+  public static void setCameraRotation(Camera camera, Vec2 eulerDeg) {
+    setCameraRotation(camera, eulerDeg.x, eulerDeg.y);
+  }
+
+  public static Vector3d getCameraPosition(Camera camera, Vector3d dest) {
+    Vec3 pos = ((CameraAccessor) camera).getPosition();
+    dest.set(pos.x(), pos.y(), pos.z());
+    return dest;
+  }
+
+  public static Quaternionf getCameraRotation(Camera camera, Quaternionf dest) {
+    return dest.set(camera.rotation());
   }
 
   @SuppressWarnings("ConstantConditions")

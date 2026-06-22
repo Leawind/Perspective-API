@@ -20,6 +20,8 @@ import java.util.function.Supplier;
 import net.minecraft.client.Camera;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import org.joml.Quaternionfc;
+import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -200,14 +202,19 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     // modify camera position and rotation
+
+    Vector3dc position;
+    Quaternionfc quat;
     if (isInTransition) {
       transition.update(now, perspective);
-      PerspectiveUtils.setCameraTransform(
-          camera, transition.getPosition(), transition.getRotation());
+      position = transition.getPosition();
+      quat = transition.getRotation();
     } else {
-      PerspectiveUtils.setCameraTransform(
-          camera, perspective.getPosition(), perspective.getRotation());
+      position = perspective.getPosition();
+      quat = perspective.getRotation();
     }
+    PerspectiveUtils.setCameraPosition(camera, position);
+    PerspectiveUtils.setCameraRotation(camera, quat);
   }
 
   // endregion

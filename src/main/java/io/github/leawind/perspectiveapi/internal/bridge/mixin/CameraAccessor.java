@@ -23,15 +23,6 @@ public interface CameraAccessor {
   @Accessor("position")
   Vec3 getPosition();
 
-  @Accessor("forwards")
-  Vector3f getForwards();
-
-  @Accessor("up")
-  Vector3f getUp();
-
-  @Accessor("left")
-  Vector3f getLeft();
-
   @Accessor("xRot")
   void setXRot(float xRot);
 

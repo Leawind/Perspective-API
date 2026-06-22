@@ -1,24 +1,55 @@
 package io.github.leawind.perspectiveapi.internal.bridge.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import io.github.leawind.perspectiveapi.internal.bridge.CameraAdapter;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.events.context.CameraSetupContext;
 import io.github.leawind.perspectiveapi.internal.bridge.events.context.ModifyFieldOfViewContext;
 import net.minecraft.client.Camera;
+import org.joml.Vector3f;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Camera.class)
-public abstract class CameraMixin {
+public class CameraMixin implements CameraAdapter {
+  // region conflict fields
+
+  // These inst field name might conflict with static field name
+  // Due to mixin's bug, we can't use CameraAccessor to access them.
+  // So use @Shadow + interface
+  @Final @Shadow private Vector3f forwards;
+  @Final @Shadow private Vector3f up;
+  @Final @Shadow private Vector3f left;
+
+  @Override
+  public Vector3f perspective_api$accessForwards() {
+    return forwards;
+  }
+
+  @Override
+  public Vector3f perspective_api$accessUp() {
+    return up;
+  }
+
+  @Override
+  public Vector3f perspective_api$accessLeft() {
+    return left;
+  }
+
+  // endregion
+
   /*? if >=26.1 {*/
   @Unique private static final String SETUP_CAMERA_METHOD = "alignWithEntity";
   /*? } else {*/
   /*@Unique private static final String SETUP_CAMERA_METHOD = "setup";
-   *//*? } */
-  
+   */
+  /*? } */
+
   // region setup camera
   @Unique private final CameraSetupContext cameraSetupContext = new CameraSetupContext();
 

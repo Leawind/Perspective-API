@@ -3,11 +3,16 @@ package io.github.leawind.perspectiveapi.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.leawind.perspectiveapi.internal.bridge.CameraAdapter;
+import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
 import io.github.leawind.perspectiveapi.testutils.TestUtils;
 import io.github.leawind.perspectiveapi.testutils.TestWithCamera;
+import net.minecraft.client.Camera;
 import net.minecraft.world.phys.Vec2;
 import org.joml.Quaternionf;
+import org.joml.Quaternionfc;
 import org.joml.Vector2f;
+import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,26 +25,88 @@ class PerspectiveHelperTest {
   /*? } */
   @Nested
   class WithCamera extends TestWithCamera {
+    private static Quaternionfc toQuat_mc(Vector2fc eulerDeg) {
+      var camera = new Camera();
+      var cameraAccessor = (CameraAccessor) camera;
+      cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
+      return cameraAccessor.getRotation();
+    }
+
+    private static Vector3f getForward_mc(Vector2fc eulerDeg) {
+      var camera = new Camera();
+      var cameraAccessor = (CameraAccessor) camera;
+      cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
+      return CameraAdapter.of(camera).perspective_api$accessForwards();
+    }
+
+    private static Vector3f getUp_mc(Vector2fc eulerDeg) {
+      var camera = new Camera();
+      var cameraAccessor = (CameraAccessor) camera;
+      cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
+      return CameraAdapter.of(camera).perspective_api$accessUp();
+    }
+
+    private static Vector3f getLeft_mc(Vector2fc eulerDeg) {
+      var camera = new Camera();
+      var cameraAccessor = (CameraAccessor) camera;
+      cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
+      return CameraAdapter.of(camera).perspective_api$accessLeft();
+    }
+
     @Test
     void testEulerToQuat() {
-
-      for (float xRot = -80; xRot < 80; xRot += 7.3f) {
-        for (float yRot = -179; yRot < 179; yRot += 7.3f) {
-          // Euler -> Quat
-          cameraAccessor.invokeSetRotation(yRot, xRot);
-          Quaternionf expected = cameraAccessor.getRotation();
-
-          Quaternionf actual =
-              PerspectiveHelper.getQuat(new Vector2f(xRot, yRot), new Quaternionf());
-
-          TestUtils.assertQuatEquals(expected, actual);
-        }
-      }
+      // [Euler] ----> Quat
+      //         -mc-> Quat
+      TestUtils.degrees(7.3f, 7.3f)
+          .forEach(
+              (eulerDeg) ->
+                  TestUtils.assertQuatEquals(
+                      toQuat_mc(eulerDeg), PerspectiveHelper.getQuat(eulerDeg, new Quaternionf())));
     }
-    
+
     @Test
-    void testQuatToEuler() {
-      
+    void testEulerToForwardVector() {
+      // [Euler] ----> Quat --> Forward
+      //         ------mc-----> Forward
+      TestUtils.degrees(7.3f, 7.3f)
+          .forEach(
+              (eulerDeg) -> {
+                var forward_mc = getForward_mc(eulerDeg);
+                var quat = PerspectiveHelper.getQuat(eulerDeg, new Quaternionf());
+                var forward = PerspectiveHelper.getForwardVector(quat, new Vector3f());
+
+                TestUtils.assertVectorEquals(forward_mc, forward, 1e-4f);
+              });
+    }
+
+    @Test
+    void testEulerToUpVector() {
+      // [Euler] ----> Quat --> Up
+      //         ------mc-----> Up
+      TestUtils.degrees(7.3f, 7.3f)
+          .forEach(
+              (eulerDeg) -> {
+                var up_mc = getUp_mc(eulerDeg);
+                var quat = PerspectiveHelper.getQuat(eulerDeg, new Quaternionf());
+                var up = PerspectiveHelper.getUpVector(quat, new Vector3f());
+
+                TestUtils.assertVectorEquals(up_mc, up, 1e-4f);
+              });
+    }
+
+    @Test
+    void testEulerToLeftVector() {
+      // [Euler] ----> Quat --> Left
+      //         ------mc-----> Left
+      TestUtils.degrees(7.3f, 7.3f)
+          .forEach(
+              (eulerDeg) -> {
+                var left_mc = getLeft_mc(eulerDeg);
+                var quat = PerspectiveHelper.getQuat(eulerDeg, new Quaternionf());
+                var left = PerspectiveHelper.getLeftVector(quat, new Vector3f());
+
+                TestUtils.assertVectorEquals(left_mc, left, 1e-4f);
+              });
     }
   }
 
@@ -186,29 +253,5 @@ class PerspectiveHelperTest {
             String.format("Yaw mismatch for Yaw: %.2f, Pitch: %.2f", yawDeg, pitchDeg));
       }
     }
-  }
-
-  @Test
-  void testGetViewVector_FromQuaternion() {
-    float yawDeg = 45.0f;
-    float pitchDeg = -30.0f;
-
-    Vector2f orientation = new Vector2f(pitchDeg, yawDeg);
-
-    // Fix 3: Must use PerspectiveHelper.getRotation to construct the quaternion.
-    // Using JOML's rotationYXZ directly would lose the 180° Y-axis rotation offset
-    // in the MC coordinate system where Yaw=0 corresponds to JOML's Y-axis rotation of 180°.
-    Quaternionf rotation = new Quaternionf();
-    PerspectiveHelper.getQuat(orientation, rotation);
-
-    Vector3f vecFromQuat = new Vector3f();
-    Vector3f vecFromOri = new Vector3f();
-
-    PerspectiveHelper.getViewVector(rotation, vecFromQuat);
-    PerspectiveHelper.getViewVector(orientation, vecFromOri);
-
-    assertEquals(vecFromOri.x, vecFromQuat.x, DELTA);
-    assertEquals(vecFromOri.y, vecFromQuat.y, DELTA);
-    assertEquals(vecFromOri.z, vecFromQuat.z, DELTA);
   }
 }
