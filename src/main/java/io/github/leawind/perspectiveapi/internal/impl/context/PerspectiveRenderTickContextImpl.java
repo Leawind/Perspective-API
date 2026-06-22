@@ -8,7 +8,7 @@ import org.jspecify.annotations.NonNull;
 public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickContext {
 
   private final PerspectiveManager manager;
-  private float particalTicks;
+  private float partialTicks;
   private Entity cameraEntity;
   private boolean isInTransition;
 
@@ -23,7 +23,7 @@ public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickCo
 
   @Override
   public float partialTicks() {
-    return particalTicks;
+    return partialTicks;
   }
 
   @Override
@@ -36,8 +36,8 @@ public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickCo
     return isInTransition;
   }
 
-  public void setup(float particalTicks, Entity cameraEntity, boolean isInTransition) {
-    this.particalTicks = particalTicks;
+  public void setup(float partialTicks, Entity cameraEntity, boolean isInTransition) {
+    this.partialTicks = partialTicks;
     this.cameraEntity = cameraEntity;
     this.isInTransition = isInTransition;
   }
