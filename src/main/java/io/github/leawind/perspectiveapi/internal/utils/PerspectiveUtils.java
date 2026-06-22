@@ -92,11 +92,12 @@ public final class PerspectiveUtils {
           newCameraType.isFirstPerson() ? minecraft.getCameraEntity() : null);
     }
     minecraft.options.setCameraType(newCameraType);
-
+    /*? if <26.2 {*/
     var levelRenderer = minecraft.levelRenderer;
     if (levelRenderer != null) {
       levelRenderer.needsUpdate();
     }
+    /*? }*/
   }
 
   /// Copied from `java.lang.Math#clamp`

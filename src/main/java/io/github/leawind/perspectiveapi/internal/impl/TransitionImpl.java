@@ -89,6 +89,10 @@ public class TransitionImpl implements Transition {
     if (minecraft == null) return null;
     var gameRenderer = minecraft.gameRenderer;
     if (gameRenderer == null) return null;
+    /*? if >=26.2 {*/
+    /*return gameRenderer.mainCamera();
+    *//*? } else {*/
     return gameRenderer.getMainCamera();
+    /*? }*/
   }
 }
