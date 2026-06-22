@@ -214,7 +214,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
       quat = perspective.getRotation();
     }
     PerspectiveUtils.setCameraPosition(camera, position);
-    PerspectiveUtils.setCameraRotation(camera, quat);
+    PerspectiveUtils.setCameraRotationQuat(camera, quat);
   }
 
   // endregion

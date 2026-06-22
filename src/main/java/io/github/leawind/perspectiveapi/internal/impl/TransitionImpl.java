@@ -58,7 +58,7 @@ public class TransitionImpl implements Transition {
 
     startTime = now;
     PerspectiveUtils.getCameraPosition(camera, startPosition);
-    PerspectiveUtils.getCameraRotation(camera, startRotation);
+    PerspectiveUtils.getCameraRotationQuat(camera, startRotation);
   }
 
   public void update(long now, Perspective perspective) {

@@ -24,12 +24,22 @@ public final class PerspectiveUtils {
         new Vec2(entity.getViewXRot(partialTicks), entity.getViewYRot(partialTicks)), quat);
   }
 
+  public static Vector3d getCameraPosition(Camera camera, Vector3d dest) {
+    Vec3 pos = CameraAccessor.of(camera).getPosition();
+    dest.set(pos.x(), pos.y(), pos.z());
+    return dest;
+  }
+
+  public static Quaternionf getCameraRotationQuat(Camera camera, Quaternionf dest) {
+    return dest.set(camera.rotation());
+  }
+
   public static void setCameraPosition(Camera camera, Vector3dc position) {
     // Apply the custom spatial position to the camera.
     CameraAccessor.of(camera).invokeSetPosition(position.x(), position.y(), position.z());
   }
 
-  public static void setCameraRotation(Camera camera, Quaternionfc rotation) {
+  public static void setCameraRotationQuat(Camera camera, Quaternionfc rotation) {
     // Apply the custom rotation to the camera.
     // refer to net.minecraft.client.Camera#setRotation
     var cameraAdapter = CameraAccessor.of(camera);
@@ -51,31 +61,18 @@ public final class PerspectiveUtils {
     /*? if >=26.1 {*/
     cameraAdapter.setMatrixPropertiesDirty(cameraAdapter.getMatrixPropertiesDirty() | 3);
     /*? }*/
-
-    //    var eulerDeg = PerspectiveHelper.getEulerDeg(quat, new Vector2f());
-    //    cameraAdapter.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
   }
 
-  public static void setCameraRotation(Camera camera, float xRot, float yRot) {
+  public static void setCameraRotationEulerDeg(Camera camera, float xRot, float yRot) {
     CameraAccessor.of(camera).invokeSetRotation(yRot, xRot);
   }
 
-  public static void setCameraRotation(Camera camera, Vector2fc eulerDeg) {
-    setCameraRotation(camera, eulerDeg.x(), eulerDeg.y());
+  public static void setCameraRotationEulerDeg(Camera camera, Vector2fc eulerDeg) {
+    setCameraRotationEulerDeg(camera, eulerDeg.x(), eulerDeg.y());
   }
 
-  public static void setCameraRotation(Camera camera, Vec2 eulerDeg) {
-    setCameraRotation(camera, eulerDeg.x, eulerDeg.y);
-  }
-
-  public static Vector3d getCameraPosition(Camera camera, Vector3d dest) {
-    Vec3 pos = CameraAccessor.of(camera).getPosition();
-    dest.set(pos.x(), pos.y(), pos.z());
-    return dest;
-  }
-
-  public static Quaternionf getCameraRotation(Camera camera, Quaternionf dest) {
-    return dest.set(camera.rotation());
+  public static void setCameraRotationEulerDeg(Camera camera, Vec2 eulerDeg) {
+    setCameraRotationEulerDeg(camera, eulerDeg.x, eulerDeg.y);
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -101,6 +98,20 @@ public final class PerspectiveUtils {
     /*? }*/
   }
 
+  @SuppressWarnings("ConstantConditions")
+  public static @Nullable Camera getMainCamera() {
+    var minecraft = Minecraft.getInstance();
+    if (minecraft == null) return null;
+    var gameRenderer = minecraft.gameRenderer;
+    if (gameRenderer == null) return null;
+    /*? if >=26.2 {*/
+    /*return gameRenderer.mainCamera();
+     */
+    /*? } else {*/
+    return gameRenderer.getMainCamera();
+    /*? }*/
+  }
+  
   /// Copied from `java.lang.Math#clamp`
   public static float clamp(float value, float min, float max) {
     if (!(min < max)) {
@@ -115,18 +126,5 @@ public final class PerspectiveUtils {
       }
     }
     return Math.min(max, Math.max(value, min));
-  }
-  
-  @SuppressWarnings("ConstantConditions")
-  public static @Nullable Camera getMainCamera() {
-    var minecraft = Minecraft.getInstance();
-    if (minecraft == null) return null;
-    var gameRenderer = minecraft.gameRenderer;
-    if (gameRenderer == null) return null;
-    /*? if >=26.2 {*/
-    /*return gameRenderer.mainCamera();
-    *//*? } else {*/
-    return gameRenderer.getMainCamera();
-    /*? }*/
   }
 }
