@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.bridge.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import io.github.leawind.perspectiveapi.internal.bridge.CameraAdapter;
+import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.events.context.CameraSetupContext;
 import io.github.leawind.perspectiveapi.internal.bridge.events.context.ModifyFieldOfViewContext;
@@ -16,28 +16,28 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Camera.class)
-public class CameraMixin implements CameraAdapter {
+public abstract class CameraMixin implements CameraAccessor {
   // region conflict fields
 
   // These inst field name might conflict with static field name
-  // Due to mixin's bug, we can't use CameraAccessor to access them.
+  // Due to mixin's bug, we can't use CameraAccessorMixin to access them.
   // So use @Shadow + interface
   @Final @Shadow private Vector3f forwards;
   @Final @Shadow private Vector3f up;
   @Final @Shadow private Vector3f left;
 
   @Override
-  public Vector3f perspective_api$accessForwards() {
+  public Vector3f perspective_api$forwards() {
     return forwards;
   }
 
   @Override
-  public Vector3f perspective_api$accessUp() {
+  public Vector3f perspective_api$up() {
     return up;
   }
 
   @Override
-  public Vector3f perspective_api$accessLeft() {
+  public Vector3f perspective_api$left() {
     return left;
   }
 

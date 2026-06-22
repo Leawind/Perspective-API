@@ -1,8 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
-import io.github.leawind.perspectiveapi.internal.bridge.CameraAdapter;
-import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -26,41 +25,38 @@ public final class PerspectiveUtils {
 
   public static void setCameraPosition(Camera camera, Vector3dc position) {
     // Apply the custom spatial position to the camera.
-    ((CameraAccessor) camera).invokeSetPosition(position.x(), position.y(), position.z());
+    CameraAccessor.of(camera).invokeSetPosition(position.x(), position.y(), position.z());
   }
 
   public static void setCameraRotation(Camera camera, Quaternionfc rotation) {
     // Apply the custom rotation to the camera.
     // refer to net.minecraft.client.Camera#setRotation
-    var cameraAccessor = (CameraAccessor) camera;
-    var cameraAdapter = CameraAdapter.of(camera);
+    var cameraAdapter = CameraAccessor.of(camera);
 
     Vector2f orientation = PerspectiveHelper.getEulerDeg(rotation, new Vector2f());
 
     // #xRot, #yRot: float
-    cameraAccessor.setXRot(orientation.x());
-    cameraAccessor.setYRot(orientation.y());
+    cameraAdapter.setXRot(orientation.x());
+    cameraAdapter.setYRot(orientation.y());
 
     // #rotation: Quaternionf
-    cameraAccessor.getRotation().set(rotation);
+    cameraAdapter.getRotation().set(rotation);
 
     // #forwards, #up, #left: Vector3f
-    PerspectiveHelper.getForwardVector(rotation, cameraAdapter.perspective_api$accessForwards());
-    PerspectiveHelper.getUpVector(rotation, cameraAdapter.perspective_api$accessUp());
-    PerspectiveHelper.getLeftVector(rotation, cameraAdapter.perspective_api$accessLeft());
+    PerspectiveHelper.getForwardVector(rotation, cameraAdapter.perspective_api$forwards());
+    PerspectiveHelper.getUpVector(rotation, cameraAdapter.perspective_api$up());
+    PerspectiveHelper.getLeftVector(rotation, cameraAdapter.perspective_api$left());
 
     /*? if >=26.1 {*/
-    cameraAccessor.setMatrixPropertiesDirty(cameraAccessor.getMatrixPropertiesDirty() | 3);
+    cameraAdapter.setMatrixPropertiesDirty(cameraAdapter.getMatrixPropertiesDirty() | 3);
     /*? }*/
 
-    //    CameraAccessor cameraAccessor = (CameraAccessor) camera;
     //    var eulerDeg = PerspectiveHelper.getEulerDeg(quat, new Vector2f());
-    //
-    //    cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
+    //    cameraAdapter.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
   }
 
   public static void setCameraRotation(Camera camera, float xRot, float yRot) {
-    ((CameraAccessor) camera).invokeSetRotation(yRot, xRot);
+    CameraAccessor.of(camera).invokeSetRotation(yRot, xRot);
   }
 
   public static void setCameraRotation(Camera camera, Vector2fc eulerDeg) {
@@ -72,7 +68,7 @@ public final class PerspectiveUtils {
   }
 
   public static Vector3d getCameraPosition(Camera camera, Vector3d dest) {
-    Vec3 pos = ((CameraAccessor) camera).getPosition();
+    Vec3 pos = CameraAccessor.of(camera).getPosition();
     dest.set(pos.x(), pos.y(), pos.z());
     return dest;
   }

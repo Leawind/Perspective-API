@@ -7,7 +7,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.vanilla.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
@@ -192,7 +192,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
     // trigger perspective render tick
     {
-      Entity entity = ((CameraAccessor) camera).getEntity();
+      Entity entity = CameraAccessor.of(camera).getEntity();
       if (entity == null) {
         LOGGER.warn("Somehow camera entity is null");
         return;

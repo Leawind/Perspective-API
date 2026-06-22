@@ -3,8 +3,7 @@ package io.github.leawind.perspectiveapi.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.leawind.perspectiveapi.internal.bridge.CameraAdapter;
-import io.github.leawind.perspectiveapi.internal.bridge.mixin.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.testutils.TestUtils;
 import io.github.leawind.perspectiveapi.testutils.TestWithCamera;
 import net.minecraft.client.Camera;
@@ -27,30 +26,30 @@ class PerspectiveHelperTest {
   class WithCamera extends TestWithCamera {
     private static Quaternionfc toQuat_mc(Vector2fc eulerDeg) {
       var camera = new Camera();
-      var cameraAccessor = (CameraAccessor) camera;
+      var cameraAccessor = CameraAccessor.of(camera);
       cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
       return cameraAccessor.getRotation();
     }
 
     private static Vector3f getForward_mc(Vector2fc eulerDeg) {
       var camera = new Camera();
-      var cameraAccessor = (CameraAccessor) camera;
+      var cameraAccessor = CameraAccessor.of(camera);
       cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
-      return CameraAdapter.of(camera).perspective_api$accessForwards();
+      return cameraAccessor.perspective_api$forwards();
     }
 
     private static Vector3f getUp_mc(Vector2fc eulerDeg) {
       var camera = new Camera();
-      var cameraAccessor = (CameraAccessor) camera;
+      var cameraAccessor = CameraAccessor.of(camera);
       cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
-      return CameraAdapter.of(camera).perspective_api$accessUp();
+      return cameraAccessor.perspective_api$up();
     }
 
     private static Vector3f getLeft_mc(Vector2fc eulerDeg) {
       var camera = new Camera();
-      var cameraAccessor = (CameraAccessor) camera;
+      var cameraAccessor = CameraAccessor.of(camera);
       cameraAccessor.invokeSetRotation(eulerDeg.y(), eulerDeg.x());
-      return CameraAdapter.of(camera).perspective_api$accessLeft();
+      return cameraAccessor.perspective_api$left();
     }
 
     @Test
