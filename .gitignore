@@ -54,3 +54,7 @@ forge*changelog.txt
 
 # stonecraft
 /versions/*-*/
+
+# deno
+deno.json
+deno.lock
