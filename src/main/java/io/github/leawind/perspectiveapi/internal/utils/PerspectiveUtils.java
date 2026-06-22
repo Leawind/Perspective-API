@@ -14,6 +14,7 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
+import org.jspecify.annotations.Nullable;
 
 public final class PerspectiveUtils {
   private PerspectiveUtils() {}
@@ -114,5 +115,18 @@ public final class PerspectiveUtils {
       }
     }
     return Math.min(max, Math.max(value, min));
+  }
+  
+  @SuppressWarnings("ConstantConditions")
+  public static @Nullable Camera getMainCamera() {
+    var minecraft = Minecraft.getInstance();
+    if (minecraft == null) return null;
+    var gameRenderer = minecraft.gameRenderer;
+    if (gameRenderer == null) return null;
+    /*? if >=26.2 {*/
+    /*return gameRenderer.mainCamera();
+    *//*? } else {*/
+    return gameRenderer.getMainCamera();
+    /*? }*/
   }
 }

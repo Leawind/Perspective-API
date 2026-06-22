@@ -4,14 +4,12 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.Objects;
-import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
+
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 public class TransitionImpl implements Transition {
 
@@ -55,7 +53,7 @@ public class TransitionImpl implements Transition {
   }
 
   public void start(long now) {
-    var camera = getCamera();
+    var camera = PerspectiveUtils.getMainCamera();
     if (camera == null) return;
 
     startTime = now;
@@ -81,18 +79,5 @@ public class TransitionImpl implements Transition {
 
   public Quaternionfc getRotation() {
     return rotation;
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  private static @Nullable Camera getCamera() {
-    var minecraft = Minecraft.getInstance();
-    if (minecraft == null) return null;
-    var gameRenderer = minecraft.gameRenderer;
-    if (gameRenderer == null) return null;
-    /*? if >=26.2 {*/
-    /*return gameRenderer.mainCamera();
-    *//*? } else {*/
-    return gameRenderer.getMainCamera();
-    /*? }*/
   }
 }
