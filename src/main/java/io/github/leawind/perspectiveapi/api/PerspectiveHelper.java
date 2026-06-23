@@ -28,8 +28,7 @@ public final class PerspectiveHelper {
   public static final Vector3fc LEFT = new Vector3f(-1.0F, 0.0F, 0.0F);
   public static final Vector3fc RIGHT = new Vector3f(1.0F, 0.0F, 0.0F);
   /*? } else {*/
-  /*
-  public static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, 1.0F);
+  /*public static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, 1.0F);
   public static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, -1.0F);
   public static final Vector3fc LEFT = new Vector3f(1.0F, 0.0F, 0.0F);
   public static final Vector3fc RIGHT = new Vector3f(-1.0F, 0.0F, 0.0F);
@@ -82,10 +81,12 @@ public final class PerspectiveHelper {
   }
 
   /// Computes the view vector from JOML orientation angles.
-  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Vector3f eulerDegToViewVector(Vector2fc eulerDeg, Vector3f dest) {
-    float pitchRad = eulerDeg.x() * DEG_TO_RAD;
-    float yawRad = eulerDeg.y() * DEG_TO_RAD;
+  ///
+  /// @param xRot The pitch angle in degrees.
+  /// @param yRot The yaw angle in degrees.
+  public static Vector3f eulerDegToViewVector(float xRot, float yRot, Vector3f dest) {
+    float pitchRad = xRot * DEG_TO_RAD;
+    float yawRad = yRot * DEG_TO_RAD;
 
     float cosPitch = (float) Math.cos(pitchRad);
     float sinPitch = (float) Math.sin(pitchRad);
@@ -95,10 +96,16 @@ public final class PerspectiveHelper {
     return dest.set(-sinYaw * cosPitch, -sinPitch, cosYaw * cosPitch);
   }
 
+  /// Computes the view vector from JOML orientation angles.
+  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
+  public static Vector3f eulerDegToViewVector(Vector2fc eulerDeg, Vector3f dest) {
+    return eulerDegToViewVector(eulerDeg.x(), eulerDeg.y(), dest);
+  }
+
   /// Computes the view vector from Minecraft's native orientation angles.
   /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
   public static Vector3f eulerDegToViewVector(Vec2 eulerDeg, Vector3f dest) {
-    return eulerDegToViewVector(new Vector2f(eulerDeg.x, eulerDeg.y), dest);
+    return eulerDegToViewVector(eulerDeg.x, eulerDeg.y, dest);
   }
 
   // endregion
@@ -117,9 +124,8 @@ public final class PerspectiveHelper {
     /*? if >=1.21 {*/
     return dest.set(-eulerAng.x() * RAD_TO_DEG, (float) ((Math.PI - eulerAng.y()) * RAD_TO_DEG));
     /*? } else {*/
-    /*
-    return dest.set(eulerAng.x() * RAD_TO_DEG, -eulerAng.y() * RAD_TO_DEG);
-    */
+    /*return dest.set(eulerAng.x() * RAD_TO_DEG, -eulerAng.y() * RAD_TO_DEG);
+     */
     /*? }*/
   }
 
@@ -139,25 +145,33 @@ public final class PerspectiveHelper {
   // endregion
 
   // region quaternion
+
   /// Constructs a quaternion rotation from JOML orientation angles.
-  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Quaternionf eulerDegToQuat(Vector2fc eulerDeg, Quaternionf dest) {
+  ///
+  /// @param xRot The pitch angle in degrees.
+  /// @param yRot The yaw angle in degrees.
+  public static Quaternionf eulerDegToQuat(float xRot, float yRot, Quaternionf dest) {
     /*? if >=1.21 {*/
-    float pitchRad = -eulerDeg.x() * DEG_TO_RAD;
-    float yawRad = (float) Math.PI - eulerDeg.y() * DEG_TO_RAD;
+    float pitchRad = -xRot * DEG_TO_RAD;
+    float yawRad = (float) Math.PI - yRot * DEG_TO_RAD;
     /*? } else {*/
-    /*
-    float pitchRad = eulerDeg.x() * DEG_TO_RAD;
-    float yawRad = -eulerDeg.y() * DEG_TO_RAD;
+    /*float pitchRad = xRot * DEG_TO_RAD;
+    float yawRad = -yRot * DEG_TO_RAD;
     */
     /*? }*/
     return dest.rotationYXZ(yawRad, pitchRad, 0.0f);
   }
 
+  /// Constructs a quaternion rotation from JOML orientation angles.
+  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
+  public static Quaternionf eulerDegToQuat(Vector2fc eulerDeg, Quaternionf dest) {
+    return eulerDegToQuat(eulerDeg.x(), eulerDeg.y(), dest);
+  }
+
   /// Constructs a quaternion rotation from Minecraft's native orientation angles.
   /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
   public static Quaternionf eulerDegToQuat(Vec2 eulerDeg, Quaternionf dest) {
-    return eulerDegToQuat(new Vector2f(eulerDeg.x, eulerDeg.y), dest);
+    return eulerDegToQuat(eulerDeg.x, eulerDeg.y, dest);
   }
 
   /// Constructs a quaternion rotation from a view vector.
@@ -173,9 +187,8 @@ public final class PerspectiveHelper {
     /*? if >=1.21 {*/
     return dest.rotationYXZ((float) Math.PI - yawRad, -pitchRad, 0.0f);
     /*? } else {*/
-    /*
-    return dest.rotationYXZ(-yawRad, pitchRad, 0.0f);
-    */
+    /*return dest.rotationYXZ(-yawRad, pitchRad, 0.0f);
+     */
     /*? }*/
   }
   // endregion
