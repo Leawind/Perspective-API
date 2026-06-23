@@ -9,7 +9,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
-import io.github.leawind.perspectiveapi.internal.logic.vanilla.VanillaFirstPersonPerspective;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.ArrayList;
 import java.util.List;

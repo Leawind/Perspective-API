@@ -2,9 +2,9 @@ package io.github.leawind.perspectiveapi.internal.bridge.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.bridge.events.CameraSetupContext;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.bridge.events.context.CameraSetupContext;
-import io.github.leawind.perspectiveapi.internal.bridge.events.context.ModifyFieldOfViewContext;
+import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
 import net.minecraft.client.Camera;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Final;

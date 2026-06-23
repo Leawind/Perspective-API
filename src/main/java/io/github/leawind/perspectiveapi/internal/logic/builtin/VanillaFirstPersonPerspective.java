@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.vanilla;
+package io.github.leawind.perspectiveapi.internal.logic.builtin;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;

@@ -1,8 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.bridge.events;
 
 import io.github.leawind.inventory.event.SingleEventEmitter;
-import io.github.leawind.perspectiveapi.internal.bridge.events.context.CameraSetupContext;
-import io.github.leawind.perspectiveapi.internal.bridge.events.context.ModifyFieldOfViewContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 

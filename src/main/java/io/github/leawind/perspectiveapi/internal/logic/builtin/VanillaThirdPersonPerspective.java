@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.vanilla;
+package io.github.leawind.perspectiveapi.internal.logic.builtin;
 
 import net.minecraft.client.CameraType;
 
