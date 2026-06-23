@@ -3,7 +3,9 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaThirdPersonPerspective;
-import io.github.leawind.perspectiveapi.spi.PerspectiveSPI;
+import io.github.leawind.perspectiveapi.spi.PerspectiveRegistrar;
+import java.util.ServiceLoader;
+import java.util.stream.StreamSupport;
 
 public final class ModEntrypoint {
   private ModEntrypoint() {}
@@ -32,6 +34,7 @@ public final class ModEntrypoint {
       manager.cycler().setActive(VanillaFirstPersonPerspective.INSTANCE.id());
     }
 
-    PerspectiveSPI.load().forEach(registrar -> registrar.register(manager));
+    StreamSupport.stream(ServiceLoader.load(PerspectiveRegistrar.class).spliterator(), false)
+        .forEach(registrar -> registrar.register(manager));
   }
 }
