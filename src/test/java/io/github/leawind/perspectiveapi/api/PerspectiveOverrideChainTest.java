@@ -2,8 +2,8 @@ package io.github.leawind.perspectiveapi.api;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
-import io.github.leawind.perspectiveapi.platform.api.Services;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ class PerspectiveOverrideChainTest {
   }
 
   private static Identifier id(String path) {
-    return Services.PLATFORM_HELPER.createIdentifier("test", path);
+    return Bridge.createIdentifier("test", path);
   }
 
   // ========== push / has ==========

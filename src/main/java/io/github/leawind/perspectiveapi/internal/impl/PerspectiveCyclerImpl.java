@@ -4,7 +4,7 @@ import io.github.leawind.inventory.lock.LockUtils;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.platform.api.Services;
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -17,8 +17,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class PerspectiveCyclerImpl implements PerspectiveCycler {
-  public static final Identifier KEY =
-      Services.PLATFORM_HELPER.createIdentifier(PerspectiveAPI.MOD_ID, "cycler");
+  public static final Identifier KEY = Bridge.createIdentifier(PerspectiveAPI.MOD_ID, "cycler");
 
   private record Entry(Identifier id, int priority) {}
 

@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.platform.api.Services;
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
@@ -20,7 +20,7 @@ public sealed class VanillaPerspective implements Perspective
   protected final Quaternionf rotation = new Quaternionf();
 
   protected VanillaPerspective(String name, CameraType cameraType) {
-    this.id = Services.PLATFORM_HELPER.createIdentifier(name);
+    this.id = Bridge.createIdentifier(name);
     this.cameraType = cameraType;
   }
 
