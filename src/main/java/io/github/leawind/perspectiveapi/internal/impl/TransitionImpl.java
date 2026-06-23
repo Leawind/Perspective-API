@@ -4,7 +4,6 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.Objects;
-
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector3d;
@@ -52,6 +51,9 @@ public class TransitionImpl implements Transition {
     return blender;
   }
 
+  /// Starts a new transition from the current camera state.
+  ///
+  /// @param now current timestamp in milliseconds
   public void start(long now) {
     var camera = PerspectiveUtils.getMainCamera();
     if (camera == null) return;
@@ -61,6 +63,10 @@ public class TransitionImpl implements Transition {
     PerspectiveUtils.getCameraRotationQuat(camera, startRotation);
   }
 
+  /// Updates the interpolated position and rotation based on elapsed time.
+  ///
+  /// @param now current timestamp in milliseconds
+  /// @param perspective target perspective to transition towards
   public void update(long now, Perspective perspective) {
     long deltaMs = now - startTime;
     deltaMs = Math.max(deltaMs, MIN_DELTA_MS);
@@ -73,10 +79,12 @@ public class TransitionImpl implements Transition {
     startRotation.slerp(perspective.getRotation(), x, rotation);
   }
 
+  /// @return current interpolated position
   public Vector3dc getPosition() {
     return position;
   }
 
+  /// @return current interpolated rotation
   public Quaternionfc getRotation() {
     return rotation;
   }

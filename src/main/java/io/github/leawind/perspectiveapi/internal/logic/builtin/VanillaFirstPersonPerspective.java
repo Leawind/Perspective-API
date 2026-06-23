@@ -5,7 +5,11 @@ import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import net.minecraft.client.CameraType;
 import org.jspecify.annotations.NonNull;
 
+/// Built-in first-person perspective matching vanilla Minecraft behavior.
+///
+/// Does not override vanilla camera logic, allowing default first-person rendering.
 public final class VanillaFirstPersonPerspective extends VanillaPerspective {
+  /// Singleton instance of the first-person perspective.
   public static final VanillaFirstPersonPerspective INSTANCE = new VanillaFirstPersonPerspective();
 
   private VanillaFirstPersonPerspective() {
@@ -19,6 +23,7 @@ public final class VanillaFirstPersonPerspective extends VanillaPerspective {
 
   @Override
   public void renderTick(@NonNull PerspectiveRenderTickContext context) {
+    // This method is never called because shouldOverrideVanillaCamera returns false
     var entity = context.entity();
     if (entity == null) {
       return;

@@ -133,14 +133,13 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     return defaultId;
   }
 
-  /// Removes all override entries except the cycler node.
   public void clearOverridesExceptCycler() {
     try (var ignored = LockUtils.writeLock(lock)) {
       overrideChain.removeIf(e -> !e.key().equals(PerspectiveCyclerImpl.KEY));
     }
   }
 
-  public void resolveAndUpdatePerspective() {
+  public void resolveAndUpdateCurrentPerspective() {
     setCurrentPerspective(resolveCurrentPerspective());
   }
 
@@ -182,6 +181,10 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   private final PerspectiveRenderTickContextImpl renderTickContext =
       new PerspectiveRenderTickContextImpl(this);
 
+  /// Updates camera position and rotation based on the current perspective.
+  ///
+  /// @param partialTicks interpolation factor between ticks
+  /// @param camera the camera to update
   public void updateCamera(float partialTicks, Camera camera) {
     Perspective perspective = getCurrentPerspective();
 

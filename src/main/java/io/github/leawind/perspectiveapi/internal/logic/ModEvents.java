@@ -7,9 +7,11 @@ import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/// Registers and handles mod event listeners.
 public final class ModEvents {
   private static final Logger LOGGER = LoggerFactory.getLogger(ModEvents.class);
 
+  /// Registers all event handlers for client tick, keybinds, camera setup, and FOV modification.
   public static void register() {
     PerspectiveManagerImpl manager = PerspectiveManagerImpl.INSTANCE;
 
@@ -17,7 +19,7 @@ public final class ModEvents {
         minecraft -> {
           if (minecraft.level == null || minecraft.player == null) return;
 
-          manager.resolveAndUpdatePerspective();
+          manager.resolveAndUpdateCurrentPerspective();
           var current = manager.getCurrentPerspective();
           current.clientTick(minecraft);
           if (!current.isAvailable()) {

@@ -4,6 +4,7 @@ import io.github.leawind.inventory.event.SingleEventEmitter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 
+/// Global event emitters for client-side game events.
 public final class GameClientEvents {
   private GameClientEvents() {}
 
