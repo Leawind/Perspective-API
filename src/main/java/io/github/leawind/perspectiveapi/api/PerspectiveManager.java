@@ -8,23 +8,31 @@ import org.jspecify.annotations.NonNull;
 /// Obtain via {@link PerspectiveAPI#getManager()}.
 public interface PerspectiveManager {
 
+  /// @return the transition controller.
+  @NonNull Transition transition();
+
   /// @return the perspective registry.
   @NonNull PerspectiveRegistry registry();
-
-  /// @return the perspective cycler for cycling through perspectives.
-  @NonNull PerspectiveCycler cycler();
 
   /// @return the override chain controller.
   @NonNull PerspectiveOverrideChain overrides();
 
-  /// @return the transition controller.
-  @NonNull Transition transition();
+  /// @return the perspective cycler for cycling through perspectives.
+  @NonNull PerspectiveCycler cycler();
 
   @NonNull Identifier getDefault();
 
   /// Returns the current active perspective after resolving the override chain.
   /// Never returns `null`.
   @NonNull Perspective getCurrentPerspective();
+
+  default boolean isCurrent(@NonNull Identifier id) {
+    return getCurrentPerspective().id().equals(id);
+  }
+
+  default boolean isCurrent(@NonNull Perspective perspective) {
+    return getCurrentPerspective() == perspective;
+  }
 
   /// Returns the default perspective.
   default @NonNull Perspective getDefaultPerspective() {
