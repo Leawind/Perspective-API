@@ -16,7 +16,7 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class PerspectiveCyclerImpl implements PerspectiveCycler {
+public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   public static final Identifier KEY = Bridge.createIdentifier(PerspectiveAPI.MOD_ID, "cycler");
 
   private record Entry(Identifier id, int priority) {}
@@ -27,7 +27,7 @@ public class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   private volatile @Nullable Identifier activeId;
 
-  public PerspectiveCyclerImpl() {}
+  PerspectiveCyclerImpl() {}
 
   @Override
   public @NonNull PerspectiveCycler add(@NonNull Identifier id, int priority) {

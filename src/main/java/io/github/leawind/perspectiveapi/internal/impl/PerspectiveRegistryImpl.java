@@ -16,7 +16,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PerspectiveRegistryImpl implements PerspectiveRegistry {
+public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveAPI.MOD_NAME);
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();

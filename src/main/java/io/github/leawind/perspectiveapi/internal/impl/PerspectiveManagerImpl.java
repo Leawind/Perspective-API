@@ -24,7 +24,7 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PerspectiveManagerImpl implements PerspectiveManager {
+public final class PerspectiveManagerImpl implements PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManagerImpl.class);
   public static final PerspectiveManagerImpl INSTANCE =
       new PerspectiveManagerImpl(VanillaFirstPersonPerspective.INSTANCE);

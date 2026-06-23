@@ -16,10 +16,12 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class PerspectiveOverrideChainImpl implements PerspectiveOverrideChain {
+public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideChain {
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   private final List<OverrideEntry> entries = new ArrayList<>();
+
+  PerspectiveOverrideChainImpl() {}
 
   @Override
   public void push(

@@ -1,9 +1,9 @@
-package io.github.leawind.perspectiveapi.api;
+package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

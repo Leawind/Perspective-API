@@ -10,7 +10,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 
-public class TransitionImpl implements Transition {
+public final class TransitionImpl implements Transition {
 
   private static final long MIN_DELTA_MS = 1;
 
@@ -30,6 +30,7 @@ public class TransitionImpl implements Transition {
   private final Quaternionf rotation = new Quaternionf();
 
   // endregion
+  TransitionImpl() {}
 
   @Override
   public boolean isInTransition(long now) {
