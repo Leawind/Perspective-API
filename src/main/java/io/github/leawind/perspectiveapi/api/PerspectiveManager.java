@@ -24,14 +24,14 @@ public interface PerspectiveManager {
 
   /// Returns the current active perspective after resolving the override chain.
   /// Never returns `null`.
-  @NonNull Perspective getCurrentPerspective();
+  @NonNull Perspective getCurrent();
 
   default boolean isCurrent(@NonNull Identifier id) {
-    return getCurrentPerspective().id().equals(id);
+    return getCurrent().id().equals(id);
   }
 
   default boolean isCurrent(@NonNull Perspective perspective) {
-    return getCurrentPerspective() == perspective;
+    return getCurrent() == perspective;
   }
 
   /// Returns the default perspective.

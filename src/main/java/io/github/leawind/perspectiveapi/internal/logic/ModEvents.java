@@ -21,7 +21,7 @@ public final class ModEvents {
           if (minecraft.level == null || minecraft.player == null) return;
 
           manager.resolveAndUpdateCurrentPerspective();
-          var current = manager.getCurrentPerspective();
+          var current = manager.getCurrent();
           current.clientTick(minecraft);
           if (!current.isAvailable()) {
             manager.cycler().switchToPreviousAvailable(manager.registry());
@@ -44,7 +44,7 @@ public final class ModEvents {
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
         (ctx) -> {
-          Perspective perspective = manager.getCurrentPerspective();
+          Perspective perspective = manager.getCurrent();
           if (!perspective.shouldOverrideVanillaCamera()) return;
           ctx.fieldOfView = perspective.getFieldOfView(ctx.fieldOfView);
         });

@@ -80,7 +80,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   // region perspective management
 
   @Override
-  public @NonNull Perspective getCurrentPerspective() {
+  public @NonNull Perspective getCurrent() {
     return currentPerspective;
   }
 
@@ -133,7 +133,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
   public void updateCamera(float partialTicks, Camera camera) {
-    Perspective perspective = getCurrentPerspective();
+    Perspective perspective = getCurrent();
 
     if (!perspective.shouldOverrideVanillaCamera()) return;
 
