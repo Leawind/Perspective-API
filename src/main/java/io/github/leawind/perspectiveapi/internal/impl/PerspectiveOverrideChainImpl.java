@@ -27,9 +27,13 @@ public class PerspectiveOverrideChainImpl implements PerspectiveOverrideChain {
     Objects.requireNonNull(key);
     Objects.requireNonNull(supplier);
     try (var ignored = LockUtils.writeLock(lock)) {
-      entries.removeIf(e -> e.key().equals(key));
-      var entry = new OverrideEntry(key, priority, supplier);
+      for (int i = entries.size() - 1; i >= 0; i--) {
+        if (entries.get(i).key().equals(key)) {
+          entries.remove(i);
+        }
+      }
 
+      var entry = new OverrideEntry(key, priority, supplier);
       int insertIdx = 0;
       for (int i = 0; i < entries.size(); i++) {
         if (entries.get(i).priority() >= priority) {
