@@ -8,15 +8,13 @@ import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-/// Provides utilities for converting between rotation, orientation, and view vector in Minecraft's
-/// coordinate system.
+/// ### Rotation representations
 ///
-/// | | | | |
-/// |-|-|-|-|
-/// | Euler Degree | `Vector2d`, `Vec2` | `eulerDeg` | (pitch, yaw) or (xRot, yRot) |
-/// | Quaternion | `Quaternionf` | `quat` | (x, y, z, w) |
-/// | View Vector | `Vector3f` | `viewVector` | (x, y, z) |
-///
+/// | Name         | Identifier   | Type               | Format                       |
+/// | ------------ | ------------ | ------------------ | ---------------------------- |
+/// | Euler Degree | `eulerDeg`   | `Vector2d`, `Vec2` | (pitch, yaw) or (xRot, yRot) |
+/// | Quaternion   | `quat`       | `Quaternionf`      | (x, y, z, w)                 |
+/// | View Vector  | `viewVector` | `Vector3f`         | (x, y, z)                    |
 public final class PerspectiveHelper {
   private PerspectiveHelper() {}
 

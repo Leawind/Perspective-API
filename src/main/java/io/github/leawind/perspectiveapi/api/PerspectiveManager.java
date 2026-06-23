@@ -26,9 +26,7 @@ public interface PerspectiveManager {
   /// If an entry with the same key already exists, it is replaced.
   /// Higher priority values take precedence (are evaluated first).
   void pushOverride(
-      @NonNull Identifier key,
-      int priority,
-      @NonNull Supplier<@Nullable Identifier> supplier);
+      @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier);
 
   /// Removes the override entry with the given key from the override chain.
   void popOverride(@NonNull Identifier key);

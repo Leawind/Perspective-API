@@ -12,8 +12,16 @@ public interface Perspective {
   // region meta info
 
   /// Returns the unique identifier of this perspective.
+  ///
+  /// Recommended format: `<modid>:<path>`
+  ///
+  /// Example: `examplemod:free_camera`
   @NonNull Identifier id();
 
+  /// Corresponding camera type for this perspective.
+  ///
+  /// If {@link #shouldOverrideVanillaCamera()} returns false, the behavior of this perspective will
+  /// be the same as the vanilla camera type.
   @NonNull CameraType cameraType();
 
   /// Determines whether it should override the vanilla camera logic for this perspective.
@@ -49,13 +57,19 @@ public interface Perspective {
   }
 
   /// Returns the camera position in world coordinates when this perspective is active.
+  ///
+  /// Called every render tick.
   @NonNull Vector3dc getPosition();
 
   /// Returns the rotation of the camera when this perspective is active.
+  ///
+  /// Called every render tick.
   @NonNull Quaternionfc getRotation();
 
   /// Modifies the field of view. Return the modified value, or `vanillaFieldOfView` to keep
   /// vanilla behavior.
+  ///
+  /// Called every render tick.
   default float getFieldOfView(float vanillaFieldOfView) {
     return vanillaFieldOfView;
   }
