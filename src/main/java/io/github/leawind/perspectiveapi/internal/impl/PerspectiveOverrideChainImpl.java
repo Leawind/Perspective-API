@@ -17,9 +17,11 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideChain {
+  public record Entry(
+      @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier) {}
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
-  private final List<OverrideEntry> entries = new ArrayList<>();
+  private final List<Entry> entries = new ArrayList<>();
 
   PerspectiveOverrideChainImpl() {}
 
@@ -35,7 +37,7 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
         }
       }
 
-      var entry = new OverrideEntry(key, priority, supplier);
+      var entry = new Entry(key, priority, supplier);
       int insertIdx = 0;
       for (int i = 0; i < entries.size(); i++) {
         if (entries.get(i).priority() >= priority) {
@@ -83,7 +85,7 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
   @Override
   public @Nullable Identifier resolve(@NonNull Predicate<@NonNull Identifier> validator) {
     try (var ignored = LockUtils.readLock(lock)) {
-      for (OverrideEntry entry : entries) {
+      for (Entry entry : entries) {
         Identifier id = entry.supplier().get();
         if (id != null && validator.test(id)) {
           return id;
