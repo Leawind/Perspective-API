@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import java.util.List;
 import java.util.stream.Stream;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -10,10 +9,6 @@ import org.jspecify.annotations.Nullable;
 ///
 /// Perspectives are ordered by priority. Lower priority values appear earlier in the cycle.
 public interface PerspectiveCycler {
-
-  /// Replaces the entire cycle list with the given ids, assigned priorities by their index order.
-  void set(@NonNull List<Identifier> list);
-
   /// Adds a perspective id to the cycle list with the given priority. Replaces any existing entry
   /// with the same id.
   @NonNull PerspectiveCycler add(@NonNull Identifier id, int priority);

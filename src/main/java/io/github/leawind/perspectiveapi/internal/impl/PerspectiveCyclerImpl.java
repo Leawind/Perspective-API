@@ -30,16 +30,6 @@ public class PerspectiveCyclerImpl implements PerspectiveCycler {
   public PerspectiveCyclerImpl() {}
 
   @Override
-  public void set(@NonNull List<Identifier> list) {
-    try (var ignored = LockUtils.writeLock(lock)) {
-      entries.clear();
-      for (int i = 0; i < list.size(); i++) {
-        entries.add(new Entry(list.get(i), i));
-      }
-    }
-  }
-
-  @Override
   public @NonNull PerspectiveCycler add(@NonNull Identifier id, int priority) {
     Objects.requireNonNull(id);
 
@@ -53,8 +43,8 @@ public class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   @Override
   public void remove(@Nullable Identifier id) {
+    if (id == null) return;
     try (var ignored = LockUtils.writeLock(lock)) {
-      if (id == null) return;
       entries.removeIf(e -> e.id().equals(id));
     }
   }
