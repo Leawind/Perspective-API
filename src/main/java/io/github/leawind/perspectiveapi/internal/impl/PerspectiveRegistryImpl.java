@@ -25,14 +25,14 @@ public class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   // region internal events
 
-  private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
+  private final SimpleEventEmitter.Owned<Perspective> onUpdate = SimpleEventEmitter.create();
 
   // endregion
 
   PerspectiveRegistryImpl() {}
 
   /// Emitted when the registry is updated (perspective added).
-  public SimpleEventEmitter<Void> onUpdate() {
+  public SimpleEventEmitter<Perspective> onUpdate() {
     return onUpdate;
   }
 
@@ -44,7 +44,7 @@ public class PerspectiveRegistryImpl implements PerspectiveRegistry {
       LOGGER.info("Registering perspective with id '{}': {}", id, perspective);
 
       perspectives.put(id, perspective);
-      onUpdate.emit();
+      onUpdate.emit(perspective);
     }
     return this;
   }

@@ -47,6 +47,17 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     currentPerspective = defaultPerspective;
 
     overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActive);
+
+    registry
+        .onUpdate()
+        .on(
+            (perspective) -> {
+              try (var ignored = LockUtils.writeLock(lock)) {
+                if (perspective.id().equals(currentPerspective.id())) {
+                  setCurrentPerspective(perspective);
+                }
+              }
+            });
   }
 
   // region components
@@ -108,7 +119,6 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
   private void setCurrentPerspective(@NonNull Perspective perspective) {
     Objects.requireNonNull(perspective);
-
     try (var ignored = LockUtils.writeLock(lock)) {
       if (perspective == currentPerspective) return;
 
