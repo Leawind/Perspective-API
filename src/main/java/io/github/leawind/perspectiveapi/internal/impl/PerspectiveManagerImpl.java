@@ -5,25 +5,22 @@ import io.github.leawind.inventory.lock.LockUtils;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
+import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
 import net.minecraft.client.Camera;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import org.joml.Quaternionfc;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,12 +46,13 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
 
     currentPerspective = defaultPerspective;
 
-    pushOverride(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActive);
+    overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActive);
   }
 
   // region components
-  private final PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl(lock);
-  private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl(lock);
+  private final PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+  private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl();
+  private final PerspectiveOverrideChainImpl overrides = new PerspectiveOverrideChainImpl();
   private final TransitionImpl transition = new TransitionImpl();
 
   @Override
@@ -68,55 +66,13 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   @Override
+  public @NonNull PerspectiveOverrideChain overrides() {
+    return overrides;
+  }
+
+  @Override
   public @NonNull Transition transition() {
     return transition;
-  }
-
-  // endregion
-
-  // region override chain
-
-  /// Override chain sorted by priority descending (highest priority first).
-  private final List<OverrideEntry> overrideChain = new ArrayList<>();
-
-  @Override
-  public void pushOverride(
-      @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier) {
-    Objects.requireNonNull(key);
-    Objects.requireNonNull(supplier);
-
-    try (var ignored = LockUtils.writeLock(lock)) {
-      overrideChain.removeIf(e -> e.key().equals(key));
-
-      var entry = new OverrideEntry(key, priority, supplier);
-      int insertIdx = 0;
-      for (int i = 0; i < overrideChain.size(); i++) {
-        if (overrideChain.get(i).priority() >= priority) {
-          insertIdx = i + 1;
-        } else {
-          break;
-        }
-      }
-      overrideChain.add(insertIdx, entry);
-    }
-  }
-
-  @Override
-  public void popOverride(@NonNull Identifier key) {
-    Objects.requireNonNull(key);
-
-    try (var ignored = LockUtils.writeLock(lock)) {
-      overrideChain.removeIf(e -> e.key().equals(key));
-    }
-  }
-
-  @Override
-  public boolean hasOverride(@NonNull Identifier key) {
-    Objects.requireNonNull(key);
-
-    try (var ignored = LockUtils.readLock(lock)) {
-      return overrideChain.stream().anyMatch(e -> e.key().equals(key));
-    }
   }
 
   // endregion
@@ -133,29 +89,20 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
     return defaultId;
   }
 
-  public void clearOverridesExceptCycler() {
-    try (var ignored = LockUtils.writeLock(lock)) {
-      overrideChain.removeIf(e -> !e.key().equals(PerspectiveCyclerImpl.KEY));
-    }
-  }
-
   public void resolveAndUpdateCurrentPerspective() {
     setCurrentPerspective(resolveCurrentPerspective());
   }
 
   private @NonNull Perspective resolveCurrentPerspective() {
-    try (var ignored = LockUtils.readLock(lock)) {
-      for (OverrideEntry entry : overrideChain) {
-        Identifier id = entry.supplier().get();
-        if (id == null) continue;
+    Identifier resolvedId = overrides.resolve(registry::contains);
 
-        Perspective perspective = registry.get(id);
-        if (perspective == null) continue;
-        if (!perspective.isAvailable()) continue;
-
+    if (resolvedId != null) {
+      Perspective perspective = registry.get(resolvedId);
+      if (perspective != null) {
         return perspective;
       }
     }
+
     return getDefaultPerspective();
   }
 

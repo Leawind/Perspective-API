@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -21,15 +22,13 @@ public class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   private record Entry(Identifier id, int priority) {}
 
-  private final ReadWriteLock lock;
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final List<Entry> entries = new ArrayList<>();
 
   private volatile @Nullable Identifier activeId;
 
-  public PerspectiveCyclerImpl(ReadWriteLock lock) {
-    this.lock = lock;
-  }
+  public PerspectiveCyclerImpl() {}
 
   @Override
   public void set(@NonNull List<Identifier> list) {

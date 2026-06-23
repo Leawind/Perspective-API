@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import org.slf4j.Logger;
@@ -34,7 +35,8 @@ public final class ModEvents {
           }
         });
 
-    GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(ignored -> manager.clearOverridesExceptCycler());
+    GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
+        ignored -> manager.overrides().clearExcept(PerspectiveCyclerImpl.KEY));
 
     // region camera
 

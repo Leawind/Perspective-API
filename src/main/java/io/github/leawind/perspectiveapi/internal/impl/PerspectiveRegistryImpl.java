@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -18,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveAPI.MOD_NAME);
 
-  private final ReadWriteLock lock;
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final Map<Identifier, Perspective> perspectives = new HashMap<>();
 
@@ -28,9 +29,7 @@ public class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   // endregion
 
-  PerspectiveRegistryImpl(ReadWriteLock lock) {
-    this.lock = lock;
-  }
+  PerspectiveRegistryImpl() {}
 
   /// Emitted when the registry is updated (perspective added).
   public SimpleEventEmitter<Void> onUpdate() {
@@ -51,14 +50,14 @@ public class PerspectiveRegistryImpl implements PerspectiveRegistry {
   }
 
   @Override
-  public boolean contains(Identifier id) {
+  public boolean contains(@Nullable Identifier id) {
     try (var ignored = LockUtils.readLock(lock)) {
       return get(id) != null;
     }
   }
 
   @Override
-  public @Nullable Perspective get(Identifier id) {
+  public @Nullable Perspective get(@Nullable Identifier id) {
     if (id == null) {
       return null;
     }
