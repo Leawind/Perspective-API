@@ -20,10 +20,13 @@ public interface Perspective {
   ///
   /// Returning `false` disables all camera modifications provided by {@link PerspectiveAPI},
   /// allowing your mod to apply its own camera modifications through Mixin or something.
-  /// Just remember to check if the current perspective is which you are working on.
+  ///
+  /// Just remember to check if the current perspective is which you are working on:
   ///
   /// ```java
-  /// if (PerspectiveManager.get().getCurrentPerspective() != ExamplePerspective.INSTANCE) return;
+  /// if (PerspectiveAPI.getManager().getCurrentPerspective() != ExamplePerspective.INSTANCE) {
+  ///   return;
+  /// }
   /// ```
   default boolean shouldOverrideVanillaCamera() {
     return true;
