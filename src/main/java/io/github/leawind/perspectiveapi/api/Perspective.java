@@ -26,6 +26,8 @@ public interface Perspective {
 
   /// Determines whether it should override the vanilla camera logic for this perspective.
   ///
+  /// Checked on every render tick.
+  ///
   /// Returning `false` disables all camera modifications provided by {@link PerspectiveAPI},
   /// allowing your mod to apply its own camera modifications through Mixin or something.
   ///
@@ -41,6 +43,8 @@ public interface Perspective {
   }
 
   /// Whether camera transition is enabled when switching to this perspective.
+  ///
+  /// Checked on every render tick.
   default boolean allowTransition() {
     return true;
   }
@@ -66,28 +70,39 @@ public interface Perspective {
   /// Called every render tick.
   @NonNull Quaternionfc getRotation();
 
-  /// Modifies the field of view. Return the modified value, or `vanillaFieldOfView` to keep
-  /// vanilla behavior.
+  /// Modifies the field of view. Return the modified value, or `originFOV` to keep
+  /// original behavior.
   ///
   /// Called every render tick.
-  default float getFieldOfView(float vanillaFieldOfView) {
-    return vanillaFieldOfView;
+  default float getFieldOfView(float originFOV) {
+    return originFOV;
   }
 
   // endregion
 
   // region events
 
-  /// Called when this perspective becomes the active perspective.
+  /// Called when this perspective becomes the current perspective (The one got from {@link
+  /// PerspectiveManager#getCurrent()}).
+  ///
+  /// @see #onDeactivate()
   default void onActivate() {}
 
+  /// Called when this perspective is no longer the current perspective (The one got from {@link
+  /// PerspectiveManager#getCurrent()}).
+  ///
+  /// @see #onActivate()
+  default void onDeactivate() {}
+
   /// Called every client tick while this perspective is active.
+  ///
+  /// @see #renderTick
   default void clientTick(Minecraft minecraft) {}
 
   /// Called on render tick while this perspective is active.
+  ///
+  /// @see #clientTick
   default void renderTick(@NonNull PerspectiveRenderTickContext context) {}
-
-  default void onDeactivate() {}
 
   // endregion
 }
