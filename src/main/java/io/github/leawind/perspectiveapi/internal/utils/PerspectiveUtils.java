@@ -26,7 +26,7 @@ public final class PerspectiveUtils {
   /// @param partialTicks interpolation factor
   /// @param quat destination quaternion
   public static void getEntityRotation(Entity entity, float partialTicks, Quaternionf quat) {
-    PerspectiveHelper.getQuat(
+    PerspectiveHelper.eulerDegToQuat(
         new Vec2(entity.getViewXRot(partialTicks), entity.getViewYRot(partialTicks)), quat);
   }
 
@@ -70,7 +70,7 @@ public final class PerspectiveUtils {
     // refer to net.minecraft.client.Camera#setRotation
     var cameraAdapter = CameraAccessor.of(camera);
 
-    Vector2f orientation = PerspectiveHelper.getEulerDeg(rotation, new Vector2f());
+    Vector2f orientation = PerspectiveHelper.quatToEulerDeg(rotation, new Vector2f());
 
     // #xRot, #yRot: float
     cameraAdapter.setXRot(orientation.x());

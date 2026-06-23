@@ -19,7 +19,6 @@ public final class PerspectiveHelper {
   private PerspectiveHelper() {}
 
   // region const fields
-  // UP and DOWN are consistent across versions
   public static final Vector3fc UP = new Vector3f(0.0F, 1.0F, 0.0F);
   public static final Vector3fc DOWN = new Vector3f(0.0F, -1.0F, 0.0F);
 
@@ -42,7 +41,7 @@ public final class PerspectiveHelper {
 
   // endregion
 
-  // region local vector
+  // region local directional vector
   /// Transforms the forward direction by the given rotation.
   public static Vector3f getForwardVector(Quaternionfc quat, Vector3f dest) {
     return quat.transform(FORWARD, dest);
@@ -78,13 +77,13 @@ public final class PerspectiveHelper {
   // region view vector
 
   /// Computes the view vector from a quaternion rotation.
-  public static Vector3f getViewVector(Quaternionfc quat, Vector3f dest) {
+  public static Vector3f quatToViewVector(Quaternionfc quat, Vector3f dest) {
     return quat.transform(FORWARD, dest);
   }
 
   /// Computes the view vector from JOML orientation angles.
   /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Vector3f getViewVector(Vector2fc eulerDeg, Vector3f dest) {
+  public static Vector3f eulerDegToViewVector(Vector2fc eulerDeg, Vector3f dest) {
     float pitchRad = eulerDeg.x() * DEG_TO_RAD;
     float yawRad = eulerDeg.y() * DEG_TO_RAD;
 
@@ -98,16 +97,16 @@ public final class PerspectiveHelper {
 
   /// Computes the view vector from Minecraft's native orientation angles.
   /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Vector3f getViewVector(Vec2 eulerDeg, Vector3f dest) {
-    return getViewVector(new Vector2f(eulerDeg.x, eulerDeg.y), dest);
+  public static Vector3f eulerDegToViewVector(Vec2 eulerDeg, Vector3f dest) {
+    return eulerDegToViewVector(new Vector2f(eulerDeg.x, eulerDeg.y), dest);
   }
 
   // endregion
 
-  // region orientation
+  // region euler degree
   /// Extracts orientation angles from a quaternion rotation.
   /// @return The orientation as (pitch, yaw) in degrees.
-  public static Vector2f getEulerDeg(Quaternionfc rotation, Vector2f dest) {
+  public static Vector2f quatToEulerDeg(Quaternionfc rotation, Vector2f dest) {
     // >=1.21  : rotationYXZ(PI - yaw, -pitch, 0)
     //   eulerAng.x = -pitch, eulerAng.y = PI - yaw
     // <=1.20.4: rotationYXZ(-yaw, pitch, 0)
@@ -126,7 +125,7 @@ public final class PerspectiveHelper {
 
   /// Computes orientation angles from a view vector.
   /// @return The orientation as (pitch, yaw) in degrees.
-  public static Vector2f getEulerDeg(Vector3fc viewVector, Vector2f dest) {
+  public static Vector2f viewViector2EulerDeg(Vector3fc viewVector, Vector2f dest) {
     float x = viewVector.x();
     float y = viewVector.y();
     float z = viewVector.z();
@@ -139,10 +138,10 @@ public final class PerspectiveHelper {
 
   // endregion
 
-  // region rotation
+  // region quaternion
   /// Constructs a quaternion rotation from JOML orientation angles.
   /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Quaternionf getQuat(Vector2fc eulerDeg, Quaternionf dest) {
+  public static Quaternionf eulerDegToQuat(Vector2fc eulerDeg, Quaternionf dest) {
     /*? if >=1.21 {*/
     float pitchRad = -eulerDeg.x() * DEG_TO_RAD;
     float yawRad = (float) Math.PI - eulerDeg.y() * DEG_TO_RAD;
@@ -157,12 +156,12 @@ public final class PerspectiveHelper {
 
   /// Constructs a quaternion rotation from Minecraft's native orientation angles.
   /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Quaternionf getQuat(Vec2 eulerDeg, Quaternionf dest) {
-    return getQuat(new Vector2f(eulerDeg.x, eulerDeg.y), dest);
+  public static Quaternionf eulerDegToQuat(Vec2 eulerDeg, Quaternionf dest) {
+    return eulerDegToQuat(new Vector2f(eulerDeg.x, eulerDeg.y), dest);
   }
 
   /// Constructs a quaternion rotation from a view vector.
-  public static Quaternionf getQuat(Vector3fc viewVector, Quaternionf dest) {
+  public static Quaternionf viewVectorToQuat(Vector3fc viewVector, Quaternionf dest) {
     float x = viewVector.x();
     float y = viewVector.y();
     float z = viewVector.z();

@@ -60,7 +60,7 @@ class PerspectiveHelperTest {
           .forEach(
               (eulerDeg) ->
                   TestUtils.assertQuatEquals(
-                      toQuat_mc(eulerDeg), PerspectiveHelper.getQuat(eulerDeg, new Quaternionf())));
+                      toQuat_mc(eulerDeg), PerspectiveHelper.eulerDegToQuat(eulerDeg, new Quaternionf())));
     }
 
     @Test
@@ -71,7 +71,7 @@ class PerspectiveHelperTest {
           .forEach(
               (eulerDeg) -> {
                 var forward_mc = getForward_mc(eulerDeg);
-                var quat = PerspectiveHelper.getQuat(eulerDeg, new Quaternionf());
+                var quat = PerspectiveHelper.eulerDegToQuat(eulerDeg, new Quaternionf());
                 var forward = PerspectiveHelper.getForwardVector(quat, new Vector3f());
 
                 TestUtils.assertVectorEquals(forward_mc, forward, 1e-4f);
@@ -86,7 +86,7 @@ class PerspectiveHelperTest {
           .forEach(
               (eulerDeg) -> {
                 var up_mc = getUp_mc(eulerDeg);
-                var quat = PerspectiveHelper.getQuat(eulerDeg, new Quaternionf());
+                var quat = PerspectiveHelper.eulerDegToQuat(eulerDeg, new Quaternionf());
                 var up = PerspectiveHelper.getUpVector(quat, new Vector3f());
 
                 TestUtils.assertVectorEquals(up_mc, up, 1e-4f);
@@ -101,7 +101,7 @@ class PerspectiveHelperTest {
           .forEach(
               (eulerDeg) -> {
                 var left_mc = getLeft_mc(eulerDeg);
-                var quat = PerspectiveHelper.getQuat(eulerDeg, new Quaternionf());
+                var quat = PerspectiveHelper.eulerDegToQuat(eulerDeg, new Quaternionf());
                 var left = PerspectiveHelper.getLeftVector(quat, new Vector3f());
 
                 TestUtils.assertVectorEquals(left_mc, left, 1e-4f);
@@ -160,10 +160,10 @@ class PerspectiveHelperTest {
                     (float) Math.toRadians(yawDeg), (float) Math.toRadians(pitchDeg), 0.0f);
 
         Vector2f orientation = new Vector2f();
-        PerspectiveHelper.getEulerDeg(original, orientation);
+        PerspectiveHelper.quatToEulerDeg(original, orientation);
 
         Quaternionf reconstructed = new Quaternionf();
-        PerspectiveHelper.getQuat(orientation, reconstructed);
+        PerspectiveHelper.eulerDegToQuat(orientation, reconstructed);
 
         assertTrue(
             original.equals(reconstructed, DELTA),
@@ -182,12 +182,12 @@ class PerspectiveHelperTest {
             .rotationYXZ((float) Math.toRadians(yawDeg), (float) Math.toRadians(pitchDeg), 0.0f);
 
     Vector2f tempVector = new Vector2f();
-    PerspectiveHelper.getEulerDeg(original, tempVector);
+    PerspectiveHelper.quatToEulerDeg(original, tempVector);
 
     Vec2 mcVec2 = new Vec2(tempVector.x, tempVector.y);
 
     Quaternionf reconstructed = new Quaternionf();
-    PerspectiveHelper.getQuat(mcVec2, reconstructed);
+    PerspectiveHelper.eulerDegToQuat(mcVec2, reconstructed);
 
     assertTrue(original.equals(reconstructed, DELTA), "Round trip with Minecraft Vec2 failed");
   }
@@ -197,11 +197,11 @@ class PerspectiveHelperTest {
   // ==========================================
 
   @Test
-  void testGetViewVector_FromOrientation_MCLogic() {
+  void testEulerDegToViewVector_FromOrientation_MCLogic() {
     // Scenario 1: Pitch=0, Yaw=0 (facing south +Z)
     Vector2f ori1 = new Vector2f(0.0f, 0.0f);
     Vector3f vec1 = new Vector3f();
-    PerspectiveHelper.getViewVector(ori1, vec1);
+    PerspectiveHelper.eulerDegToViewVector(ori1, vec1);
     assertEquals(0.0f, vec1.x, DELTA);
     assertEquals(0.0f, vec1.y, DELTA);
     assertEquals(1.0f, vec1.z, DELTA);
@@ -209,7 +209,7 @@ class PerspectiveHelperTest {
     // Scenario 2: Pitch=-90 (looking straight up +Y), Yaw=0
     Vector2f ori2 = new Vector2f(-90.0f, 0.0f);
     Vector3f vec2 = new Vector3f();
-    PerspectiveHelper.getViewVector(ori2, vec2);
+    PerspectiveHelper.eulerDegToViewVector(ori2, vec2);
     assertEquals(0.0f, vec2.x, DELTA);
     assertEquals(1.0f, vec2.y, DELTA);
     assertEquals(0.0f, vec2.z, DELTA);
@@ -217,7 +217,7 @@ class PerspectiveHelperTest {
     // Scenario 3: Pitch=0, Yaw=90 (facing west -X)
     Vector2f ori3 = new Vector2f(0.0f, 90.0f);
     Vector3f vec3 = new Vector3f();
-    PerspectiveHelper.getViewVector(ori3, vec3);
+    PerspectiveHelper.eulerDegToViewVector(ori3, vec3);
     assertEquals(-1.0f, vec3.x, DELTA);
     assertEquals(0.0f, vec3.y, DELTA);
     assertEquals(0.0f, vec3.z, DELTA);
@@ -233,10 +233,10 @@ class PerspectiveHelperTest {
         Vector2f originalOrientation = new Vector2f(pitchDeg, yawDeg);
 
         Vector3f viewVector = new Vector3f();
-        PerspectiveHelper.getViewVector(originalOrientation, viewVector);
+        PerspectiveHelper.eulerDegToViewVector(originalOrientation, viewVector);
 
         Vector2f reconstructedOrientation = new Vector2f();
-        PerspectiveHelper.getEulerDeg(viewVector, reconstructedOrientation);
+        PerspectiveHelper.viewViector2EulerDeg(viewVector, reconstructedOrientation);
 
         assertEquals(
             originalOrientation.x,
