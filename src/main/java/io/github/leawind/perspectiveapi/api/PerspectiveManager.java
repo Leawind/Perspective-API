@@ -20,7 +20,8 @@ public interface PerspectiveManager {
   /// @return the perspective cycler for cycling through perspectives.
   @NonNull PerspectiveCycler cycler();
 
-  @NonNull Identifier getDefault();
+  /// Returns the default perspective.
+  @NonNull Perspective getDefault();
 
   /// Returns the current active perspective after resolving the override chain.
   /// Never returns `null`.
@@ -32,12 +33,5 @@ public interface PerspectiveManager {
 
   default boolean isCurrent(@NonNull Perspective perspective) {
     return getCurrent() == perspective;
-  }
-
-  /// Returns the default perspective.
-  default @NonNull Perspective getDefaultPerspective() {
-    Perspective perspective = registry().get(getDefault());
-    assert perspective != null;
-    return perspective;
   }
 }

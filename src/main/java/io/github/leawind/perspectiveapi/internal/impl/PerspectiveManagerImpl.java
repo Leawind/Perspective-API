@@ -85,8 +85,8 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   @Override
-  public @NonNull Identifier getDefault() {
-    return defaultId;
+  public @NonNull Perspective getDefault() {
+    return Objects.requireNonNull(registry().get(defaultId));
   }
 
   public void resolveAndUpdateCurrentPerspective() {
@@ -103,7 +103,7 @@ public class PerspectiveManagerImpl implements PerspectiveManager {
       }
     }
 
-    return getDefaultPerspective();
+    return getDefault();
   }
 
   private void setCurrentPerspective(@NonNull Perspective perspective) {
