@@ -136,11 +136,11 @@ public final class PerspectiveUtils {
     }
     minecraft.options.setCameraType(newCameraType);
     /*? if <26.2 {*/
-    var levelRenderer = minecraft.levelRenderer;
+    /*var levelRenderer = minecraft.levelRenderer;
     if (levelRenderer != null) {
       levelRenderer.needsUpdate();
     }
-    /*? }*/
+    *//*? }*/
   }
 
   /// Gets the main camera instance.
@@ -153,11 +153,10 @@ public final class PerspectiveUtils {
     var gameRenderer = minecraft.gameRenderer;
     if (gameRenderer == null) return null;
     /*? if >=26.2 {*/
-    /*return gameRenderer.mainCamera();
-     */
+    return gameRenderer.mainCamera();
     /*? } else {*/
-    return gameRenderer.getMainCamera();
-    /*? }*/
+    /*return gameRenderer.getMainCamera();
+    *//*? }*/
   }
   
   /// Clamps a float value between min and max.
