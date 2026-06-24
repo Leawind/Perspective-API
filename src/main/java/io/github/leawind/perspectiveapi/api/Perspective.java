@@ -63,7 +63,7 @@ public interface Perspective {
   /// Called every render tick.
   ///
   /// @return the field of view, or `null` to keep original.
-  default Float getFieldOfView() {
+  default @Nullable Float getFieldOfView() {
     return null;
   }
 
@@ -86,7 +86,7 @@ public interface Perspective {
   /// Called every client tick while this perspective is active.
   ///
   /// @see #renderTick
-  default void clientTick(Minecraft minecraft) {}
+  default void clientTick(@NonNull Minecraft minecraft) {}
 
   /// Called on render tick while this perspective is active.
   ///

@@ -11,10 +11,6 @@ import org.jspecify.annotations.Nullable;
 /// Entries are evaluated in descending order of priority. The chain resolves to the first
 /// non-null identifier that passes the provided validator.
 public interface PerspectiveOverrideChain {
-
-  /// Pushes an override entry into the chain.
-  /// If an entry with the same key already exists, it is replaced.
-  /// Higher priority values take precedence (are evaluated first).
   void push(
       @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier);
 

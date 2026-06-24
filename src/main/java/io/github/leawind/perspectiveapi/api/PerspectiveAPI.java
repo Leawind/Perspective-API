@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
+import org.jspecify.annotations.NonNull;
 
 /// Entry point for mod Perspective API
 public final class PerspectiveAPI {
@@ -10,7 +11,7 @@ public final class PerspectiveAPI {
   public static final String MOD_NAME = "Perspective API";
 
   /// @return  the global singleton of {@link PerspectiveManager}
-  public static PerspectiveManager getManager() {
+  public static @NonNull PerspectiveManager getManager() {
     return PerspectiveManagerImpl.INSTANCE;
   }
 }
