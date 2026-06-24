@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.bridge;
 
-import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -29,18 +28,6 @@ public final class Bridge {
     return Identifier.fromNamespaceAndPath(namespace, path);
     /*? } else {*/
     /*return new Identifier(namespace, path);
-    *//*? }*/
-  }
-
-  @SuppressWarnings("ConstantConditions")
-  public static float getCurrentFov() {
-    Minecraft minecraft = Minecraft.getInstance();
-    if (minecraft == null) return 70.0f;
-    
-    /*? if >=26.1 {*/
-    return CameraAccessor.of(getMainCamera()).getFov();
-    /*? } else {*/
-    /*return ((io.github.leawind.perspectiveapi.internal.bridge.mixin.GameRenderAccessorMixin) minecraft.gameRenderer).getFov();
     *//*? }*/
   }
 
