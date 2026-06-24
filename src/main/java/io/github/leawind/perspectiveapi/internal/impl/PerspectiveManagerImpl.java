@@ -145,8 +145,6 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   public void updateCamera(float partialTicks, Camera camera) {
     Perspective perspective = getCurrent();
 
-    if (!perspective.shouldOverrideVanillaCamera()) return;
-
     long now = System.currentTimeMillis();
     boolean isInTransition = transition.isInTransition(now) && perspective.allowTransition();
 
@@ -161,20 +159,20 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
       perspective.renderTick(renderTickContext);
     }
 
-    // modify camera position and rotation
-
     Vector3dc position;
-    Quaternionfc quat;
+    Quaternionfc rotation;
     if (isInTransition) {
       transition.update(now, perspective);
       position = transition.getPosition();
-      quat = transition.getRotation();
+      rotation = transition.getRotation();
     } else {
       position = perspective.getPosition();
-      quat = perspective.getRotation();
+      rotation = perspective.getRotation();
     }
-    PerspectiveUtils.setCameraPosition(camera, position);
-    PerspectiveUtils.setCameraRotationQuat(camera, quat);
+
+    // Apply to camera
+    if (position != null) PerspectiveUtils.setCameraPosition(camera, position);
+    if (rotation != null) PerspectiveUtils.setCameraRotationQuat(camera, rotation);
   }
 
   // endregion

@@ -5,9 +5,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
-import org.joml.Quaternionfc;
 import org.joml.Vector3d;
-import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 
 public sealed class VanillaPerspective implements Perspective
@@ -35,18 +33,8 @@ public sealed class VanillaPerspective implements Perspective
   }
 
   @Override
-  public final @NonNull Vector3dc getPosition() {
-    return position;
-  }
-
-  @Override
-  public final @NonNull Quaternionfc getRotation() {
-    return rotation;
-  }
-
-  @Override
   public boolean allowTransition() {
-    return true;
+    return false;
   }
 
   @Override

@@ -7,6 +7,7 @@ import net.minecraft.resources.Identifier;
 import org.joml.Quaternionfc;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public interface Perspective {
   // region meta info
@@ -19,28 +20,7 @@ public interface Perspective {
   @NonNull Identifier id();
 
   /// Corresponding camera type for this perspective.
-  ///
-  /// If {@link #shouldOverrideVanillaCamera()} returns false, the behavior of this perspective will
-  /// be the same as the vanilla camera type.
   @NonNull CameraType cameraType();
-
-  /// Determines whether it should override the vanilla camera logic for this perspective.
-  ///
-  /// Checked on every render tick.
-  ///
-  /// Returning `false` disables all camera modifications provided by {@link PerspectiveAPI},
-  /// allowing your mod to apply its own camera modifications through Mixin or something.
-  ///
-  /// Just remember to check if the current perspective is which you are working on:
-  ///
-  /// ```java
-  /// if (PerspectiveAPI.getManager().getCurrentPerspective() != ExamplePerspective.INSTANCE) {
-  ///   return;
-  /// }
-  /// ```
-  default boolean shouldOverrideVanillaCamera() {
-    return true;
-  }
 
   /// Whether camera transition is enabled when switching to this perspective.
   ///
@@ -63,19 +43,28 @@ public interface Perspective {
   /// Returns the camera position in world coordinates when this perspective is active.
   ///
   /// Called every render tick.
-  @NonNull Vector3dc getPosition();
+  ///
+  /// @return the position, or `null` to keep original.
+  default @Nullable Vector3dc getPosition() {
+    return null;
+  }
 
   /// Returns the rotation of the camera when this perspective is active.
   ///
   /// Called every render tick.
-  @NonNull Quaternionfc getRotation();
+  /// @return the rotation, or `null` to keep original.
+  default @Nullable Quaternionfc getRotation() {
+    return null;
+  }
 
   /// Modifies the field of view. Return the modified value, or `originFov` to keep
   /// original behavior.
   ///
   /// Called every render tick.
-  default float getFieldOfView(float originFov) {
-    return originFov;
+  ///
+  /// @return the field of view, or `null` to keep original.
+  default Float getFieldOfView() {
+    return null;
   }
 
   // endregion

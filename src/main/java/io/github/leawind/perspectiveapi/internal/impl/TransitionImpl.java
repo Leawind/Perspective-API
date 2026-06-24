@@ -77,8 +77,15 @@ public final class TransitionImpl implements Transition {
     x = PerspectiveUtils.clamp(x, 0, 1);
     x = blender.blend(x);
 
-    startPosition.lerp(perspective.getPosition(), x, position);
-    startRotation.slerp(perspective.getRotation(), x, rotation);
+    var targetPosition = perspective.getPosition();
+    if (targetPosition != null) {
+      startPosition.lerp(perspective.getPosition(), x, position);
+    }
+
+    Quaternionfc targetRotation = perspective.getRotation();
+    if (targetRotation != null) {
+      startRotation.slerp(targetRotation, x, rotation);
+    }
   }
 
   /// @return current interpolated position

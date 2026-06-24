@@ -11,10 +11,6 @@ public final class VanillaThirdPersonPerspective extends VanillaPerspective {
   public static final VanillaThirdPersonPerspective FRONT =
       new VanillaThirdPersonPerspective("third_person_front", CameraType.THIRD_PERSON_FRONT);
 
-  public boolean shouldOverrideVanillaCamera() {
-    return false;
-  }
-
   private VanillaThirdPersonPerspective(String name, CameraType cameraType) {
     super(name, cameraType);
   }

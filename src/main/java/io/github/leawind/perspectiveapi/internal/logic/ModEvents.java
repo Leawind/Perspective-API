@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
@@ -44,9 +43,10 @@ public final class ModEvents {
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
         (ctx) -> {
-          Perspective perspective = manager.getCurrent();
-          if (!perspective.shouldOverrideVanillaCamera()) return;
-          ctx.fieldOfView = perspective.getFieldOfView(ctx.fieldOfView);
+          Float fov = manager.getCurrent().getFieldOfView();
+          if (fov != null) {
+            ctx.fieldOfView = fov;
+          }
         });
 
     // endregion

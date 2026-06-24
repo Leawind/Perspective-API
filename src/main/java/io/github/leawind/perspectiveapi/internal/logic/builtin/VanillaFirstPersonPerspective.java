@@ -17,13 +17,7 @@ public final class VanillaFirstPersonPerspective extends VanillaPerspective {
   }
 
   @Override
-  public boolean shouldOverrideVanillaCamera() {
-    return false;
-  }
-
-  @Override
   public void renderTick(@NonNull PerspectiveRenderTickContext context) {
-    // This method is never called because shouldOverrideVanillaCamera returns false
     var entity = context.entity();
     if (entity == null) {
       return;
