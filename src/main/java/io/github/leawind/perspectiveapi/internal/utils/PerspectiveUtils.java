@@ -3,8 +3,6 @@ package io.github.leawind.perspectiveapi.internal.utils;
 import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import net.minecraft.client.Camera;
-import net.minecraft.client.CameraType;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
@@ -14,7 +12,6 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
-import org.jspecify.annotations.Nullable;
 
 /// Utility methods for camera and perspective operations.
 public final class PerspectiveUtils {
@@ -114,51 +111,6 @@ public final class PerspectiveUtils {
     setCameraRotationEulerDeg(camera, eulerDeg.x, eulerDeg.y);
   }
 
-  /// Updates the camera type and triggers necessary side effects.
-  ///
-  /// Handles post-effect checks and renderer updates when switching between first-person
-  /// and third-person views.
-  ///
-  /// @param newCameraType the new camera type to set
-  @SuppressWarnings("ConstantConditions")
-  public static void updateCameraType(CameraType newCameraType) {
-    // similar to vanilla: `Minecraft#handleKeybinds()`
-
-    Minecraft minecraft = Minecraft.getInstance();
-    if (minecraft == null || minecraft.options == null || minecraft.gameRenderer == null) {
-      return;
-    }
-
-    var oldCameraType = minecraft.options.getCameraType();
-    if (oldCameraType.isFirstPerson() != newCameraType.isFirstPerson()) {
-      minecraft.gameRenderer.checkEntityPostEffect(
-          newCameraType.isFirstPerson() ? minecraft.getCameraEntity() : null);
-    }
-    minecraft.options.setCameraType(newCameraType);
-    /*? if <26.2 {*/
-    /*var levelRenderer = minecraft.levelRenderer;
-    if (levelRenderer != null) {
-      levelRenderer.needsUpdate();
-    }
-    *//*? }*/
-  }
-
-  /// Gets the main camera instance.
-  ///
-  /// @return the main camera, or null if unavailable
-  @SuppressWarnings("ConstantConditions")
-  public static @Nullable Camera getMainCamera() {
-    var minecraft = Minecraft.getInstance();
-    if (minecraft == null) return null;
-    var gameRenderer = minecraft.gameRenderer;
-    if (gameRenderer == null) return null;
-    /*? if >=26.2 {*/
-    return gameRenderer.mainCamera();
-    /*? } else {*/
-    /*return gameRenderer.getMainCamera();
-    *//*? }*/
-  }
-  
   /// Clamps a float value between min and max.
   ///
   /// @param value the value to clamp

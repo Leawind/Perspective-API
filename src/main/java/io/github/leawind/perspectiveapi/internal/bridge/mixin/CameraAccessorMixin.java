@@ -43,4 +43,9 @@ public interface CameraAccessorMixin {
   @Accessor("matrixPropertiesDirty")
   void setMatrixPropertiesDirty(int dirty);
   /*? }*/
+
+  /*? if >=26.1 {*/
+  @Accessor("fov")
+  float getFov();
+  /*? }*/
 }

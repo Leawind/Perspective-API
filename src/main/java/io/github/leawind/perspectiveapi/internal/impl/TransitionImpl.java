@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.Transition;
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.Objects;
 import org.joml.Quaternionf;
@@ -56,7 +57,7 @@ public final class TransitionImpl implements Transition {
   ///
   /// @param now current timestamp in milliseconds
   public void start(long now) {
-    var camera = PerspectiveUtils.getMainCamera();
+    var camera = Bridge.getMainCamera();
     if (camera == null) return;
 
     startTime = now;

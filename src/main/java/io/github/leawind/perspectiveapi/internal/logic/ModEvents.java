@@ -1,10 +1,10 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
-import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ public final class ModEvents {
     PerspectiveManagerImpl.INSTANCE.onCurrentPerspectiveChanged.on(
         perspective -> {
           LOGGER.debug("Switching current perspective to {}", perspective.id());
-          PerspectiveUtils.updateCameraType(perspective.cameraType());
+          Bridge.updateCameraType(perspective.cameraType());
         });
 
     // endregion

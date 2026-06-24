@@ -6,6 +6,7 @@
 	"client": [
 		"CameraAccessorMixin",
 		"CameraMixin",
+		"GameRenderAccessorMixin",
 		"GameRendererMixin",
 		"MinecraftMixin"
 	],

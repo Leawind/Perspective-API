@@ -1,7 +1,12 @@
 package io.github.leawind.perspectiveapi.internal.bridge;
 
+import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import net.minecraft.SharedConstants;
+import net.minecraft.client.Camera;
+import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.Nullable;
 
 public final class Bridge {
   private Bridge() {}
@@ -12,7 +17,7 @@ public final class Bridge {
     return SharedConstants.getCurrentVersion().dataVersion().version();
     /*? } else {*/
     /*return SharedConstants.getCurrentVersion().getDataVersion().getVersion();
-     *//*? }*/
+    *//*? }*/
   }
 
   public static Identifier createIdentifier(String path) {
@@ -24,6 +29,63 @@ public final class Bridge {
     return Identifier.fromNamespaceAndPath(namespace, path);
     /*? } else {*/
     /*return new Identifier(namespace, path);
-     *//*? }*/
+    *//*? }*/
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  public static float getCurrentFov() {
+    Minecraft minecraft = Minecraft.getInstance();
+    if (minecraft == null) return 70.0f;
+    
+    /*? if >=26.1 {*/
+    return CameraAccessor.of(getMainCamera()).getFov();
+    /*? } else {*/
+    /*return ((io.github.leawind.perspectiveapi.internal.bridge.mixin.GameRenderAccessorMixin) minecraft.gameRenderer).getFov();
+    *//*? }*/
+  }
+
+  /// Updates the camera type and triggers necessary side effects.
+  ///
+  /// Handles post-effect checks and renderer updates when switching between first-person
+  /// and third-person views.
+  ///
+  /// @param newCameraType the new camera type to set
+  @SuppressWarnings("ConstantConditions")
+  public static void updateCameraType(CameraType newCameraType) {
+    // similar to vanilla: `Minecraft#handleKeybinds()`
+
+    Minecraft minecraft = Minecraft.getInstance();
+    if (minecraft == null || minecraft.options == null || minecraft.gameRenderer == null) {
+      return;
+    }
+
+    var oldCameraType = minecraft.options.getCameraType();
+    if (oldCameraType.isFirstPerson() != newCameraType.isFirstPerson()) {
+      minecraft.gameRenderer.checkEntityPostEffect(
+          newCameraType.isFirstPerson() ? minecraft.getCameraEntity() : null);
+    }
+    minecraft.options.setCameraType(newCameraType);
+    /*? if <26.2 {*/
+    /*var levelRenderer = minecraft.levelRenderer;
+    if (levelRenderer != null) {
+      levelRenderer.needsUpdate();
+    }
+    *//*? }*/
+  }
+
+  /// Gets the main camera instance.
+  ///
+  /// @return the main camera, or null if unavailable
+  @SuppressWarnings("ConstantConditions")
+  public static @Nullable Camera getMainCamera() {
+    var minecraft = Minecraft.getInstance();
+    if (minecraft == null) return null;
+    var gameRenderer = minecraft.gameRenderer;
+    if (gameRenderer == null) return null;
+    /*? if >=26.2 {*/
+    return gameRenderer.mainCamera();
+    /*? } else {*/
+    /*return gameRenderer.getMainCamera();
+    *//*? }*/
   }
 }
