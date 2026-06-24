@@ -70,12 +70,12 @@ public interface Perspective {
   /// Called every render tick.
   @NonNull Quaternionfc getRotation();
 
-  /// Modifies the field of view. Return the modified value, or `originFOV` to keep
+  /// Modifies the field of view. Return the modified value, or `originFov` to keep
   /// original behavior.
   ///
   /// Called every render tick.
-  default float getFieldOfView(float originFOV) {
-    return originFOV;
+  default float getFieldOfView(float originFov) {
+    return originFov;
   }
 
   // endregion
