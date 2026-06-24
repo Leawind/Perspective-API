@@ -17,6 +17,6 @@ public interface PerspectiveRenderTickContext {
   /// Returns the camera entity, or `null` if unavailable.
   @Nullable Entity entity();
 
-  /// Returns `true` if the it is currently transitioning to this perspective.
+  /// Returns `true` if it is currently transitioning to this perspective.
   boolean isInTransition();
 }
