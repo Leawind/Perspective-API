@@ -7,14 +7,34 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.NonNull;
 
+/// Utility class for converting between rotation representations used in camera perspectives.
+///
 /// ### Rotation representations
 ///
-/// | Name         | Identifier   | Type               | Format                       |
-/// | ------------ | ------------ | ------------------ | ---------------------------- |
-/// | Euler Degree | `eulerDeg`   | `Vector2d`, `Vec2` | (pitch, yaw) or (xRot, yRot) |
-/// | Quaternion   | `quat`       | `Quaternionf`      | (x, y, z, w)                 |
-/// | View Vector  | `viewVector` | `Vector3f`         | (x, y, z)                    |
+/// | Name         | Identifier   | Type            | Format                                |
+/// | ------------ | ------------ | --------------- | ------------------------------------- |
+/// | Euler Degree | `eulerDeg`   | `Vector2fc`     | (pitch, yaw) in degrees               |
+/// | Euler Degree | `eulerDeg`   | `Vector3fc`     | (pitch, yaw, roll) in degrees         |
+/// | Euler Degree | `eulerDeg`   | `Vec2`          | (pitch, yaw) in degrees (MC native)   |
+/// | Quaternion   | `quat`       | `Quaternionfc`  | (x, y, z, w)                          |
+/// | View Vector  | `viewVector` | `Vector3fc`     | (x, y, z) unit direction, no roll     |
+///
+/// ### Euler angle conventions
+///
+/// - **pitch** (xRot): rotation around X axis. Positive = looking down; Negative = looking up.
+/// - **yaw**   (yRot): rotation around Y axis. Positive = clockwise when viewed from above.
+/// - **roll**: rotation around Z axis. Positive = tilt right (clockwise when looking forward).
+///
+/// All euler angles are in **degrees** unless explicitly noted otherwise.
+///
+/// ### Notes
+///
+/// - Minecraft's native `Vec2` stores `(xRot=pitch, yRot=yaw)`.
+/// - A view vector encodes only a direction (pitch + yaw); roll information is lost in conversion.
+/// - Internal quaternion composition uses **YXZ** order to match vanilla Minecraft.
+@SuppressWarnings("unused")
 public final class PerspectiveHelper {
   private PerspectiveHelper() {}
 
@@ -32,8 +52,7 @@ public final class PerspectiveHelper {
   public static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, -1.0F);
   public static final Vector3fc LEFT = new Vector3f(1.0F, 0.0F, 0.0F);
   public static final Vector3fc RIGHT = new Vector3f(-1.0F, 0.0F, 0.0F);
-  */
-  /*? }*/
+  *//*? }*/
 
   private static final float DEG_TO_RAD = (float) Math.PI / 180.0F;
   private static final float RAD_TO_DEG = 180.0F / (float) Math.PI;
@@ -41,50 +60,53 @@ public final class PerspectiveHelper {
   // endregion
 
   // region local directional vector
+
   /// Transforms the forward direction by the given rotation.
-  public static Vector3f getForwardVector(Quaternionfc quat, Vector3f dest) {
+  public static Vector3f getForwardVector(@NonNull Quaternionfc quat, @NonNull Vector3f dest) {
     return quat.transform(FORWARD, dest);
   }
 
   /// Transforms the backward direction by the given rotation.
-  public static Vector3f getBackwardVector(Quaternionfc quat, Vector3f dest) {
+  public static Vector3f getBackwardVector(@NonNull Quaternionfc quat, @NonNull Vector3f dest) {
     return quat.transform(BACKWARD, dest);
   }
 
   /// Transforms the up direction by the given rotation.
-  public static Vector3f getUpVector(Quaternionfc quat, Vector3f dest) {
+  public static Vector3f getUpVector(@NonNull Quaternionfc quat, @NonNull Vector3f dest) {
     return quat.transform(UP, dest);
   }
 
   /// Transforms the down direction by the given rotation.
-  public static Vector3f getDownVector(Quaternionfc quat, Vector3f dest) {
+  public static Vector3f getDownVector(@NonNull Quaternionfc quat, @NonNull Vector3f dest) {
     return quat.transform(DOWN, dest);
   }
 
   /// Transforms the left direction by the given rotation.
-  public static Vector3f getLeftVector(Quaternionfc quat, Vector3f dest) {
+  public static Vector3f getLeftVector(@NonNull Quaternionfc quat, @NonNull Vector3f dest) {
     return quat.transform(LEFT, dest);
   }
 
   /// Transforms the right direction by the given rotation.
-  public static Vector3f getRightVector(Quaternionfc quat, Vector3f dest) {
+  public static Vector3f getRightVector(@NonNull Quaternionfc quat, @NonNull Vector3f dest) {
     return quat.transform(RIGHT, dest);
   }
 
   // endregion
 
-  // region view vector
+  // region to view vector
 
   /// Computes the view vector from a quaternion rotation.
-  public static Vector3f quatToViewVector(Quaternionfc quat, Vector3f dest) {
+  ///
+  /// Roll (if any) does not affect the resulting direction.
+  public static Vector3f quatToViewVector(@NonNull Quaternionfc quat, @NonNull Vector3f dest) {
     return quat.transform(FORWARD, dest);
   }
 
-  /// Computes the view vector from JOML orientation angles.
+  /// Computes the view vector from euler angles (pitch, yaw). Roll is ignored.
   ///
   /// @param xRot The pitch angle in degrees.
-  /// @param yRot The yaw angle in degrees.
-  public static Vector3f eulerDegToViewVector(float xRot, float yRot, Vector3f dest) {
+  /// @param yRot   The yaw angle in degrees.
+  public static Vector3f eulerDegToViewVector(float xRot, float yRot, @NonNull Vector3f dest) {
     float pitchRad = xRot * DEG_TO_RAD;
     float yawRad = yRot * DEG_TO_RAD;
 
@@ -96,42 +118,34 @@ public final class PerspectiveHelper {
     return dest.set(-sinYaw * cosPitch, -sinPitch, cosYaw * cosPitch);
   }
 
-  /// Computes the view vector from JOML orientation angles.
+  /// Computes the view vector from euler angles `(pitch, yaw)`.
+  ///
   /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Vector3f eulerDegToViewVector(Vector2fc eulerDeg, Vector3f dest) {
+  public static Vector3f eulerDegToViewVector(@NonNull Vector2fc eulerDeg, @NonNull Vector3f dest) {
+    return eulerDegToViewVector(eulerDeg.x(), eulerDeg.y(), dest);
+  }
+
+  /// Computes the view vector from euler angles `(pitch, yaw, roll)`.
+  /// Roll is ignored since a view vector only encodes direction.
+  ///
+  /// @param eulerDeg The orientation as (pitch, yaw, roll) in degrees.
+  public static Vector3f eulerDegToViewVector(@NonNull Vector3fc eulerDeg, @NonNull Vector3f dest) {
     return eulerDegToViewVector(eulerDeg.x(), eulerDeg.y(), dest);
   }
 
   /// Computes the view vector from Minecraft's native orientation angles.
-  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Vector3f eulerDegToViewVector(Vec2 eulerDeg, Vector3f dest) {
+  ///
+  /// @param eulerDeg The orientation as (pitch=x, yaw=y) in degrees.
+  public static Vector3f eulerDegToViewVector(@NonNull Vec2 eulerDeg, @NonNull Vector3f dest) {
     return eulerDegToViewVector(eulerDeg.x, eulerDeg.y, dest);
   }
 
-  // endregion
-
-  // region euler degree
-  /// Extracts orientation angles from a quaternion rotation.
-  /// @return The orientation as (pitch, yaw) in degrees.
-  public static Vector2f quatToEulerDeg(Quaternionfc rotation, Vector2f dest) {
-    // >=1.21  : rotationYXZ(PI - yaw, -pitch, 0)
-    //   eulerAng.x = -pitch, eulerAng.y = PI - yaw
-    // <=1.20.4: rotationYXZ(-yaw, pitch, 0)
-    //   eulerAng.x = pitch, eulerAng.y = -yaw
-
-    final Vector3f eulerAng = new Vector3f();
-    rotation.getEulerAnglesYXZ(eulerAng);
-    /*? if >=1.21 {*/
-    return dest.set(-eulerAng.x() * RAD_TO_DEG, (float) ((Math.PI - eulerAng.y()) * RAD_TO_DEG));
-    /*? } else {*/
-    /*return dest.set(eulerAng.x() * RAD_TO_DEG, -eulerAng.y() * RAD_TO_DEG);
-     */
-    /*? }*/
-  }
-
-  /// Computes orientation angles from a view vector.
-  /// @return The orientation as (pitch, yaw) in degrees.
-  public static Vector2f viewViector2EulerDeg(Vector3fc viewVector, Vector2f dest) {
+  /// Computes orientation angles (pitch, yaw) from a view vector.
+  /// Roll cannot be recovered from a view vector and is not returned.
+  ///
+  /// @return `dest` set to (pitch, yaw) in degrees.
+  public static Vector2f viewVectorToEulerDeg(
+      @NonNull Vector3fc viewVector, @NonNull Vector2f dest) {
     float x = viewVector.x();
     float y = viewVector.y();
     float z = viewVector.z();
@@ -142,54 +156,164 @@ public final class PerspectiveHelper {
     return dest.set(pitch, yaw);
   }
 
+  /// Computes orientation angles (pitch, yaw) from a view vector, with roll set to 0.
+  ///
+  /// @return `dest` set to (pitch, yaw, 0) in degrees.
+  public static Vector3f viewVectorToEulerDeg(
+      @NonNull Vector3fc viewVector, @NonNull Vector3f dest) {
+    float x = viewVector.x();
+    float y = viewVector.y();
+    float z = viewVector.z();
+    float horizontalLength = (float) Math.sqrt(x * x + z * z);
+    // Use atan2 for numerical stability, avoiding asin overflow
+    float pitch = (float) (Math.atan2(-y, horizontalLength) * RAD_TO_DEG);
+    float yaw = (float) (-Math.atan2(x, z) * RAD_TO_DEG);
+    return dest.set(pitch, yaw, 0.0);
+  }
+
   // endregion
 
-  // region quaternion
-
-  /// Constructs a quaternion rotation from JOML orientation angles.
-  ///
-  /// @param xRot The pitch angle in degrees.
-  /// @param yRot The yaw angle in degrees.
-  public static Quaternionf eulerDegToQuat(float xRot, float yRot, Quaternionf dest) {
-    /*? if >=1.21 {*/
-    float pitchRad = -xRot * DEG_TO_RAD;
-    float yawRad = (float) Math.PI - yRot * DEG_TO_RAD;
-    /*? } else {*/
-    /*float pitchRad = xRot * DEG_TO_RAD;
-    float yawRad = -yRot * DEG_TO_RAD;
-    */
-    /*? }*/
-    return dest.rotationYXZ(yawRad, pitchRad, 0.0f);
-  }
-
-  /// Constructs a quaternion rotation from JOML orientation angles.
-  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Quaternionf eulerDegToQuat(Vector2fc eulerDeg, Quaternionf dest) {
-    return eulerDegToQuat(eulerDeg.x(), eulerDeg.y(), dest);
-  }
-
-  /// Constructs a quaternion rotation from Minecraft's native orientation angles.
-  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
-  public static Quaternionf eulerDegToQuat(Vec2 eulerDeg, Quaternionf dest) {
-    return eulerDegToQuat(eulerDeg.x, eulerDeg.y, dest);
-  }
-
+  // region to quaternion
+  
   /// Constructs a quaternion rotation from a view vector.
   public static Quaternionf viewVectorToQuat(Vector3fc viewVector, Quaternionf dest) {
     float x = viewVector.x();
     float y = viewVector.y();
     float z = viewVector.z();
     float horizontalLength = (float) Math.sqrt(x * x + z * z);
-
+    
     float pitchRad = (float) Math.atan2(-y, horizontalLength);
     float yawRad = (float) -Math.atan2(x, z);
-
+    
     /*? if >=1.21 {*/
     return dest.rotationYXZ((float) Math.PI - yawRad, -pitchRad, 0.0f);
     /*? } else {*/
     /*return dest.rotationYXZ(-yawRad, pitchRad, 0.0f);
-     */
-    /*? }*/
+    *//*? }*/
   }
+
+  /// Constructs a quaternion from euler angles (pitch, yaw) with roll = 0.
+  ///
+  /// @param xRot The pitch angle in degrees.
+  /// @param yRot   The yaw angle in degrees.
+  public static Quaternionf eulerDegToQuat(float xRot, float yRot, @NonNull Quaternionf dest) {
+    return eulerDegToQuat(xRot, yRot, 0.0f, dest);
+  }
+
+  /// Constructs a quaternion from euler angles (pitch, yaw, roll).
+  ///
+  /// @param xRot The pitch angle in degrees.
+  /// @param yRot   The yaw angle in degrees.
+  /// @param roll  The roll angle in degrees.
+  public static Quaternionf eulerDegToQuat(
+      float xRot, float yRot, float roll, @NonNull Quaternionf dest) {
+    /*? if >=1.21 {*/
+    float pitchRad = -xRot * DEG_TO_RAD;
+    float yawRad = (float) Math.PI - yRot * DEG_TO_RAD;
+    float rollRad = roll * DEG_TO_RAD;
+    /*? } else {*/
+    /*float pitchRad = xRot * DEG_TO_RAD;
+    float yawRad = -yRot * DEG_TO_RAD;
+    float rollRad = roll * DEG_TO_RAD;
+    *//*? }*/
+    return dest.rotationYXZ(yawRad, pitchRad, rollRad);
+  }
+
+  /// Constructs a quaternion from euler angles `(pitch, yaw)` with roll = 0.
+  ///
+  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
+  public static Quaternionf eulerDegToQuat(@NonNull Vector2fc eulerDeg, @NonNull Quaternionf dest) {
+    return eulerDegToQuat(eulerDeg.x(), eulerDeg.y(), dest);
+  }
+
+  /// Constructs a quaternion from euler angles `(pitch, yaw, roll)`.
+  ///
+  /// @param eulerDeg The orientation as (pitch, yaw, roll) in degrees.
+  public static Quaternionf eulerDegToQuat(@NonNull Vector3fc eulerDeg, @NonNull Quaternionf dest) {
+    return eulerDegToQuat(eulerDeg.x(), eulerDeg.y(), eulerDeg.z(), dest);
+  }
+
+  /// Constructs a quaternion from Minecraft's native orientation angles `(pitch=x, yaw=y)`.
+  ///
+  /// @param eulerDeg The orientation as (pitch, yaw) in degrees.
+  public static Quaternionf eulerDegToQuat(@NonNull Vec2 eulerDeg, @NonNull Quaternionf dest) {
+    return eulerDegToQuat(eulerDeg.x, eulerDeg.y, dest);
+  }
+
+  /// Extracts (pitch, yaw) from a quaternion, discarding roll.
+  ///
+  /// @return `dest` set to (pitch, yaw) in degrees.
+  public static Vector2f quatToEulerDeg(@NonNull Quaternionfc rotation, @NonNull Vector2f dest) {
+    Vector3f full = quatToEulerDeg(rotation, new Vector3f());
+    return dest.set(full.x(), full.y());
+  }
+
+  /// Extracts (pitch, yaw, roll) from a quaternion.
+  ///
+  /// @return `dest` set to (pitch, yaw, roll) in degrees.
+  public static Vector3f quatToEulerDeg(@NonNull Quaternionfc rotation, @NonNull Vector3f dest) {
+    // Internal decomposition uses YXZ order (matching vanilla).
+    //   >=1.21  : built via rotationYXZ(PI - yaw, -pitch, roll)
+    //                => eulerRad.x = -pitch, eulerRad.y = PI - yaw, eulerRad.z = roll
+    //   <=1.20.4: built via rotationYXZ(-yaw, pitch, roll)
+    //                => eulerRad.x = pitch,  eulerRad.y = -yaw, eulerRad.z = roll
+    final Vector3f eulerRad = new Vector3f();
+    rotation.getEulerAnglesYXZ(eulerRad);
+    /*? if >=1.21 {*/
+    return dest.set(
+        -eulerRad.x() * RAD_TO_DEG,
+        (float) ((Math.PI - eulerRad.y()) * RAD_TO_DEG),
+        eulerRad.z() * RAD_TO_DEG);
+    /*? } else {*/
+    /*return dest.set(
+        eulerRad.x() * RAD_TO_DEG,
+        -eulerRad.y() * RAD_TO_DEG,
+        eulerRad.z() * RAD_TO_DEG);
+    *//*? }*/
+  }
+
+  // endregion
+
+  // region euler utilities
+
+  /// Normalizes euler angles so that `pitch` ∈ `[-90, 90]` when possible and `yaw/roll` ∈ `(-180,
+  /// 180]`.
+  ///
+  /// Useful for stable comparisons and interpolation endpoints.
+  ///
+  /// @param eulerDeg The orientation as (pitch, yaw, roll) in degrees (modified in-place).
+  /// @return the same `eulerDeg` instance for chaining.
+  public static Vector3f normalizeEulerDeg(@NonNull Vector3f eulerDeg) {
+    float pitch = eulerDeg.x();
+    float yaw = eulerDeg.y();
+    float roll = eulerDeg.z();
+
+    // Wrap yaw and roll into (-180, 180]
+    yaw = wrapAngle(yaw);
+    roll = wrapAngle(roll);
+
+    // Normalize pitch: if outside [-90, 90], flip and compensate yaw/roll
+    pitch = wrapAngle(pitch);
+    if (pitch > 90.0f) {
+      pitch = 180.0f - pitch;
+      yaw = wrapAngle(yaw + 180.0f);
+      roll = wrapAngle(roll + 180.0f);
+    } else if (pitch < -90.0f) {
+      pitch = -180.0f - pitch;
+      yaw = wrapAngle(yaw + 180.0f);
+      roll = wrapAngle(roll + 180.0f);
+    }
+
+    return eulerDeg.set(pitch, yaw, roll);
+  }
+
+  /// Wraps an angle in degrees into the range `(-180, 180]`.
+  public static float wrapAngle(float degrees) {
+    float d = degrees % 360.0f;
+    if (d > 180.0f) d -= 360.0f;
+    else if (d <= -180.0f) d += 360.0f;
+    return d;
+  }
+
   // endregion
 }
