@@ -1,10 +1,53 @@
 {
   "tasks": {
     "publishToMavenLocal": "./gradlew publishToMavenLocal --no-parallel",
-    "collect": "deno -A scripts/collect.ts"
+    "collect": "deno -A scripts/collect.ts",
+    "clean_run_configs": "./scripts/clean_run_configs.sh"
   },
   "imports": {
     "@leawind/inventory": "jsr:@leawind/inventory@^0.19.5",
     "@std/dotenv": "jsr:@std/dotenv@^0.225.7"
+  },
+  "lint": {
+    "include": [
+      "scripts/",
+      "src/"
+    ],
+    "rules": {
+      "exclude": [
+        "ban-types",
+        "no-explicit-any",
+        "no-import-prefix",
+        "no-unreachable",
+        "require-await"
+      ]
+    }
+  },
+  "fmt": {
+    "bracePosition": "sameLine",
+    "indentWidth": 2,
+    "lineWidth": 80,
+    "newLineKind": "lf",
+    "nextControlFlowPosition": "sameLine",
+    "operatorPosition": "nextLine",
+    "proseWrap": "preserve",
+    "quoteProps": "asNeeded",
+    "semiColons": false,
+    "singleBodyPosition": "sameLine",
+    "useBraces": "always",
+    "useTabs": false,
+    "singleQuote": true,
+    "spaceAround": false,
+    "spaceSurroundingProperties": true,
+    "trailingCommas": "onlyMultiLine",
+    "typeLiteral.separatorKind": "semiColon",
+    "include": [
+      ".github/",
+      "scripts/",
+      "src/",
+      "**/*.md",
+      "**/*.json"
+    ],
+    "exclude": []
   }
 }
