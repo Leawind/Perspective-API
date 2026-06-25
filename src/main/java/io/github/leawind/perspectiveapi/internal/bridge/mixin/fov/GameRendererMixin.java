@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 *//*? }*/
 
 @Mixin(GameRenderer.class)
-public class GameRendererMixin {
+public abstract class GameRendererMixin {
   /*? if >=26.1 {*/
   /*? } else if >=1.21.11 {*/
   /*@Unique private final ModifyFieldOfViewContext context = new ModifyFieldOfViewContext();

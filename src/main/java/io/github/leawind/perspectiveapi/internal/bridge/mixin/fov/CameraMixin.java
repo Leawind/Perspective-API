@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 /*? }*/
 
 @Mixin(Camera.class)
-public class CameraMixin {
+public abstract class CameraMixin {
   /*? if >=26.1 {*/
   @Unique
   private final ModifyFieldOfViewContext modifyFieldOfViewContext = new ModifyFieldOfViewContext();

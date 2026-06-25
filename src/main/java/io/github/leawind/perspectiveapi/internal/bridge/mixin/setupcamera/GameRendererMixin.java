@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.GameRenderer;
 
 /*? if >=1.21 {*/
 @Mixin(GameRenderer.class)
-public class GameRendererMixin {}
+public abstract class GameRendererMixin {}
 
 /*? } else if >=1.20.6 {*/
 /*import org.spongepowered.asm.mixin.Shadow;
@@ -17,7 +17,7 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 @Mixin(GameRenderer.class)
-public class GameRendererMixin {
+public abstract class GameRendererMixin {
   @Shadow @Final private Camera mainCamera;
 
   @ModifyVariable(method = "renderLevel", at = @At("STORE"), ordinal = 1)
@@ -39,7 +39,7 @@ import net.minecraft.client.Camera;
 import org.joml.Vector3f;
 
 @Mixin(GameRenderer.class)
-public class GameRendererMixin {
+public abstract class GameRendererMixin {
   @Shadow @Final private Camera mainCamera;
 
   @Inject(
