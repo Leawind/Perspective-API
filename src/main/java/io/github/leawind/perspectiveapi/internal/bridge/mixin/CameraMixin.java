@@ -84,19 +84,4 @@ public abstract class CameraMixin implements CameraAccessor {
 
   // endregion
 
-  // region modify field of view
-
-  /*? if >=26.1 {*/
-  @Unique
-  private final ModifyFieldOfViewContext modifyFieldOfViewContext = new ModifyFieldOfViewContext();
-
-  @ModifyReturnValue(method = "calculateFov", at = @At(value = "RETURN"))
-  private float modifyFov(float fov) {
-    modifyFieldOfViewContext.setup(fov);
-    GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(modifyFieldOfViewContext);
-    return modifyFieldOfViewContext.fieldOfView;
-  }
-  /*? }*/
-
-  // endregion
 }

@@ -1,19 +1,17 @@
-package io.github.leawind.perspectiveapi.internal.bridge.mixin;
+package io.github.leawind.perspectiveapi.internal.bridge.mixin.fov;
 
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 
-/*? if <=1.21.11 {*/
-/*import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
+
+/*? if <26.1 {*/
+/*import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 *//*? }*/
 
-
-/// TODO >= 1.21.11 ?: (1.20.4, 1.21.11]
-@Mixin(value = GameRenderer.class)
+@Mixin(GameRenderer.class)
 public class GameRendererMixin {
   /*? if >=26.1 {*/
   /*? } else if >=1.21.11 {*/
