@@ -6,6 +6,7 @@
 	"client": [
 		"fov.CameraMixin",
 		"fov.GameRendererMixin",
+		"setupcamera.CameraMixin",
 		"CameraAccessorMixin",
 		"CameraMixin",
 		"MinecraftMixin"
