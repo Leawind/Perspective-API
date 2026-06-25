@@ -1,5 +1,10 @@
 {
   "tasks": {
-    "publishToMavenLocal": "./gradlew publishToMavenLocal --no-parallel"
+    "publishToMavenLocal": "./gradlew publishToMavenLocal --no-parallel",
+    "collect": "deno -A scripts/collect.ts"
+  },
+  "imports": {
+    "@leawind/inventory": "jsr:@leawind/inventory@^0.19.5",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.7"
   }
 }

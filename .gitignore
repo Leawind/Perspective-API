@@ -57,3 +57,8 @@ AGENTS-*.md
 
 # stonecraft
 /versions/*-*/
+
+# dotenv
+.env
+.env.*
+!.env.example

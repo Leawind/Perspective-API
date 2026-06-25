@@ -1,12 +1,41 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@leawind/delegate@0.6": "0.6.0",
+    "jsr:@leawind/inventory@~0.19.5": "0.19.5",
+    "jsr:@std/dotenv@~0.225.7": "0.225.7",
+    "jsr:@std/fs@^1.0.22": "1.0.23",
     "jsr:@std/internal@^1.0.12": "1.0.13",
-    "jsr:@std/path@*": "1.1.4",
+    "jsr:@std/path@^1.1.4": "1.1.4",
     "npm:commander@*": "14.0.3",
-    "npm:minimatch@*": "10.2.5"
+    "npm:lay-sing@~0.4.2": "0.4.2",
+    "npm:minimatch@*": "10.2.5",
+    "npm:minimatch@^10.2.5": "10.2.5"
   },
   "jsr": {
+    "@leawind/delegate@0.6.0": {
+      "integrity": "37b5638a8ba0393d40f16f8cfc1788dff3b597bdb3251633d5893c9c366f3e24"
+    },
+    "@leawind/inventory@0.19.5": {
+      "integrity": "7cf38b6a22f47ff5b7399ca064323139e9888e9ad277e27a5ea5021877f44fa0",
+      "dependencies": [
+        "jsr:@leawind/delegate",
+        "jsr:@std/fs",
+        "jsr:@std/path",
+        "npm:lay-sing",
+        "npm:minimatch@^10.2.5"
+      ]
+    },
+    "@std/dotenv@0.225.7": {
+      "integrity": "11d8db03ca4ad5aba9eba809f2e8058b2a4f320b7b09fea4b360e162928329e3"
+    },
+    "@std/fs@1.0.23": {
+      "integrity": "3ecbae4ce4fee03b180fa710caff36bb5adb66631c46a6460aaad49515565a37",
+      "dependencies": [
+        "jsr:@std/internal",
+        "jsr:@std/path"
+      ]
+    },
     "@std/internal@1.0.13": {
       "integrity": "2f9546691d4ac2d32859c82dff284aaeac980ddeca38430d07941e7e288725c0"
     },
@@ -30,11 +59,20 @@
     "commander@14.0.3": {
       "integrity": "sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw=="
     },
+    "lay-sing@0.4.2": {
+      "integrity": "sha512-kEkJosE2aguIdIhfS82UGXBdHm05Egc103FqPIy8t1+iC0ardeK58ZB28DTkuV1FV31oa97RpCWmWaCuMbm/LQ=="
+    },
     "minimatch@10.2.5": {
       "integrity": "sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==",
       "dependencies": [
         "brace-expansion"
       ]
     }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@leawind/inventory@~0.19.5",
+      "jsr:@std/dotenv@~0.225.7"
+    ]
   }
 }
