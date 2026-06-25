@@ -7,6 +7,7 @@
 		"fov.CameraMixin",
 		"fov.GameRendererMixin",
 		"setupcamera.CameraMixin",
+		"setupcamera.GameRendererMixin",
 		"CameraAccessorMixin",
 		"CameraMixin",
 		"MinecraftMixin"
