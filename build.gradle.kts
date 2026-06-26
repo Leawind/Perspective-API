@@ -112,10 +112,6 @@ dependencies {
         modImplAlias("com.terraformersmc:modmenu:${project.property("mod.modmenu_version")}")
     }
 
-    // region bundled (shadowed)
-    shadowBundle("com.github.Leawind:inventory-java:0.4.0")
-    // endregion
-
     // region test
     testCompileOnly("org.jspecify:jspecify:1.0.0")
 
@@ -159,8 +155,6 @@ tasks.shadowJar {
     minimize()
 
     val dest = "${mod.group}.lib"
-    // com.github.Leawind:inventory-java
-    relocate("io.github.leawind.inventory", "${dest}.inventory")
 }
 
 tasks.withType<RemapJarTask>().matching { it.name == "remapJar" }.configureEach {

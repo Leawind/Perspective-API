@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.inventory.event.SimpleEventEmitter;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
@@ -11,6 +10,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
+import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.resources.Identifier;

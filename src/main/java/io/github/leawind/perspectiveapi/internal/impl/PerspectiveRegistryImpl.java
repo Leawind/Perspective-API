@@ -1,9 +1,9 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.inventory.event.SimpleEventEmitter;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

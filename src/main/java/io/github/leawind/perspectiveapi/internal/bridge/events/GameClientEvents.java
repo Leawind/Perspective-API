@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.bridge.events;
 
-import io.github.leawind.inventory.event.SingleEventEmitter;
+import io.github.leawind.perspectiveapi.internal.utils.event.SingleEventEmitter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 
