@@ -61,8 +61,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private final TransitionImpl transition = new TransitionImpl();
 
   /// Temporary state extracted from camera for transition start.
-  private final PerspectiveState.Mutable cameraState = PerspectiveState.create();
-
+  private final PerspectiveState.Mutable cameraState = new PerspectiveStateImpl();
+  
   @Override
   public @NonNull PerspectiveRegistry registry() {
     return registry;

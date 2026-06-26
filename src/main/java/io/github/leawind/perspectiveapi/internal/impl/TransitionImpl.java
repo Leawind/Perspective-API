@@ -15,14 +15,10 @@ public final class TransitionImpl implements Transition {
   private Blender blender = Blender::easeOut;
   // endregion
 
-  // region start state
   private long startTime;
-  private final PerspectiveState.Mutable startState = PerspectiveState.create();
-  // endregion
+  private final PerspectiveState.Mutable startState = new PerspectiveStateImpl();
+  private final PerspectiveState.Mutable currentState = new PerspectiveStateImpl();
 
-  // region current state
-  private final PerspectiveState.Mutable currentState = PerspectiveState.create();
-  // endregion
   TransitionImpl() {}
 
   @Override

@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateImpl;
 import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -13,8 +14,8 @@ public sealed class VanillaPerspective implements Perspective
   private final Identifier id;
   private final CameraType cameraType;
 
-  protected final PerspectiveState.Mutable state = PerspectiveState.create();
-
+  protected final PerspectiveState.Mutable state = new PerspectiveStateImpl();
+  
   protected VanillaPerspective(String name, CameraType cameraType) {
     this.id = Bridge.createIdentifier(name);
     this.cameraType = cameraType;

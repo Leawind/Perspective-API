@@ -12,6 +12,8 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
   private float fieldOfView;
   private float fieldOfViewModifier = 1.0f;
 
+  public PerspectiveStateImpl() {}
+
   @Override
   public @NonNull Vector3d position() {
     return position;

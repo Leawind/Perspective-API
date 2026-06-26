@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateImpl;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector3d;
@@ -10,10 +9,6 @@ import org.jspecify.annotations.Nullable;
 
 // TODO docs
 public interface PerspectiveState {
-  static Mutable create() {
-    return new PerspectiveStateImpl();
-  }
-
   @Nullable Vector3dc position();
 
   @Nullable Quaternionfc rotation();
