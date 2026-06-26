@@ -5,21 +5,45 @@ import org.joml.Quaternionfc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 // TODO docs
 public interface PerspectiveState {
-  @Nullable Vector3dc position();
 
-  @Nullable Quaternionfc rotation();
+  default boolean hasPosition() {
+    return false;
+  }
 
-  boolean hasFieldOfView();
+  default boolean hasRotation() {
+    return false;
+  }
 
-  float getFieldOfView();
+  default boolean hasFieldOfView() {
+    return false;
+  }
 
-  float getFieldOfViewModifier();
+  default @NonNull Vector3dc getPosition() {
+    throw new IllegalStateException();
+  }
+
+  default @NonNull Quaternionfc getRotation() {
+    throw new IllegalStateException();
+  }
+
+  default float getFieldOfView() {
+    throw new IllegalStateException();
+  }
+
+  default float getFieldOfViewModifier() {
+    return 1.0f;
+  }
 
   interface Mutable extends PerspectiveState {
+    void setHasPosition(boolean value);
+
+    void setHasRotation(boolean value);
+
+    void setHasFieldOfView(boolean value);
+
     @NonNull Vector3d position();
 
     @NonNull Quaternionf rotation();
@@ -27,76 +51,5 @@ public interface PerspectiveState {
     void setFieldOfView(float fov);
 
     void setFieldOfViewModifier(float modifier);
-
-    static Mutable set(PerspectiveState state, Mutable dest) {
-      {
-        var position = state.position();
-        if (position != null) {
-          dest.position().set(state.position());
-        }
-      }
-      {
-        var rotation = state.rotation();
-        if (rotation != null) {
-          dest.rotation().set(state.rotation());
-        }
-      }
-
-      if (state.hasFieldOfView()) {
-        dest.setFieldOfView(state.getFieldOfView());
-      }
-
-      dest.setFieldOfViewModifier(state.getFieldOfViewModifier());
-      return dest;
-    }
-
-    static Mutable interpolate(
-        float t, @NonNull PerspectiveState min, @NonNull PerspectiveState max, Mutable dest) {
-      {
-        var maxPosition = max.position();
-        if (maxPosition != null) {
-          var minPosition = min.position();
-          if (minPosition != null) {
-            minPosition.lerp(maxPosition, t, dest.position());
-          } else {
-            dest.position().set(maxPosition);
-          }
-        }
-      }
-
-      {
-        var maxRotation = max.rotation();
-        if (maxRotation != null) {
-          var minRotation = min.rotation();
-          if (minRotation != null) {
-            minRotation.slerp(maxRotation, t, dest.rotation());
-          } else {
-            dest.rotation().set(maxRotation);
-          }
-        }
-      }
-
-      {
-        if (max.hasFieldOfView()) {
-          if (min.hasFieldOfView()) {
-            float maxFov = max.getFieldOfView();
-            float minFov = min.getFieldOfView();
-            float fov = minFov + (maxFov - minFov) * t;
-            dest.setFieldOfView(fov);
-          } else {
-            dest.setFieldOfView(max.getFieldOfView());
-          }
-        }
-      }
-
-      {
-        float maxFov = max.getFieldOfViewModifier();
-        float minFov = min.getFieldOfViewModifier();
-        float fov = minFov + (maxFov - minFov) * t;
-        dest.setFieldOfViewModifier(fov);
-      }
-
-      return dest;
-    }
   }
 }

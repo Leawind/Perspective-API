@@ -62,7 +62,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   /// Temporary state extracted from camera for transition start.
   private final PerspectiveState.Mutable cameraState = new PerspectiveStateImpl();
-  
+
   @Override
   public @NonNull PerspectiveRegistry registry() {
     return registry;
@@ -169,10 +169,12 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     if (state != null) {
-      var position = state.position();
-      var rotation = state.rotation();
-      if (position != null) PerspectiveUtils.setCameraPosition(camera, position);
-      if (rotation != null) PerspectiveUtils.setCameraRotationQuat(camera, rotation);
+      if (state.hasPosition()) {
+        PerspectiveUtils.setCameraPosition(camera, state.getPosition());
+      }
+      if (state.hasRotation()) {
+        PerspectiveUtils.setCameraRotationQuat(camera, state.getRotation());
+      }
     }
   }
 
@@ -183,13 +185,20 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   /// @param dest destination state to populate
   /// @return the destination state, or `null` if camera is unavailable
   private static PerspectiveState.@Nullable Mutable extractCameraState(
-      PerspectiveState.Mutable dest) {
+      PerspectiveState.@NonNull Mutable dest) {
     var camera = Bridge.getMainCamera();
     if (camera == null) return null;
+
+    dest.setHasPosition(true);
     PerspectiveUtils.getCameraPosition(camera, dest.position());
+
+    dest.setHasRotation(true);
     PerspectiveUtils.getCameraRotationQuat(camera, dest.rotation());
+
     dest.setFieldOfView(Bridge.getFov());
+
     dest.setFieldOfViewModifier(1.0f);
+
     return dest;
   }
 }

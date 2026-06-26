@@ -16,8 +16,8 @@ public final class TransitionImpl implements Transition {
   // endregion
 
   private long startTime;
-  private final PerspectiveState.Mutable startState = new PerspectiveStateImpl();
-  private final PerspectiveState.Mutable currentState = new PerspectiveStateImpl();
+  private final PerspectiveStateImpl startState = new PerspectiveStateImpl();
+  private final PerspectiveStateImpl currentState = new PerspectiveStateImpl();
 
   TransitionImpl() {}
 
@@ -45,7 +45,7 @@ public final class TransitionImpl implements Transition {
   public void start(double now, @NonNull PerspectiveState state) {
     Objects.requireNonNull(state);
     startTime = (long) now;
-    PerspectiveState.Mutable.set(state, startState);
+    startState.set(state);
   }
 
   @Override
@@ -58,8 +58,8 @@ public final class TransitionImpl implements Transition {
     x = PerspectiveUtils.clamp(x, 0, 1);
     x = blender.blend(x);
 
-    PerspectiveState.Mutable.set(startState, currentState);
-    PerspectiveState.Mutable.interpolate(x, startState, state, currentState);
+    currentState.set(startState);
+    currentState.interpolate(x, startState, state);
   }
 
   @Override

@@ -15,7 +15,7 @@ public sealed class VanillaPerspective implements Perspective
   private final CameraType cameraType;
 
   protected final PerspectiveState.Mutable state = new PerspectiveStateImpl();
-  
+
   protected VanillaPerspective(String name, CameraType cameraType) {
     this.id = Bridge.createIdentifier(name);
     this.cameraType = cameraType;
