@@ -52,7 +52,7 @@ public final class PerspectiveHelper {
   // Internal decomposition uses YXZ order (matching vanilla).
   //   >=1.21  : built via rotationYXZ(PI - yaw, -pitch, roll)
   //                => eulerRad.x = -pitch, eulerRad.y = PI - yaw, eulerRad.z = roll
-  //   <=1.20.4: built via rotationYXZ(-yaw, pitch, roll)
+  //   else: built via rotationYXZ(-yaw, pitch, roll)
   //                => eulerRad.x = pitch,  eulerRad.y = -yaw, eulerRad.z = roll
   private static final float PITCH_SIGN;
   private static final float YAW_SIGN;
