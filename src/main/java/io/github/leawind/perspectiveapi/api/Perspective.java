@@ -57,14 +57,24 @@ public interface Perspective {
     return null;
   }
 
-  /// Modifies the field of view. Return the modified value, or `null` to keep
-  /// original behavior.
+  /// Returns the basic field of view, or `null` to keep original behavior.
+  ///
+  /// The final fov will be fov * modifier
   ///
   /// Called every render tick.
   ///
-  /// @return the field of view, or `null` to keep original.
+  /// @see #getFieldOfViewModifier()
   default @Nullable Float getFieldOfView() {
     return null;
+  }
+
+  /// Field of view modifier, the final fov is fov * modifier.
+  ///
+  /// Called every render tick.
+  ///
+  /// @see #getFieldOfView()
+  default float getFieldOfViewModifier() {
+    return 1.0f;
   }
 
   // endregion
