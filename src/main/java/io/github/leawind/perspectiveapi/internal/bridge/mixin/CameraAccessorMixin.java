@@ -38,14 +38,6 @@ public interface CameraAccessorMixin {
   void setYRot(float yRot);
 
   /*? if >=26.1 {*/
-  @Accessor("matrixPropertiesDirty")
-  int getMatrixPropertiesDirty();
-
-  @Accessor("matrixPropertiesDirty")
-  void setMatrixPropertiesDirty(int dirty);
-  /*? }*/
-
-  /*? if >=26.1 {*/
   @Accessor("fov")
   float getFov();
   /*? }*/

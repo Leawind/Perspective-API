@@ -8,7 +8,6 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
-import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -61,29 +60,9 @@ public final class PerspectiveUtils {
   /// Updates all internal camera state including euler angles, quaternion, and direction vectors.
   ///
   /// @param camera the camera to modify
-  /// @param rotation new rotation
-  public static void setCameraRotationQuat(Camera camera, Quaternionfc rotation) {
-    // Apply the custom rotation to the camera.
-    // refer to net.minecraft.client.Camera#setRotation
-    var cameraAdapter = CameraAccessor.of(camera);
-
-    Vector2f orientation = PerspectiveHelper.quatToEulerDeg(rotation, new Vector2f());
-
-    // #xRot, #yRot: float
-    cameraAdapter.setXRot(orientation.x());
-    cameraAdapter.setYRot(orientation.y());
-
-    // #rotation: Quaternionf
-    cameraAdapter.getRotation().set(rotation);
-
-    // #forwards, #up, #left: Vector3f
-    PerspectiveHelper.getForwardVector(rotation, cameraAdapter.perspective_api$forwards());
-    PerspectiveHelper.getUpVector(rotation, cameraAdapter.perspective_api$up());
-    PerspectiveHelper.getLeftVector(rotation, cameraAdapter.perspective_api$left());
-
-    /*? if >=26.1 {*/
-    cameraAdapter.setMatrixPropertiesDirty(cameraAdapter.getMatrixPropertiesDirty() | 3);
-    /*? }*/
+  /// @param quat new rotation
+  public static void setCameraRotationQuat(Camera camera, Quaternionfc quat) {
+    CameraAccessor.of(camera).perspective_api$setRotation(quat);
   }
 
   /// Sets camera rotation from euler angles in degrees.
