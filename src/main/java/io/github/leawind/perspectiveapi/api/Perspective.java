@@ -4,8 +4,6 @@ import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
-import org.joml.Quaternionfc;
-import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -22,16 +20,14 @@ public interface Perspective {
   /// Corresponding camera type for this perspective.
   @NonNull CameraType cameraType();
 
+  // endregion
+
   /// Whether camera transition is enabled when switching to this perspective.
   ///
   /// Checked on every render tick.
   default boolean allowTransition() {
     return true;
   }
-
-  // endregion
-
-  // region dynamic
 
   /// Returns whether this perspective is currently available.
   ///
@@ -40,44 +36,14 @@ public interface Perspective {
     return true;
   }
 
-  /// Returns the camera position in world coordinates when this perspective is active.
+  /// Returns the camera state this perspective wants to apply.
   ///
-  /// Called every render tick.
+  /// Called every render tick after {@link #renderTick} has been invoked to compute the state.
   ///
-  /// @return the position, or `null` to keep original.
-  default @Nullable Vector3dc getPosition() {
+  /// @return the state, or `null` to keep vanilla defaults.
+  default @Nullable PerspectiveState getState() {
     return null;
   }
-
-  /// Returns the rotation of the camera when this perspective is active.
-  ///
-  /// Called every render tick.
-  /// @return the rotation, or `null` to keep original.
-  default @Nullable Quaternionfc getRotation() {
-    return null;
-  }
-
-  /// Returns the basic field of view, or `null` to keep original behavior.
-  ///
-  /// The final fov will be fov * modifier
-  ///
-  /// Called every render tick.
-  ///
-  /// @see #getFieldOfViewModifier()
-  default @Nullable Float getFieldOfView() {
-    return null;
-  }
-
-  /// Field of view modifier, the final fov is fov * modifier.
-  ///
-  /// Called every render tick.
-  ///
-  /// @see #getFieldOfView()
-  default float getFieldOfViewModifier() {
-    return 1.0f;
-  }
-
-  // endregion
 
   // region events
 

@@ -43,11 +43,12 @@ public final class ModEvents {
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
         (ctx) -> {
-          var current = manager.getCurrent();
-          Float fov = current.getFieldOfView();
-          if (fov != null) {
-            float modifier = current.getFieldOfViewModifier();
-            ctx.fieldOfView = fov * modifier;
+          var state = manager.getCurrent().getState();
+          if (state != null) {
+            if (state.hasFieldOfView()) {
+              ctx.fieldOfView = state.getFieldOfView();
+            }
+            ctx.fieldOfView *= state.getFieldOfViewModifier();
           }
         });
 

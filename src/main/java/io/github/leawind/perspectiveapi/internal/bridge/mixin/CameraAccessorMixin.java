@@ -36,4 +36,9 @@ public interface CameraAccessorMixin {
 
   @Accessor("yRot")
   void setYRot(float yRot);
+
+  /*? if >=26.1 {*/
+  @Accessor("fov")
+  float getFov();
+  /*? }*/
 }

@@ -1,14 +1,9 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.Objects;
-import org.joml.Quaternionf;
-import org.joml.Quaternionfc;
-import org.joml.Vector3d;
-import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 
 public final class TransitionImpl implements Transition {
@@ -22,14 +17,11 @@ public final class TransitionImpl implements Transition {
 
   // region start state
   private long startTime;
-  private final Vector3d startPosition = new Vector3d();
-  private final Quaternionf startRotation = new Quaternionf();
+  private final PerspectiveState.Mutable startState = PerspectiveState.create();
   // endregion
 
   // region current state
-  private final Vector3d position = new Vector3d();
-  private final Quaternionf rotation = new Quaternionf();
-
+  private final PerspectiveState.Mutable currentState = PerspectiveState.create();
   // endregion
   TransitionImpl() {}
 
@@ -53,48 +45,29 @@ public final class TransitionImpl implements Transition {
     return blender;
   }
 
-  /// Starts a new transition from the current camera state.
-  ///
-  /// @param now current timestamp in milliseconds
-  public void start(long now) {
-    var camera = Bridge.getMainCamera();
-    if (camera == null) return;
-
-    startTime = now;
-    PerspectiveUtils.getCameraPosition(camera, startPosition);
-    PerspectiveUtils.getCameraRotationQuat(camera, startRotation);
+  @Override
+  public void start(double now, @NonNull PerspectiveState state) {
+    Objects.requireNonNull(state);
+    startTime = (long) now;
+    PerspectiveState.Mutable.set(state, startState);
   }
 
-  /// Updates the interpolated position and rotation based on elapsed time.
-  ///
-  /// @param now current timestamp in milliseconds
-  /// @param perspective target perspective to transition towards
-  public void update(long now, Perspective perspective) {
-    long deltaMs = now - startTime;
+  @Override
+  public void update(double now, @NonNull PerspectiveState state) {
+    Objects.requireNonNull(state);
+    long deltaMs = (long) now - startTime;
     deltaMs = Math.max(deltaMs, MIN_DELTA_MS);
 
     float x = (float) deltaMs / (float) duration;
     x = PerspectiveUtils.clamp(x, 0, 1);
     x = blender.blend(x);
 
-    var targetPosition = perspective.getPosition();
-    if (targetPosition != null) {
-      startPosition.lerp(perspective.getPosition(), x, position);
-    }
-
-    Quaternionfc targetRotation = perspective.getRotation();
-    if (targetRotation != null) {
-      startRotation.slerp(targetRotation, x, rotation);
-    }
+    PerspectiveState.Mutable.set(startState, currentState);
+    PerspectiveState.Mutable.interpolate(x, startState, state, currentState);
   }
 
-  /// @return current interpolated position
-  public Vector3dc getPosition() {
-    return position;
-  }
-
-  /// @return current interpolated rotation
-  public Quaternionfc getRotation() {
-    return rotation;
+  @Override
+  public @NonNull PerspectiveState getCurrentState() {
+    return currentState;
   }
 }

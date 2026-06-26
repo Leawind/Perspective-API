@@ -5,7 +5,9 @@ import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.api.Transition;
+import io.github.leawind.perspectiveapi.api.PerspectiveState;
+import io.github.leawind.perspectiveapi.api.TransitionController;
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
@@ -15,9 +17,8 @@ import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
-import org.joml.Quaternionfc;
-import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +60,9 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private final PerspectiveOverrideChainImpl overrides = new PerspectiveOverrideChainImpl();
   private final TransitionImpl transition = new TransitionImpl();
 
+  /// Temporary state extracted from camera for transition start.
+  private final PerspectiveState.Mutable cameraState = PerspectiveState.create();
+
   @Override
   public @NonNull PerspectiveRegistry registry() {
     return registry;
@@ -75,7 +79,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   @Override
-  public @NonNull Transition transition() {
+  public @NonNull TransitionController transition() {
     return transition;
   }
 
@@ -114,7 +118,10 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     Objects.requireNonNull(perspective);
     if (perspective == currentPerspective) return;
 
-    transition.start(System.currentTimeMillis());
+    var camera = extractCameraState(cameraState);
+    if (camera != null) {
+      transition.start(System.currentTimeMillis(), cameraState);
+    }
     currentPerspective.onDeactivate();
     perspective.onActivate();
 
@@ -150,21 +157,39 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
       perspective.renderTick(renderTickContext);
     }
 
-    Vector3dc position;
-    Quaternionfc rotation;
+    PerspectiveState state;
     if (isInTransition) {
-      transition.update(now, perspective);
-      position = transition.getPosition();
-      rotation = transition.getRotation();
+      var targetState = perspective.getState();
+      if (targetState != null) {
+        transition.update(now, targetState);
+      }
+      state = transition.getCurrentState();
     } else {
-      position = perspective.getPosition();
-      rotation = perspective.getRotation();
+      state = perspective.getState();
     }
 
-    // Apply to camera
-    if (position != null) PerspectiveUtils.setCameraPosition(camera, position);
-    if (rotation != null) PerspectiveUtils.setCameraRotationQuat(camera, rotation);
+    if (state != null) {
+      var position = state.position();
+      var rotation = state.rotation();
+      if (position != null) PerspectiveUtils.setCameraPosition(camera, position);
+      if (rotation != null) PerspectiveUtils.setCameraRotationQuat(camera, rotation);
+    }
   }
 
   // endregion
+
+  /// Extracts current camera position, rotation, and field of view into the given state.
+  ///
+  /// @param dest destination state to populate
+  /// @return the destination state, or `null` if camera is unavailable
+  private static PerspectiveState.@Nullable Mutable extractCameraState(
+      PerspectiveState.Mutable dest) {
+    var camera = Bridge.getMainCamera();
+    if (camera == null) return null;
+    PerspectiveUtils.getCameraPosition(camera, dest.position());
+    PerspectiveUtils.getCameraRotationQuat(camera, dest.rotation());
+    dest.setFieldOfView(Bridge.getFov());
+    dest.setFieldOfViewModifier(1.0f);
+    return dest;
+  }
 }

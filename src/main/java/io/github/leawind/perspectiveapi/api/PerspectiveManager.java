@@ -9,7 +9,7 @@ import org.jspecify.annotations.NonNull;
 public interface PerspectiveManager {
 
   /// @return the transition controller.
-  @NonNull Transition transition();
+  @NonNull TransitionController transition();
 
   /// @return the perspective registry.
   @NonNull PerspectiveRegistry registry();
