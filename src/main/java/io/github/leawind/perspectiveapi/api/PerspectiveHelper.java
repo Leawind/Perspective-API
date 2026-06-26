@@ -36,28 +36,54 @@ import org.jspecify.annotations.NonNull;
 /// - Internal quaternion composition uses **YXZ** order to match vanilla Minecraft.
 @SuppressWarnings("unused")
 public final class PerspectiveHelper {
-  private PerspectiveHelper() {}
-
-  // region const fields
-  public static final Vector3fc UP = new Vector3f(0.0F, 1.0F, 0.0F);
-  public static final Vector3fc DOWN = new Vector3f(0.0F, -1.0F, 0.0F);
-
-  /*? if >=1.21 {*/
-  public static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, -1.0F);
-  public static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, 1.0F);
-  public static final Vector3fc LEFT = new Vector3f(-1.0F, 0.0F, 0.0F);
-  public static final Vector3fc RIGHT = new Vector3f(1.0F, 0.0F, 0.0F);
-  /*? } else {*/
-  /*public static final Vector3fc FORWARD = new Vector3f(0.0F, 0.0F, 1.0F);
-  public static final Vector3fc BACKWARD = new Vector3f(0.0F, 0.0F, -1.0F);
-  public static final Vector3fc LEFT = new Vector3f(1.0F, 0.0F, 0.0F);
-  public static final Vector3fc RIGHT = new Vector3f(-1.0F, 0.0F, 0.0F);
-  *//*? }*/
-
   private static final float DEG_TO_RAD = (float) Math.PI / 180.0F;
   private static final float RAD_TO_DEG = 180.0F / (float) Math.PI;
 
+  private static class CoordinateSystem {}
+
+  // region const fields
+  public static final Vector3fc UP;
+  public static final Vector3fc DOWN;
+  public static final Vector3fc FORWARD;
+  public static final Vector3fc BACKWARD;
+  public static final Vector3fc LEFT;
+  public static final Vector3fc RIGHT;
+
+  // Internal decomposition uses YXZ order (matching vanilla).
+  //   >=1.21  : built via rotationYXZ(PI - yaw, -pitch, roll)
+  //                => eulerRad.x = -pitch, eulerRad.y = PI - yaw, eulerRad.z = roll
+  //   <=1.20.4: built via rotationYXZ(-yaw, pitch, roll)
+  //                => eulerRad.x = pitch,  eulerRad.y = -yaw, eulerRad.z = roll
+  private static final float PITCH_SIGN;
+  private static final float YAW_SIGN;
+  private static final float YAW_OFFSET_RAD;
+
+  static {
+    UP = new Vector3f(0.0F, 1.0F, 0.0F);
+    DOWN = new Vector3f(0.0F, -1.0F, 0.0F);
+
+    /*? if >=1.21 {*/
+    FORWARD = new Vector3f(0.0F, 0.0F, -1.0F);
+    BACKWARD = new Vector3f(0.0F, 0.0F, 1.0F);
+    LEFT = new Vector3f(-1.0F, 0.0F, 0.0F);
+    RIGHT = new Vector3f(1.0F, 0.0F, 0.0F);
+    PITCH_SIGN = -1.0F;
+    YAW_SIGN = -1.0F;
+    YAW_OFFSET_RAD = (float) Math.PI;
+    /*? } else {*/
+    /*FORWARD = new Vector3f(0.0F, 0.0F, 1.0F);
+    BACKWARD = new Vector3f(0.0F, 0.0F, -1.0F);
+    LEFT = new Vector3f(1.0F, 0.0F, 0.0F);
+    RIGHT = new Vector3f(-1.0F, 0.0F, 0.0F);
+    PITCH_SIGN = 1.0F;
+    YAW_SIGN = -1.0F;
+    YAW_OFFSET_RAD = 0.0F;
+    *//*? }*/
+  }
+
   // endregion
+
+  private PerspectiveHelper() {}
 
   // region local directional vector
 
@@ -174,22 +200,19 @@ public final class PerspectiveHelper {
   // endregion
 
   // region to quaternion
-  
+
   /// Constructs a quaternion rotation from a view vector.
   public static Quaternionf viewVectorToQuat(Vector3fc viewVector, Quaternionf dest) {
     float x = viewVector.x();
     float y = viewVector.y();
     float z = viewVector.z();
     float horizontalLength = (float) Math.sqrt(x * x + z * z);
-    
+
     float pitchRad = (float) Math.atan2(-y, horizontalLength);
     float yawRad = (float) -Math.atan2(x, z);
-    
-    /*? if >=1.21 {*/
-    return dest.rotationYXZ((float) Math.PI - yawRad, -pitchRad, 0.0f);
-    /*? } else {*/
-    /*return dest.rotationYXZ(-yawRad, pitchRad, 0.0f);
-    *//*? }*/
+
+    // Unified formula using version-specific signs
+    return dest.rotationYXZ(YAW_OFFSET_RAD + yawRad * YAW_SIGN, pitchRad * PITCH_SIGN, 0.0f);
   }
 
   /// Constructs a quaternion from euler angles (pitch, yaw) with roll = 0.
@@ -207,15 +230,9 @@ public final class PerspectiveHelper {
   /// @param roll  The roll angle in degrees.
   public static Quaternionf eulerDegToQuat(
       float xRot, float yRot, float roll, @NonNull Quaternionf dest) {
-    /*? if >=1.21 {*/
-    float pitchRad = -xRot * DEG_TO_RAD;
-    float yawRad = (float) Math.PI - yRot * DEG_TO_RAD;
+    float pitchRad = xRot * PITCH_SIGN * DEG_TO_RAD;
+    float yawRad = YAW_OFFSET_RAD + yRot * YAW_SIGN * DEG_TO_RAD;
     float rollRad = roll * DEG_TO_RAD;
-    /*? } else {*/
-    /*float pitchRad = xRot * DEG_TO_RAD;
-    float yawRad = -yRot * DEG_TO_RAD;
-    float rollRad = roll * DEG_TO_RAD;
-    *//*? }*/
     return dest.rotationYXZ(yawRad, pitchRad, rollRad);
   }
 
@@ -252,24 +269,13 @@ public final class PerspectiveHelper {
   ///
   /// @return `dest` set to (pitch, yaw, roll) in degrees.
   public static Vector3f quatToEulerDeg(@NonNull Quaternionfc rotation, @NonNull Vector3f dest) {
-    // Internal decomposition uses YXZ order (matching vanilla).
-    //   >=1.21  : built via rotationYXZ(PI - yaw, -pitch, roll)
-    //                => eulerRad.x = -pitch, eulerRad.y = PI - yaw, eulerRad.z = roll
-    //   <=1.20.4: built via rotationYXZ(-yaw, pitch, roll)
-    //                => eulerRad.x = pitch,  eulerRad.y = -yaw, eulerRad.z = roll
     final Vector3f eulerRad = new Vector3f();
     rotation.getEulerAnglesYXZ(eulerRad);
-    /*? if >=1.21 {*/
+
     return dest.set(
-        -eulerRad.x() * RAD_TO_DEG,
-        (float) ((Math.PI - eulerRad.y()) * RAD_TO_DEG),
+        eulerRad.x() * RAD_TO_DEG * PITCH_SIGN,
+        (eulerRad.y() - YAW_OFFSET_RAD) * RAD_TO_DEG * YAW_SIGN,
         eulerRad.z() * RAD_TO_DEG);
-    /*? } else {*/
-    /*return dest.set(
-        eulerRad.x() * RAD_TO_DEG,
-        -eulerRad.y() * RAD_TO_DEG,
-        eulerRad.z() * RAD_TO_DEG);
-    *//*? }*/
   }
 
   // endregion
