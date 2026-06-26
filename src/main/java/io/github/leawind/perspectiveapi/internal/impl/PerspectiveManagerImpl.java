@@ -1,7 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.inventory.event.SimpleEventEmitter;
-import io.github.leawind.inventory.lock.LockUtils;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
@@ -13,8 +12,6 @@ import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderT
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.Objects;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import net.minecraft.client.Camera;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
@@ -28,8 +25,6 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManagerImpl.class);
   public static final PerspectiveManagerImpl INSTANCE =
       new PerspectiveManagerImpl(VanillaFirstPersonPerspective.INSTANCE);
-
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final @NonNull Identifier defaultId;
 
@@ -52,10 +47,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
         .onUpdate()
         .on(
             (perspective) -> {
-              try (var ignored = LockUtils.writeLock(lock)) {
-                if (perspective.id().equals(currentPerspective.id())) {
-                  setCurrentPerspective(perspective);
-                }
+              if (perspective.id().equals(currentPerspective.id())) {
+                setCurrentPerspective(perspective);
               }
             });
   }
@@ -117,18 +110,16 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     return getDefault();
   }
 
-  private void setCurrentPerspective(@NonNull Perspective perspective) {
+  private synchronized void setCurrentPerspective(@NonNull Perspective perspective) {
     Objects.requireNonNull(perspective);
-    try (var ignored = LockUtils.writeLock(lock)) {
-      if (perspective == currentPerspective) return;
+    if (perspective == currentPerspective) return;
 
-      transition.start(System.currentTimeMillis());
-      currentPerspective.onDeactivate();
-      perspective.onActivate();
+    transition.start(System.currentTimeMillis());
+    currentPerspective.onDeactivate();
+    perspective.onActivate();
 
-      currentPerspective = perspective;
-      onCurrentPerspectiveChanged.emit(perspective);
-    }
+    currentPerspective = perspective;
+    onCurrentPerspectiveChanged.emit(perspective);
   }
 
   // endregion

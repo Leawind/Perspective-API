@@ -1,15 +1,13 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.inventory.lock.LockUtils;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;
@@ -18,10 +16,11 @@ import org.jspecify.annotations.Nullable;
 
 public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideChain {
   public record Entry(
-      @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier) {}
+      @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier) {
+    public static Comparator<Entry> COMPARATOR = Comparator.comparingInt(e -> -e.priority);
+  }
 
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
-  private final List<Entry> entries = new ArrayList<>();
+  private volatile List<Entry> entries = List.of();
 
   PerspectiveOverrideChainImpl() {}
 
@@ -30,46 +29,41 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
       @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier) {
     Objects.requireNonNull(key);
     Objects.requireNonNull(supplier);
-    try (var ignored = LockUtils.writeLock(lock)) {
-      for (int i = entries.size() - 1; i >= 0; i--) {
-        if (entries.get(i).key().equals(key)) {
-          entries.remove(i);
-        }
-      }
-
-      var entry = new Entry(key, priority, supplier);
-      int insertIdx = 0;
-      for (int i = 0; i < entries.size(); i++) {
-        if (entries.get(i).priority() >= priority) {
-          insertIdx = i + 1;
-        } else {
-          break;
-        }
-      }
-      entries.add(insertIdx, entry);
+    synchronized (this) {
+      List<Entry> newList = new ArrayList<>(entries);
+      newList.removeIf(e -> e.key().equals(key));
+      newList.add(new Entry(key, priority, supplier));
+      newList.sort(Entry.COMPARATOR);
+      this.entries = newList;
     }
   }
 
   @Override
   public void pop(@NonNull Identifier key) {
     Objects.requireNonNull(key);
-    try (var ignored = LockUtils.writeLock(lock)) {
-      entries.removeIf(e -> e.key().equals(key));
+    synchronized (this) {
+      List<Entry> newList = new ArrayList<>(entries);
+      if (newList.removeIf(e -> e.key().equals(key))) {
+        this.entries = List.copyOf(newList);
+      }
     }
   }
 
   @Override
   public boolean has(@NonNull Identifier key) {
     Objects.requireNonNull(key);
-    try (var ignored = LockUtils.readLock(lock)) {
-      return entries.stream().anyMatch(e -> e.key().equals(key));
+    for (Entry entry : entries) {
+      if (entry.key().equals(key)) return true;
     }
+    return false;
   }
 
   @Override
   public void clear() {
-    try (var ignored = LockUtils.writeLock(lock)) {
-      entries.clear();
+    synchronized (this) {
+      if (!entries.isEmpty()) {
+        this.entries = List.of();
+      }
     }
   }
 
@@ -77,19 +71,21 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
   public void clearExcept(@NonNull Identifier... keys) {
     Objects.requireNonNull(keys);
     Set<Identifier> keep = new HashSet<>(Arrays.asList(keys));
-    try (var ignored = LockUtils.writeLock(lock)) {
-      entries.removeIf(e -> !keep.contains(e.key()));
+    synchronized (this) {
+      List<Entry> newList = new ArrayList<>(entries);
+      if (newList.removeIf(e -> !keep.contains(e.key()))) {
+        this.entries = List.copyOf(newList);
+      }
     }
   }
 
   @Override
   public @Nullable Identifier resolve(@NonNull Predicate<@NonNull Identifier> validator) {
-    try (var ignored = LockUtils.readLock(lock)) {
-      for (Entry entry : entries) {
-        Identifier id = entry.supplier().get();
-        if (id != null && validator.test(id)) {
-          return id;
-        }
+    List<Entry> snapshot = this.entries;
+    for (Entry entry : snapshot) {
+      Identifier id = entry.supplier().get();
+      if (id != null && validator.test(id)) {
+        return id;
       }
     }
     return null;

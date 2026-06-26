@@ -1,15 +1,12 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.inventory.event.SimpleEventEmitter;
-import io.github.leawind.inventory.lock.LockUtils;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -19,9 +16,9 @@ import org.slf4j.LoggerFactory;
 public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveAPI.MOD_NAME);
 
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+  private final Map<Identifier, Perspective> perspectives = new ConcurrentHashMap<>();
 
-  private final Map<Identifier, Perspective> perspectives = new HashMap<>();
+  private volatile List<Perspective> allPerspectivesSnapshot = List.of();
 
   // region internal events
 
@@ -40,20 +37,18 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   public @NonNull PerspectiveRegistry register(@NonNull Perspective perspective) {
     var id = perspective.id();
 
-    try (var ignored = LockUtils.writeLock(lock)) {
-      LOGGER.info("Registering perspective with id '{}': {}", id, perspective);
-
+    LOGGER.info("Registering perspective with id '{}': {}", id, perspective);
+    synchronized (this) {
       perspectives.put(id, perspective);
-      onUpdate.emit(perspective);
+      rebuildSnapshot();
     }
+    onUpdate.emit(perspective);
     return this;
   }
 
   @Override
   public boolean contains(@Nullable Identifier id) {
-    try (var ignored = LockUtils.readLock(lock)) {
-      return get(id) != null;
-    }
+    return get(id) != null;
   }
 
   @Override
@@ -61,15 +56,15 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     if (id == null) {
       return null;
     }
-    try (var ignored = LockUtils.readLock(lock)) {
-      return perspectives.get(id);
-    }
+    return perspectives.get(id);
   }
 
   @Override
   public @NonNull List<Perspective> getAll() {
-    try (var ignored = LockUtils.readLock(lock)) {
-      return perspectives.values().stream().toList();
-    }
+    return allPerspectivesSnapshot;
+  }
+
+  private synchronized void rebuildSnapshot() {
+    this.allPerspectivesSnapshot = List.copyOf(perspectives.values());
   }
 }

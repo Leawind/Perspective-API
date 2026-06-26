@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.inventory.lock.LockUtils;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
@@ -9,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -21,10 +18,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   private record Entry(Identifier id, int priority) {}
 
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-  private final List<Entry> entries = new ArrayList<>();
-
+  private volatile List<Entry> entries = List.of();
   private volatile @Nullable Identifier activeId;
 
   PerspectiveCyclerImpl() {}
@@ -32,11 +26,12 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   @Override
   public @NonNull PerspectiveCycler add(@NonNull Identifier id, int priority) {
     Objects.requireNonNull(id);
-
-    try (var ignored = LockUtils.writeLock(lock)) {
-      entries.removeIf(e -> e.id().equals(id));
-      entries.add(new Entry(id, priority));
-      entries.sort(Comparator.comparingInt(Entry::priority));
+    synchronized (this) {
+      List<Entry> newList = new ArrayList<>(entries);
+      newList.removeIf(e -> e.id().equals(id));
+      newList.add(new Entry(id, priority));
+      newList.sort(Comparator.comparingInt(Entry::priority));
+      this.entries = List.copyOf(newList);
     }
     return this;
   }
@@ -44,23 +39,24 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   @Override
   public void remove(@Nullable Identifier id) {
     if (id == null) return;
-    try (var ignored = LockUtils.writeLock(lock)) {
-      entries.removeIf(e -> e.id().equals(id));
+    synchronized (this) {
+      List<Entry> newList = new ArrayList<>(entries);
+      if (newList.removeIf(e -> e.id().equals(id))) {
+        this.entries = List.copyOf(newList);
+      }
     }
   }
 
   @Override
-  public void clear() {
-    try (var ignored = LockUtils.writeLock(lock)) {
-      entries.clear();
+  public synchronized void clear() {
+    if (!entries.isEmpty()) {
+      this.entries = List.of();
     }
   }
 
   @Override
   public @NonNull Stream<Identifier> stream() {
-    try (var ignored = LockUtils.readLock(lock)) {
-      return entries.stream().map(Entry::id).toList().stream();
-    }
+    return entries.stream().map(Entry::id);
   }
 
   @Override
@@ -70,37 +66,30 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   @Override
   public @Nullable Identifier getNext(@Nullable Identifier current) {
-    try (var ignored = LockUtils.readLock(lock)) {
-      if (entries.isEmpty()) return null;
-
-      int idx = indexOf(current);
-      if (idx < 0) {
-        return entries.get(0).id();
-      }
-
-      return entries.get((idx + 1) % entries.size()).id();
+    List<Entry> snapshot = this.entries;
+    if (snapshot.isEmpty()) {
+      return null;
     }
+    int idx = indexOf(snapshot, current);
+    if (idx < 0) return snapshot.get(0).id();
+    return snapshot.get((idx + 1) % snapshot.size()).id();
   }
 
   @Override
   public @Nullable Identifier getPrevious(@Nullable Identifier current) {
-    try (var ignored = LockUtils.readLock(lock)) {
-      if (entries.isEmpty()) return null;
-
-      int idx = indexOf(current);
-      if (idx < 0) {
-        return entries.get(entries.size() - 1).id();
-      }
-
-      return entries.get((idx - 1 + entries.size()) % entries.size()).id();
+    List<Entry> snapshot = this.entries;
+    if (snapshot.isEmpty()) {
+      return null;
     }
+    int idx = indexOf(snapshot, current);
+    if (idx < 0) return snapshot.get(snapshot.size() - 1).id();
+    return snapshot.get((idx - 1 + snapshot.size()) % snapshot.size()).id();
   }
 
   @Override
   public @Nullable Identifier getFirst() {
-    try (var ignored = LockUtils.readLock(lock)) {
-      return entries.isEmpty() ? null : entries.get(0).id();
-    }
+    List<Entry> snapshot = this.entries;
+    return snapshot.isEmpty() ? null : snapshot.get(0).id();
   }
 
   @Override
@@ -115,45 +104,72 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   @Override
   public void switchToNextAvailable(@NonNull PerspectiveRegistry registry) {
-    try (var ignored = LockUtils.readLock(lock)) {
-      if (entries.isEmpty()) return;
+    List<Entry> snapshot = this.entries;
+    if (snapshot.isEmpty()) return;
 
-      Identifier current = activeId;
-      Identifier next = current;
-      do {
-        next = getNext(next);
-        if (!registry.contains(next)) continue;
-        activeId = next;
+    Identifier current = activeId;
+    Identifier candidate = current;
+    int attempts = 0;
+    int size = snapshot.size();
+
+    do {
+      candidate = getNextInSnapshot(snapshot, candidate);
+      if (candidate != null && registry.contains(candidate)) {
+        activeId = candidate;
         return;
-      } while (next != current);
-    }
+      }
+      attempts++;
+    } while (attempts < size && !Objects.equals(candidate, current));
   }
 
   @Override
   public void switchToPreviousAvailable(@NonNull PerspectiveRegistry registry) {
-    try (var ignored = LockUtils.readLock(lock)) {
-      if (entries.isEmpty()) return;
+    List<Entry> snapshot = this.entries;
+    if (snapshot.isEmpty()) return;
 
-      Identifier current = activeId;
-      Identifier previous = current;
-      do {
-        previous = getPrevious(previous);
-        if (!registry.contains(previous)) continue;
-        activeId = previous;
+    Identifier current = activeId;
+    Identifier candidate = current;
+    int attempts = 0;
+    int size = snapshot.size();
+
+    do {
+      candidate = getPreviousInSnapshot(snapshot, candidate);
+      if (candidate == null) return;
+      if (registry.contains(candidate)) {
+        activeId = candidate;
         return;
-      } while (previous != current);
+      }
+      attempts++;
+    } while (attempts < size && !Objects.equals(candidate, current));
+  }
+
+  private static @Nullable Identifier getNextInSnapshot(
+      List<Entry> snapshot, @Nullable Identifier current) {
+    if (snapshot.isEmpty()) {
+      return null;
     }
+    int idx = indexOf(snapshot, current);
+    if (idx < 0) return snapshot.get(0).id();
+    return snapshot.get((idx + 1) % snapshot.size()).id();
   }
 
-  private @Nullable Identifier getLast() {
-    return entries.isEmpty() ? null : entries.get(entries.size() - 1).id();
+  /// @return previous entry, or `null` if list is empty
+  private static @Nullable Identifier getPreviousInSnapshot(
+      List<Entry> snapshot, @Nullable Identifier current) {
+    if (snapshot.isEmpty()) {
+      return null;
+    }
+    int idx = indexOf(snapshot, current);
+    if (idx < 0) {
+      return snapshot.get(snapshot.size() - 1).id();
+    }
+    return snapshot.get((idx - 1 + snapshot.size()) % snapshot.size()).id();
   }
 
-  private int indexOf(@Nullable Identifier id) {
+  private static int indexOf(List<Entry> entries, @Nullable Identifier id) {
     if (id == null) {
       return -1;
     }
-
     for (int i = 0; i < entries.size(); i++) {
       if (entries.get(i).id().equals(id)) {
         return i;
