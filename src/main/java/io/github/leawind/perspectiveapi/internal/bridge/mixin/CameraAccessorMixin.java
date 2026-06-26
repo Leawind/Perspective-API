@@ -10,7 +10,8 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(Camera.class)
 public interface CameraAccessorMixin {
-  // Due to a bug of mixin, do not access instance field forwards, up or left here.
+  // Due to a bug of mixin, do not access instance field `forwards`, `up` or `left` here.
+  // See `CameraMixin`, `CameraAccessor`
 
   @Invoker("setPosition")
   void invokeSetPosition(double x, double y, double z);

@@ -1,12 +1,12 @@
+// Make sure camera roll in its quaternion works.
 package io.github.leawind.perspectiveapi.internal.bridge.mixin.setupcamera;
 
-import org.spongepowered.asm.mixin.Mixin;
 import net.minecraft.client.renderer.GameRenderer;
+import org.spongepowered.asm.mixin.Mixin;
 
 /*? if >=1.21 {*/
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {}
-
 /*? } else if >=1.20.6 {*/
 /*import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Final;

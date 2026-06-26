@@ -57,7 +57,7 @@ public interface Perspective {
     return null;
   }
 
-  /// Modifies the field of view. Return the modified value, or `originFov` to keep
+  /// Modifies the field of view. Return the modified value, or `null` to keep
   /// original behavior.
   ///
   /// Called every render tick.
