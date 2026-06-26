@@ -17,6 +17,8 @@ import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import org.joml.Quaternionf;
+import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -189,14 +191,9 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     var camera = Bridge.getMainCamera();
     if (camera == null) return null;
 
-    dest.setHasPosition(true);
-    PerspectiveUtils.getCameraPosition(camera, dest.position());
-
-    dest.setHasRotation(true);
-    PerspectiveUtils.getCameraRotationQuat(camera, dest.rotation());
-
+    dest.setPosition(PerspectiveUtils.getCameraPosition(camera, new Vector3d()));
+    dest.setRotation(PerspectiveUtils.getCameraRotationQuat(camera, new Quaternionf()));
     dest.setFieldOfView(Bridge.getFov());
-
     dest.setFieldOfViewModifier(1.0f);
 
     return dest;

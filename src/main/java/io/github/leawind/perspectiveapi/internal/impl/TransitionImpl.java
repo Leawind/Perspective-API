@@ -59,7 +59,7 @@ public final class TransitionImpl implements Transition {
     x = blender.blend(x);
 
     currentState.set(startState);
-    currentState.interpolate(x, startState, state);
+    startState.lerp(x, state, currentState);
   }
 
   @Override

@@ -2,7 +2,9 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import org.joml.Quaternionf;
+import org.joml.Quaternionfc;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 
 public class PerspectiveStateImpl implements PerspectiveState.Mutable {
@@ -14,21 +16,9 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
   private float fieldOfView;
   private float fieldOfViewModifier = 1.0f;
 
-  public PerspectiveStateImpl() {}
-
   @Override
   public boolean hasPosition() {
     return hasPosition;
-  }
-
-  @Override
-  public void setHasPosition(boolean value) {
-    this.hasPosition = value;
-  }
-
-  @Override
-  public @NonNull Vector3d position() {
-    return position;
   }
 
   @Override
@@ -37,33 +27,43 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
   }
 
   @Override
-  public void setHasRotation(boolean value) {
-    this.hasRotation = value;
-  }
-
-  @Override
-  public @NonNull Quaternionf rotation() {
-    return rotation;
-  }
-
-  @Override
-  public void setHasFieldOfView(boolean value) {
-    this.hasFieldOfView = value;
-  }
-
-  @Override
   public boolean hasFieldOfView() {
     return hasFieldOfView;
   }
 
   @Override
+  public @NonNull Vector3dc getPosition() {
+    if (!hasPosition) throw new IllegalStateException("Position is not present");
+    return position;
+  }
+
+  @Override
+  public @NonNull Quaternionfc getRotation() {
+    if (!hasRotation) throw new IllegalStateException("Rotation is not present");
+    return rotation;
+  }
+
+  @Override
   public float getFieldOfView() {
+    if (!hasFieldOfView) throw new IllegalStateException("FieldOfView is not present");
     return fieldOfView;
   }
 
   @Override
   public float getFieldOfViewModifier() {
     return fieldOfViewModifier;
+  }
+
+  @Override
+  public void setPosition(@NonNull Vector3dc pos) {
+    this.position.set(pos);
+    this.hasPosition = true;
+  }
+
+  @Override
+  public void setRotation(@NonNull Quaternionfc rot) {
+    this.rotation.set(rot);
+    this.hasRotation = true;
   }
 
   @Override
@@ -77,6 +77,22 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
     this.fieldOfViewModifier = modifier;
   }
 
+  @Override
+  public void clearPosition() {
+    this.hasPosition = false;
+  }
+
+  @Override
+  public void clearRotation() {
+    this.hasRotation = false;
+  }
+
+  @Override
+  public void clearFieldOfView() {
+    this.hasFieldOfView = false;
+  }
+
+  @Override
   public void set(@NonNull PerspectiveState src) {
     if (src.hasPosition()) {
       position.set(src.getPosition());
@@ -102,44 +118,46 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
     fieldOfViewModifier = src.getFieldOfViewModifier();
   }
 
-  public void interpolate(float t, @NonNull PerspectiveState start, @NonNull PerspectiveState end) {
-    if (end.hasPosition()) {
-      if (start.hasPosition()) {
-        start.getPosition().lerp(end.getPosition(), t, position);
+  @Override
+  public void lerp(float t, @NonNull PerspectiveState target, @NonNull Mutable dest) {
+    // Position
+    if (target.hasPosition()) {
+      if (this.hasPosition()) {
+        dest.setPosition(this.getPosition().lerp(target.getPosition(), t, new Vector3d()));
       } else {
-        position.set(end.getPosition());
+        dest.setPosition(this.getPosition());
       }
-      hasPosition = true;
     } else {
-      hasPosition = false;
+      dest.clearPosition();
     }
 
-    if (end.hasRotation()) {
-      if (start.hasRotation()) {
-        start.getRotation().slerp(end.getRotation(), t, rotation);
+    // Rotation (slerp for quaternions)
+    if (target.hasRotation()) {
+      if (this.hasRotation) {
+        dest.setRotation(this.getRotation().slerp(target.getRotation(), t, new Quaternionf()));
       } else {
-        rotation.set(end.getRotation());
+        dest.setRotation(this.getRotation());
       }
-      hasRotation = true;
     } else {
-      hasRotation = false;
+      dest.clearRotation();
     }
 
-    if (end.hasFieldOfView()) {
-      if (start.hasFieldOfView()) {
-        float maxFov = end.getFieldOfView();
-        float minFov = start.getFieldOfView();
-        fieldOfView = minFov + (maxFov - minFov) * t;
+    // Field of View
+    if (target.hasFieldOfView()) {
+      if (this.hasFieldOfView()) {
+        float startFov = this.fieldOfView;
+        float endFov = target.getFieldOfView();
+        dest.setFieldOfView(startFov + (endFov - startFov) * t);
       } else {
-        fieldOfView = end.getFieldOfView();
+        dest.setFieldOfView(this.getFieldOfView());
       }
-      hasFieldOfView = true;
+    } else {
+      dest.clearFieldOfView();
     }
 
-    {
-      float maxFov = end.getFieldOfViewModifier();
-      float minFov = start.getFieldOfViewModifier();
-      fieldOfViewModifier = minFov + (maxFov - minFov) * t;
-    }
+    // Modifier (always present, unconditional lerp)
+    float startMod = this.fieldOfViewModifier;
+    float endMod = target.getFieldOfViewModifier();
+    dest.setFieldOfViewModifier(startMod + (endMod - startMod) * t);
   }
 }
