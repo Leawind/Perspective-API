@@ -16,8 +16,8 @@ public final class TransitionImpl implements Transition {
   // endregion
 
   private long startTime;
-  private final PerspectiveStateImpl startState = new PerspectiveStateImpl();
-  private final PerspectiveStateImpl currentState = new PerspectiveStateImpl();
+  private final PerspectiveState startState = new PerspectiveState();
+  private final PerspectiveState currentState = new PerspectiveState();
 
   TransitionImpl() {}
 

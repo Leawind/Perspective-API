@@ -63,7 +63,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private final TransitionImpl transition = new TransitionImpl();
 
   /// Temporary state extracted from camera for transition start.
-  private final PerspectiveState.Mutable cameraState = new PerspectiveStateImpl();
+  private final PerspectiveState cameraState = new PerspectiveState();
 
   @Override
   public @NonNull PerspectiveRegistry registry() {
@@ -171,11 +171,11 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     if (state != null) {
-      if (state.hasPosition()) {
-        PerspectiveUtils.setCameraPosition(camera, state.getPosition());
+      if (state.hasPosition) {
+        PerspectiveUtils.setCameraPosition(camera, state.position);
       }
-      if (state.hasRotation()) {
-        PerspectiveUtils.setCameraRotationQuat(camera, state.getRotation());
+      if (state.hasRotation) {
+        PerspectiveUtils.setCameraRotationQuat(camera, state.rotation);
       }
     }
   }
@@ -186,15 +186,17 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   ///
   /// @param dest destination state to populate
   /// @return the destination state, or `null` if camera is unavailable
-  private static PerspectiveState.@Nullable Mutable extractCameraState(
-      PerspectiveState.@NonNull Mutable dest) {
+  private static @Nullable PerspectiveState extractCameraState(@NonNull PerspectiveState dest) {
     var camera = Bridge.getMainCamera();
     if (camera == null) return null;
 
-    dest.setPosition(PerspectiveUtils.getCameraPosition(camera, new Vector3d()));
-    dest.setRotation(PerspectiveUtils.getCameraRotationQuat(camera, new Quaternionf()));
-    dest.setFieldOfView(Bridge.getFov());
-    dest.setFieldOfViewModifier(1.0f);
+    dest.position.set(PerspectiveUtils.getCameraPosition(camera, new Vector3d()));
+    dest.hasPosition = true;
+    dest.rotation.set(PerspectiveUtils.getCameraRotationQuat(camera, new Quaternionf()));
+    dest.hasRotation = true;
+    dest.fieldOfView = Bridge.getFov();
+    dest.hasFieldOfView = true;
+    dest.fieldOfViewModifier = 1.0f;
 
     return dest;
   }

@@ -30,9 +30,11 @@ public final class VanillaFirstPersonPerspective extends VanillaPerspective {
 
     var pos = entity.getEyePosition(context.partialTicks());
     tempPos.set(pos.x, pos.y, pos.z);
-    state.setPosition(tempPos);
+    state.position.set(tempPos);
+    state.hasPosition = true;
 
     PerspectiveUtils.getEntityRotation(entity, context.partialTicks(), tempRot);
-    state.setRotation(tempRot);
+    state.rotation.set(tempRot);
+    state.hasRotation = true;
   }
 }

@@ -45,10 +45,10 @@ public final class ModEvents {
         (ctx) -> {
           var state = manager.getCurrent().getState();
           if (state != null) {
-            if (state.hasFieldOfView()) {
-              ctx.fieldOfView = state.getFieldOfView();
+            if (state.hasFieldOfView) {
+              ctx.fieldOfView = state.fieldOfView;
             }
-            ctx.fieldOfView *= state.getFieldOfViewModifier();
+            ctx.fieldOfView *= state.fieldOfViewModifier;
           }
         });
 
