@@ -1,21 +1,16 @@
 name: Publish
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        description: 'Dry run'
-        type: boolean
-        default: true
 
 permissions:
   contents: write
 
 env:
-  DO_PUBLISH: ${{ github.event_name == 'push' || github.event.inputs.dry_run == 'false' }}
+  DO_PUBLISH: true
 
 jobs:
   publish:
