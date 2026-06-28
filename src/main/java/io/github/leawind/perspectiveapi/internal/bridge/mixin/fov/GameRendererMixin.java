@@ -16,13 +16,11 @@ public abstract class GameRendererMixin {
   /*? if >=26.1 {*/
   /*? } else if >=1.21.11 {*/
   /*@Unique private final ModifyFieldOfViewContext context = new ModifyFieldOfViewContext();
-  @Unique private float perspective_api$cachedFov;
 
   @com.llamalad7.mixinextras.injector.ModifyReturnValue(method = "getFov", at = @At(value = "RETURN"))
   private float modifyFov(float fov) {
     context.setup(fov);
     GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(context);
-    this.perspective_api$cachedFov = context.fieldOfView;
     return context.fieldOfView;
   }
   *//*? } else {*/

@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.bridge;
 
-import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -29,22 +29,12 @@ public final class Bridge {
     return Identifier.fromNamespaceAndPath(namespace, path);
     /*? } else {*/
     /*return new Identifier(namespace, path);
-    *//*? }*/
+     *//*? }*/
   }
 
   /// Returns the current field of view.
-  @SuppressWarnings("ConstantConditions")
   public static float getFov() {
-    Minecraft minecraft = Minecraft.getInstance();
-    if (minecraft == null) return 70.0f;
-
-    /*? if >=26.1 {*/
-    return CameraAccessor.of(getMainCamera()).getFov();
-    /*? } else if >=1.21.11 {*/
-    /*return ((io.github.leawind.perspectiveapi.internal.bridge.mixin.fov.GameRendererAccessorMixin) minecraft.gameRenderer).perspective_api$getCachedFov();
-    *//*? } else {*/
-    /*return ((io.github.leawind.perspectiveapi.internal.bridge.mixin.fov.GameRendererAccessorMixin) minecraft.gameRenderer).getFov();
-    *//*? }*/
+    return ModifyFieldOfViewContext.getLastFieldOfView();
   }
 
   /// Updates the camera type and triggers necessary side effects.

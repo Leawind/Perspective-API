@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
+import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import org.slf4j.Logger;
@@ -50,6 +51,7 @@ public final class ModEvents {
             }
             ctx.fieldOfView *= state.fieldOfViewModifier;
           }
+          ModifyFieldOfViewContext.setLastFieldOfView(ctx.fieldOfView);
         });
 
     // endregion
