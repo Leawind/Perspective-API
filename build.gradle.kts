@@ -82,7 +82,7 @@ repositories {
 
 val shadowBundle: Configuration by configurations.creating
 fun DependencyHandlerScope.shadowBundle(dependencyNotation: String) {
-    if(mod.isForge){
+    if (mod.isForge) {
         add("forgeRuntimeLibrary", dependencyNotation)
     }
     implementation(dependencyNotation)
@@ -115,9 +115,9 @@ dependencies {
     // region test
     testCompileOnly("org.jspecify:jspecify:1.0.0")
 
-    if(mod.isFabric){
-        testImplementation( "net.fabricmc:fabric-loader-junit:${props["loader_version"]}")
-    }else{
+    if (mod.isFabric) {
+        testImplementation("net.fabricmc:fabric-loader-junit:${props["loader_version"]}")
+    } else {
         testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     }
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -191,6 +191,15 @@ if (mod.isForge) {
 }
 tasks.test {
     useJUnitPlatform()
+}
+
+publishMods {
+    modrinth {
+    }
+    curseforge {
+        client = true
+        server = false
+    }
 }
 
 publishing {
