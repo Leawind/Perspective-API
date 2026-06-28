@@ -31,7 +31,7 @@
   "custom": {
     "modmenu": {
       "links": {
-        "GitHub": "https://github.com/Leawind/PerspectiveAPI"
+        "GitHub": "${source_url}"
       }
     },
     "modmenu:clientsideOnly": true
