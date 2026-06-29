@@ -45,7 +45,7 @@
       ".github/",
       "scripts/",
       "src/",
-      ".releaserc.json",
+      ".releaserc.*",
       "**/*.md",
       "**/*.json"
     ],
