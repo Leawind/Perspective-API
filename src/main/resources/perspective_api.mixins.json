@@ -1,18 +1,18 @@
 {
-	"required": true,
-	"package": "io.github.leawind.perspectiveapi.internal.bridge.mixin",
-	"compatibilityLevel": "JAVA_17",
-	"minVersion": "0.8",
-	"client": [
-		"fov.CameraMixin",
-		"fov.GameRendererMixin",
-		"setupcamera.CameraMixin",
-		"setupcamera.GameRendererMixin",
-		"CameraAccessorMixin",
-		"CameraMixin",
-		"MinecraftMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
-	}
+  "required": true,
+  "package": "io.github.leawind.perspectiveapi.internal.bridge.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "client": [
+    "fov.CameraMixin",
+    "fov.GameRendererMixin",
+    "setupcamera.CameraMixin",
+    "setupcamera.GameRendererMixin",
+    "CameraAccessorMixin",
+    "CameraMixin",
+    "MinecraftMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }
