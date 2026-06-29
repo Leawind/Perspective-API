@@ -11,6 +11,8 @@ pluginManagement {
     }
 }
 plugins {
+    // https://github.com/meza/Stonecraft-template/blob/main/settings.gradle.kts
+    // https://plugins.gradle.org/plugin/gg.meza.stonecraft
     id("gg.meza.stonecraft") version "1.10.+"
     id("dev.kikugie.stonecutter") version "0.9.+"
 }
