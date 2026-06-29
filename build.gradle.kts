@@ -4,7 +4,6 @@ import org.gradle.util.internal.VersionNumber
 
 plugins {
     `maven-publish`
-    id("com.gradleup.shadow") version "8.3.10"
     id("gg.meza.stonecraft")
 }
 
@@ -80,15 +79,6 @@ repositories {
     }
 }
 
-val shadowBundle: Configuration by configurations.creating
-fun DependencyHandlerScope.shadowBundle(dependencyNotation: String) {
-    if (mod.isForge) {
-        add("forgeRuntimeLibrary", dependencyNotation)
-    }
-    implementation(dependencyNotation)
-    add("shadowBundle", dependencyNotation)
-}
-
 fun DependencyHandlerScope.modImplAlias(dependencyNotation: String) {
     if (VersionNumber.parse(mod.minecraftVersion) >= VersionNumber.parse("26.1")) {
         implementation(dependencyNotation)
@@ -137,32 +127,9 @@ dependencies {
     // endregion
 }
 
-tasks.shadowJar {
-    archiveBaseName.set(archivesBaseName)
-    archiveVersion.set(archivesVersion)
-
-    configurations = listOf(shadowBundle)
-
-    dependsOn(tasks.processResources)
-    tasks.findByName("generatePackMCMetaJson")?.let { dependsOn(it) }
-
-    if (tasks.findByName("remapJar") == null) {
-        archiveClassifier.set("")
-    } else {
-        archiveClassifier.set("shadow")
-    }
-
-    minimize()
-
-    val dest = "${mod.group}.lib"
-}
-
 tasks.withType<RemapJarTask>().matching { it.name == "remapJar" }.configureEach {
     archiveBaseName.set(archivesBaseName)
     archiveVersion.set(archivesVersion)
-
-    dependsOn(tasks.shadowJar)
-    inputFile.set(tasks.shadowJar.flatMap { it.archiveFile })
 }
 
 tasks.withType<JavaCompile> {
@@ -209,15 +176,6 @@ publishing {
             artifactId = archivesBaseName
             version = archivesVersion
 
-            if (tasks.findByName("remapJar") == null) {
-                artifact(tasks.shadowJar) {
-                    classifier = ""
-                }
-            } else {
-                artifact(tasks.named("remapJar")) {
-                    classifier = ""
-                }
-            }
             pom {
                 name.set(mod.name)
                 description.set(mod.description)
