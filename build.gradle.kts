@@ -195,7 +195,6 @@ tasks.test {
 
 publishMods {
     dryRun = false
-    displayName = "${mod.name} ${mod.version} for ${mod.minecraftVersion} ${mod.loader}"
     modrinth {
     }
     curseforge {
