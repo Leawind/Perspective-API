@@ -1,9 +1,9 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveRegistrar;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaThirdPersonPerspective;
-import io.github.leawind.perspectiveapi.spi.PerspectiveRegistrar;
 import java.util.ServiceLoader;
 import java.util.stream.StreamSupport;
 

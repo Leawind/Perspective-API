@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.spi;
+package io.github.leawind.perspectiveapi.api.spi;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 
