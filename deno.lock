@@ -73,6 +73,11 @@
     "dependencies": [
       "jsr:@leawind/inventory@~0.19.5",
       "jsr:@std/dotenv@~0.225.7"
-    ]
+    ],
+    "packageJson": {
+      "dependencies": [
+        "npm:semantic-release@^25.0.5"
+      ]
+    }
   }
 }
