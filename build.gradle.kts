@@ -160,6 +160,10 @@ tasks.test {
     useJUnitPlatform()
 }
 
+java {
+    withSourcesJar()
+}
+
 publishMods {
     dryRun = false
     modrinth {
