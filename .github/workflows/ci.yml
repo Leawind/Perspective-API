@@ -67,6 +67,7 @@ jobs:
           DO_PUBLISH: steps.get-next-version.outputs.new_release_published
           MODRINTH_ID: ${{ vars.MODRINTH_ID }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_SLUG: ${{ vars.CURSEFORGE_SLUG }}
           CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           # DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
