@@ -17,7 +17,8 @@ public final class Bridge {
     return SharedConstants.getCurrentVersion().dataVersion().version();
     /*? } else {*/
     /*return SharedConstants.getCurrentVersion().getDataVersion().getVersion();
-    *//*? }*/
+     */
+    /*? }*/
   }
 
   public static Identifier createIdentifier(String path) {
@@ -29,12 +30,8 @@ public final class Bridge {
     return Identifier.fromNamespaceAndPath(namespace, path);
     /*? } else {*/
     /*return new Identifier(namespace, path);
-     *//*? }*/
-  }
-
-  /// Returns the current field of view.
-  public static float getFov() {
-    return ModifyFieldOfViewContext.getLastFieldOfView();
+     */
+    /*? }*/
   }
 
   /// Updates the camera type and triggers necessary side effects.
@@ -63,7 +60,8 @@ public final class Bridge {
     if (levelRenderer != null) {
       levelRenderer.needsUpdate();
     }
-    *//*? }*/
+    */
+    /*? }*/
   }
 
   /// Gets the main camera instance.
@@ -79,6 +77,7 @@ public final class Bridge {
     return gameRenderer.mainCamera();
     /*? } else {*/
     /*return gameRenderer.getMainCamera();
-    *//*? }*/
+     */
+    /*? }*/
   }
 }

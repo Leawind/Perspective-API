@@ -1,23 +1,33 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.Objects;
+import org.joml.Quaternionf;
+import org.joml.Quaternionfc;
+import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 
 public final class TransitionImpl implements Transition {
 
-  private static final long MIN_DELTA_MS = 1;
+  private static final double MIN_DELTA_MS = 1;
 
   // region settings
-  private long duration = 300;
+  private double duration = 300;
   private Blender blender = Blender::easeOut;
   // endregion
 
-  private long startTime;
-  private final PerspectiveState startState = new PerspectiveState();
-  private final PerspectiveState currentState = new PerspectiveState();
+  private double startTime;
+
+  // region start state
+  private final Vector3d startPosition = new Vector3d();
+  private final Quaternionf startRotation = new Quaternionf();
+  private float startFov = 70.0f;
+
+  private final Vector3d currentPosition = new Vector3d();
+  private final Quaternionf currentRotation = new Quaternionf();
+  private float currentFov = 70.0f;
 
   TransitionImpl() {}
 
@@ -42,28 +52,50 @@ public final class TransitionImpl implements Transition {
   }
 
   @Override
-  public void start(double now, @NonNull PerspectiveState state) {
-    Objects.requireNonNull(state);
-    startTime = (long) now;
-    startState.set(state);
+  public void setStartState(
+      double startTime, Vector3dc startPosition, Quaternionfc startRotation, float startFov) {
+    this.startTime = startTime;
+    this.startPosition.set(startPosition);
+    this.startRotation.set(startRotation);
+    this.startFov = startFov;
   }
 
-  @Override
-  public void update(double now, @NonNull PerspectiveState state) {
-    Objects.requireNonNull(state);
-    long deltaMs = (long) now - startTime;
+  private float getProgress(double now) {
+    double deltaMs = now - startTime;
     deltaMs = Math.max(deltaMs, MIN_DELTA_MS);
 
-    float x = (float) deltaMs / (float) duration;
-    x = PerspectiveUtils.clamp(x, 0, 1);
-    x = blender.blend(x);
-
-    currentState.set(startState);
-    startState.lerp(x, state, currentState);
+    float t = (float) (deltaMs / duration);
+    t = PerspectiveUtils.clamp(t, 0, 1);
+    t = blender.blend(t);
+    t = PerspectiveUtils.clamp(t, 0, 1);
+    return t;
   }
 
   @Override
-  public @NonNull PerspectiveState getCurrentState() {
-    return currentState;
+  public void updateTransform(double now, Vector3dc targetPosition, Quaternionfc targetRotation) {
+    float progress = getProgress(now);
+    startPosition.lerp(targetPosition, progress, currentPosition);
+    startRotation.slerp(targetRotation, progress, currentRotation);
+  }
+
+  @Override
+  public float updateFov(double now, float targetFov) {
+    float progress = getProgress(now);
+   return  currentFov = startFov + (targetFov - startFov) * progress;
+  }
+
+  @Override
+  public @NonNull Vector3dc getCurrentPosition() {
+    return currentPosition;
+  }
+
+  @Override
+  public @NonNull Quaternionfc getCurrentRotation() {
+    return currentRotation;
+  }
+
+  @Override
+  public float getCurrentFov() {
+    return currentFov;
   }
 }

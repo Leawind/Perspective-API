@@ -1,18 +1,18 @@
 package io.github.leawind.perspectiveapi.internal.impl.context;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
-import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
+import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NonNull;
 
-public class PerspectiveRenderTickContextImpl implements PerspectiveRenderTickContext {
+public class PerspectiveContextImpl implements PerspectiveContext {
 
   private final PerspectiveManager manager;
   private float partialTicks;
   private Entity cameraEntity;
   private boolean isInTransition;
 
-  public PerspectiveRenderTickContextImpl(PerspectiveManager manager) {
+  public PerspectiveContextImpl(PerspectiveManager manager) {
     this.manager = manager;
   }
 

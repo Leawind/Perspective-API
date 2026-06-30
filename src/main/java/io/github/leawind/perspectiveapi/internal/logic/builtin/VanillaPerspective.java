@@ -1,7 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
@@ -12,8 +11,6 @@ public sealed class VanillaPerspective implements Perspective
 
   private final Identifier id;
   private final CameraType cameraType;
-
-  protected final PerspectiveState state = new PerspectiveState();
 
   protected VanillaPerspective(String name, CameraType cameraType) {
     this.id = Bridge.createIdentifier(name);
@@ -28,16 +25,6 @@ public sealed class VanillaPerspective implements Perspective
   @Override
   public final @NonNull CameraType cameraType() {
     return cameraType;
-  }
-
-  @Override
-  public boolean allowTransition() {
-    return false;
-  }
-
-  @Override
-  public @NonNull PerspectiveState getState() {
-    return state;
   }
 
   @Override

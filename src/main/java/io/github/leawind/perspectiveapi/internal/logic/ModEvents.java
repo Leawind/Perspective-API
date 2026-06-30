@@ -2,7 +2,6 @@ package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import org.slf4j.Logger;
@@ -43,16 +42,7 @@ public final class ModEvents {
     GameClientEvents.SETUP_CAMERA.on((ctx) -> manager.updateCamera(ctx.partialTicks, ctx.camera));
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
-        (ctx) -> {
-          var state = manager.getCurrent().getState();
-          if (state != null) {
-            if (state.hasFieldOfView) {
-              ctx.fieldOfView = state.fieldOfView;
-            }
-            ctx.fieldOfView *= state.fieldOfViewModifier;
-          }
-          ModifyFieldOfViewContext.setLastFieldOfView(ctx.fieldOfView);
-        });
+        (ctx) -> ctx.fieldOfView = manager.modifyFov(ctx.fieldOfView));
 
     // endregion
 

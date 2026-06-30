@@ -5,8 +5,8 @@ import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-/// Context provided during a render tick callback while a perspective is active.
-public interface PerspectiveRenderTickContext {
+/// Context provided during perspective evaluation and lifecycle callbacks.
+public interface PerspectiveContext {
 
   /// Returns the perspective manager.
   @NonNull PerspectiveManager manager();

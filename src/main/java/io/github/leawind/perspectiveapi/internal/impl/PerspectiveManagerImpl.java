@@ -5,11 +5,10 @@ import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.TransitionController;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
-import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveRenderTickContextImpl;
+import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
@@ -20,7 +19,6 @@ import net.minecraft.world.entity.Entity;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +34,15 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   public final SimpleEventEmitter.Owned<Perspective> onCurrentPerspectiveChanged =
       SimpleEventEmitter.create();
+
+  // region temp states
+
+  private boolean isTempStateInited = false;
+  private final Vector3d tempPosition = new Vector3d();
+  private final Quaternionf tempRotation = new Quaternionf();
+  private float tempFov = 70;
+
+  // endregion
 
   private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
@@ -61,9 +68,6 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl();
   private final PerspectiveOverrideChainImpl overrides = new PerspectiveOverrideChainImpl();
   private final TransitionImpl transition = new TransitionImpl();
-
-  /// Temporary state extracted from camera for transition start.
-  private final PerspectiveState cameraState = new PerspectiveState();
 
   @Override
   public @NonNull PerspectiveRegistry registry() {
@@ -120,10 +124,17 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     Objects.requireNonNull(perspective);
     if (perspective == currentPerspective) return;
 
-    var camera = extractCameraState(cameraState);
-    if (camera != null) {
-      transition.start(System.currentTimeMillis(), cameraState);
+    var camera = Bridge.getMainCamera();
+    if (camera == null) return;
+
+    if (!isTempStateInited) {
+      PerspectiveUtils.getCameraPosition(camera, tempPosition);
+      PerspectiveUtils.getCameraRotationQuat(camera, tempRotation);
+      tempFov = 70.0f;
+      isTempStateInited = true;
     }
+    transition.setStartState(System.currentTimeMillis(), tempPosition, tempRotation, tempFov);
+
     currentPerspective.onDeactivate();
     perspective.onActivate();
 
@@ -135,8 +146,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   // region camera update
 
-  private final PerspectiveRenderTickContextImpl renderTickContext =
-      new PerspectiveRenderTickContextImpl(this);
+  private final PerspectiveContextImpl renderTickContext = new PerspectiveContextImpl(this);
 
   /// Updates camera position and rotation based on the current perspective.
   ///
@@ -145,59 +155,52 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   public void updateCamera(float partialTicks, Camera camera) {
     Perspective perspective = getCurrent();
 
+    Entity entity = CameraAccessor.of(camera).getEntity();
+    if (entity == null) {
+      LOGGER.warn("Somehow camera entity is null");
+      return;
+    }
+
     long now = System.currentTimeMillis();
     boolean isInTransition = transition.isInTransition(now) && perspective.allowTransition();
 
-    // trigger perspective render tick
-    {
-      Entity entity = CameraAccessor.of(camera).getEntity();
-      if (entity == null) {
-        LOGGER.warn("Somehow camera entity is null");
-        return;
-      }
-      renderTickContext.setup(partialTicks, entity, isInTransition);
-      perspective.renderTick(renderTickContext);
-    }
+    // Setup context object
+    renderTickContext.setup(partialTicks, entity, isInTransition);
 
-    PerspectiveState state;
+    // Event: render tick
+    perspective.renderTick(renderTickContext);
+
+    // Extract current vanilla state
+    PerspectiveUtils.getCameraPosition(camera, tempPosition);
+    PerspectiveUtils.getCameraRotationQuat(camera, tempRotation);
+
+    perspective.applyTransform(renderTickContext, tempPosition, tempRotation);
+
     if (isInTransition) {
-      var targetState = perspective.getState();
-      if (targetState != null) {
-        transition.update(now, targetState);
-      }
-      state = transition.getCurrentState();
-    } else {
-      state = perspective.getState();
+      transition.updateTransform(now, tempPosition, tempRotation);
+      tempPosition.set(transition.getCurrentPosition());
+      tempRotation.set(transition.getCurrentRotation());
     }
 
-    if (state != null) {
-      if (state.hasPosition) {
-        PerspectiveUtils.setCameraPosition(camera, state.position);
-      }
-      if (state.hasRotation) {
-        PerspectiveUtils.setCameraRotationQuat(camera, state.rotation);
-      }
+    isTempStateInited = true;
+    PerspectiveUtils.setCameraPosition(camera, tempPosition);
+    PerspectiveUtils.setCameraRotationQuat(camera, tempRotation);
+  }
+
+  /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
+  public float modifyFov(float vanillaFov) {
+    Perspective perspective = getCurrent();
+    float targetFov = perspective.applyFov(renderTickContext, vanillaFov);
+
+    long now = System.currentTimeMillis();
+    if (transition.isInTransition(now) && perspective.allowTransition()) {
+      tempFov = transition.updateFov(now, targetFov);
+    } else {
+      tempFov = targetFov;
     }
+    isTempStateInited = true;
+    return tempFov;
   }
 
   // endregion
-
-  /// Extracts current camera position, rotation, and field of view into the given state.
-  ///
-  /// @param dest destination state to populate
-  /// @return the destination state, or `null` if camera is unavailable
-  private static @Nullable PerspectiveState extractCameraState(@NonNull PerspectiveState dest) {
-    var camera = Bridge.getMainCamera();
-    if (camera == null) return null;
-
-    dest.position.set(PerspectiveUtils.getCameraPosition(camera, new Vector3d()));
-    dest.hasPosition = true;
-    dest.rotation.set(PerspectiveUtils.getCameraRotationQuat(camera, new Quaternionf()));
-    dest.hasRotation = true;
-    dest.fieldOfView = Bridge.getFov();
-    dest.hasFieldOfView = true;
-    dest.fieldOfViewModifier = 1.0f;
-
-    return dest;
-  }
 }

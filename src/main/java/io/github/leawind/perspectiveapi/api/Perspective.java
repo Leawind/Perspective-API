@@ -1,11 +1,12 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.context.PerspectiveRenderTickContext;
+import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
+import org.joml.Quaternionf;
+import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 public interface Perspective {
   // region meta info
@@ -36,13 +37,29 @@ public interface Perspective {
     return true;
   }
 
-  /// Returns the camera state this perspective wants to apply.
+  /// Modifies the vanilla camera's spatial state in-place.
   ///
-  /// Called every render tick after {@link #renderTick} has been invoked to compute the state.
+  /// Called after {@link #renderTick}
   ///
-  /// @return the state, or `null` to keep vanilla defaults.
-  default @Nullable PerspectiveState getState() {
-    return null;
+  /// The `position` and `rotation` parameters represent the current vanilla camera
+  /// state. This method should mutate them to apply the desired perspective transformation. If this
+  /// method does nothing, the vanilla state is preserved as-is.
+  ///
+  /// @param ctx      The context containing frame-specific data.
+  /// @param position The vanilla camera position in world space. Can be mutated.
+  /// @param rotation The vanilla camera rotation. Can be mutated.
+  default void applyTransform(
+      @NonNull PerspectiveContext ctx, @NonNull Vector3d position, @NonNull Quaternionf rotation) {}
+
+  /// Calculates the final Field of View based on the vanilla FOV.
+  /// 
+  /// Called after {@link #renderTick}
+  ///
+  /// @param ctx The context containing frame-specific data.
+  /// @param vanillaFovDeg The vanilla camera FOV in degrees.
+  /// @return The final FOV to be applied, in degrees.
+  default float applyFov(@NonNull PerspectiveContext ctx, float vanillaFovDeg) {
+    return vanillaFovDeg;
   }
 
   // region events
@@ -66,8 +83,10 @@ public interface Perspective {
 
   /// Called on render tick while this perspective is active.
   ///
+  /// Before {@link #applyTransform} and {@link #applyFov}
+  ///
   /// @see #clientTick
-  default void renderTick(@NonNull PerspectiveRenderTickContext context) {}
+  default void renderTick(@NonNull PerspectiveContext context) {}
 
   // endregion
 }
