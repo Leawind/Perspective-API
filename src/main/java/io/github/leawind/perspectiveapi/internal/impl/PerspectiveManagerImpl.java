@@ -10,7 +10,6 @@ import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
-import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Objects;
 import net.minecraft.client.Camera;
@@ -128,8 +127,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     if (camera == null) return;
 
     if (!isTempStateInited) {
-      PerspectiveUtils.getCameraPosition(camera, tempPosition);
-      PerspectiveUtils.getCameraRotationQuat(camera, tempRotation);
+      Bridge.getCameraPosition(camera, tempPosition);
+      Bridge.getCameraRotationQuat(camera, tempRotation);
       tempFov = 70.0f;
       isTempStateInited = true;
     }
@@ -171,8 +170,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     perspective.renderTick(renderTickContext);
 
     // Extract current vanilla state
-    PerspectiveUtils.getCameraPosition(camera, tempPosition);
-    PerspectiveUtils.getCameraRotationQuat(camera, tempRotation);
+    Bridge.getCameraPosition(camera, tempPosition);
+    Bridge.getCameraRotationQuat(camera, tempRotation);
 
     perspective.applyTransform(renderTickContext, tempPosition, tempRotation);
 
@@ -183,8 +182,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     isTempStateInited = true;
-    PerspectiveUtils.setCameraPosition(camera, tempPosition);
-    PerspectiveUtils.setCameraRotationQuat(camera, tempRotation);
+    Bridge.setCameraPosition(camera, tempPosition);
+    Bridge.setCameraRotationQuat(camera, tempRotation);
   }
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
