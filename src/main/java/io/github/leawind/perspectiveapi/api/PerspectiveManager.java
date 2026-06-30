@@ -8,16 +8,16 @@ import org.jspecify.annotations.NonNull;
 /// Obtain via {@link PerspectiveAPI#getManager()}.
 public interface PerspectiveManager {
 
-  /// @return the transition controller.
+  /// @return The transition controller.
   @NonNull TransitionController transition();
 
-  /// @return the perspective registry.
+  /// @return The perspective registry.
   @NonNull PerspectiveRegistry registry();
 
-  /// @return the override chain controller.
+  /// @return The override chain controller.
   @NonNull PerspectiveOverrideChain overrides();
 
-  /// @return the perspective cycler for cycling through perspectives.
+  /// @return The perspective cycler for cycling through perspectives.
   @NonNull PerspectiveCycler cycler();
 
   /// Returns the default perspective.
