@@ -1,6 +1,6 @@
 {
   "tasks": {
-	"gen-releaserc": "deno -A scripts/gen-releaserc.ts",
+    "gen-releaserc": "deno -A scripts/gen-releaserc.ts",
     "publishToMavenLocal": "./gradlew publishToMavenLocal --no-parallel",
     "collect": "deno -A scripts/collect.ts",
     "clean_run_configs": "./scripts/clean_run_configs.sh"
