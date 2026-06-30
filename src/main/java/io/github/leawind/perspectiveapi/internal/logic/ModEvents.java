@@ -21,7 +21,13 @@ public final class ModEvents {
 
           manager.resolveAndUpdateCurrentPerspective();
           var current = manager.getCurrent();
-          current.clientTick(minecraft);
+
+          try {
+            current.clientTick(minecraft);
+          } catch (Throwable e) {
+            manager.reportException(current, "clientTick", e);
+          }
+
           if (!current.isAvailable()) {
             manager.cycler().switchToPreviousAvailable(manager.registry());
           }

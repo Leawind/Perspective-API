@@ -10,6 +10,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
+import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Objects;
 import net.minecraft.client.Camera;
@@ -25,6 +26,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManagerImpl.class);
   public static final PerspectiveManagerImpl INSTANCE =
       new PerspectiveManagerImpl(VanillaFirstPersonPerspective.INSTANCE);
+
+  private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
   private final @NonNull Identifier defaultId;
 
@@ -42,6 +45,13 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private float tempFov = 70;
 
   // endregion
+
+  public void reportException(Perspective perspective, String phase, Throwable throwable) {
+    String id = perspective.id().toString();
+    throttledAction.run(
+        id + ":" + phase + ":exception",
+        () -> LOGGER.warn("Perspective '{}' threw an exception during {}.", id, phase, throwable));
+  }
 
   private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
@@ -146,6 +156,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   // region camera update
 
   private final PerspectiveContextImpl renderTickContext = new PerspectiveContextImpl(this);
+  private final Vector3d backupPosition = new Vector3d();
+  private final Quaternionf backupRotation = new Quaternionf();
 
   /// Updates camera position and rotation based on the current perspective.
   ///
@@ -167,21 +179,58 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     renderTickContext.setup(partialTicks, entity, isInTransition);
 
     // Event: render tick
-    perspective.renderTick(renderTickContext);
+    try {
+      perspective.renderTick(renderTickContext);
+    } catch (Throwable e) {
+      reportException(perspective, "renderTick", e);
+    }
 
-    // Extract current vanilla state
+    // Extract current vanilla state and backup
     Bridge.getCameraPosition(camera, tempPosition);
     Bridge.getCameraRotationQuat(camera, tempRotation);
+    backupPosition.set(tempPosition);
+    backupRotation.set(tempRotation);
 
-    perspective.applyTransform(renderTickContext, tempPosition, tempRotation);
+    // Apply transform
+    boolean transformFailed = false;
+    try {
+      perspective.applyTransform(renderTickContext, tempPosition, tempRotation);
+    } catch (Throwable e) {
+      transformFailed = true;
+      reportException(perspective, "applyTransform", e);
+    }
 
+    // Sanitize and fallback if needed
+    boolean posInvalid = !Sanitizer.isFinite(tempPosition);
+    boolean rotInvalid = !Sanitizer.isFinite(tempRotation);
+    if (posInvalid || rotInvalid) {
+      String id = perspective.id().toString();
+      throttledAction.run(
+          id + ":applyTransform:invalid",
+          () ->
+              LOGGER.warn(
+                  "Perspective '{}' provided invalid state during applyTransform. Falling back to vanilla. pos: {}, rot: {}",
+                  id,
+                  tempPosition,
+                  tempRotation));
+
+      if (posInvalid) {
+        tempPosition.set(backupPosition);
+      }
+      if (rotInvalid) {
+        tempRotation.set(backupRotation);
+      }
+    }
+
+    // Apply transition
     if (isInTransition) {
       transition.updateTransform(now, tempPosition, tempRotation);
       tempPosition.set(transition.getCurrentPosition());
       tempRotation.set(transition.getCurrentRotation());
     }
-
     isTempStateInited = true;
+
+    // Commit to camera
     Bridge.setCameraPosition(camera, tempPosition);
     Bridge.setCameraRotationQuat(camera, tempRotation);
   }
@@ -189,15 +238,36 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
   public float modifyFov(float vanillaFov) {
     Perspective perspective = getCurrent();
-    float targetFov = perspective.applyFov(renderTickContext, vanillaFov);
+    float fov = vanillaFov;
+    boolean fovFailed = false;
+
+    try {
+      fov = perspective.applyFov(renderTickContext, vanillaFov);
+    } catch (Throwable e) {
+      fovFailed = true;
+      reportException(perspective, "applyFov", e);
+    }
+
+    boolean fovInvalid = fovFailed || !Sanitizer.isFinite(fov) || fov < 0.0f || fov > 180.0f;
+    if (fovInvalid) {
+      fov = vanillaFov;
+      if (!fovFailed) {
+        String id = perspective.id().toString();
+        throttledAction.run(
+            id + ":applyFov:invalid",
+            () ->
+                LOGGER.warn(
+                    "Perspective '{}' returned invalid FOV during applyFov. Falling back to vanilla.",
+                    id));
+      }
+    }
 
     long now = System.currentTimeMillis();
     if (transition.isInTransition(now) && perspective.allowTransition()) {
-      tempFov = transition.updateFov(now, targetFov);
+      tempFov = transition.updateFov(now, fov);
     } else {
-      tempFov = targetFov;
+      tempFov = fov;
     }
-    isTempStateInited = true;
     return tempFov;
   }
 
