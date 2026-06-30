@@ -167,8 +167,12 @@ java {
 publishMods {
     dryRun = false
     modrinth {
+        // Somehow in 1.20.1-fabric, it fails if not specified
+        // refer to https://github.com/Leawind/Perspective-API/actions/runs/28410673256/job/84182772569
+        projectId = System.getenv("MODRINTH_ID")
     }
     curseforge {
+        projectId = System.getenv("CURSEFORGE_ID")
         client = true
         server = false
     }
