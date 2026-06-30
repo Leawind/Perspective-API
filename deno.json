@@ -1,9 +1,9 @@
 {
   "tasks": {
-    "gen-releaserc": "deno -A scripts/gen-releaserc.ts",
-    "publishToMavenLocal": "./gradlew publishToMavenLocal --no-parallel",
+    "clean_run_configs": "./scripts/clean_run_configs.sh",
     "collect": "deno -A scripts/collect.ts",
-    "clean_run_configs": "./scripts/clean_run_configs.sh"
+    "gen-releaserc": "deno -A scripts/gen-releaserc.ts",
+    "publishToMavenLocal": "./gradlew publishToMavenLocal --no-parallel"
   },
   "imports": {
     "@leawind/inventory": "jsr:@leawind/inventory@^0.19.5",
