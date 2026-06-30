@@ -17,14 +17,13 @@ public interface PerspectiveRegistry {
   /// Registers a perspective.
   ///
   /// Replaces the perspective with the same ID if it already exists.
-  @NonNull PerspectiveRegistry register(@NonNull Perspective perspective)
-      throws IllegalArgumentException;
+  @NonNull PerspectiveRegistry register(@NonNull Perspective perspective);
 
   /// Returns `true` if a perspective with the given ID is registered.
   boolean contains(@Nullable Identifier id);
 
   /// ### Returns
-  /// 
+  ///
   /// - the registered perspective with the given ID, or
   /// - `null` if:
   ///   - ID not found
