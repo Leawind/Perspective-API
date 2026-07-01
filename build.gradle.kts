@@ -192,7 +192,7 @@ publishing {
         create<MavenPublication>("maven") {
             artifactId = archivesBaseName
             version = archivesVersion
-
+            from(components["java"])
             pom {
                 name.set(mod.name)
                 description.set(mod.description)
