@@ -39,8 +39,6 @@ public final class PerspectiveHelper {
   private static final float DEG_TO_RAD = (float) Math.PI / 180.0F;
   private static final float RAD_TO_DEG = 180.0F / (float) Math.PI;
 
-  private static class CoordinateSystem {}
-
   // region const fields
   public static final Vector3fc UP;
   public static final Vector3fc DOWN;
