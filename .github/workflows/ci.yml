@@ -66,6 +66,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           DO_PUBLISH: steps.get-next-version.outputs.new_release_published
+          DRY_RUN: ${{ vars.DRY_RUN }}
           MODRINTH_ID: ${{ vars.MODRINTH_ID }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_SLUG: ${{ vars.CURSEFORGE_SLUG }}
