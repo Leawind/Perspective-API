@@ -23,10 +23,18 @@ public interface Perspective {
 
   // endregion
 
-  /// Whether camera transition is enabled when switching to this perspective.
+  /// Whether smooth transitions are allowed when switching TO this perspective.
   ///
-  /// Checked on every render tick.
-  default boolean allowTransition() {
+  /// Checked when this perspective becomes {@link PerspectiveManager#getCurrent()}.
+  default boolean allowTransitionIn() {
+    return true;
+  }
+
+  /// Whether smooth transitions are allowed when switching FROM this perspective.
+  ///
+  /// Checked when this perspective is {@link PerspectiveManager#getCurrent()} and is about to be
+  /// replaced.
+  default boolean allowTransitionOut() {
     return true;
   }
 

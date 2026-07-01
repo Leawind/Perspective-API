@@ -31,6 +31,9 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   private final @NonNull Identifier defaultId;
 
+  /// Previously perspective
+  private volatile @NonNull Perspective previousPerspective;
+
   /// Currently used perspective
   private volatile @NonNull Perspective currentPerspective;
 
@@ -58,7 +61,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     registry.register(defaultPerspective);
     defaultId = defaultPerspective.id();
 
-    currentPerspective = defaultPerspective;
+    previousPerspective = currentPerspective = defaultPerspective;
 
     overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActive);
 
@@ -133,6 +136,9 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     Objects.requireNonNull(perspective);
     if (perspective == currentPerspective) return;
 
+    previousPerspective = currentPerspective;
+    currentPerspective = perspective;
+
     var camera = Bridge.getMainCamera();
     if (camera == null) return;
 
@@ -144,11 +150,10 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
     transition.setStartState(System.currentTimeMillis(), tempPosition, tempRotation, tempFov);
 
-    currentPerspective.onDeactivate();
-    perspective.onActivate();
+    previousPerspective.onDeactivate();
+    currentPerspective.onActivate();
 
-    currentPerspective = perspective;
-    onCurrentPerspectiveChanged.emit(perspective);
+    onCurrentPerspectiveChanged.emit(currentPerspective);
   }
 
   // endregion
@@ -164,8 +169,6 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
   public void updateCamera(float partialTicks, Camera camera) {
-    Perspective perspective = getCurrent();
-
     Entity entity = CameraAccessor.of(camera).getEntity();
     if (entity == null) {
       LOGGER.warn("Somehow camera entity is null");
@@ -173,16 +176,20 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     long now = System.currentTimeMillis();
-    boolean isInTransition = transition.isInTransition(now) && perspective.allowTransition();
+
+    boolean isTransitioning =
+        transition.isInTransition(now)
+            && currentPerspective.allowTransitionIn()
+            && previousPerspective.allowTransitionOut();
 
     // Setup context object
-    renderTickContext.setup(partialTicks, entity, isInTransition);
+    renderTickContext.setup(partialTicks, entity, isTransitioning);
 
     // Event: render tick
     try {
-      perspective.renderTick(renderTickContext);
+      currentPerspective.renderTick(renderTickContext);
     } catch (Throwable e) {
-      reportException(perspective, "renderTick", e);
+      reportException(currentPerspective, "renderTick", e);
     }
 
     // Extract current vanilla state and backup
@@ -192,19 +199,17 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     backupRotation.set(tempRotation);
 
     // Apply transform
-    boolean transformFailed = false;
     try {
-      perspective.applyTransform(renderTickContext, tempPosition, tempRotation);
+      currentPerspective.applyTransform(renderTickContext, tempPosition, tempRotation);
     } catch (Throwable e) {
-      transformFailed = true;
-      reportException(perspective, "applyTransform", e);
+      reportException(currentPerspective, "applyTransform", e);
     }
 
     // Sanitize and fallback if needed
     boolean posInvalid = !Sanitizer.isFinite(tempPosition);
     boolean rotInvalid = !Sanitizer.isFinite(tempRotation);
     if (posInvalid || rotInvalid) {
-      String id = perspective.id().toString();
+      String id = currentPerspective.id().toString();
       throttledAction.run(
           id + ":applyTransform:invalid",
           () ->
@@ -223,7 +228,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     // Apply transition
-    if (isInTransition) {
+    if (isTransitioning) {
       transition.updateTransform(now, tempPosition, tempRotation);
       tempPosition.set(transition.getCurrentPosition());
       tempRotation.set(transition.getCurrentRotation());
@@ -237,22 +242,21 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
   public float modifyFov(float vanillaFov) {
-    Perspective perspective = getCurrent();
     float fov = vanillaFov;
     boolean fovFailed = false;
 
     try {
-      fov = perspective.applyFov(renderTickContext, vanillaFov);
+      fov = currentPerspective.applyFov(renderTickContext, vanillaFov);
     } catch (Throwable e) {
       fovFailed = true;
-      reportException(perspective, "applyFov", e);
+      reportException(currentPerspective, "applyFov", e);
     }
 
     boolean fovInvalid = fovFailed || !Sanitizer.isFinite(fov) || fov < 0.0f || fov > 180.0f;
     if (fovInvalid) {
       fov = vanillaFov;
       if (!fovFailed) {
-        String id = perspective.id().toString();
+        String id = currentPerspective.id().toString();
         throttledAction.run(
             id + ":applyFov:invalid",
             () ->
@@ -263,7 +267,12 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     long now = System.currentTimeMillis();
-    if (transition.isInTransition(now) && perspective.allowTransition()) {
+
+    // 计算是否允许过渡
+
+    if (transition.isInTransition(now)
+        && currentPerspective.allowTransitionIn()
+        && previousPerspective.allowTransitionOut()) {
       tempFov = transition.updateFov(now, fov);
     } else {
       tempFov = fov;
