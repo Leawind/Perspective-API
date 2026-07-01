@@ -11,6 +11,9 @@ pluginManagement {
     }
 }
 plugins {
+    // https://modrinth.com/news/article/new-environments
+    // Be 2.1.0+ so we have accurate metadata when publishing to modrinth
+    id("me.modmuss50.mod-publish-plugin") version "2.1.1" apply false
     // https://github.com/meza/Stonecraft-template/blob/main/settings.gradle.kts
     // https://plugins.gradle.org/plugin/gg.meza.stonecraft
     id("gg.meza.stonecraft") version "1.10.+"

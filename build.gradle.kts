@@ -178,6 +178,7 @@ publishMods {
         // refer to https://github.com/Leawind/Perspective-API/actions/runs/28410673256/job/84182772569
         projectId = System.getenv("MODRINTH_ID")
         additionalFiles.from(tasks.named("sourcesJar"))
+        environment = CLIENT_ONLY
     }
     curseforge {
         projectId = System.getenv("CURSEFORGE_ID")
