@@ -18,5 +18,5 @@ public interface PerspectiveContext {
   @Nullable Entity entity();
 
   /// Returns `true` if it is currently transitioning to this perspective.
-  boolean isInTransition();
+  boolean isTransitioning();
 }

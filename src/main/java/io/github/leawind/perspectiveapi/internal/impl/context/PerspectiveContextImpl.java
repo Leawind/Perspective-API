@@ -10,7 +10,7 @@ public class PerspectiveContextImpl implements PerspectiveContext {
   private final PerspectiveManager manager;
   private float partialTicks;
   private Entity cameraEntity;
-  private boolean isInTransition;
+  private boolean isTransitioning;
 
   public PerspectiveContextImpl(PerspectiveManager manager) {
     this.manager = manager;
@@ -32,13 +32,13 @@ public class PerspectiveContextImpl implements PerspectiveContext {
   }
 
   @Override
-  public boolean isInTransition() {
-    return isInTransition;
+  public boolean isTransitioning() {
+    return isTransitioning;
   }
 
-  public void setup(float partialTicks, Entity cameraEntity, boolean isInTransition) {
+  public void setup(float partialTicks, Entity cameraEntity, boolean isTransitioning) {
     this.partialTicks = partialTicks;
     this.cameraEntity = cameraEntity;
-    this.isInTransition = isInTransition;
+    this.isTransitioning = isTransitioning;
   }
 }
