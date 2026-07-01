@@ -1,5 +1,5 @@
-| [中文](README.zh.md) | English |
-| :------------------: | :-----: |
+| 中文 | [English](README.md) |
+| :--: | :------------------: |
 
 <div align="center">
 
