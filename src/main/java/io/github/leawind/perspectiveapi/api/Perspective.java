@@ -8,6 +8,11 @@ import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
 
+/// Represents a camera perspective that can be applied to the game camera.
+///
+/// Perspective instances are owned by the {@link PerspectiveRegistry} and
+/// {@link PerspectiveManager}. Implementations should not be stored or
+/// referenced directly anywhere else.
 public interface Perspective {
   // region meta info
 
