@@ -34,7 +34,7 @@ The framework includes built-in smooth transition animations, a priority-based p
 |      1.20.6       |   ✅   |    ✅    |       ❌       |
 |       1.21        |   ✅   |    ✅    |       ❌       |
 |      1.21.11      |   ✅   |    ✅    |       ❌       |
-|       26.1        |   ✅   |    ✅    |       ❌       |
+|      26.1.x       |   ✅   |    ✅    |       ❌       |
 |       26.2        |   ✅   |    ✅    |       ❌       |
 
 ## Developer Guide
