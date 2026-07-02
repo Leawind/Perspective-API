@@ -42,6 +42,11 @@ public final class TransitionImpl implements Transition {
   }
 
   @Override
+  public int getDurationMs() {
+    return durationMs;
+  }
+
+  @Override
   public void setBlender(@NonNull Blender blender) {
     this.blender = Objects.requireNonNull(blender);
   }

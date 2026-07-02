@@ -14,6 +14,8 @@ public interface TransitionController {
   /// Sets the transition duration in milliseconds.
   void setDurationMs(int durationMs);
 
+  int getDurationMs();
+
   /// Sets the blending function used for easing.
   void setBlender(@NonNull Blender blender);
 
