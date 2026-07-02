@@ -14,11 +14,11 @@ public final class TransitionImpl implements Transition {
   private static final double MIN_DELTA_MS = 1;
 
   // region settings
-  private int duration = 300;
+  private int durationMs = 300;
   private Blender blender = Blender::easeOut;
   // endregion
 
-  private double startTime;
+  private double startTimeMs;
 
   // region start state
   private final Vector3d startPosition = new Vector3d();
@@ -32,13 +32,13 @@ public final class TransitionImpl implements Transition {
   TransitionImpl() {}
 
   @Override
-  public boolean isInTransition(long now) {
-    return now - startTime < duration;
+  public boolean isInTransition(long currentTimeMs) {
+    return currentTimeMs - startTimeMs < durationMs;
   }
 
   @Override
-  public void setDuration(int duration) {
-    this.duration = duration;
+  public void setDurationMs(int durationMs) {
+    this.durationMs = durationMs;
   }
 
   @Override
@@ -53,18 +53,18 @@ public final class TransitionImpl implements Transition {
 
   @Override
   public void setStartState(
-      double startTime, Vector3dc startPosition, Quaternionfc startRotation, float startFov) {
-    this.startTime = startTime;
+      double startTimeMs, Vector3dc startPosition, Quaternionfc startRotation, float startFov) {
+    this.startTimeMs = startTimeMs;
     this.startPosition.set(startPosition);
     this.startRotation.set(startRotation);
     this.startFov = startFov;
   }
 
-  private float getProgress(double now) {
-    double deltaMs = now - startTime;
+  private float getProgress(double currentTimeMs) {
+    double deltaMs = currentTimeMs - startTimeMs;
     deltaMs = Math.max(deltaMs, MIN_DELTA_MS);
 
-    float t = (float) (deltaMs / duration);
+    float t = (float) (deltaMs / durationMs);
     t = PerspectiveUtils.clamp(t, 0, 1);
     t = blender.blend(t);
     t = PerspectiveUtils.clamp(t, 0, 1);
@@ -72,15 +72,16 @@ public final class TransitionImpl implements Transition {
   }
 
   @Override
-  public void updateTransform(double now, Vector3dc targetPosition, Quaternionfc targetRotation) {
-    float progress = getProgress(now);
+  public void updateTransform(
+      double currentTimeMs, Vector3dc targetPosition, Quaternionfc targetRotation) {
+    float progress = getProgress(currentTimeMs);
     startPosition.lerp(targetPosition, progress, currentPosition);
     startRotation.slerp(targetRotation, progress, currentRotation);
   }
 
   @Override
-  public float updateFov(double now, float targetFov) {
-    float progress = getProgress(now);
+  public float updateFov(double currentTimeMs, float targetFov) {
+    float progress = getProgress(currentTimeMs);
     return currentFov = startFov + (targetFov - startFov) * progress;
   }
 
