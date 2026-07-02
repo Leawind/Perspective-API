@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
+import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
@@ -17,6 +18,7 @@ public final class ModEvents {
 
     GameClientEvents.CLIENT_TICK_START.on(
         minecraft -> {
+          if (!PerspectiveAPI.enabled) return;
           if (minecraft.level == null || minecraft.player == null) return;
 
           manager.resolveAndUpdateCurrentPerspective();
@@ -35,20 +37,31 @@ public final class ModEvents {
 
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         (minecraft) -> {
+          if (!PerspectiveAPI.enabled) return;
           while (minecraft.options.keyTogglePerspective.consumeClick()) {
             manager.cycler().switchToNextAvailable(manager.registry());
           }
         });
 
     GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
-        ignored -> manager.overrides().clearExcept(PerspectiveCyclerImpl.KEY));
+        ignored -> {
+          if (!PerspectiveAPI.enabled) return;
+          manager.overrides().clearExcept(PerspectiveCyclerImpl.KEY);
+        });
 
     // region camera
 
-    GameClientEvents.SETUP_CAMERA.on((ctx) -> manager.updateCamera(ctx.partialTicks, ctx.camera));
+    GameClientEvents.SETUP_CAMERA.on(
+        (ctx) -> {
+          if (!PerspectiveAPI.enabled) return;
+          manager.updateCamera(ctx.partialTicks, ctx.camera);
+        });
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
-        (ctx) -> ctx.fieldOfView = manager.modifyFov(ctx.fieldOfView));
+        (ctx) -> {
+          if (!PerspectiveAPI.enabled) return;
+          ctx.fieldOfView = manager.modifyFov(ctx.fieldOfView);
+        });
 
     // endregion
 
