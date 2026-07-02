@@ -3,9 +3,7 @@
 
 <div align="center">
 
-<img src="src/main/resources/logo.png" alt="Perspective API" style="image-rendering:pixelated;height:6em;">
-
-<span style="font-size:0.7em;color:#888">(no logo yet)</span>
+<img src="src/main/resources/logo.64x.png" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
 
 # Perspective API
 
