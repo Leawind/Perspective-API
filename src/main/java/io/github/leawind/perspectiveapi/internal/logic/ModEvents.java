@@ -18,7 +18,7 @@ public final class ModEvents {
 
     GameClientEvents.CLIENT_TICK_START.on(
         minecraft -> {
-          if (!PerspectiveAPI.enabled) return;
+          if (!PerspectiveAPI.isEnabled()) return;
           if (minecraft.level == null || minecraft.player == null) return;
 
           manager.resolveAndUpdateCurrentPerspective();
@@ -37,7 +37,7 @@ public final class ModEvents {
 
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         (minecraft) -> {
-          if (!PerspectiveAPI.enabled) return;
+          if (!PerspectiveAPI.isEnabled()) return;
           while (minecraft.options.keyTogglePerspective.consumeClick()) {
             manager.cycler().switchToNextAvailable(manager.registry());
           }
@@ -45,7 +45,7 @@ public final class ModEvents {
 
     GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
         ignored -> {
-          if (!PerspectiveAPI.enabled) return;
+          if (!PerspectiveAPI.isEnabled()) return;
           manager.overrides().clearExcept(PerspectiveCyclerImpl.KEY);
         });
 
@@ -53,13 +53,13 @@ public final class ModEvents {
 
     GameClientEvents.SETUP_CAMERA.on(
         (ctx) -> {
-          if (!PerspectiveAPI.enabled) return;
+          if (!PerspectiveAPI.isEnabled()) return;
           manager.updateCamera(ctx.partialTicks, ctx.camera);
         });
 
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
         (ctx) -> {
-          if (!PerspectiveAPI.enabled) return;
+          if (!PerspectiveAPI.isEnabled()) return;
           ctx.fieldOfView = manager.modifyFov(ctx.fieldOfView);
         });
 

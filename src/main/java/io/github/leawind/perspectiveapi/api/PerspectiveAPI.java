@@ -10,9 +10,20 @@ public final class PerspectiveAPI {
   public static final String MOD_ID = "perspective_api";
   public static final String MOD_NAME = "Perspective API";
 
+  private static volatile boolean enabled = true;
+
   /// Master switch that controls whether all mixins and event handlers are active.
   /// Set to `false` to completely revert to vanilla behavior.
-  public static volatile boolean enabled = true;
+  ///
+  /// @see #setEnabled(boolean)
+  public static boolean isEnabled() {
+    return enabled;
+  }
+
+  /// @see #isEnabled()
+  public static void setEnabled(boolean enabled) {
+    PerspectiveAPI.enabled = enabled;
+  }
 
   /// @return The global singleton of {@link PerspectiveManager}.
   public static @NonNull PerspectiveManager getManager() {
