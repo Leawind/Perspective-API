@@ -14,7 +14,7 @@ public final class TransitionImpl implements Transition {
   private static final double MIN_DELTA_MS = 1;
 
   // region settings
-  private double duration = 300;
+  private int duration = 300;
   private Blender blender = Blender::easeOut;
   // endregion
 
@@ -37,7 +37,7 @@ public final class TransitionImpl implements Transition {
   }
 
   @Override
-  public void setDuration(long duration) {
+  public void setDuration(int duration) {
     this.duration = duration;
   }
 
@@ -81,7 +81,7 @@ public final class TransitionImpl implements Transition {
   @Override
   public float updateFov(double now, float targetFov) {
     float progress = getProgress(now);
-   return  currentFov = startFov + (targetFov - startFov) * progress;
+    return currentFov = startFov + (targetFov - startFov) * progress;
   }
 
   @Override

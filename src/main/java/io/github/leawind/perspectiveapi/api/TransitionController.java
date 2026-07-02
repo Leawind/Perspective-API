@@ -12,7 +12,7 @@ public interface TransitionController {
   boolean isInTransition(long now);
 
   /// Sets the transition duration in milliseconds.
-  void setDuration(long duration);
+  void setDuration(int duration);
 
   /// Sets the blending function used for easing.
   void setBlender(@NonNull Blender blender);
