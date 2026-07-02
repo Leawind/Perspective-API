@@ -26,6 +26,17 @@ public interface Perspective {
   /// Corresponding camera type for this perspective.
   @NonNull CameraType cameraType();
 
+  /// Returns the translation key for this perspective's display name.
+  ///
+  /// The default key follows the format: `perspective.<namespace>.<path>`.
+  /// For example, an ID of `examplemod:free_camera` produces `perspective.examplemod.free_camera`.
+  ///
+  /// This key is intended to be used with Minecraft's translation system
+  /// to display localized perspective names in GUIs.
+  default String translationKey() {
+    return "perspective." + id().getNamespace() + "." + id().getPath();
+  }
+
   // endregion
 
   /// Whether smooth transitions are allowed when switching TO this perspective.
