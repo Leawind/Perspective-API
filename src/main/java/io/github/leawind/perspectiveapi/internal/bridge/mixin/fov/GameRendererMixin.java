@@ -24,7 +24,7 @@ public abstract class GameRendererMixin {
     GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(perspective_api$context);
     return perspective_api$context.fieldOfView;
   }
-  *//*? } else {*/
+  *//*? } else if !forge {*/
   /*@Unique
   private final ModifyFieldOfViewContext perspective_api$context = new ModifyFieldOfViewContext();
 
