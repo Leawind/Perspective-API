@@ -1,4 +1,6 @@
 {
+  "modmenu.nameTranslation.perspective_api": "Perspective API",
+  "modmenu.descriptionTranslation.perspective_api": "A client-side API framework for managing and extending camera perspectives.",
   "perspective.minecraft.first_person": "First Person",
   "perspective.minecraft.third_person_back": "Third Person Back",
   "perspective.minecraft.third_person_front": "Third Person Front"
