@@ -5,6 +5,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
+import java.nio.file.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +52,20 @@ public final class ModEvents {
           if (!PerspectiveAPI.isEnabled()) return;
           ctx.fieldOfView = manager.modifyFov(ctx.fieldOfView);
         });
+
+    // endregion
+
+    // region lifecycle
+
+    GameClientEvents.AFTER_MINECRAFT_INIT.on(
+        minecraft -> {
+          var stateManager = PerspectiveAPI.getStateManager(minecraft);
+          if (Files.exists(stateManager.filePath())) {
+            stateManager.tryLoadAndApply();
+          }
+        });
+    GameClientEvents.ON_MINECRAFT_CLOSE.on(
+        minecraft -> PerspectiveAPI.getStateManager(minecraft).tryExtractAndSave());
 
     // endregion
 

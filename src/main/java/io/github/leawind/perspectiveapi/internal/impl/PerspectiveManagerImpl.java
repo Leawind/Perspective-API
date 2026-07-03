@@ -275,4 +275,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   // endregion
+
+  public void setCurrentId(@NonNull Identifier id) {
+    currentId = id;
+  }
 }
