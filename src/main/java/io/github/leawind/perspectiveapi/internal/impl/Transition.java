@@ -5,12 +5,20 @@ import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
+import org.lwjgl.glfw.GLFW;
 
 /// Controls smooth camera transitions between perspectives.
 ///
 /// When a perspective switch occurs, the camera interpolates from its previous position/rotation
 /// to the new perspective's values.
 public interface Transition extends TransitionController {
+
+  static double getTimeMs() {
+    return GLFW.glfwGetTime() * 1000;
+  }
+
+  /// Returns `true` if a transition is currently in progress at the given timestamp.
+  boolean isInTransition(double now);
 
   /// Starts a new transition from the given start state.
   ///

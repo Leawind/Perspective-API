@@ -8,13 +8,10 @@ import org.jspecify.annotations.NonNull;
 /// to the new perspective's values
 public interface TransitionController {
 
-  /// Returns `true` if a transition is currently in progress at the given timestamp.
-  boolean isInTransition(long now);
-
   /// Sets the transition duration in milliseconds.
-  void setDurationMs(int durationMs);
+  void setDurationMs(double durationMs);
 
-  int getDurationMs();
+  double getDurationMs();
 
   /// Sets the blending function used for easing.
   void setBlender(@NonNull Blender blender);

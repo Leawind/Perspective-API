@@ -75,7 +75,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
               isTempStateInited = true;
             }
           }
-          transition.setStartState(System.currentTimeMillis(), tempPosition, tempRotation, tempFov);
+          transition.setStartState(Transition.getTimeMs(), tempPosition, tempRotation, tempFov);
         });
   }
 
@@ -171,7 +171,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     Perspective current = currentPerspective;
     Perspective previous = previousPerspective;
 
-    long now = System.currentTimeMillis();
+    double now = Transition.getTimeMs();
 
     boolean isTransitioning =
         transition.isInTransition(now)
@@ -263,7 +263,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
       }
     }
 
-    long now = System.currentTimeMillis();
+    double now = Transition.getTimeMs();
     if (transition.isInTransition(now)
         && current.allowTransitionIn()
         && (previous == null || previous.allowTransitionOut())) {

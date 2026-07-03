@@ -13,7 +13,7 @@ public final class TransitionImpl implements Transition {
   private static final double MIN_DELTA_MS = 1;
 
   // region settings
-  private int durationMs = 300;
+  private double durationMs = 300;
   private Blender blender = Blender::easeOut;
   // endregion
 
@@ -27,17 +27,17 @@ public final class TransitionImpl implements Transition {
   TransitionImpl() {}
 
   @Override
-  public boolean isInTransition(long currentTimeMs) {
+  public boolean isInTransition(double currentTimeMs) {
     return currentTimeMs - startTimeMs < durationMs;
   }
 
   @Override
-  public void setDurationMs(int durationMs) {
+  public void setDurationMs(double durationMs) {
     this.durationMs = durationMs;
   }
 
   @Override
-  public int getDurationMs() {
+  public double getDurationMs() {
     return durationMs;
   }
 
