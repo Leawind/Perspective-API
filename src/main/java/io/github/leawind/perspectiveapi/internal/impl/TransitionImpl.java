@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
 import java.util.Objects;
 import org.joml.Quaternionf;
@@ -27,7 +26,6 @@ public final class TransitionImpl implements Transition {
 
   private final Vector3d currentPosition = new Vector3d();
   private final Quaternionf currentRotation = new Quaternionf();
-  private float currentFov = 70.0f;
 
   TransitionImpl() {}
 
@@ -87,7 +85,7 @@ public final class TransitionImpl implements Transition {
   @Override
   public float updateFov(double currentTimeMs, float targetFov) {
     float progress = getProgress(currentTimeMs);
-    return currentFov = startFov + (targetFov - startFov) * progress;
+    return startFov + (targetFov - startFov) * progress;
   }
 
   @Override
@@ -98,10 +96,5 @@ public final class TransitionImpl implements Transition {
   @Override
   public @NonNull Quaternionfc getCurrentRotation() {
     return currentRotation;
-  }
-
-  @Override
-  public float getCurrentFov() {
-    return currentFov;
   }
 }

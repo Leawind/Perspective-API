@@ -1,5 +1,6 @@
-package io.github.leawind.perspectiveapi.api;
+package io.github.leawind.perspectiveapi.internal.impl;
 
+import io.github.leawind.perspectiveapi.api.TransitionController;
 import org.joml.Quaternionfc;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
@@ -38,7 +39,4 @@ public interface Transition extends TransitionController {
 
   /// Returns the current interpolated camera rotation.
   @NonNull Quaternionfc getCurrentRotation();
-
-  /// Returns the current interpolated FOV.
-  float getCurrentFov();
 }
