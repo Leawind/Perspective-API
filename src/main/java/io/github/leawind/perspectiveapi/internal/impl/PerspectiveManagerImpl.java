@@ -14,11 +14,13 @@ import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Objects;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,10 +31,11 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
-  private volatile @NonNull Identifier previousId;
-  private volatile @NonNull Perspective previousPerspectiveCache;
   private volatile @NonNull Identifier currentId;
-  private volatile @NonNull Perspective currentPerspectiveCache;
+
+  /// Updated on client tick
+  private volatile @NonNull Perspective currentPerspective;
+  private volatile @Nullable Perspective previousPerspective = null;
 
   public final SimpleEventEmitter.Owned<Perspective> onCurrentPerspectiveChanged =
       SimpleEventEmitter.create();
@@ -56,11 +59,24 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
     registry = new PerspectiveRegistryImpl(defaultPerspective);
-    previousId = currentId = defaultPerspective.id();
-    previousPerspectiveCache = currentPerspectiveCache = defaultPerspective;
-    registry.onUpdate(() -> setCurrentPerspective(registry.getOrDefault(currentId)));
+    currentId = defaultPerspective.id();
+    currentPerspective = defaultPerspective;
 
     overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActive);
+
+    onCurrentPerspectiveChanged.on(
+        () -> {
+          if (!isTempStateInited) {
+            Camera camera = Bridge.getMainCamera();
+            if (camera != null) {
+              Bridge.getCameraPosition(camera, tempPosition);
+              Bridge.getCameraRotationQuat(camera, tempRotation);
+              tempFov = 70.0f;
+              isTempStateInited = true;
+            }
+          }
+          transition.setStartState(System.currentTimeMillis(), tempPosition, tempRotation, tempFov);
+        });
   }
 
   // region components
@@ -95,48 +111,42 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   @Override
   public @NonNull Perspective getCurrent() {
-    return currentPerspectiveCache;
+    return currentPerspective;
   }
 
-  public void resolveAndUpdateCurrentPerspective() {
-    // TODO Identifier resolvedId = overrides.resolve(registry::get);
+  public void clientTick(Minecraft minecraft) {
+    // Resolve and update current id from override chain
     Identifier resolvedId = overrides.resolve(registry::contains);
-    setCurrentPerspective(registry.getOrDefault(resolvedId));
-  }
+    if (resolvedId == null) {
+      resolvedId = registry.getDefault().id();
+    }
+    currentId = resolvedId;
 
-  /// @throws IllegalArgumentException if `perspective` is not registered
-  /// @throws NullPointerException if `perspective` is null
-  private synchronized void setCurrentPerspective(@NonNull Perspective perspective) {
-    Objects.requireNonNull(perspective);
-    if (!registry().contains(perspective)) {
-      throw new IllegalArgumentException("Perspective is not registered: " + perspective.id());
+    // Resolve latest current perspective
+    Perspective current = registry.getOrDefault(currentId);
+
+    // If cached current is outdated, update the cache
+    Perspective cachedCurrent = currentPerspective;
+    if (cachedCurrent != current) {
+      previousPerspective = cachedCurrent;
+      currentPerspective = current;
+
+      cachedCurrent.onDeactivate();
+      current.onActivate();
+
+      onCurrentPerspectiveChanged.emit(current);
     }
 
-    if (perspective == currentPerspectiveCache) return;
-
-    previousId = currentId;
-    previousPerspectiveCache = currentPerspectiveCache;
-
-    currentId = perspective.id();
-    currentPerspectiveCache = perspective;
-
-    onCurrentPerspectiveChanged.emit(currentPerspectiveCache);
-
-    var camera = Bridge.getMainCamera();
-    if (camera == null) return;
-    if (!isTempStateInited) {
-      Bridge.getCameraPosition(camera, tempPosition);
-      Bridge.getCameraRotationQuat(camera, tempRotation);
-      tempFov = 70.0f;
-      isTempStateInited = true;
+    // Run perspective client tick
+    try {
+      current.clientTick(minecraft);
+    } catch (Throwable e) {
+      reportException(current, "clientTick", e);
     }
 
-    transition.setStartState(System.currentTimeMillis(), tempPosition, tempRotation, tempFov);
-
-    previousPerspectiveCache.onDeactivate();
-    currentPerspectiveCache.onActivate();
-
-    onCurrentPerspectiveChanged.emit(currentPerspectiveCache);
+    if (!current.isAvailable()) {
+      cycler().switchToPreviousAvailable(registry());
+    }
   }
 
   // endregion
@@ -158,15 +168,15 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
       return;
     }
 
-    var currentPerspective = currentPerspectiveCache;
-    var previousPerspective = previousPerspectiveCache;
+    Perspective current = currentPerspective;
+    Perspective previous = previousPerspective;
 
     long now = System.currentTimeMillis();
 
     boolean isTransitioning =
         transition.isInTransition(now)
-            && currentPerspective.allowTransitionIn()
-            && previousPerspective.allowTransitionOut();
+            && current.allowTransitionIn()
+            && (previous == null || previous.allowTransitionOut());
 
     // Setup context object
     renderTickContext.setup(partialTicks, entity, isTransitioning);
@@ -229,21 +239,21 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     float fov = vanillaFov;
     boolean fovFailed = false;
 
-    var currentPerspective = currentPerspectiveCache;
-    var previousPerspective = previousPerspectiveCache;
+    Perspective current = currentPerspective;
+    Perspective previous = previousPerspective;
 
     try {
-      fov = currentPerspective.applyFov(renderTickContext, vanillaFov);
+      fov = current.applyFov(renderTickContext, vanillaFov);
     } catch (Throwable e) {
       fovFailed = true;
-      reportException(currentPerspective, "applyFov", e);
+      reportException(current, "applyFov", e);
     }
 
     boolean fovInvalid = fovFailed || !Sanitizer.isFinite(fov) || fov < 0.0f || fov > 180.0f;
     if (fovInvalid) {
       fov = vanillaFov;
       if (!fovFailed) {
-        String id = currentPerspective.id().toString();
+        String id = current.id().toString();
         throttledAction.run(
             id + ":applyFov:invalid",
             () ->
@@ -255,8 +265,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
     long now = System.currentTimeMillis();
     if (transition.isInTransition(now)
-        && currentPerspective.allowTransitionIn()
-        && previousPerspective.allowTransitionOut()) {
+        && current.allowTransitionIn()
+        && (previous == null || previous.allowTransitionOut())) {
       tempFov = transition.updateFov(now, fov);
     } else {
       tempFov = fov;

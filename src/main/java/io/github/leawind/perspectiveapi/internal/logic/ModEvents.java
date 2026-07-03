@@ -21,18 +21,7 @@ public final class ModEvents {
           if (!PerspectiveAPI.isEnabled()) return;
           if (minecraft.level == null || minecraft.player == null) return;
 
-          manager.resolveAndUpdateCurrentPerspective();
-          var current = manager.getCurrent();
-
-          try {
-            current.clientTick(minecraft);
-          } catch (Throwable e) {
-            manager.reportException(current, "clientTick", e);
-          }
-
-          if (!current.isAvailable()) {
-            manager.cycler().switchToPreviousAvailable(manager.registry());
-          }
+          manager.clientTick(minecraft);
         });
 
     GameClientEvents.HANDLE_KEYBINDS_START.on(
@@ -69,6 +58,7 @@ public final class ModEvents {
 
     PerspectiveManagerImpl.INSTANCE.onCurrentPerspectiveChanged.on(
         perspective -> {
+          if (!PerspectiveAPI.isEnabled()) return;
           LOGGER.debug("Switching current perspective to {}", perspective.id());
           Bridge.updateCameraType(perspective.cameraType());
         });
