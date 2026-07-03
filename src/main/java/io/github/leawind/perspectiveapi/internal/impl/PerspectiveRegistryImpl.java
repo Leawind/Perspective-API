@@ -3,7 +3,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,29 +20,33 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   private volatile List<Perspective> allPerspectivesSnapshot = List.of();
 
+  private final @NonNull Identifier defaultId;
+
   // region internal events
 
-  private final SimpleEventEmitter.Owned<Perspective> onUpdate = SimpleEventEmitter.create();
+  private final List<Runnable> updateListeners = new ArrayList<>();
 
   // endregion
 
-  PerspectiveRegistryImpl() {}
+  PerspectiveRegistryImpl(@NonNull Perspective defaultPerspective) {
+    register(defaultPerspective);
+    defaultId = defaultPerspective.id();
+  }
 
-  /// Emitted when the registry is updated (perspective added).
-  public SimpleEventEmitter<Perspective> onUpdate() {
-    return onUpdate;
+  @Override
+  public void onUpdate(@NonNull Runnable listener) {
+    updateListeners.add(listener);
   }
 
   @Override
   public @NonNull PerspectiveRegistry register(@NonNull Perspective perspective) {
     var id = perspective.id();
-
     LOGGER.info("Registering perspective with id '{}': {}", id, perspective);
     synchronized (this) {
       perspectives.put(id, perspective);
       rebuildSnapshot();
     }
-    onUpdate.emit(perspective);
+    updateListeners.forEach(Runnable::run);
     return this;
   }
 
@@ -57,6 +61,19 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       return null;
     }
     return perspectives.get(id);
+  }
+
+  @Override
+  public @NonNull Perspective getDefault() {
+    return perspectives.get(defaultId);
+  }
+
+  @Override
+  public @NonNull Perspective getOrDefault(@Nullable Identifier id) {
+    if (id == null) {
+      return getDefault();
+    }
+    return perspectives.getOrDefault(id, getDefault());
   }
 
   @Override

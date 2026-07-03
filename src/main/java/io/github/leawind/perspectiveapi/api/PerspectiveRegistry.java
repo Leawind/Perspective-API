@@ -18,7 +18,6 @@ import org.jspecify.annotations.Nullable;
 ///
 /// Perspectives are expected to be registered during mod initialization.
 public interface PerspectiveRegistry {
-
   /// Registers a perspective.
   ///
   /// Replaces the perspective with the same ID if it already exists.
@@ -35,8 +34,17 @@ public interface PerspectiveRegistry {
   ///   - ID is null
   @Nullable Perspective get(@Nullable Identifier id);
 
+  @NonNull Perspective getDefault();
+
+  @Nullable Perspective getOrDefault(@NonNull Identifier id);
+
   /// Returns all registered perspectives as an unmodifiable list.
   @NonNull List<Perspective> getAll();
+
+  /// Registers a listener that is called when a perspective is registered or replaced.
+  ///
+  /// @param listener callback invoked with the registered perspective
+  void onUpdate(@NonNull Runnable listener);
 
   /// Returns `true` if the given perspective instance is registered.
   default boolean contains(@NonNull Perspective perspective) {

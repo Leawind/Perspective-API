@@ -20,9 +20,6 @@ public interface PerspectiveManager {
   /// @return The perspective cycler for cycling through perspectives.
   @NonNull PerspectiveCycler cycler();
 
-  /// Returns the default perspective.
-  @NonNull Perspective getDefault();
-
   /// Returns the current active perspective after resolving the override chain.
   /// Never returns `null`.
   @NonNull Perspective getCurrent();

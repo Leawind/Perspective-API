@@ -29,13 +29,10 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
-  private final @NonNull Identifier defaultId;
-
-  /// Previously perspective
-  private volatile @NonNull Perspective previousPerspective;
-
-  /// Currently used perspective
-  private volatile @NonNull Perspective currentPerspective;
+  private volatile @NonNull Identifier previousId;
+  private volatile @NonNull Perspective previousPerspectiveCache;
+  private volatile @NonNull Identifier currentId;
+  private volatile @NonNull Perspective currentPerspectiveCache;
 
   public final SimpleEventEmitter.Owned<Perspective> onCurrentPerspectiveChanged =
       SimpleEventEmitter.create();
@@ -58,25 +55,16 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
-    registry.register(defaultPerspective);
-    defaultId = defaultPerspective.id();
-
-    previousPerspective = currentPerspective = defaultPerspective;
+    registry = new PerspectiveRegistryImpl(defaultPerspective);
+    previousId = currentId = defaultPerspective.id();
+    previousPerspectiveCache = currentPerspectiveCache = defaultPerspective;
+    registry.onUpdate(() -> setCurrentPerspective(registry.getOrDefault(currentId)));
 
     overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActive);
-
-    registry
-        .onUpdate()
-        .on(
-            (perspective) -> {
-              if (perspective.id().equals(currentPerspective.id())) {
-                setCurrentPerspective(perspective);
-              }
-            });
   }
 
   // region components
-  private final PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+  private final PerspectiveRegistryImpl registry;
   private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl();
   private final PerspectiveOverrideChainImpl overrides = new PerspectiveOverrideChainImpl();
   private final Transition transition = new TransitionImpl();
@@ -107,53 +95,48 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   @Override
   public @NonNull Perspective getCurrent() {
-    return currentPerspective;
-  }
-
-  @Override
-  public @NonNull Perspective getDefault() {
-    return Objects.requireNonNull(registry().get(defaultId));
+    return currentPerspectiveCache;
   }
 
   public void resolveAndUpdateCurrentPerspective() {
-    setCurrentPerspective(resolveCurrentPerspective());
-  }
-
-  private @NonNull Perspective resolveCurrentPerspective() {
+    // TODO Identifier resolvedId = overrides.resolve(registry::get);
     Identifier resolvedId = overrides.resolve(registry::contains);
-
-    if (resolvedId != null) {
-      Perspective perspective = registry.get(resolvedId);
-      if (perspective != null) {
-        return perspective;
-      }
-    }
-
-    return getDefault();
+    setCurrentPerspective(registry.getOrDefault(resolvedId));
   }
 
+  /// @throws IllegalArgumentException if `perspective` is not registered
+  /// @throws NullPointerException if `perspective` is null
   private synchronized void setCurrentPerspective(@NonNull Perspective perspective) {
     Objects.requireNonNull(perspective);
-    if (perspective == currentPerspective) return;
+    if (!registry().contains(perspective)) {
+      throw new IllegalArgumentException("Perspective is not registered: " + perspective.id());
+    }
 
-    previousPerspective = currentPerspective;
-    currentPerspective = perspective;
+    if (perspective == currentPerspectiveCache) return;
+
+    previousId = currentId;
+    previousPerspectiveCache = currentPerspectiveCache;
+
+    currentId = perspective.id();
+    currentPerspectiveCache = perspective;
+
+    onCurrentPerspectiveChanged.emit(currentPerspectiveCache);
 
     var camera = Bridge.getMainCamera();
     if (camera == null) return;
-
     if (!isTempStateInited) {
       Bridge.getCameraPosition(camera, tempPosition);
       Bridge.getCameraRotationQuat(camera, tempRotation);
       tempFov = 70.0f;
       isTempStateInited = true;
     }
+
     transition.setStartState(System.currentTimeMillis(), tempPosition, tempRotation, tempFov);
 
-    previousPerspective.onDeactivate();
-    currentPerspective.onActivate();
+    previousPerspectiveCache.onDeactivate();
+    currentPerspectiveCache.onActivate();
 
-    onCurrentPerspectiveChanged.emit(currentPerspective);
+    onCurrentPerspectiveChanged.emit(currentPerspectiveCache);
   }
 
   // endregion
@@ -174,6 +157,9 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
       LOGGER.warn("Somehow camera entity is null");
       return;
     }
+
+    var currentPerspective = currentPerspectiveCache;
+    var previousPerspective = previousPerspectiveCache;
 
     long now = System.currentTimeMillis();
 
@@ -243,6 +229,9 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     float fov = vanillaFov;
     boolean fovFailed = false;
 
+    var currentPerspective = currentPerspectiveCache;
+    var previousPerspective = previousPerspectiveCache;
+
     try {
       fov = currentPerspective.applyFov(renderTickContext, vanillaFov);
     } catch (Throwable e) {
@@ -265,9 +254,6 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     long now = System.currentTimeMillis();
-
-    // 计算是否允许过渡
-
     if (transition.isInTransition(now)
         && currentPerspective.allowTransitionIn()
         && previousPerspective.allowTransitionOut()) {
