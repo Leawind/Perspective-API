@@ -24,9 +24,6 @@ public final class TransitionImpl implements Transition {
   private final Quaternionf startRotation = new Quaternionf();
   private float startFov = 70.0f;
 
-  private final Vector3d currentPosition = new Vector3d();
-  private final Quaternionf currentRotation = new Quaternionf();
-
   TransitionImpl() {}
 
   @Override
@@ -76,25 +73,19 @@ public final class TransitionImpl implements Transition {
 
   @Override
   public void updateTransform(
-      double currentTimeMs, Vector3dc targetPosition, Quaternionfc targetRotation) {
+      double currentTimeMs,
+      Vector3dc targetPosition,
+      Quaternionfc targetRotation,
+      Vector3d destPosition,
+      Quaternionf destRotation) {
     float progress = getProgress(currentTimeMs);
-    startPosition.lerp(targetPosition, progress, currentPosition);
-    startRotation.slerp(targetRotation, progress, currentRotation);
+    startPosition.lerp(targetPosition, progress, destPosition);
+    startRotation.slerp(targetRotation, progress, destRotation);
   }
 
   @Override
   public float updateFov(double currentTimeMs, float targetFov) {
     float progress = getProgress(currentTimeMs);
     return startFov + (targetFov - startFov) * progress;
-  }
-
-  @Override
-  public @NonNull Vector3dc getCurrentPosition() {
-    return currentPosition;
-  }
-
-  @Override
-  public @NonNull Quaternionfc getCurrentRotation() {
-    return currentRotation;
   }
 }

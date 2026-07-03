@@ -79,7 +79,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private final PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
   private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl();
   private final PerspectiveOverrideChainImpl overrides = new PerspectiveOverrideChainImpl();
-  private final TransitionImpl transition = new TransitionImpl();
+  private final Transition transition = new TransitionImpl();
 
   @Override
   public @NonNull PerspectiveRegistry registry() {
@@ -229,9 +229,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
     // Apply transition
     if (isTransitioning) {
-      transition.updateTransform(now, tempPosition, tempRotation);
-      tempPosition.set(transition.getCurrentPosition());
-      tempRotation.set(transition.getCurrentRotation());
+      transition.updateTransform(now, tempPosition, tempRotation, tempPosition, tempRotation);
     }
     isTempStateInited = true;
 
