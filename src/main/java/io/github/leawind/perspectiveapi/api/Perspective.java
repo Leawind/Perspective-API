@@ -98,8 +98,7 @@ public interface Perspective {
   default void onActivate() {}
 
   /// Called when this perspective is no longer the current perspective (the one obtained from
-  // {@link
-  /// PerspectiveManager#getCurrent()}).
+  /// {@link PerspectiveManager#getCurrent()}).
   ///
   /// @see #onActivate()
   default void onDeactivate() {}
