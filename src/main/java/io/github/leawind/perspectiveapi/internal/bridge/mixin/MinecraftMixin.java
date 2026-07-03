@@ -11,6 +11,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
 
+  @Inject(method = "<init>", at = @At("TAIL"))
+  private void afterInit(CallbackInfo ci) {
+    GameClientEvents.AFTER_MINECRAFT_INIT.emit((Minecraft) (Object) this);
+  }
+
+  @Inject(method = "close", at = @At("TAIL"))
+  private void onClose(CallbackInfo ci) {
+    GameClientEvents.ON_MINECRAFT_CLOSE.emit((Minecraft) (Object) this);
+  }
+
   @Inject(method = "tick", at = @At(value = "HEAD"))
   private void beforeTick(CallbackInfo ci) {
     GameClientEvents.CLIENT_TICK_START.emit((Minecraft) (Object) this);

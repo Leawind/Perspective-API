@@ -8,6 +8,11 @@ import net.minecraft.client.multiplayer.ClientLevel;
 public final class GameClientEvents {
   private GameClientEvents() {}
 
+  public static final SingleEventEmitter<Minecraft> AFTER_MINECRAFT_INIT =
+      new SingleEventEmitter<>();
+
+  public static final SingleEventEmitter<Minecraft> ON_MINECRAFT_CLOSE = new SingleEventEmitter<>();
+
   public static final SingleEventEmitter<Minecraft> CLIENT_TICK_START = new SingleEventEmitter<>();
 
   public static final SingleEventEmitter<ClientLevel> AFTER_CLIENT_LEVEL_CHANGE =
