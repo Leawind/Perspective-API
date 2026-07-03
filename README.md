@@ -74,12 +74,14 @@ Implement the `Perspective` interface to define new camera behaviors.
 
 **Core Methods:**
 
-- `getId()`: Returns a unique `Identifier` for registration and reference.
-- `getCameraType()`: Specifies the vanilla camera type to fall back to when `applyTransform` and `applyFov` perform no modifications.
-- `applyTransform(position, rotation)`: Called every frame to modify the camera's position and orientation.
-- `applyFov(fov)`: Called every frame to modify the Field of View.
-- `clientTick()` / `renderTick()`: Called during client logic ticks and render ticks, respectively, to update internal state.
+- `id()`: Returns a unique `Identifier` for registration and reference.
+- `cameraType()`: Specifies the vanilla camera type to fall back to when `applyTransform` and `applyFov` perform no modifications.
+- `allowTransitionIn()` / `allowTransitionOut()`: Controls whether smooth transitions are allowed when switching to or from this perspective.
+- `applyTransform(ctx, position, rotation)`: Called every frame to modify the camera's position and orientation.
+- `applyFov(ctx, vanillaFovDeg)`: Called every frame to modify the Field of View.
+- `clientTick(minecraft)` / `renderTick(ctx)`: Called during client logic ticks and render ticks, respectively, to update internal state.
 - `isAvailable()`: Determines if the current perspective is available. If `false`, the override chain will skip this perspective.
+- `onActivate()` / `onDeactivate()`: Lifecycle callbacks invoked when this perspective becomes or ceases to be the current perspective.
 
 ### Registering Perspectives
 

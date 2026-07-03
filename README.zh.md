@@ -74,12 +74,14 @@ dependencies {
 
 核心方法说明：
 
-- `getId()`: 返回唯一的 `Identifier`，用于注册和引用。
-- `getCameraType()`: 当`applyTransform`和`applyFov`什么也不做时，回退到的原版视角。
-- `applyTransform(position, rotation)`: 每帧调用，用于修改相机的位置和朝向。
-- `applyFov(fov)`: 每帧调用，用于修改视场角。
-- `clientTick()` / `renderTick()`: 分别在客户端逻辑 tick 和渲染 tick 中调用，用于更新内部状态。
+- `id()`: 返回唯一的 `Identifier`，用于注册和引用。
+- `cameraType()`: 当 `applyTransform` 和 `applyFov` 什么也不做时，回退到的原版视角。
+- `allowTransitionIn()` / `allowTransitionOut()`: 控制切换到该视角或从该视角切换出时是否允许平滑过渡。
+- `applyTransform(ctx, position, rotation)`: 每帧调用，用于修改相机的位置和朝向。
+- `applyFov(ctx, vanillaFovDeg)`: 每帧调用，用于修改视场角。
+- `clientTick(minecraft)` / `renderTick(ctx)`: 分别在客户端逻辑 tick 和渲染 tick 中调用，用于更新内部状态。
 - `isAvailable()`: 判断当前视角是否可用。若返回 `false`，覆盖链将跳过此视角。
+- `onActivate()` / `onDeactivate()`: 当该视角成为当前视角或不再是当前视角时调用的生命周期回调。
 
 ### 注册视角
 
