@@ -204,12 +204,22 @@ publishMods {
         projectId = System.getenv("MODRINTH_ID")
         additionalFiles.from(tasks.named("sourcesJar"))
         environment = CLIENT_ONLY
+
+        if (mod.isFabric) {
+            optional("modmenu")
+        }
+        optional("yacl")
     }
     curseforge {
         projectId = System.getenv("CURSEFORGE_ID")
         client = true
         server = false
         additionalFiles.from(tasks.named("sourcesJar"))
+
+        if (mod.isFabric) {
+            optional("modmenu")
+        }
+        optional("yacl")
     }
 }
 
