@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 /*? if !fabric {*/
 /*@org.junit.jupiter.api.Disabled
 *//*? } */
-class PerspectiveUtilsTest {
+class PerspectiveApiUtilsTest {
   @Disabled
   @Test
   void test() {}

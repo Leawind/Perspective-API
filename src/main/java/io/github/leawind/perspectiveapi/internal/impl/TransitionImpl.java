@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.perspectiveapi.internal.utils.PerspectiveUtils;
+import io.github.leawind.perspectiveapi.internal.utils.PerspectiveApiUtils;
 import java.util.Objects;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
@@ -77,9 +77,9 @@ public final class TransitionImpl implements Transition {
     deltaMs = Math.max(deltaMs, MIN_DELTA_MS);
 
     float t = (float) (deltaMs / durationMs);
-    t = PerspectiveUtils.clamp(t, 0, 1);
+    t = PerspectiveApiUtils.clamp(t, 0, 1);
     t = blender.blend(t);
-    t = PerspectiveUtils.clamp(t, 0, 1);
+    t = PerspectiveApiUtils.clamp(t, 0, 1);
     return t;
   }
 
@@ -98,7 +98,7 @@ public final class TransitionImpl implements Transition {
     // Rotation: chase interpolation from previous frame result to dynamic target
     float u = computeEasedProgress(currentTimeMs);
     double k = (u - prevEasedProgress) / (1 - prevEasedProgress);
-    k = PerspectiveUtils.clamp(k, 0, 1);
+    k = PerspectiveApiUtils.clamp(k, 0, 1);
 
     prevRotation.slerp(targetRotation, (float) k, destRotation);
     prevRotation.set(destRotation);

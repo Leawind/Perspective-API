@@ -1,8 +1,8 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
 /// Utility methods for camera and perspective operations.
-public final class PerspectiveUtils {
-  private PerspectiveUtils() {}
+public final class PerspectiveApiUtils {
+  private PerspectiveApiUtils() {}
 
   /// Clamps a float value between min and max.
   ///
@@ -50,5 +50,14 @@ public final class PerspectiveUtils {
       }
     }
     return Math.min(max, Math.max(value, min));
+  }
+
+  public static boolean isClassAvailable(String className) {
+    try {
+      Class.forName(className, false, Thread.currentThread().getContextClassLoader());
+      return true;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
   }
 }
