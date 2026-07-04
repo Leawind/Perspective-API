@@ -55,6 +55,11 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   }
 
   @Override
+  public @NonNull List<@NonNull Identifier> getCustomOrder() {
+    return customOrder;
+  }
+
+  @Override
   public boolean isCustomOrderEnabled() {
     return useCustomOrder;
   }

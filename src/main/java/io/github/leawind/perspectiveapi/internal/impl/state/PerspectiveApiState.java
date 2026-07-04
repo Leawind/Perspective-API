@@ -12,6 +12,7 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.resources.Identifier;
@@ -30,20 +31,34 @@ public final class PerspectiveApiState {
                           .forGetter(s -> Optional.ofNullable(s.managerCurrent)),
                       Identifier.CODEC
                           .optionalFieldOf("cycler.active")
-                          .forGetter(s -> Optional.ofNullable(s.cyclerActive)))
+                          .forGetter(s -> Optional.ofNullable(s.cyclerActive)),
+                      Codec.BOOL
+                          .optionalFieldOf("cycler.use_custom_order", false)
+                          .forGetter(s -> s.cyclerUseCustomOrder),
+                      Codec.list(Identifier.CODEC)
+                          .optionalFieldOf("cycler.custom_order", List.of())
+                          .forGetter(s -> s.cyclerCustomOrder))
                   .apply(inst, PerspectiveApiState::new));
 
   private final boolean enabled;
   private final @Nullable Identifier managerCurrent;
   private final @Nullable Identifier cyclerActive;
+  private final boolean cyclerUseCustomOrder;
+  private final List<Identifier> cyclerCustomOrder;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveApiState(
-      boolean enabled, Optional<Identifier> managerCurrent, Optional<Identifier> cyclerActive) {
+      boolean enabled,
+      Optional<Identifier> managerCurrent,
+      Optional<Identifier> cyclerActive,
+      boolean cyclerUseCustomOrder,
+      List<Identifier> cyclerCustomOrder) {
 
     this.enabled = enabled;
     this.managerCurrent = managerCurrent.orElse(null);
     this.cyclerActive = cyclerActive.orElse(null);
+    this.cyclerUseCustomOrder = cyclerUseCustomOrder;
+    this.cyclerCustomOrder = cyclerCustomOrder;
   }
 
   @Override
@@ -51,13 +66,16 @@ public final class PerspectiveApiState {
     if (this == o) return true;
     if (!(o instanceof PerspectiveApiState that)) return false;
     return enabled == that.enabled
+        && cyclerUseCustomOrder == that.cyclerUseCustomOrder
         && Objects.equals(managerCurrent, that.managerCurrent)
-        && Objects.equals(cyclerActive, that.cyclerActive);
+        && Objects.equals(cyclerActive, that.cyclerActive)
+        && Objects.equals(cyclerCustomOrder, that.cyclerCustomOrder);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, managerCurrent, cyclerActive);
+    return Objects.hash(
+        enabled, managerCurrent, cyclerActive, cyclerUseCustomOrder, cyclerCustomOrder);
   }
 
   // endregion
@@ -71,14 +89,20 @@ public final class PerspectiveApiState {
       PerspectiveManagerImpl.INSTANCE.setCurrentId(managerCurrent);
     }
 
-    PerspectiveAPI.getManager().cycler().setActiveId(cyclerActive);
+    var cycler = PerspectiveAPI.getManager().cycler();
+    cycler.setActiveId(cyclerActive);
+    cycler.setCustomOrderEnabled(cyclerUseCustomOrder);
+    cycler.setCustomOrder(cyclerCustomOrder);
   }
 
   public static PerspectiveApiState extract() {
+    var cycler = PerspectiveAPI.getManager().cycler();
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManagerImpl.INSTANCE.getCurrent().id()),
-        Optional.ofNullable(PerspectiveAPI.getManager().cycler().getActiveId()));
+        Optional.ofNullable(cycler.getActiveId()),
+        cycler.isCustomOrderEnabled(),
+        cycler.getCustomOrder());
   }
 
   // endregion

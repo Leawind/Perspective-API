@@ -20,6 +20,11 @@ public interface PerspectiveCycler {
   /// Removes all entries from the cycle list and resets the default perspective.
   void clear();
 
+  /// Returns the custom order list set by {@link #setCustomOrder(List)}.
+  ///
+  /// @return an unmodifiable list of IDs in custom order
+  @NonNull List<@NonNull Identifier> getCustomOrder();
+
   /// Returns whether custom order is enabled.
   ///
   /// When enabled, {@link #getIds()} returns IDs in the order set by
