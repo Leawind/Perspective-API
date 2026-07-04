@@ -20,9 +20,19 @@ public final class TransitionImpl implements Transition {
   private double startTimeMs;
 
   // region start state
+
   private final Vector3d startPosition = new Vector3d();
   private final Quaternionf startRotation = new Quaternionf();
   private float startFov = 70.0f;
+
+  // endregion
+
+  // region rotation transition state
+
+  private final Quaternionf prevRotation = new Quaternionf();
+  private float prevEasedProgress = 0;
+
+  // endregion
 
   TransitionImpl() {}
 
@@ -57,7 +67,9 @@ public final class TransitionImpl implements Transition {
     this.startTimeMs = startTimeMs;
     this.startPosition.set(startPosition);
     this.startRotation.set(startRotation);
+    this.prevRotation.set(startRotation);
     this.startFov = startFov;
+    this.prevEasedProgress = 0;
   }
 
   private float getProgress(double currentTimeMs) {
@@ -79,8 +91,18 @@ public final class TransitionImpl implements Transition {
       Vector3d destPosition,
       Quaternionf destRotation) {
     float progress = getProgress(currentTimeMs);
+
+    // Position: interpolate from fixed start to dynamic target
     startPosition.lerp(targetPosition, progress, destPosition);
-    startRotation.slerp(targetRotation, progress, destRotation);
+
+    // Rotation: chase interpolation from previous frame result to dynamic target
+    float u = getProgress(currentTimeMs);
+    double k = (u - prevEasedProgress) / (1 - prevEasedProgress);
+    k = PerspectiveUtils.clamp(k, 0, 1);
+
+    prevRotation.slerp(targetRotation, (float) k, destRotation);
+    prevRotation.set(destRotation);
+    prevEasedProgress = u;
   }
 
   @Override
