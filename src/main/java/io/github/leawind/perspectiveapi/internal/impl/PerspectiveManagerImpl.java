@@ -62,7 +62,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     currentId = defaultPerspective.id();
     currentPerspective = defaultPerspective;
 
-    overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActive);
+    overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActiveId);
 
     onCurrentPerspectiveChanged.on(
         () -> {
@@ -145,7 +145,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     if (!current.isAvailable()) {
-      cycler().switchToPreviousAvailable(registry());
+      cycler().cycleBackward(registry());
     }
   }
 

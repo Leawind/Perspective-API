@@ -73,14 +73,14 @@ public final class PerspectiveApiState {
       PerspectiveManagerImpl.INSTANCE.setCurrentId(currentPerspective);
     }
 
-    PerspectiveAPI.getManager().cycler().setActive(activeCyclerPerspective);
+    PerspectiveAPI.getManager().cycler().setActiveId(activeCyclerPerspective);
   }
 
   public static PerspectiveApiState extract() {
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManagerImpl.INSTANCE.getCurrent().id()),
-        Optional.ofNullable(PerspectiveAPI.getManager().cycler().getActive()));
+        Optional.ofNullable(PerspectiveAPI.getManager().cycler().getActiveId()));
   }
 
   // endregion

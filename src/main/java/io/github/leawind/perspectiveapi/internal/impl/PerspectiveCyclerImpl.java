@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -20,6 +19,8 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   private volatile List<Entry> entries = List.of();
   private volatile @Nullable Identifier activeId;
+  private volatile boolean useCustomOrder;
+  private volatile List<Identifier> customOrder = List.of();
 
   PerspectiveCyclerImpl() {}
 
@@ -49,71 +50,81 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   @Override
   public synchronized void clear() {
-    if (!entries.isEmpty()) {
-      this.entries = List.of();
+    this.entries = List.of();
+    this.activeId = null;
+  }
+
+  @Override
+  public boolean isCustomOrderEnabled() {
+    return useCustomOrder;
+  }
+
+  @Override
+  public void setCustomOrderEnabled(boolean useCustomOrder) {
+    this.useCustomOrder = useCustomOrder;
+  }
+
+  @Override
+  public void setCustomOrder(@NonNull List<@NonNull Identifier> orderedIds) {
+    Objects.requireNonNull(orderedIds);
+    this.customOrder = List.copyOf(orderedIds);
+  }
+
+  @Override
+  public @NonNull List<@NonNull Identifier> getIds() {
+    if (!useCustomOrder) {
+      return entries.stream().map(Entry::id).toList();
     }
-  }
-
-  @Override
-  public @NonNull Stream<Identifier> stream() {
-    return entries.stream().map(Entry::id);
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return entries.isEmpty();
+    List<Entry> snapshot = this.entries;
+    List<Identifier> result = new ArrayList<>(customOrder);
+    for (Entry entry : snapshot) {
+      if (!result.contains(entry.id())) {
+        result.add(entry.id());
+      }
+    }
+    return List.copyOf(result);
   }
 
   @Override
   public @Nullable Identifier getNext(@Nullable Identifier current) {
-    List<Entry> snapshot = this.entries;
-    if (snapshot.isEmpty()) {
-      return null;
-    }
-    int idx = indexOf(snapshot, current);
-    if (idx < 0) return snapshot.get(0).id();
-    return snapshot.get((idx + 1) % snapshot.size()).id();
+    List<Identifier> list = getIds();
+    if (list.isEmpty()) return null;
+    int idx = indexOfId(list, current);
+    if (idx < 0) return list.get(0);
+    return list.get((idx + 1) % list.size());
   }
 
   @Override
   public @Nullable Identifier getPrevious(@Nullable Identifier current) {
-    List<Entry> snapshot = this.entries;
-    if (snapshot.isEmpty()) {
-      return null;
-    }
-    int idx = indexOf(snapshot, current);
-    if (idx < 0) return snapshot.get(snapshot.size() - 1).id();
-    return snapshot.get((idx - 1 + snapshot.size()) % snapshot.size()).id();
+    List<Identifier> list = getIds();
+    if (list.isEmpty()) return null;
+    int idx = indexOfId(list, current);
+    if (idx < 0) return list.get(list.size() - 1);
+    return list.get((idx - 1 + list.size()) % list.size());
   }
 
   @Override
-  public @Nullable Identifier getFirst() {
-    List<Entry> snapshot = this.entries;
-    return snapshot.isEmpty() ? null : snapshot.get(0).id();
-  }
-
-  @Override
-  public @Nullable Identifier getActive() {
+  public @Nullable Identifier getActiveId() {
     return activeId;
   }
 
   @Override
-  public void setActive(@Nullable Identifier id) {
+  public void setActiveId(@Nullable Identifier id) {
     this.activeId = id;
   }
 
   @Override
-  public void switchToNextAvailable(@NonNull PerspectiveRegistry registry) {
-    List<Entry> snapshot = this.entries;
-    if (snapshot.isEmpty()) return;
+  public void cycleForward(@NonNull PerspectiveRegistry registry) {
+    List<Identifier> list = getIds();
+    if (list.isEmpty()) return;
 
     Identifier current = activeId;
     Identifier candidate = current;
     int attempts = 0;
-    int size = snapshot.size();
+    int size = list.size();
 
     do {
-      candidate = getNextInSnapshot(snapshot, candidate);
+      candidate = nextInList(list, candidate);
       if (candidate != null && registry.contains(candidate)) {
         activeId = candidate;
         return;
@@ -123,17 +134,17 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   }
 
   @Override
-  public void switchToPreviousAvailable(@NonNull PerspectiveRegistry registry) {
-    List<Entry> snapshot = this.entries;
-    if (snapshot.isEmpty()) return;
+  public void cycleBackward(@NonNull PerspectiveRegistry registry) {
+    List<Identifier> list = getIds();
+    if (list.isEmpty()) return;
 
     Identifier current = activeId;
     Identifier candidate = current;
     int attempts = 0;
-    int size = snapshot.size();
+    int size = list.size();
 
     do {
-      candidate = getPreviousInSnapshot(snapshot, candidate);
+      candidate = previousInList(list, candidate);
       if (candidate == null) return;
       if (registry.contains(candidate)) {
         activeId = candidate;
@@ -143,37 +154,26 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
     } while (attempts < size && !Objects.equals(candidate, current));
   }
 
-  private static @Nullable Identifier getNextInSnapshot(
-      List<Entry> snapshot, @Nullable Identifier current) {
-    if (snapshot.isEmpty()) {
-      return null;
-    }
-    int idx = indexOf(snapshot, current);
-    if (idx < 0) return snapshot.get(0).id();
-    return snapshot.get((idx + 1) % snapshot.size()).id();
+  private static @Nullable Identifier nextInList(
+      List<Identifier> list, @Nullable Identifier current) {
+    if (list.isEmpty()) return null;
+    int idx = indexOfId(list, current);
+    if (idx < 0) return list.get(0);
+    return list.get((idx + 1) % list.size());
   }
 
-  /// @return previous entry, or `null` if list is empty
-  private static @Nullable Identifier getPreviousInSnapshot(
-      List<Entry> snapshot, @Nullable Identifier current) {
-    if (snapshot.isEmpty()) {
-      return null;
-    }
-    int idx = indexOf(snapshot, current);
-    if (idx < 0) {
-      return snapshot.get(snapshot.size() - 1).id();
-    }
-    return snapshot.get((idx - 1 + snapshot.size()) % snapshot.size()).id();
+  private static @Nullable Identifier previousInList(
+      List<Identifier> list, @Nullable Identifier current) {
+    if (list.isEmpty()) return null;
+    int idx = indexOfId(list, current);
+    if (idx < 0) return list.get(list.size() - 1);
+    return list.get((idx - 1 + list.size()) % list.size());
   }
 
-  private static int indexOf(List<Entry> entries, @Nullable Identifier id) {
-    if (id == null) {
-      return -1;
-    }
-    for (int i = 0; i < entries.size(); i++) {
-      if (entries.get(i).id().equals(id)) {
-        return i;
-      }
+  private static int indexOfId(List<Identifier> list, @Nullable Identifier id) {
+    if (id == null) return -1;
+    for (int i = 0; i < list.size(); i++) {
+      if (list.get(i).equals(id)) return i;
     }
     return -1;
   }

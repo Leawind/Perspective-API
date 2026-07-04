@@ -31,7 +31,7 @@ public final class ModEntrypoint {
           .add(VanillaFirstPersonPerspective.INSTANCE.id(), 0)
           .add(VanillaThirdPersonPerspective.BACK.id(), 1)
           .add(VanillaThirdPersonPerspective.FRONT.id(), 2);
-      manager.cycler().setActive(VanillaFirstPersonPerspective.INSTANCE.id());
+      manager.cycler().setActiveId(VanillaFirstPersonPerspective.INSTANCE.id());
     }
 
     StreamSupport.stream(ServiceLoader.load(PerspectiveRegistrar.class).spliterator(), false)

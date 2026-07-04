@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
-import java.util.stream.Stream;
+import java.util.List;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 ///
 /// Perspectives are ordered by priority. Lower priority values appear earlier in the cycle.
 public interface PerspectiveCycler {
+
   /// Adds a perspective ID to the cycle list with the given priority. Replaces any existing entry
   /// with the same ID.
   @NonNull PerspectiveCycler add(@NonNull Identifier id, int priority);
@@ -19,31 +20,66 @@ public interface PerspectiveCycler {
   /// Removes all entries from the cycle list and resets the default perspective.
   void clear();
 
-  /// @return a stream of all perspective IDs in priority order.
-  @NonNull Stream<Identifier> stream();
+  /// Returns whether custom order is enabled.
+  ///
+  /// When enabled, {@link #getIds()} returns IDs in the order set by
+  /// {@link #setCustomOrder(List)}, with any remaining IDs appended in priority order.
+  boolean isCustomOrderEnabled();
 
-  /// @return `true` if the cycle list is empty.
-  boolean isEmpty();
+  /// Enables or disables custom order.
+  ///
+  /// @see #setCustomOrder(List)
+  /// @see #isCustomOrderEnabled()
+  void setCustomOrderEnabled(boolean enabled);
 
-  /// Returns the next cyclable perspective after `current`.
+  /// Sets the custom order for the cycle list.
+  ///
+  /// IDs listed here appear first in {@link #getIds()}, in the given order.
+  /// Any IDs not present in `orderedIds` are appended at the end, sorted by priority.
+  ///
+  /// @param orderedIds the desired order; IDs not in the cycler are ignored
+  void setCustomOrder(@NonNull List<@NonNull Identifier> orderedIds);
+
+  /// @return a sorted unmodifiable list of all perspective IDs in the current cycle order
+  @NonNull List<@NonNull Identifier> getIds();
+
+  /// Returns the next perspective ID after `current` in the cycle list.
+  ///
+  /// Wraps around: the successor of the last element is the first.
+  /// If `current` is null or not in the list, returns the first element.
+  ///
+  /// @return the next ID, or null if the list is empty
   @Nullable Identifier getNext(@Nullable Identifier current);
 
-  /// @return the previous cyclable perspective before `current`.
+  /// Returns the perspective ID before `current` in the cycle list.
+  ///
+  /// Wraps around: the predecessor of the first element is the last.
+  /// If `current` is null or not in the list, returns the last element.
+  ///
+  /// @return the previous ID, or null if the list is empty
   @Nullable Identifier getPrevious(@Nullable Identifier current);
 
-  /// @return the first (lowest-priority) cyclable perspective, or `null` if the list is empty.
-  @Nullable Identifier getFirst();
+  /// Returns the currently active perspective ID, or null if none is set.
+  @Nullable Identifier getActiveId();
 
-  /// @return the player's currently selected perspective ID in the cycle list, or `null` if
-  /// none is selected.
-  @Nullable Identifier getActive();
+  /// Sets the active perspective ID. Pass null to clear the active perspective.
+  void setActiveId(@Nullable Identifier id);
 
-  /// Sets the player's selected perspective ID in the cycle list.
-  void setActive(@Nullable Identifier id);
+  /// Advances the active perspective to the next registered one in the cycle list.
+  ///
+  /// Iterates forward through the list, skipping IDs not present in the given
+  /// {@link PerspectiveRegistry}. If the active ID is null or not in the list,
+  /// cycling starts from the first element.
+  ///
+  /// @param registry the registry used to filter available perspectives
+  void cycleForward(@NonNull PerspectiveRegistry registry);
 
-  /// Cycles to the next available perspective.
-  void switchToNextAvailable(@NonNull PerspectiveRegistry registry);
-
-  /// Cycles to the previous available perspective.
-  void switchToPreviousAvailable(@NonNull PerspectiveRegistry registry);
+  /// Moves the active perspective to the previous registered one in the cycle list.
+  ///
+  /// Iterates backward through the list, skipping IDs not present in the given
+  /// {@link PerspectiveRegistry}. If the active ID is null or not in the list,
+  /// cycling starts from the last element.
+  ///
+  /// @param registry the registry used to filter available perspectives
+  void cycleBackward(@NonNull PerspectiveRegistry registry);
 }
