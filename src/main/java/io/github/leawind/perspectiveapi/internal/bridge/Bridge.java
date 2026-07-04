@@ -71,8 +71,7 @@ public final class Bridge {
     if (levelRenderer != null) {
       levelRenderer.needsUpdate();
     }
-    */
-    /*? }*/
+    *//*? }*/
   }
 
   /// Gets the main camera instance.
@@ -88,8 +87,7 @@ public final class Bridge {
     return gameRenderer.mainCamera();
     /*? } else {*/
     /*return gameRenderer.getMainCamera();
-     */
-    /*? }*/
+    *//*? }*/
   }
 
   /// Extracts entity rotation as a quaternion.

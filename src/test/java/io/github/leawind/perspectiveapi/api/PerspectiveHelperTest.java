@@ -20,8 +20,7 @@ class PerspectiveHelperTest {
 
   /*? if !fabric {*/
   /*@org.junit.jupiter.api.Disabled
-   */
-  /*? } */
+  *//*? } */
   @Nested
   class WithCamera extends TestWithCamera {
     private static Quaternionfc toQuat_mc(Vector2fc eulerDeg) {
