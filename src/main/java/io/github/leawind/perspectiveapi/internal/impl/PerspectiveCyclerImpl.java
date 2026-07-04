@@ -17,6 +17,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   private record Entry(Identifier id, int priority) {}
 
+  private final PerspectiveRegistry registry;
   private volatile List<Entry> entries = List.of();
   private volatile @Nullable Identifier activeId;
   private volatile boolean useCustomOrder;
@@ -24,7 +25,9 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   private volatile List<Identifier> customOrder = List.of();
   private volatile @Nullable List<Identifier> customOrderCache = null;
 
-  PerspectiveCyclerImpl() {}
+  PerspectiveCyclerImpl(@NonNull PerspectiveRegistry registry) {
+    this.registry = Objects.requireNonNull(registry);
+  }
 
   @Override
   public @NonNull PerspectiveCycler add(@NonNull Identifier id, int priority) {
@@ -143,7 +146,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   }
 
   @Override
-  public void cycleForward(@NonNull PerspectiveRegistry registry) {
+  public void cycleForward() {
     List<Identifier> list = getIds();
     if (list.isEmpty()) return;
 
@@ -163,7 +166,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   }
 
   @Override
-  public void cycleBackward(@NonNull PerspectiveRegistry registry) {
+  public void cycleBackward() {
     List<Identifier> list = getIds();
     if (list.isEmpty()) return;
 

@@ -6,7 +6,6 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
@@ -41,9 +40,9 @@ class PerspectiveCyclerImplTest {
 
   @BeforeEach
   void setUp() {
-    cycler = new PerspectiveCyclerImpl();
     // Use a fresh registry instead of the singleton
     registry = new PerspectiveRegistryImpl(perspective(ID_A));
+    cycler = new PerspectiveCyclerImpl(registry);
 
     // Register test perspectives so cycleForward/cycleBackward can find them
     registry.register(perspective(ID_B));
@@ -234,13 +233,13 @@ class PerspectiveCyclerImplTest {
     // Order: B, A, C
     cycler.setActiveId(ID_B);
 
-    cycler.cycleForward(registry);
+    cycler.cycleForward();
     assertEquals(ID_A, cycler.getActiveId());
 
-    cycler.cycleForward(registry);
+    cycler.cycleForward();
     assertEquals(ID_C, cycler.getActiveId());
 
-    cycler.cycleForward(registry);
+    cycler.cycleForward();
     assertEquals(ID_B, cycler.getActiveId()); // Wrap around
   }
 
@@ -253,13 +252,13 @@ class PerspectiveCyclerImplTest {
     // Order: B, A, C
     cycler.setActiveId(ID_C);
 
-    cycler.cycleBackward(registry);
+    cycler.cycleBackward();
     assertEquals(ID_A, cycler.getActiveId());
 
-    cycler.cycleBackward(registry);
+    cycler.cycleBackward();
     assertEquals(ID_B, cycler.getActiveId());
 
-    cycler.cycleBackward(registry);
+    cycler.cycleBackward();
     assertEquals(ID_C, cycler.getActiveId()); // Wrap around
   }
 
@@ -269,8 +268,8 @@ class PerspectiveCyclerImplTest {
     assertNull(cycler.getActiveId());
 
     // Cycling with empty list should not throw and active should remain null
-    assertDoesNotThrow(() -> cycler.cycleForward(registry));
-    assertDoesNotThrow(() -> cycler.cycleBackward(registry));
+    assertDoesNotThrow(cycler::cycleForward);
+    assertDoesNotThrow(cycler::cycleBackward);
     assertNull(cycler.getActiveId());
   }
 
@@ -325,20 +324,23 @@ class PerspectiveCyclerImplTest {
     PerspectiveRegistry limitedRegistry = new PerspectiveRegistryImpl(perspective(ID_A));
     limitedRegistry.register(perspective(ID_B));
 
+    // Create a cycler with the limited registry
+    PerspectiveCycler limitedCycler = new PerspectiveCyclerImpl(limitedRegistry);
+
     // Add A, B, C, D to cycler
-    cycler.add(ID_A, 10);
-    cycler.add(ID_B, 5);
-    cycler.add(ID_C, 20);
-    cycler.add(ID_D, 15);
+    limitedCycler.add(ID_A, 10);
+    limitedCycler.add(ID_B, 5);
+    limitedCycler.add(ID_C, 20);
+    limitedCycler.add(ID_D, 15);
 
     // Order by priority: B(5), A(10), D(15), C(20)
     // Cycle should skip D and C since they are not registered
-    cycler.setActiveId(ID_B);
-    cycler.cycleForward(limitedRegistry);
-    assertEquals(ID_A, cycler.getActiveId());
+    limitedCycler.setActiveId(ID_B);
+    limitedCycler.cycleForward();
+    assertEquals(ID_A, limitedCycler.getActiveId());
 
-    cycler.cycleForward(limitedRegistry);
-    assertEquals(ID_B, cycler.getActiveId()); // wraps, skips D and C
+    limitedCycler.cycleForward();
+    assertEquals(ID_B, limitedCycler.getActiveId()); // wraps, skips D and C
   }
 
   @Test

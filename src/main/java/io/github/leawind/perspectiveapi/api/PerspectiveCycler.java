@@ -91,19 +91,15 @@ public interface PerspectiveCycler {
 
   /// Advances the active perspective to the next registered one in the cycle list.
   ///
-  /// Iterates forward through the list, skipping IDs not present in the given
-  /// {@link PerspectiveRegistry}. If the active ID is null or not in the list,
-  /// cycling starts from the first element.
-  ///
-  /// @param registry the registry used to filter available perspectives
-  void cycleForward(@NonNull PerspectiveRegistry registry);
+  /// Iterates forward through the list, skipping IDs not present in the
+  /// {@link PerspectiveRegistry}. If the active ID is null or not in the list, cycling starts from
+  /// the first element.
+  void cycleForward();
 
   /// Moves the active perspective to the previous registered one in the cycle list.
   ///
-  /// Iterates backward through the list, skipping IDs not present in the given
-  /// {@link PerspectiveRegistry}. If the active ID is null or not in the list,
-  /// cycling starts from the last element.
-  ///
-  /// @param registry the registry used to filter available perspectives
-  void cycleBackward(@NonNull PerspectiveRegistry registry);
+  /// Iterates backward through the list, skipping IDs not present in the
+  /// {@link PerspectiveRegistry}. If the active ID is null or not in the list, cycling starts from
+  /// the last element.
+  void cycleBackward();
 }

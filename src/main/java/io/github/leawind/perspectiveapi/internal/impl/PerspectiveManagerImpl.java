@@ -59,6 +59,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
     registry = new PerspectiveRegistryImpl(defaultPerspective);
+    cycler = new PerspectiveCyclerImpl(registry);
     currentId = defaultPerspective.id();
     currentPerspective = defaultPerspective;
 
@@ -81,7 +82,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   // region components
   private final PerspectiveRegistryImpl registry;
-  private final PerspectiveCyclerImpl cycler = new PerspectiveCyclerImpl();
+  private final PerspectiveCyclerImpl cycler;
   private final PerspectiveOverrideChainImpl overrides = new PerspectiveOverrideChainImpl();
   private final Transition transition = new TransitionImpl();
 
@@ -145,7 +146,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     if (!current.isAvailable()) {
-      cycler().cycleBackward(registry());
+      cycler().cycleBackward();
     }
   }
 

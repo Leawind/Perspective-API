@@ -29,7 +29,7 @@ public final class ModEvents {
         (minecraft) -> {
           if (!PerspectiveAPI.isEnabled()) return;
           while (minecraft.options.keyTogglePerspective.consumeClick()) {
-            manager.cycler().cycleForward(manager.registry());
+            manager.cycler().cycleForward();
           }
         });
 
