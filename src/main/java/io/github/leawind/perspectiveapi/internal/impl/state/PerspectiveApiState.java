@@ -37,7 +37,10 @@ public final class PerspectiveApiState {
                           .forGetter(s -> s.cyclerUseCustomOrder),
                       Codec.list(Identifier.CODEC)
                           .optionalFieldOf("cycler.custom_order", List.of())
-                          .forGetter(s -> s.cyclerCustomOrder))
+                          .forGetter(s -> s.cyclerCustomOrder),
+                      Codec.DOUBLE
+                          .optionalFieldOf("transition.duration_ms", 300.0)
+                          .forGetter(s -> s.transitionDurationMs))
                   .apply(inst, PerspectiveApiState::new));
 
   private final boolean enabled;
@@ -45,6 +48,7 @@ public final class PerspectiveApiState {
   private final @Nullable Identifier cyclerActive;
   private final boolean cyclerUseCustomOrder;
   private final List<Identifier> cyclerCustomOrder;
+  private final double transitionDurationMs;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveApiState(
@@ -52,13 +56,15 @@ public final class PerspectiveApiState {
       Optional<Identifier> managerCurrent,
       Optional<Identifier> cyclerActive,
       boolean cyclerUseCustomOrder,
-      List<Identifier> cyclerCustomOrder) {
+      List<Identifier> cyclerCustomOrder,
+      double transitionDurationMs) {
 
     this.enabled = enabled;
     this.managerCurrent = managerCurrent.orElse(null);
     this.cyclerActive = cyclerActive.orElse(null);
     this.cyclerUseCustomOrder = cyclerUseCustomOrder;
     this.cyclerCustomOrder = cyclerCustomOrder;
+    this.transitionDurationMs = transitionDurationMs;
   }
 
   @Override
@@ -67,6 +73,7 @@ public final class PerspectiveApiState {
     if (!(o instanceof PerspectiveApiState that)) return false;
     return enabled == that.enabled
         && cyclerUseCustomOrder == that.cyclerUseCustomOrder
+        && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
         && Objects.equals(managerCurrent, that.managerCurrent)
         && Objects.equals(cyclerActive, that.cyclerActive)
         && Objects.equals(cyclerCustomOrder, that.cyclerCustomOrder);
@@ -75,7 +82,12 @@ public final class PerspectiveApiState {
   @Override
   public int hashCode() {
     return Objects.hash(
-        enabled, managerCurrent, cyclerActive, cyclerUseCustomOrder, cyclerCustomOrder);
+        enabled,
+        managerCurrent,
+        cyclerActive,
+        cyclerUseCustomOrder,
+        cyclerCustomOrder,
+        transitionDurationMs);
   }
 
   // endregion
@@ -93,16 +105,20 @@ public final class PerspectiveApiState {
     cycler.setActiveId(cyclerActive);
     cycler.setCustomOrderEnabled(cyclerUseCustomOrder);
     cycler.setCustomOrder(cyclerCustomOrder);
+
+    PerspectiveAPI.getManager().transition().setDurationMs(transitionDurationMs);
   }
 
   public static PerspectiveApiState extract() {
     var cycler = PerspectiveAPI.getManager().cycler();
+    var transition = PerspectiveAPI.getManager().transition();
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManagerImpl.INSTANCE.getCurrent().id()),
         Optional.ofNullable(cycler.getActiveId()),
         cycler.isCustomOrderEnabled(),
-        cycler.getCustomOrder());
+        cycler.getCustomOrder(),
+        transition.getDurationMs());
   }
 
   // endregion
