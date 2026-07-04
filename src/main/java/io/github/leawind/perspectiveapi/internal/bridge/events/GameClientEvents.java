@@ -26,4 +26,7 @@ public final class GameClientEvents {
 
   public static final SingleEventEmitter<ModifyFieldOfViewContext> MODIFY_FIELD_OF_VIEW =
       new SingleEventEmitter<>();
+
+  public static final SingleEventEmitter<RegisterConfigScreenContext> REGISTER_CONFIG_SCREEN =
+      new SingleEventEmitter<>();
 }

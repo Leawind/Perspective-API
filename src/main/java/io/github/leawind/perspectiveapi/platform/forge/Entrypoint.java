@@ -4,10 +4,13 @@ package io.github.leawind.perspectiveapi.platform.forge;
 /*import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
+import io.github.leawind.perspectiveapi.internal.config.ConfigScreenManager;
 import io.github.leawind.perspectiveapi.internal.logic.ModEntrypoint;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
@@ -24,7 +27,21 @@ public class Entrypoint {
 
   private static final ModifyFieldOfViewContext modifyFovContext = new ModifyFieldOfViewContext();
 
-  private static void initialize() {}
+  private static void initialize() {
+    ModList.get()
+        .getModContainerById(PerspectiveAPI.MOD_ID)
+        .ifPresent(
+            container -> {
+              var configScreenManager = ConfigScreenManager.getInstance();
+              if (configScreenManager.hasBuilder()) {
+                container.registerExtensionPoint(
+                    ConfigScreenHandler.ConfigScreenFactory.class,
+                    () ->
+                        new ConfigScreenHandler.ConfigScreenFactory(
+                            (minecraft, screen) -> configScreenManager.build(screen)));
+              }
+            });
+  }
 
   @Mod.EventBusSubscriber(modid = PerspectiveAPI.MOD_ID)
   public static class ModEventHandler {

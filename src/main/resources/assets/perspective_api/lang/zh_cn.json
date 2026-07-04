@@ -3,5 +3,18 @@
   "modmenu.descriptionTranslation.perspective_api": "一个用于管理和扩展摄像机视角的客户端 API 框架",
   "perspective.minecraft.first_person": "第一人称",
   "perspective.minecraft.third_person_back": "第三人称背面",
-  "perspective.minecraft.third_person_front": "第三人称正面"
+  "perspective.minecraft.third_person_front": "第三人称正面",
+  "perspective_api.config_screen.title": "视角 API 设置",
+  "perspective_api.config_screen.category.general": "通用",
+  "perspective_api.config_screen.category.general.desc": "视角 API 的通用设置",
+  "perspective_api.config_screen.category.cycler": "视角循环",
+  "perspective_api.config_screen.category.cycler.desc": "视角循环顺序的设置。",
+  "perspective_api.config_screen.option.mod_enabled": "启用模组",
+  "perspective_api.config_screen.option.mod_enabled.desc": "控制是否启用所有视角 API 功能的总开关。关闭后将完全恢复原版行为。",
+  "perspective_api.config_screen.option.cycler_custom_order": "自定义循环顺序",
+  "perspective_api.config_screen.option.cycler_custom_order.desc": "启用后，视角循环将按照自定义顺序而非默认的注册顺序进行。",
+  "perspective_api.config_screen.option.cycler_custom_order_list": "自定义循环顺序列表",
+  "perspective_api.config_screen.option.cycler_custom_order_list.desc": "自定义循环的视角 ID 列表。列出的 ID 将按顺序优先循环。每行填写一个视角 ID（如 minecraft:first_person）。",
+  "perspective_api.config_screen.option.transition_duration": "过渡时长（毫秒）",
+  "perspective_api.config_screen.option.transition_duration.desc": "切换视角时平滑相机过渡的持续时间，单位为毫秒。设为 0 可禁用过渡。"
 }

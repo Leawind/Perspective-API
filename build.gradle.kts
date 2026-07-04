@@ -77,6 +77,18 @@ repositories {
         name = "Nucleoid"
         url = uri("https://maven.nucleoid.xyz")
     }
+
+    // Yet Another Config Lib
+    exclusiveContent {
+        forRepository {
+            maven("https://api.modrinth.com/maven") {
+                name = "Modrinth"
+            }
+        }
+        filter {
+            includeGroup("maven.modrinth")
+        }
+    }
 }
 
 fun DependencyHandlerScope.modImplAlias(dependencyNotation: String) {
@@ -101,6 +113,10 @@ dependencies {
         // https://modrinth.com/mod/modmenu/versions
         modImplAlias("com.terraformersmc:modmenu:${project.property("mod.modmenu_version")}")
     }
+
+    // https://maven.isxander.dev/releases/dev/isxander/yet-another-config-lib
+    //modImplAlias("dev.isxander:yet-another-config-lib:${project.property("mod.yacl_version")}-${mod.loader}")
+    modImplAlias("maven.modrinth:yacl:${project.property("mod.yacl_version")}-${mod.loader}")
 
     // region test
     testCompileOnly("org.jspecify:jspecify:1.0.0")

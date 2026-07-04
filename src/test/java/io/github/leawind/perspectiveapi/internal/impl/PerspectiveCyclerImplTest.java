@@ -455,4 +455,71 @@ class PerspectiveCyclerImplTest {
     assertEquals(ID_B, list2.get(1));
     assertEquals(ID_A, list2.get(2));
   }
+
+  // --- getCustomOrder specific tests ---
+
+  @Test
+  void testGetCustomOrderReturnsUnmodifiableList() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+
+    List<Identifier> order = cycler.getCustomOrder();
+    assertThrows(UnsupportedOperationException.class, () -> order.add(ID_C));
+    assertThrows(UnsupportedOperationException.class, () -> order.remove(0));
+    assertThrows(UnsupportedOperationException.class, () -> order.set(0, ID_C));
+    assertThrows(UnsupportedOperationException.class, order::clear);
+  }
+
+  @Test
+  void testGetCustomOrderReturnsAllIdsByPriorityWhenNeverSet() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+
+    List<Identifier> order = cycler.getCustomOrder();
+    assertEquals(3, order.size());
+    assertEquals(ID_B, order.get(0));
+    assertEquals(ID_A, order.get(1));
+    assertEquals(ID_C, order.get(2));
+  }
+
+  @Test
+  void testGetCustomOrderAlwaysContainsAllIds() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+    cycler.add(ID_D, 15);
+
+    // Incomplete custom order: only C and A
+    cycler.setCustomOrder(List.of(ID_C, ID_A));
+
+    List<Identifier> order = cycler.getCustomOrder();
+    assertEquals(4, order.size());
+    assertTrue(order.contains(ID_A));
+    assertTrue(order.contains(ID_B));
+    assertTrue(order.contains(ID_C));
+    assertTrue(order.contains(ID_D));
+    // Leading portion follows custom order
+    assertEquals(ID_C, order.get(0));
+    assertEquals(ID_A, order.get(1));
+    // Remainder sorted by priority
+    assertEquals(ID_B, order.get(2));
+    assertEquals(ID_D, order.get(3));
+  }
+
+  @Test
+  void testGetCustomOrderReflectsLatestSetCall() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+
+    cycler.setCustomOrder(List.of(ID_A, ID_B, ID_C));
+    assertEquals(ID_A, cycler.getCustomOrder().get(0));
+
+    cycler.setCustomOrder(List.of(ID_C, ID_B, ID_A));
+    List<Identifier> order = cycler.getCustomOrder();
+    assertEquals(ID_C, order.get(0));
+    assertEquals(ID_B, order.get(1));
+    assertEquals(ID_A, order.get(2));
+  }
 }

@@ -15,7 +15,8 @@
   "icon": "${logo_file}",
   "environment": "client",
   "entrypoints": {
-    "client": ["${group}.platform.fabric.Entrypoint"]
+    "client": ["${group}.platform.fabric.Entrypoint"],
+    "modmenu": ["${group}.platform.fabric.ModMenuEntry"]
   },
   "mixins": [
     "${id}.mixins.json",
@@ -26,7 +27,8 @@
     "minecraft": ">=${minecraftVersion}"
   },
   "recommends": {
-    "modmenu": "*"
+    "modmenu": "*",
+    "yet_another_config_lib_v3": "*"
   },
   "custom": {
     "modmenu": {

@@ -20,9 +20,14 @@ public interface PerspectiveCycler {
   /// Removes all entries from the cycle list and resets the default perspective.
   void clear();
 
-  /// Returns the custom order list set by {@link #setCustomOrder(List)}.
+  /// Returns the custom order list.
   ///
-  /// @return an unmodifiable list of IDs in custom order
+  /// The returned list is unmodifiable and always contains all IDs in the cycler.
+  /// If {@link #setCustomOrder(List)} has never been called, returns IDs sorted by priority.
+  /// If {@link #setCustomOrder(List)} was called, returns the order defined by it,
+  /// with any missing IDs appended sorted by priority.
+  ///
+  /// @return an unmodifiable list of all IDs in custom order
   @NonNull List<@NonNull Identifier> getCustomOrder();
 
   /// Returns whether custom order is enabled.
@@ -41,11 +46,12 @@ public interface PerspectiveCycler {
   ///
   /// This method does not change the value of {@link #isCustomOrderEnabled()}.
   ///
-  /// IDs listed here appear first in {@link #getIds()}, in the given order.
+  /// The given list defines the leading portion of the order. IDs listed here appear
+  /// first in {@link #getCustomOrder()} and {@link #getIds()}, in the given order.
   /// Any IDs in the cycler that are not present in `orderedIds` are appended
   /// at the end, sorted by priority. IDs not in the cycler are ignored.
   ///
-  /// @param orderedIds the desired order
+  /// @param orderedIds the desired leading order
   void setCustomOrder(@NonNull List<@NonNull Identifier> orderedIds);
 
   /// Returns an unmodifiable list of all perspective IDs in the cycler.

@@ -28,6 +28,14 @@ versionRange = "*"
 ordering = "NONE"
 side = "CLIENT"
 
+[[dependencies.${id}]]
+modId = "yet_another_config_lib_v3"
+type = "optional"
+versionRange = "*"
+ordering = "NONE"
+side = "CLIENT"
+referraUrl = "https://modrinth.com/mod/yacl"
+
 [[mixins]]
 config = "${id}.mixins.json"
 

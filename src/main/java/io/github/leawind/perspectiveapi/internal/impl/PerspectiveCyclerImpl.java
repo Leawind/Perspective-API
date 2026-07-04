@@ -20,7 +20,9 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   private volatile List<Entry> entries = List.of();
   private volatile @Nullable Identifier activeId;
   private volatile boolean useCustomOrder;
+
   private volatile List<Identifier> customOrder = List.of();
+  private volatile @Nullable List<Identifier> customOrderCache = null;
 
   PerspectiveCyclerImpl() {}
 
@@ -33,6 +35,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
       newList.add(new Entry(id, priority));
       newList.sort(Comparator.comparingInt(Entry::priority));
       this.entries = List.copyOf(newList);
+      this.customOrderCache = null;
     }
     return this;
   }
@@ -44,6 +47,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
       List<Entry> newList = new ArrayList<>(entries);
       if (newList.removeIf(e -> e.id().equals(id))) {
         this.entries = List.copyOf(newList);
+        this.customOrderCache = null;
       }
     }
   }
@@ -52,11 +56,17 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   public synchronized void clear() {
     this.entries = List.of();
     this.activeId = null;
+    this.customOrder = List.of();
+    this.customOrderCache = null;
   }
 
   @Override
   public @NonNull List<@NonNull Identifier> getCustomOrder() {
-    return customOrder;
+    var cache = customOrderCache;
+    if (cache == null) {
+      return rebuildCustomOrderCache();
+    }
+    return cache;
   }
 
   @Override
@@ -73,6 +83,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   public void setCustomOrder(@NonNull List<@NonNull Identifier> orderedIds) {
     Objects.requireNonNull(orderedIds);
     this.customOrder = List.copyOf(orderedIds);
+    this.customOrderCache = null;
   }
 
   @Override
@@ -80,20 +91,27 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
     if (!useCustomOrder) {
       return entries.stream().map(Entry::id).toList();
     }
-    List<Entry> snapshot = this.entries;
-    List<Identifier> idsInCycler = snapshot.stream().map(Entry::id).toList();
+    return getCustomOrder();
+  }
+
+  private @NonNull List<Identifier> rebuildCustomOrderCache() {
+    List<Entry> snapshot = entries;
+    if (customOrder.isEmpty()) {
+      return customOrderCache = List.copyOf(snapshot.stream().map(Entry::id).toList());
+    }
     List<Identifier> result = new ArrayList<>();
     for (Identifier id : customOrder) {
-      if (idsInCycler.contains(id) && !result.contains(id)) {
+      if (snapshot.stream().anyMatch(e -> e.id().equals(id)) && !result.contains(id)) {
         result.add(id);
       }
     }
-    for (Identifier id : idsInCycler) {
-      if (!result.contains(id)) {
-        result.add(id);
+    for (Entry entry : snapshot) {
+      if (!result.contains(entry.id())) {
+        result.add(entry.id());
       }
     }
-    return List.copyOf(result);
+
+    return customOrderCache = List.copyOf(result);
   }
 
   @Override

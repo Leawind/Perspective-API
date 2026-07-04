@@ -5,26 +5,16 @@ package io.github.leawind.perspectiveapi.platform.neoforge;
 import io.github.leawind.perspectiveapi.internal.logic.ModEntrypoint;
 /^?   if >=1.21.11 {^/
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 
 @Mod(value = PerspectiveAPI.MOD_ID, dist = Dist.CLIENT)
 public final class Entrypoint {
-  public Entrypoint(IEventBus modBus) {
+  public Entrypoint(ModContainer container) {
     ModEntrypoint.initialize();
-    initialize();
-  }
-
-  private void initialize() {}
-
-  @EventBusSubscriber(modid = PerspectiveAPI.MOD_ID)
-  public static class EventHandler {
+    NeoforgeModInitializer.initialize();
   }
 }
-
 /^?   } else {^/
 /^import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -38,11 +28,8 @@ public final class Entrypoint {
       return;
     }
     ModEntrypoint.initialize();
-    initialize();
+    NeoforgeModInitializer.initialize();
   }
-
-  private void initialize() {}
 }
 ^//^?   }^/
-
 *//*? }*/

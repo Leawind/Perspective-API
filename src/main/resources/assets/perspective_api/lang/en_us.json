@@ -3,5 +3,18 @@
   "modmenu.descriptionTranslation.perspective_api": "A client-side API framework for managing and extending camera perspectives.",
   "perspective.minecraft.first_person": "First Person",
   "perspective.minecraft.third_person_back": "Third Person Back",
-  "perspective.minecraft.third_person_front": "Third Person Front"
+  "perspective.minecraft.third_person_front": "Third Person Front",
+  "perspective_api.config_screen.title": "Perspective API Settings",
+  "perspective_api.config_screen.category.general": "General",
+  "perspective_api.config_screen.category.general.desc": "General settings for Perspective API",
+  "perspective_api.config_screen.category.cycler": "Perspective Cycle",
+  "perspective_api.config_screen.category.cycler.desc": "Settings for perspective cycling order.",
+  "perspective_api.config_screen.option.mod_enabled": "Enable Mod",
+  "perspective_api.config_screen.option.mod_enabled.desc": "Master switch that controls whether all Perspective API features are active. Disable to completely revert to vanilla behavior.",
+  "perspective_api.config_screen.option.cycler_custom_order": "Custom Cycle Order",
+  "perspective_api.config_screen.option.cycler_custom_order.desc": "When enabled, the perspective cycle order follows your custom order instead of the default registry order.",
+  "perspective_api.config_screen.option.cycler_custom_order_list": "Custom Cycle Order List",
+  "perspective_api.config_screen.option.cycler_custom_order_list.desc": "The ordered list of perspective IDs for custom cycling. IDs listed here appear first in the cycle, in the given order. Enter one perspective ID per line (e.g. minecraft:first_person).",
+  "perspective_api.config_screen.option.transition_duration": "Transition Duration (ms)",
+  "perspective_api.config_screen.option.transition_duration.desc": "Duration of the smooth camera transition when switching perspectives, in milliseconds. Set to 0 to disable transitions."
 }

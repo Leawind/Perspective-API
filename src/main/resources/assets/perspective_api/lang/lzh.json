@@ -1,5 +1,20 @@
 {
+  "modmenu.nameTranslation.perspective_api": "視角卯口",
+  "modmenu.descriptionTranslation.perspective_api": "用於管理並擴展客端攝像視角之框架",
   "perspective.minecraft.first_person": "己目",
   "perspective.minecraft.third_person_back": "背观",
-  "perspective.minecraft.third_person_front": "面观"
+  "perspective.minecraft.third_person_front": "面观",
+  "perspective_api.config_screen.title": "視角卯口 設定",
+  "perspective_api.config_screen.category.general": "常",
+  "perspective_api.config_screen.category.general.desc": "視角卯口 通設定",
+  "perspective_api.config_screen.category.cycler": "視角循環",
+  "perspective_api.config_screen.category.cycler.desc": "視角循環序之設定。",
+  "perspective_api.config_screen.option.mod_enabled": "啟用模組",
+  "perspective_api.config_screen.option.mod_enabled.desc": "主開關，掌視角卯口諸用之啓閉。閉之則復原制之行。",
+  "perspective_api.config_screen.option.cycler_custom_order": "自定循序",
+  "perspective_api.config_screen.option.cycler_custom_order.desc": "啓之則循視角依自定之序，非循登記之序。",
+  "perspective_api.config_screen.option.cycler_custom_order_list": "自定循序列表",
+  "perspective_api.config_screen.option.cycler_custom_order_list.desc": "自定循環之視角序。列於此者優先循環。每行填一視角之號（如 minecraft:first_person）。",
+  "perspective_api.config_screen.option.transition_duration": "過渡時長（毫秒）",
+  "perspective_api.config_screen.option.transition_duration.desc": "換視角時平滑相機過渡之時長，以毫秒計。設為零則禁過渡。"
 }
