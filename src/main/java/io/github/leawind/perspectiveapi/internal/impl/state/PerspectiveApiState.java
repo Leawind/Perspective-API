@@ -26,26 +26,24 @@ public final class PerspectiveApiState {
               inst.group(
                       Codec.BOOL.optionalFieldOf("enabled", true).forGetter((s) -> s.enabled),
                       Identifier.CODEC
-                          .optionalFieldOf("currentPerspective")
-                          .forGetter(s -> Optional.ofNullable(s.currentPerspective)),
+                          .optionalFieldOf("manager.current")
+                          .forGetter(s -> Optional.ofNullable(s.managerCurrent)),
                       Identifier.CODEC
-                          .optionalFieldOf("activeCyclerPerspective")
-                          .forGetter(s -> Optional.ofNullable(s.activeCyclerPerspective)))
+                          .optionalFieldOf("cycler.active")
+                          .forGetter(s -> Optional.ofNullable(s.cyclerActive)))
                   .apply(inst, PerspectiveApiState::new));
 
   private final boolean enabled;
-  private final @Nullable Identifier currentPerspective;
-  private final @Nullable Identifier activeCyclerPerspective;
+  private final @Nullable Identifier managerCurrent;
+  private final @Nullable Identifier cyclerActive;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveApiState(
-      boolean enabled,
-      Optional<Identifier> currentPerspective,
-      Optional<Identifier> activeCyclerPerspective) {
+      boolean enabled, Optional<Identifier> managerCurrent, Optional<Identifier> cyclerActive) {
 
     this.enabled = enabled;
-    this.currentPerspective = currentPerspective.orElse(null);
-    this.activeCyclerPerspective = activeCyclerPerspective.orElse(null);
+    this.managerCurrent = managerCurrent.orElse(null);
+    this.cyclerActive = cyclerActive.orElse(null);
   }
 
   @Override
@@ -53,13 +51,13 @@ public final class PerspectiveApiState {
     if (this == o) return true;
     if (!(o instanceof PerspectiveApiState that)) return false;
     return enabled == that.enabled
-        && Objects.equals(currentPerspective, that.currentPerspective)
-        && Objects.equals(activeCyclerPerspective, that.activeCyclerPerspective);
+        && Objects.equals(managerCurrent, that.managerCurrent)
+        && Objects.equals(cyclerActive, that.cyclerActive);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, currentPerspective, activeCyclerPerspective);
+    return Objects.hash(enabled, managerCurrent, cyclerActive);
   }
 
   // endregion
@@ -69,11 +67,11 @@ public final class PerspectiveApiState {
   public void apply() {
     PerspectiveAPI.setEnabled(enabled);
 
-    if (currentPerspective != null) {
-      PerspectiveManagerImpl.INSTANCE.setCurrentId(currentPerspective);
+    if (managerCurrent != null) {
+      PerspectiveManagerImpl.INSTANCE.setCurrentId(managerCurrent);
     }
 
-    PerspectiveAPI.getManager().cycler().setActiveId(activeCyclerPerspective);
+    PerspectiveAPI.getManager().cycler().setActiveId(cyclerActive);
   }
 
   public static PerspectiveApiState extract() {
