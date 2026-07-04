@@ -3,10 +3,10 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
@@ -41,12 +41,11 @@ class PerspectiveCyclerImplTest {
 
   @BeforeEach
   void setUp() {
-    // Get the singleton instance as requested
     cycler = new PerspectiveCyclerImpl();
-    registry = PerspectiveAPI.getManager().registry();
+    // Use a fresh registry instead of the singleton
+    registry = new PerspectiveRegistryImpl(perspective(ID_A));
 
     // Register test perspectives so cycleForward/cycleBackward can find them
-    registry.register(perspective(ID_A));
     registry.register(perspective(ID_B));
     registry.register(perspective(ID_C));
     registry.register(perspective(ID_D));
@@ -120,9 +119,6 @@ class PerspectiveCyclerImplTest {
 
   @Test
   void testCustomOrderDisabledByDefault() {
-    // Assuming default is false based on typical behavior, but explicitly checking state
-    // If the default is true, this test might need adjustment depending on implementation details,
-    // but usually standard sorting is default.
     boolean initialUseCustomOrder = cycler.isCustomOrderEnabled();
 
     cycler.add(ID_A, 10);
@@ -208,11 +204,6 @@ class PerspectiveCyclerImplTest {
     cycler.add(ID_A, 10);
     cycler.add(ID_B, 5);
 
-    // If current is null, next/previous usually returns the first/last or null depending on spec.
-    // Based on typical cycler logic:
-    // getNext(null) -> First item (B)
-    // getPrevious(null) -> Last item (A)
-
     assertEquals(ID_B, cycler.getNext(null));
     assertEquals(ID_A, cycler.getPrevious(null));
   }
@@ -281,5 +272,187 @@ class PerspectiveCyclerImplTest {
     assertDoesNotThrow(() -> cycler.cycleForward(registry));
     assertDoesNotThrow(() -> cycler.cycleBackward(registry));
     assertNull(cycler.getActiveId());
+  }
+
+  @Test
+  void testGetIdsReturnsImmutableList() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+
+    List<Identifier> list = cycler.getIds();
+    assertThrows(UnsupportedOperationException.class, () -> list.add(ID_C));
+    assertThrows(UnsupportedOperationException.class, () -> list.remove(0));
+    assertThrows(UnsupportedOperationException.class, () -> list.set(0, ID_C));
+    assertThrows(UnsupportedOperationException.class, list::clear);
+  }
+
+  @Test
+  void testGetIdsReturnsImmutableListWithCustomOrder() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.setCustomOrder(List.of(ID_A, ID_B));
+    cycler.setCustomOrderEnabled(true);
+
+    List<Identifier> list = cycler.getIds();
+    assertThrows(UnsupportedOperationException.class, () -> list.add(ID_C));
+    assertThrows(UnsupportedOperationException.class, () -> list.remove(0));
+  }
+
+  @Test
+  void testGetIdsIncludesAllIdsRegardlessOfRegistration() {
+    // Only register A and B in the registry
+    PerspectiveRegistry limitedRegistry = new PerspectiveRegistryImpl(perspective(ID_A));
+    limitedRegistry.register(perspective(ID_B));
+
+    // Add A, B, C, D to the cycler
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+    cycler.add(ID_D, 15);
+
+    // getIds should include all 4 IDs even though only A, B are registered
+    List<Identifier> list = cycler.getIds();
+    assertEquals(4, list.size());
+    assertTrue(list.contains(ID_A));
+    assertTrue(list.contains(ID_B));
+    assertTrue(list.contains(ID_C));
+    assertTrue(list.contains(ID_D));
+  }
+
+  @Test
+  void testCycleSkipsUnregisteredIds() {
+    // Only register A and B
+    PerspectiveRegistry limitedRegistry = new PerspectiveRegistryImpl(perspective(ID_A));
+    limitedRegistry.register(perspective(ID_B));
+
+    // Add A, B, C, D to cycler
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+    cycler.add(ID_D, 15);
+
+    // Order by priority: B(5), A(10), D(15), C(20)
+    // Cycle should skip D and C since they are not registered
+    cycler.setActiveId(ID_B);
+    cycler.cycleForward(limitedRegistry);
+    assertEquals(ID_A, cycler.getActiveId());
+
+    cycler.cycleForward(limitedRegistry);
+    assertEquals(ID_B, cycler.getActiveId()); // wraps, skips D and C
+  }
+
+  @Test
+  void testSetCustomOrderDoesNotChangeIsCustomOrderEnabled() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+
+    // Enable custom order
+    cycler.setCustomOrderEnabled(true);
+    assertTrue(cycler.isCustomOrderEnabled());
+
+    // Set custom order should not change the enabled state
+    cycler.setCustomOrder(List.of(ID_A, ID_B));
+    assertTrue(cycler.isCustomOrderEnabled());
+
+    // Disable custom order
+    cycler.setCustomOrderEnabled(false);
+    assertFalse(cycler.isCustomOrderEnabled());
+
+    // Set custom order should not re-enable it
+    cycler.setCustomOrder(List.of(ID_B, ID_A));
+    assertFalse(cycler.isCustomOrderEnabled());
+  }
+
+  @Test
+  void testSetCustomOrderWithIncompleteListAppendsMissingByPriority() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+    cycler.add(ID_D, 15);
+
+    // Custom order only contains C and A
+    // Missing: B(5) and D(15), should be appended sorted by priority
+    cycler.setCustomOrder(List.of(ID_C, ID_A));
+    cycler.setCustomOrderEnabled(true);
+
+    List<Identifier> list = cycler.getIds();
+    assertEquals(4, list.size());
+    assertEquals(ID_C, list.get(0));
+    assertEquals(ID_A, list.get(1));
+    assertEquals(ID_B, list.get(2)); // B has priority 5
+    assertEquals(ID_D, list.get(3)); // D has priority 15
+  }
+
+  @Test
+  void testSetCustomOrderWithEmptyListAppendsAllByPriority() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+
+    // Empty custom order: all IDs should be appended sorted by priority
+    cycler.setCustomOrder(List.of());
+    cycler.setCustomOrderEnabled(true);
+
+    List<Identifier> list = cycler.getIds();
+    assertEquals(3, list.size());
+    assertEquals(ID_B, list.get(0)); // priority 5
+    assertEquals(ID_A, list.get(1)); // priority 10
+    assertEquals(ID_C, list.get(2)); // priority 20
+  }
+
+  @Test
+  void testSetCustomOrderWithAllIdsNoRemainder() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+
+    // Custom order contains all IDs
+    cycler.setCustomOrder(List.of(ID_C, ID_A, ID_B));
+    cycler.setCustomOrderEnabled(true);
+
+    List<Identifier> list = cycler.getIds();
+    assertEquals(3, list.size());
+    assertEquals(ID_C, list.get(0));
+    assertEquals(ID_A, list.get(1));
+    assertEquals(ID_B, list.get(2));
+  }
+
+  @Test
+  void testSetCustomOrderIgnoresIdsNotInCycler() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+
+    // Custom order includes ID_C which is not in the cycler
+    cycler.setCustomOrder(List.of(ID_A, ID_C));
+    cycler.setCustomOrderEnabled(true);
+
+    List<Identifier> list = cycler.getIds();
+    assertEquals(2, list.size());
+    assertEquals(ID_A, list.get(0));
+    assertEquals(ID_B, list.get(1)); // ID_C ignored, ID_B appended by priority
+  }
+
+  @Test
+  void testSetCustomOrderPreservesOrderAcrossMultipleCalls() {
+    cycler.add(ID_A, 10);
+    cycler.add(ID_B, 5);
+    cycler.add(ID_C, 20);
+
+    // First call
+    cycler.setCustomOrder(List.of(ID_A, ID_B));
+    cycler.setCustomOrderEnabled(true);
+
+    List<Identifier> list1 = cycler.getIds();
+    assertEquals(ID_A, list1.get(0));
+    assertEquals(ID_B, list1.get(1));
+    assertEquals(ID_C, list1.get(2));
+
+    // Second call overrides the custom order
+    cycler.setCustomOrder(List.of(ID_C, ID_B, ID_A));
+
+    List<Identifier> list2 = cycler.getIds();
+    assertEquals(ID_C, list2.get(0));
+    assertEquals(ID_B, list2.get(1));
+    assertEquals(ID_A, list2.get(2));
   }
 }

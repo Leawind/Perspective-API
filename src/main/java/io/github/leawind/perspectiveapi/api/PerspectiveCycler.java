@@ -34,13 +34,26 @@ public interface PerspectiveCycler {
 
   /// Sets the custom order for the cycle list.
   ///
-  /// IDs listed here appear first in {@link #getIds()}, in the given order.
-  /// Any IDs not present in `orderedIds` are appended at the end, sorted by priority.
+  /// This method does not change the value of {@link #isCustomOrderEnabled()}.
   ///
-  /// @param orderedIds the desired order; IDs not in the cycler are ignored
+  /// IDs listed here appear first in {@link #getIds()}, in the given order.
+  /// Any IDs in the cycler that are not present in `orderedIds` are appended
+  /// at the end, sorted by priority. IDs not in the cycler are ignored.
+  ///
+  /// @param orderedIds the desired order
   void setCustomOrder(@NonNull List<@NonNull Identifier> orderedIds);
 
-  /// @return a sorted unmodifiable list of all perspective IDs in the current cycle order
+  /// Returns an unmodifiable list of all perspective IDs in the cycler.
+  ///
+  /// The list includes every ID added to the cycler, regardless of whether
+  /// the perspective is available or registered in the {@link PerspectiveRegistry}.
+  ///
+  /// Ordering depends on {@link #isCustomOrderEnabled()}:
+  /// - if `true`, IDs follow the order set by {@link #setCustomOrder(List)},
+  ///   with any remaining IDs appended in priority order
+  /// - if `false`, IDs are sorted by priority (ascending)
+  ///
+  /// @return an unmodifiable list of all perspective IDs in the current cycle order
   @NonNull List<@NonNull Identifier> getIds();
 
   /// Returns the next perspective ID after `current` in the cycle list.

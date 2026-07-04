@@ -76,10 +76,16 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
       return entries.stream().map(Entry::id).toList();
     }
     List<Entry> snapshot = this.entries;
-    List<Identifier> result = new ArrayList<>(customOrder);
-    for (Entry entry : snapshot) {
-      if (!result.contains(entry.id())) {
-        result.add(entry.id());
+    List<Identifier> idsInCycler = snapshot.stream().map(Entry::id).toList();
+    List<Identifier> result = new ArrayList<>();
+    for (Identifier id : customOrder) {
+      if (idsInCycler.contains(id) && !result.contains(id)) {
+        result.add(id);
+      }
+    }
+    for (Identifier id : idsInCycler) {
+      if (!result.contains(id)) {
+        result.add(id);
       }
     }
     return List.copyOf(result);
