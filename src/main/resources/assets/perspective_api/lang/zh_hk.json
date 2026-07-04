@@ -16,5 +16,7 @@
   "perspective_api.config_screen.option.cycler_custom_order_list": "自定義循環順序列表",
   "perspective_api.config_screen.option.cycler_custom_order_list.desc": "自定義循環的視角 ID 列表。列出的 ID 將按順序優先循環。每行填寫一個視角 ID（如 minecraft:first_person）。",
   "perspective_api.config_screen.option.transition_duration": "過渡時長（毫秒）",
-  "perspective_api.config_screen.option.transition_duration.desc": "切換視角時平滑攝影機過渡的持續時間，單位為毫秒。設為 0 可禁用過渡。"
+  "perspective_api.config_screen.option.transition_duration.desc": "切換視角時平滑攝影機過渡的持續時間，單位為毫秒。設為 0 可禁用過渡。",
+  "perspective_api.config_screen.fallback.title": "無可用的配置畫面",
+  "perspective_api.config_screen.fallback.message": "請安裝 YACL 以顯示配置畫面"
 }

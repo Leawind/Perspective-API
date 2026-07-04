@@ -17,12 +17,11 @@ import net.minecraft.resources.Identifier;
 
 public final class YaclConfigScreenBuilder {
 
-  public Screen build(ConfigScreenManager manager, Screen parent) {
+  public static Screen build(Screen parent) {
     var cycler = PerspectiveAPI.getManager().cycler();
 
     return YetAnotherConfigLib.createBuilder()
         .title(text("config_screen.title"))
-        .save(() -> manager.onUpdate.emit(null))
         .category(
             ConfigCategory.createBuilder()
                 .name(text("config_screen.category.general"))
@@ -99,7 +98,7 @@ public final class YaclConfigScreenBuilder {
         .generateScreen(parent);
   }
 
-  static Component text(String key) {
+  private static Component text(String key) {
     return Component.translatable(PerspectiveAPI.MOD_ID + "." + key);
   }
 }

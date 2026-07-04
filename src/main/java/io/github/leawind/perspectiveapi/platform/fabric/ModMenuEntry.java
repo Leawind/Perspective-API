@@ -9,7 +9,7 @@ import io.github.leawind.perspectiveapi.internal.logic.config.ConfigScreenManage
 public final class ModMenuEntry implements ModMenuApi {
   @Override
   public ConfigScreenFactory<?> getModConfigScreenFactory() {
-    return parent -> ConfigScreenManager.getInstance().build(parent);
+    return ConfigScreenManager::findAndBuild;
   }
 }
 /*?}*/

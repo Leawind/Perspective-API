@@ -31,16 +31,12 @@ public class Entrypoint {
     ModList.get()
         .getModContainerById(PerspectiveAPI.MOD_ID)
         .ifPresent(
-            container -> {
-              var configScreenManager = ConfigScreenManager.getInstance();
-              if (configScreenManager.hasBuilder()) {
+            container ->
                 container.registerExtensionPoint(
                     ConfigScreenHandler.ConfigScreenFactory.class,
                     () ->
                         new ConfigScreenHandler.ConfigScreenFactory(
-                            (minecraft, screen) -> configScreenManager.build(screen)));
-              }
-            });
+                            (minecraft, screen) -> ConfigScreenManager.findAndBuild(screen))));
   }
 
   @Mod.EventBusSubscriber(modid = PerspectiveAPI.MOD_ID)

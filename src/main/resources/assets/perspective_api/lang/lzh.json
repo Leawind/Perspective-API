@@ -16,5 +16,7 @@
   "perspective_api.config_screen.option.cycler_custom_order_list": "自定循序列表",
   "perspective_api.config_screen.option.cycler_custom_order_list.desc": "自定循環之視角序。列於此者優先循環。每行填一視角之號（如 minecraft:first_person）。",
   "perspective_api.config_screen.option.transition_duration": "過渡時長（毫秒）",
-  "perspective_api.config_screen.option.transition_duration.desc": "換視角時平滑相機過渡之時長，以毫秒計。設為零則禁過渡。"
+  "perspective_api.config_screen.option.transition_duration.desc": "換視角時平滑相機過渡之時長，以毫秒計。設為零則禁過渡。",
+  "perspective_api.config_screen.fallback.title": "無置設之幕可用",
+  "perspective_api.config_screen.fallback.message": "措置 YACL 以見置設之幕"
 }
