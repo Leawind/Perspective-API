@@ -227,6 +227,25 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     // Apply transition
     if (isTransitioning) {
       transition.updateTransform(now, tempPosition, tempRotation, tempPosition, tempRotation);
+
+      if (!Sanitizer.isFinite(tempPosition)) {
+        throttledAction.run(
+            "transition:position",
+            () ->
+                LOGGER.warn(
+                    "Transition position is invalid, falling back to vanilla. pos: {}",
+                    tempPosition));
+        tempPosition.set(backupPosition);
+      }
+      if (!Sanitizer.isFinite(tempRotation)) {
+        throttledAction.run(
+            "transition:rotation",
+            () ->
+                LOGGER.warn(
+                    "Transition rotation is invalid, falling back to vanilla. rot: {}",
+                    tempRotation));
+        tempRotation.set(backupRotation);
+      }
     }
     isTempStateInited = true;
 
@@ -269,6 +288,14 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
         && current.allowTransitionIn()
         && (previous == null || previous.allowTransitionOut())) {
       tempFov = transition.updateFov(now, fov);
+      if (!Sanitizer.isFinite(tempFov)) {
+        throttledAction.run(
+            "transition:fov",
+            () ->
+                LOGGER.warn(
+                    "Transition FOV is invalid, falling back to vanilla. fov: {}", tempFov));
+        tempFov = fov;
+      }
     } else {
       tempFov = fov;
     }
