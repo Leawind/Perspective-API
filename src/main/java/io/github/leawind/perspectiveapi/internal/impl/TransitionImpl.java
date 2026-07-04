@@ -72,7 +72,7 @@ public final class TransitionImpl implements Transition {
     this.prevEasedProgress = 0;
   }
 
-  private float getProgress(double currentTimeMs) {
+  private float computeEasedProgress(double currentTimeMs) {
     double deltaMs = currentTimeMs - startTimeMs;
     deltaMs = Math.max(deltaMs, MIN_DELTA_MS);
 
@@ -90,13 +90,13 @@ public final class TransitionImpl implements Transition {
       Quaternionfc targetRotation,
       Vector3d destPosition,
       Quaternionf destRotation) {
-    float progress = getProgress(currentTimeMs);
+    float progress = computeEasedProgress(currentTimeMs);
 
     // Position: interpolate from fixed start to dynamic target
     startPosition.lerp(targetPosition, progress, destPosition);
 
     // Rotation: chase interpolation from previous frame result to dynamic target
-    float u = getProgress(currentTimeMs);
+    float u = computeEasedProgress(currentTimeMs);
     double k = (u - prevEasedProgress) / (1 - prevEasedProgress);
     k = PerspectiveUtils.clamp(k, 0, 1);
 
@@ -107,7 +107,7 @@ public final class TransitionImpl implements Transition {
 
   @Override
   public float updateFov(double currentTimeMs, float targetFov) {
-    float progress = getProgress(currentTimeMs);
+    float progress = computeEasedProgress(currentTimeMs);
     return startFov + (targetFov - startFov) * progress;
   }
 }
