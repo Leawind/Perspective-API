@@ -12,6 +12,7 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
@@ -45,6 +46,20 @@ public final class PerspectiveApiState {
     this.enabled = enabled;
     this.currentPerspective = currentPerspective.orElse(null);
     this.activeCyclerPerspective = activeCyclerPerspective.orElse(null);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PerspectiveApiState that)) return false;
+    return enabled == that.enabled
+        && Objects.equals(currentPerspective, that.currentPerspective)
+        && Objects.equals(activeCyclerPerspective, that.activeCyclerPerspective);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(enabled, currentPerspective, activeCyclerPerspective);
   }
 
   // endregion

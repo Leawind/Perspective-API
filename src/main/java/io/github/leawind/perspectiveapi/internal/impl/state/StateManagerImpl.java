@@ -2,7 +2,6 @@ package io.github.leawind.perspectiveapi.internal.impl.state;
 
 import com.google.gson.JsonSyntaxException;
 import io.github.leawind.perspectiveapi.api.state.StateManager;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,9 +27,20 @@ public record StateManagerImpl(@NonNull Path filePath) implements StateManager {
   @Override
   public void tryExtractAndSave() {
     try {
-      LOGGER.info("Saving perspective state to {}", filePath);
       Files.createDirectories(filePath.getParent());
-      PerspectiveApiState.extract().save(filePath);
+      var newState = PerspectiveApiState.extract();
+      try {
+        if (Files.exists(filePath)) {
+          var existingState = PerspectiveApiState.load(filePath);
+          if (existingState.equals(newState)) {
+            return;
+          }
+        }
+      } catch (Exception e) {
+        LOGGER.debug("Failed to read existing state from {}, proceeding to overwrite", filePath, e);
+      }
+      LOGGER.info("Saving perspective state to {}", filePath);
+      newState.save(filePath);
     } catch (Exception e) {
       LOGGER.warn("Failed to save perspective state to {}.", filePath, e);
     }
