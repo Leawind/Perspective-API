@@ -10,7 +10,7 @@ import org.jspecify.annotations.NonNull;
 
 public final class TransitionImpl implements Transition {
 
-  private static final double MIN_DELTA_MS = 1;
+  private static final double MIN_DELTA_MS = 0.1;
 
   // region settings
   private double durationMs = 300;
