@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.config;
+package io.github.leawind.perspectiveapi.internal.logic.config;
 
 import dev.isxander.yacl3.api.ConfigCategory;
 import dev.isxander.yacl3.api.ListOption;

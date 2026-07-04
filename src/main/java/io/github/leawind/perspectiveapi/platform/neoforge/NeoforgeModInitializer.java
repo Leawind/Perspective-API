@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.platform.neoforge;
 /*? if neoforge {*/
 /*import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.internal.config.ConfigScreenManager;
+import io.github.leawind.perspectiveapi.internal.logic.config.ConfigScreenManager;
 import net.neoforged.fml.ModList;
 
 public class NeoforgeModInitializer {

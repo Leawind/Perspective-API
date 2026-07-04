@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.config;
+package io.github.leawind.perspectiveapi.internal.logic.config;
 
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Objects;

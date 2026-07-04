@@ -4,7 +4,7 @@ package io.github.leawind.perspectiveapi.platform.forge;
 /*import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
-import io.github.leawind.perspectiveapi.internal.config.ConfigScreenManager;
+import io.github.leawind.perspectiveapi.internal.logic.config.ConfigScreenManager;
 import io.github.leawind.perspectiveapi.internal.logic.ModEntrypoint;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ConfigScreenHandler;
