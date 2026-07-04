@@ -2,7 +2,6 @@ package io.github.leawind.perspectiveapi.internal.bridge;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
-import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -27,12 +26,15 @@ public final class Bridge {
     return SharedConstants.getCurrentVersion().dataVersion().version();
     /*? } else {*/
     /*return SharedConstants.getCurrentVersion().getDataVersion().getVersion();
-     */
-    /*? }*/
+     *//*? }*/
   }
 
-  public static Identifier createIdentifier(String path) {
-    return createIdentifier("minecraft", path);
+  public static Identifier parseIdentifier(String identifier) {
+    /*? if >=1.21 {*/
+    return Identifier.parse(identifier);
+    /*? } else {*/
+    /*return new Identifier(identifier);
+    *//*? }*/
   }
 
   public static Identifier createIdentifier(String namespace, String path) {
@@ -40,8 +42,7 @@ public final class Bridge {
     return Identifier.fromNamespaceAndPath(namespace, path);
     /*? } else {*/
     /*return new Identifier(namespace, path);
-     */
-    /*? }*/
+     *//*? }*/
   }
 
   /// Updates the camera type and triggers necessary side effects.
