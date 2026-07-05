@@ -2,8 +2,7 @@ package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveRegistrar;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaThirdPersonPerspective;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
 import java.util.ServiceLoader;
 import java.util.stream.StreamSupport;
 
@@ -21,17 +20,17 @@ public final class ModEntrypoint {
 
     manager
         .registry()
-        .register(VanillaFirstPersonPerspective.INSTANCE)
-        .register(VanillaThirdPersonPerspective.BACK)
-        .register(VanillaThirdPersonPerspective.FRONT);
+        .register(VanillaPerspective.FIRST_PERSON)
+        .register(VanillaPerspective.THIRD_PERSON_BACK)
+        .register(VanillaPerspective.THIRD_PERSON_FRONT);
 
     {
       manager
           .cycler()
-          .add(VanillaFirstPersonPerspective.INSTANCE.id(), 0)
-          .add(VanillaThirdPersonPerspective.BACK.id(), 1)
-          .add(VanillaThirdPersonPerspective.FRONT.id(), 2);
-      manager.cycler().setActiveId(VanillaFirstPersonPerspective.INSTANCE.id());
+          .add(VanillaPerspective.FIRST_PERSON.id(), 0)
+          .add(VanillaPerspective.THIRD_PERSON_BACK.id(), 1)
+          .add(VanillaPerspective.THIRD_PERSON_FRONT.id(), 2);
+      manager.cycler().setActiveId(VanillaPerspective.FIRST_PERSON.id());
     }
 
     StreamSupport.stream(ServiceLoader.load(PerspectiveRegistrar.class).spliterator(), false)

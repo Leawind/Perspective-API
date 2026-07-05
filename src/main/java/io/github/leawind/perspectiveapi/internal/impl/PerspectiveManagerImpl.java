@@ -9,7 +9,7 @@ import io.github.leawind.perspectiveapi.api.TransitionController;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaFirstPersonPerspective;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Objects;
@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 public final class PerspectiveManagerImpl implements PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManagerImpl.class);
   public static final PerspectiveManagerImpl INSTANCE =
-      new PerspectiveManagerImpl(VanillaFirstPersonPerspective.INSTANCE);
+      new PerspectiveManagerImpl(VanillaPerspective.FIRST_PERSON);
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
