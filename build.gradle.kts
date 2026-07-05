@@ -89,6 +89,18 @@ repositories {
             includeGroup("maven.modrinth")
         }
     }
+    // Modern UI
+    maven("https://maven.izzel.io/releases/") {
+        name = "Modern UI"
+    }
+    // Forge Config API Port
+    maven {
+        url = uri("https://raw.githubusercontent.com/Fuzss/modresources/main/maven/")
+        content {
+            includeGroup("fuzs.forgeconfigapiport")
+        }
+    }
+
 }
 
 fun DependencyHandlerScope.modImplAlias(dependencyNotation: String) {
@@ -118,6 +130,44 @@ dependencies {
     //modImplAlias("dev.isxander:yet-another-config-lib:${project.property("mod.yacl_version")}-${mod.loader}")
     modImplAlias("maven.modrinth:yacl:${project.property("mod.yacl_version")}-${mod.loader}")
 
+
+    // region Modern UI
+
+    val modernuiCoreVersion = project.findProperty("mod.modernui_core_version") as? String
+    val modernuiMarkflowVersion = project.findProperty("mod.modernui_markflow_version") as? String
+    val modernuiMarkdownVersion = project.findProperty("mod.modernui_markdown_version") as? String
+    val modernuiLoaderVersion = project.findProperty("mod.modernui_loader_version") as? String
+
+    if (modernuiCoreVersion != null) {
+        if (VersionNumber.parse(modernuiCoreVersion) >= VersionNumber.parse("3.13.0")) {
+            modImplAlias("dev.icyllis:modernui-core:$modernuiCoreVersion")
+        } else {
+            modImplAlias("icyllis.modernui:ModernUI-Core:$modernuiCoreVersion")
+        }
+    }
+    if (modernuiMarkflowVersion != null) {
+        modImplAlias("icyllis.modernui:ModernUI-Markflow:$modernuiMarkflowVersion")
+    }
+    if (modernuiMarkdownVersion != null) {
+        modImplAlias("icyllis.modernui:ModernUI-Markdown:$modernuiMarkdownVersion")
+    }
+    if (modernuiLoaderVersion != null) {
+        if (mod.isFabric) {
+            modImplAlias("icyllis.modernui:ModernUI-Fabric:$modernuiLoaderVersion")
+        } else if (mod.isNeoforge) {
+            modImplAlias("icyllis.modernui:ModernUI-NeoForge:$modernuiLoaderVersion")
+        } else if (mod.isForge) {
+            modImplAlias("icyllis.modernui:ModernUI-Forge:$modernuiLoaderVersion")
+        }
+    }
+
+    // required by Modern UI
+    val forgeconfigapiportVersion = project.findProperty("mod.forgeconfigapiport_version") as? String
+    if (forgeconfigapiportVersion != null && mod.isFabric) {
+        modImplAlias("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:$forgeconfigapiportVersion")
+    }
+    // endregion
+
     // region test
     testCompileOnly("org.jspecify:jspecify:1.0.0")
 
@@ -141,6 +191,16 @@ dependencies {
     compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
     annotationProcessor("com.google.auto.service:auto-service:1.1.1")
     // endregion
+}
+
+// Patterns to exclude from the test classpath
+val testExcludePatterns = listOf("modernui", "forgeconfigapiport")
+
+tasks.test {
+    useJUnitPlatform()
+    classpath = classpath.filter { file ->
+        testExcludePatterns.none { pattern -> file.name.contains(pattern, ignoreCase = true) }
+    }
 }
 
 tasks.withType<RemapJarTask>().matching { it.name == "remapJar" }.configureEach {
@@ -181,9 +241,6 @@ loom {
     }
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
 
 java {
     withSourcesJar()
