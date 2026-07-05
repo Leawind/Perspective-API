@@ -79,16 +79,19 @@ repositories {
     }
 
     // Yet Another Config Lib
-    exclusiveContent {
-        forRepository {
-            maven("https://api.modrinth.com/maven") {
-                name = "Modrinth"
-            }
-        }
-        filter {
-            includeGroup("maven.modrinth")
-        }
+    maven("https://maven.isxander.dev/releases") {
+        name = "Xander Maven"
     }
+//    exclusiveContent {
+//        forRepository {
+//            maven("https://api.modrinth.com/maven") {
+//                name = "Modrinth"
+//            }
+//        }
+//        filter {
+//            includeGroup("maven.modrinth")
+//        }
+//    }
     // Modern UI
     maven("https://maven.izzel.io/releases/") {
         name = "Modern UI"
@@ -128,7 +131,7 @@ dependencies {
 
     // https://maven.isxander.dev/releases/dev/isxander/yet-another-config-lib
     //modImplAlias("dev.isxander:yet-another-config-lib:${project.property("mod.yacl_version")}-${mod.loader}")
-    modImplAlias("maven.modrinth:yacl:${project.property("mod.yacl_version")}-${mod.loader}")
+    modImplAlias("dev.isxander:yet-another-config-lib:${project.property("mod.yacl_version")}-${mod.loader}")
 
 
     // region Modern UI
