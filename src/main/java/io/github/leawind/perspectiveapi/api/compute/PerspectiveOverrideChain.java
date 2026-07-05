@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 /// non-null identifier that passes the provided validator.
 public interface PerspectiveOverrideChain extends PerspectiveComputer {
   void push(
-      @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier);
+      @NonNull Identifier key, int priority, @NonNull PerspectiveComputer computer);
 
   /// Removes the override entry with the given key.
   void pop(@NonNull Identifier key);
