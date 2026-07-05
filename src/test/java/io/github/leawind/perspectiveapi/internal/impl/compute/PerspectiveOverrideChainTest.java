@@ -1,8 +1,8 @@
-package io.github.leawind.perspectiveapi.internal.impl;
+package io.github.leawind.perspectiveapi.internal.impl.compute;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,7 @@ class PerspectiveOverrideChainTest {
     chain.push(key, 10, () -> key);
     chain.push(key, 20, () -> result);
 
-    Identifier resolved = chain.resolve(id -> true);
+    Identifier resolved = chain.computeId();
     assertEquals(result, resolved);
   }
 
@@ -88,64 +88,66 @@ class PerspectiveOverrideChainTest {
     assertTrue(chain.has(c));
   }
 
-  // ========== resolve ==========
+  // ========== computeId ==========
 
   @Test
-  void resolveEmptyChainReturnsNull() {
-    assertNull(chain.resolve(id -> true));
+  void computeIdEmptyChainReturnsNull() {
+    assertNull(chain.computeId());
   }
 
   @Test
-  void resolveSingleEntry() {
+  void computeIdSingleEntry() {
     Identifier key = id("a");
     chain.push(key, 10, () -> key);
-    assertEquals(key, chain.resolve(id -> true));
+    assertEquals(key, chain.computeId());
   }
 
   @Test
-  void resolveReturnsHighestPriorityFirst() {
+  void computeIdReturnsHighestPriorityFirst() {
     Identifier low = id("low");
     Identifier high = id("high");
     chain.push(low, 1, () -> low);
     chain.push(high, 100, () -> high);
 
-    assertEquals(high, chain.resolve(id -> true));
+    assertEquals(high, chain.computeId());
   }
 
   @Test
-  void resolveSkipsNullSupplier() {
+  void computeIdSkipsNullSupplier() {
     Identifier fallback = id("fallback");
     chain.push(id("null_supplier"), 100, () -> null);
     chain.push(fallback, 1, () -> fallback);
 
-    assertEquals(fallback, chain.resolve(id -> true));
+    assertEquals(fallback, chain.computeId());
   }
 
   @Test
-  void resolveSkipsFailingValidator() {
+  void computeIdSkipsFailingValidator() {
     Identifier fallback = id("fallback");
     chain.push(id("invalid"), 100, () -> id("invalid"));
     chain.push(fallback, 1, () -> fallback);
 
-    assertEquals(fallback, chain.resolve(id -> !"invalid".equals(id.getPath())));
+    chain.setValidator(id -> !"invalid".equals(id.getPath()));
+    assertEquals(fallback, chain.computeId());
   }
 
   @Test
-  void resolveAllFailReturnsNull() {
+  void computeIdAllFailReturnsNull() {
     chain.push(id("a"), 10, () -> null);
     chain.push(id("b"), 5, () -> null);
-    assertNull(chain.resolve(id -> true));
+    assertNull(chain.computeId());
   }
 
   @Test
-  void resolveValidatorRejectsAll() {
+  void computeIdValidatorRejectsAll() {
     chain.push(id("a"), 10, () -> id("a"));
     chain.push(id("b"), 5, () -> id("b"));
-    assertNull(chain.resolve(id -> false));
+    chain.setValidator(id -> false);
+    assertNull(chain.computeId());
   }
 
   @Test
-  void resolvePriorityOrdering() {
+  void computeIdPriorityOrdering() {
     Identifier first = id("first");
     Identifier second = id("second");
     Identifier third = id("third");
@@ -153,31 +155,31 @@ class PerspectiveOverrideChainTest {
     chain.push(first, 100, () -> first);
     chain.push(second, 50, () -> second);
 
-    assertEquals(first, chain.resolve(id -> true));
+    assertEquals(first, chain.computeId());
 
     chain.pop(first);
-    assertEquals(second, chain.resolve(id -> true));
+    assertEquals(second, chain.computeId());
 
     chain.pop(second);
-    assertEquals(third, chain.resolve(id -> true));
+    assertEquals(third, chain.computeId());
   }
 
   @Test
-  void resolveAfterPop() {
+  void computeIdAfterPop() {
     Identifier a = id("a");
     Identifier b = id("b");
     chain.push(a, 10, () -> a);
     chain.push(b, 5, () -> b);
 
     chain.pop(a);
-    assertEquals(b, chain.resolve(id -> true));
+    assertEquals(b, chain.computeId());
   }
 
   @Test
-  void resolveAfterClear() {
+  void computeIdAfterClear() {
     chain.push(id("a"), 10, () -> id("a"));
     chain.clear();
-    assertNull(chain.resolve(id -> true));
+    assertNull(chain.computeId());
   }
 
   @Test
@@ -188,7 +190,34 @@ class PerspectiveOverrideChainTest {
     chain.push(second, 10, () -> second);
 
     // Both have same priority; first pushed should be evaluated first
-    assertEquals(first, chain.resolve(id -> true));
+    assertEquals(first, chain.computeId());
+  }
+
+  // ========== setValidator ==========
+
+  @Test
+  void setValidatorOverridesValidator() {
+    Identifier a = id("a");
+    Identifier b = id("b");
+    chain.push(a, 10, () -> a);
+    chain.push(b, 5, () -> b);
+
+    // Initially no validator, returns highest priority
+    assertEquals(a, chain.computeId());
+
+    // Set validator that rejects 'a'
+    chain.setValidator(id -> !"a".equals(id.getPath()));
+    assertEquals(b, chain.computeId());
+  }
+
+  @Test
+  void setValidatorWithNullSupplier() {
+    Identifier fallback = id("fallback");
+    chain.push(id("null_supplier"), 100, () -> null);
+    chain.push(fallback, 1, () -> fallback);
+
+    chain.setValidator(id -> !"fallback".equals(id.getPath()));
+    assertNull(chain.computeId());
   }
 
   // ========== null safety ==========

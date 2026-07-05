@@ -1,13 +1,15 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
-import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.TransitionController;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveCyclerImpl;
+import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
@@ -63,7 +65,9 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     currentId = defaultPerspective.id();
     currentPerspective = defaultPerspective;
 
-    overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::getActiveId);
+    overrides = new PerspectiveOverrideChainImpl();
+    overrides.setValidator(registry::contains);
+    overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::computeId);
 
     onCurrentPerspectiveChanged.on(
         () -> {
@@ -83,7 +87,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   // region components
   private final PerspectiveRegistryImpl registry;
   private final PerspectiveCyclerImpl cycler;
-  private final PerspectiveOverrideChainImpl overrides = new PerspectiveOverrideChainImpl();
+  private final PerspectiveOverrideChainImpl overrides;
   private final Transition transition = new TransitionImpl();
 
   @Override
@@ -117,7 +121,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   public void clientTick(Minecraft minecraft) {
     // Resolve and update current id from override chain
-    Identifier resolvedId = overrides.resolve(registry::contains);
+    Identifier resolvedId = overrides.computeId();
     if (resolvedId == null) {
       resolvedId = registry.getDefault().id();
     }

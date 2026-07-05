@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.api;
+package io.github.leawind.perspectiveapi.api.compute;
 
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 ///
 /// Entries are evaluated in descending order of priority. The chain resolves to the first
 /// non-null identifier that passes the provided validator.
-public interface PerspectiveOverrideChain {
+public interface PerspectiveOverrideChain extends PerspectiveComputer {
   void push(
       @NonNull Identifier key, int priority, @NonNull Supplier<@Nullable Identifier> supplier);
 
@@ -26,10 +26,5 @@ public interface PerspectiveOverrideChain {
   /// Clears all entries except those with the specified keys.
   void clearExcept(@NonNull Identifier... keys);
 
-  /// Resolves the chain by evaluating suppliers in priority order.
-  ///
-  /// @param validator A predicate provided by the caller to determine if a generated identifier
-  ///     is actually valid/available.
-  /// @return The first valid identifier, or `null` if all entries fail or the chain is empty.
-  @Nullable Identifier resolve(@NonNull Predicate<@NonNull Identifier> validator);
+  void setValidator(@NonNull Predicate<@NonNull Identifier> validator);
 }

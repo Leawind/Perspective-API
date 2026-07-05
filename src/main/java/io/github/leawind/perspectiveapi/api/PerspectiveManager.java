@@ -1,5 +1,7 @@
 package io.github.leawind.perspectiveapi.api;
 
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 

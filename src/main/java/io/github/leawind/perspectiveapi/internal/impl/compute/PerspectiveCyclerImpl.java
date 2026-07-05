@@ -1,7 +1,7 @@
-package io.github.leawind.perspectiveapi.internal.impl;
+package io.github.leawind.perspectiveapi.internal.impl.compute;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   private volatile List<Identifier> customOrder = List.of();
   private volatile @Nullable List<Identifier> customOrderCache = null;
 
-  PerspectiveCyclerImpl(@NonNull PerspectiveRegistry registry) {
+  public PerspectiveCyclerImpl(@NonNull PerspectiveRegistry registry) {
     this.registry = Objects.requireNonNull(registry);
   }
 
@@ -136,7 +136,7 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
   }
 
   @Override
-  public @Nullable Identifier getActiveId() {
+  public @Nullable Identifier computeId() {
     return activeId;
   }
 

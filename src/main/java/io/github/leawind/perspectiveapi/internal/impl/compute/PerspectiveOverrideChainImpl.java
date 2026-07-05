@@ -1,6 +1,6 @@
-package io.github.leawind.perspectiveapi.internal.impl;
+package io.github.leawind.perspectiveapi.internal.impl.compute;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -22,7 +22,7 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
 
   private volatile List<Entry> entries = List.of();
 
-  PerspectiveOverrideChainImpl() {}
+  public PerspectiveOverrideChainImpl() {}
 
   @Override
   public void push(
@@ -79,12 +79,18 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
     }
   }
 
+  private @Nullable Predicate<@NonNull Identifier> validator = null;
+
   @Override
-  public @Nullable Identifier resolve(@NonNull Predicate<@NonNull Identifier> validator) {
+  public void setValidator(@Nullable Predicate<@NonNull Identifier> validator) {
+    this.validator = validator;
+  }
+
+  public @Nullable Identifier computeId() {
     List<Entry> snapshot = this.entries;
     for (Entry entry : snapshot) {
       Identifier id = entry.supplier().get();
-      if (id != null && validator.test(id)) {
+      if (id != null && (validator == null || validator.test(id))) {
         return id;
       }
     }

@@ -1,4 +1,6 @@
-package io.github.leawind.perspectiveapi.api;
+package io.github.leawind.perspectiveapi.api.compute;
+
+import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 
 import java.util.List;
 import net.minecraft.resources.Identifier;
@@ -8,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 /// Manages an ordered list of perspective IDs for cycling via keybind.
 ///
 /// Perspectives are ordered by priority. Lower priority values appear earlier in the cycle.
-public interface PerspectiveCycler {
+public interface PerspectiveCycler extends PerspectiveComputer {
 
   /// Adds a perspective ID to the cycle list with the given priority. Replaces any existing entry
   /// with the same ID.
@@ -82,9 +84,6 @@ public interface PerspectiveCycler {
   ///
   /// @return the previous ID, or null if the list is empty
   @Nullable Identifier getPrevious(@Nullable Identifier current);
-
-  /// Returns the currently active perspective ID, or null if none is set.
-  @Nullable Identifier getActiveId();
 
   /// Sets the active perspective ID. Pass null to clear the active perspective.
   void setActiveId(@Nullable Identifier id);

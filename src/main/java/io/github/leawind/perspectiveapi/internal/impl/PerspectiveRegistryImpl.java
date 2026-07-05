@@ -28,7 +28,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   // endregion
 
-  PerspectiveRegistryImpl(@NonNull Perspective defaultPerspective) {
+  public PerspectiveRegistryImpl(@NonNull Perspective defaultPerspective) {
     register(defaultPerspective);
     defaultId = defaultPerspective.id();
   }

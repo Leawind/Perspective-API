@@ -1,11 +1,12 @@
-package io.github.leawind.perspectiveapi.internal.impl;
+package io.github.leawind.perspectiveapi.internal.impl.compute;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.List;
 import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
@@ -113,7 +114,7 @@ class PerspectiveCyclerImplTest {
     cycler.clear();
 
     assertTrue(cycler.getIds().isEmpty());
-    assertNull(cycler.getActiveId());
+    assertNull(cycler.computeId());
   }
 
   @Test
@@ -208,20 +209,20 @@ class PerspectiveCyclerImplTest {
   }
 
   @Test
-  void testSetActiveAndGetActiveIdId() {
-    assertNull(cycler.getActiveId());
+  void testSetActiveAndComputeIdId() {
+    assertNull(cycler.computeId());
 
     cycler.add(ID_A, 10);
     cycler.add(ID_B, 5);
 
     cycler.setActiveId(ID_A);
-    assertEquals(ID_A, cycler.getActiveId());
+    assertEquals(ID_A, cycler.computeId());
 
     cycler.setActiveId(ID_B);
-    assertEquals(ID_B, cycler.getActiveId());
+    assertEquals(ID_B, cycler.computeId());
 
     cycler.setActiveId(null);
-    assertNull(cycler.getActiveId());
+    assertNull(cycler.computeId());
   }
 
   @Test
@@ -234,13 +235,13 @@ class PerspectiveCyclerImplTest {
     cycler.setActiveId(ID_B);
 
     cycler.cycleForward();
-    assertEquals(ID_A, cycler.getActiveId());
+    assertEquals(ID_A, cycler.computeId());
 
     cycler.cycleForward();
-    assertEquals(ID_C, cycler.getActiveId());
+    assertEquals(ID_C, cycler.computeId());
 
     cycler.cycleForward();
-    assertEquals(ID_B, cycler.getActiveId()); // Wrap around
+    assertEquals(ID_B, cycler.computeId()); // Wrap around
   }
 
   @Test
@@ -253,24 +254,24 @@ class PerspectiveCyclerImplTest {
     cycler.setActiveId(ID_C);
 
     cycler.cycleBackward();
-    assertEquals(ID_A, cycler.getActiveId());
+    assertEquals(ID_A, cycler.computeId());
 
     cycler.cycleBackward();
-    assertEquals(ID_B, cycler.getActiveId());
+    assertEquals(ID_B, cycler.computeId());
 
     cycler.cycleBackward();
-    assertEquals(ID_C, cycler.getActiveId()); // Wrap around
+    assertEquals(ID_C, cycler.computeId()); // Wrap around
   }
 
   @Test
   void testCycleWithEmptyList() {
     cycler.clear();
-    assertNull(cycler.getActiveId());
+    assertNull(cycler.computeId());
 
     // Cycling with empty list should not throw and active should remain null
     assertDoesNotThrow(cycler::cycleForward);
     assertDoesNotThrow(cycler::cycleBackward);
-    assertNull(cycler.getActiveId());
+    assertNull(cycler.computeId());
   }
 
   @Test
@@ -337,10 +338,10 @@ class PerspectiveCyclerImplTest {
     // Cycle should skip D and C since they are not registered
     limitedCycler.setActiveId(ID_B);
     limitedCycler.cycleForward();
-    assertEquals(ID_A, limitedCycler.getActiveId());
+    assertEquals(ID_A, limitedCycler.computeId());
 
     limitedCycler.cycleForward();
-    assertEquals(ID_B, limitedCycler.getActiveId()); // wraps, skips D and C
+    assertEquals(ID_B, limitedCycler.computeId()); // wraps, skips D and C
   }
 
   @Test
