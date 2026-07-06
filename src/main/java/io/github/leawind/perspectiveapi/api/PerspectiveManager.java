@@ -10,11 +10,14 @@ import org.jspecify.annotations.NonNull;
 /// Obtain via {@link PerspectiveAPI#getManager()}.
 public interface PerspectiveManager {
 
+  /// @return The perspective registry.
+  @NonNull PerspectiveRegistry registry();
+
   /// @return The transition controller.
   @NonNull TransitionController transition();
 
-  /// @return The perspective registry.
-  @NonNull PerspectiveRegistry registry();
+  /// @return The modifier chain for registering camera modifiers.
+  @NonNull PerspectiveModifierChain modifiers();
 
   /// @return The override chain controller.
   @NonNull PerspectiveOverrideChain overrides();

@@ -3,39 +3,24 @@ package io.github.leawind.perspectiveapi.api;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
 
 /// Represents a camera perspective that can be applied to the game camera.
 ///
+/// A Perspective acts as the foundational {@link PerspectiveModifier} that establishes
+/// the base camera state. Additionally, it provides metadata (ID, translation key),
+/// lifecycle callbacks, and a {@link CameraType} to instruct the vanilla rendering pipeline.
+///
 /// Perspective instances are owned by the {@link PerspectiveRegistry} and
 /// {@link PerspectiveManager}. Implementations should not be stored or
 /// referenced directly anywhere else.
-public interface Perspective {
+public interface Perspective extends PerspectiveModifier {
   // region meta info
-
-  /// Returns the unique identifier of this perspective.
-  ///
-  /// Recommended format: `<modid>:<path>`
-  ///
-  /// Example: `examplemod:free_camera`
-  @NonNull Identifier id();
 
   /// Corresponding camera type for this perspective.
   @NonNull CameraType cameraType();
-
-  /// Returns the translation key for this perspective's display name.
-  ///
-  /// The default key follows the format: `perspective.<namespace>.<path>`.
-  /// For example, an ID of `examplemod:free_camera` produces `perspective.examplemod.free_camera`.
-  ///
-  /// This key is intended to be used with Minecraft's translation system
-  /// to display localized perspective names in GUIs.
-  default String translationKey() {
-    return "perspective." + id().getNamespace() + "." + id().getPath();
-  }
 
   // endregion
 
@@ -54,37 +39,30 @@ public interface Perspective {
     return true;
   }
 
-  /// Returns whether this perspective is currently available.
+  /// Modifies the camera's spatial target state in-place.
   ///
-  /// Checked on every client tick.
-  default boolean isAvailable() {
-    return true;
-  }
-
-  /// Modifies the vanilla camera's spatial state in-place.
-  ///
-  /// Called after {@link #renderTick} and before the camera is applied to the renderer.
-  ///
-  /// The `position` and `rotation` parameters represent the current vanilla camera state.
-  /// This method should mutate them directly to apply the desired perspective transformation.
-  /// If this method does nothing, the vanilla state is preserved as-is.
+  /// As the base perspective, this method receives the vanilla camera state and
+  /// establishes the foundational target state. Subsequent {@link PerspectiveModifier}s
+  /// will further mutate this state before transition interpolation.
   ///
   /// @param ctx The context containing frame-specific data.
   /// @param position The vanilla camera position in world space. Can be mutated.
   /// @param rotation The vanilla camera rotation. Can be mutated.
   /// @apiNote The arguments `position` and `rotation` must not be stored or referenced outside this
   /// method call.
+  @Override
   default void applyTransform(
       @NonNull PerspectiveContext ctx, @NonNull Vector3d position, @NonNull Quaternionf rotation) {}
 
-  /// Calculates the final Field of View (FOV) based on the vanilla FOV.
+  /// Calculates the target Field of View (FOV).
   ///
-  /// Called after {@link #renderTick} and before the camera is applied to the renderer.
+  /// As the base perspective, this method receives the vanilla FOV and establishes
+  /// the foundational target FOV. Subsequent modifiers will further mutate this value.
   ///
   /// @param ctx The context containing frame-specific data.
   /// @param vanillaFovDeg The vanilla camera FOV in degrees.
-  /// @return The final FOV to be applied, in degrees. Returning `vanillaFovDeg` preserves the
-  /// vanilla behavior.
+  /// @return The target FOV to be applied, in degrees.
+  @Override
   default float applyFov(@NonNull PerspectiveContext ctx, float vanillaFovDeg) {
     return vanillaFovDeg;
   }

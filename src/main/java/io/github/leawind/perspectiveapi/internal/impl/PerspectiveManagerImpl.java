@@ -2,6 +2,8 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveManager;
+import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
+import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.TransitionController;
 import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
@@ -51,17 +53,24 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   // endregion
 
-  public void reportException(Perspective perspective, String phase, Throwable throwable) {
-    String id = perspective.id().toString();
+  private void reportException(
+      @NonNull PerspectiveModifier modifier, String phase, Throwable throwable) {
+    String id = modifier.id().toString();
     throttledAction.run(
         id + ":" + phase + ":exception",
-        () -> LOGGER.warn("Perspective '{}' threw an exception during {}.", id, phase, throwable));
+        () -> LOGGER.warn("'{}' threw an exception during {}.", id, phase, throwable));
   }
 
   private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
     registry = new PerspectiveRegistryImpl(defaultPerspective);
     cycler = new PerspectiveCyclerImpl(registry);
+    modifiers =
+        new PerspectiveModifierChainImpl(
+            (modifier, e) -> reportException(modifier, "applyTransform", e),
+            (modifier, msg) ->
+                throttledAction.run(
+                    modifier.id() + ":applyFov:invalid", () -> LOGGER.warn("{}", msg)));
     currentId = defaultPerspective.id();
     currentPerspective = defaultPerspective;
 
@@ -86,8 +95,9 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   // region components
   private final PerspectiveRegistryImpl registry;
-  private final PerspectiveCyclerImpl cycler;
+  private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
+  private final PerspectiveCyclerImpl cycler;
   private final Transition transition = new TransitionImpl();
 
   @Override
@@ -96,8 +106,13 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   @Override
-  public @NonNull PerspectiveCycler cycler() {
-    return cycler;
+  public @NonNull TransitionController transition() {
+    return transition;
+  }
+
+  @Override
+  public @NonNull PerspectiveModifierChain modifiers() {
+    return modifiers;
   }
 
   @Override
@@ -106,8 +121,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   }
 
   @Override
-  public @NonNull TransitionController transition() {
-    return transition;
+  public @NonNull PerspectiveCycler cycler() {
+    return cycler;
   }
 
   // endregion
@@ -199,12 +214,15 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     backupPosition.set(tempPosition);
     backupRotation.set(tempRotation);
 
-    // Apply transform
+    // 1. Apply Base Perspective
     try {
       currentPerspective.applyTransform(renderTickContext, tempPosition, tempRotation);
     } catch (Throwable e) {
       reportException(currentPerspective, "applyTransform", e);
     }
+
+    // 2. Apply Modifiers (Further mutates the target state BEFORE transition)
+    modifiers.applyTransform(renderTickContext, tempPosition, tempRotation);
 
     // Sanitize and fallback if needed
     boolean posInvalid = !Sanitizer.isFinite(tempPosition);
@@ -261,32 +279,34 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
   public float modifyFov(float vanillaFov) {
     float fov = vanillaFov;
-    boolean fovFailed = false;
 
     Perspective current = currentPerspective;
     Perspective previous = previousPerspective;
 
+    // Apply Base Perspective
     try {
       fov = current.applyFov(renderTickContext, vanillaFov);
     } catch (Throwable e) {
-      fovFailed = true;
       reportException(current, "applyFov", e);
+      fov = vanillaFov;
     }
-
-    boolean fovInvalid = fovFailed || !Sanitizer.isFinite(fov) || fov < 0.0f || fov > 180.0f;
+    // Sanitize
+    boolean fovInvalid = !Sanitizer.isFinite(fov) || fov < 0.0f || fov > 180.0f;
     if (fovInvalid) {
       fov = vanillaFov;
-      if (!fovFailed) {
-        String id = current.id().toString();
-        throttledAction.run(
-            id + ":applyFov:invalid",
-            () ->
-                LOGGER.warn(
-                    "Perspective '{}' returned invalid FOV during applyFov. Falling back to vanilla.",
-                    id));
-      }
+      String id = current.id().toString();
+      throttledAction.run(
+          id + ":applyFov:invalid",
+          () ->
+              LOGGER.warn(
+                  "Perspective '{}' returned invalid FOV during applyFov. Falling back to vanilla.",
+                  id));
     }
 
+    // Apply Modifiers
+    fov = modifiers.applyFov(renderTickContext, fov);
+
+    // Apply Transition
     double now = Transition.getTimeMs();
     if (transition.isInTransition(now)
         && current.allowTransitionIn()
