@@ -1,11 +1,10 @@
-| 中文 | [English](README.md) |
-| :--: | :------------------: |
-
 <div align="center">
 
-<img src="src/main/resources/logo.64x.png" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
+<img src="src/main/resources/logo.png" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
 
 # 视角API（Perspective API）
+
+中文 | [English](README.md)
 
 ![API version](https://img.shields.io/github/v/tag/Leawind/Perspective-API?label=API&color=818181)
 
@@ -15,8 +14,6 @@
 </div>
 
 Perspective API 是一个为 Minecraft 客户端模组设计的相机视角管理框架。它提供一套标准化的接口，使用 JOML 库处理相机的位置、旋转等状态，与 Minecraft 代码解耦。
-
-该框架内置了平滑过渡动画、基于优先级的视角覆盖链以及可配置的视角循环切换机制。
 
 ## 核心特性
 
@@ -37,14 +34,44 @@ Perspective API 是一个为 Minecraft 客户端模组设计的相机视角管�
 |     26.1.x     |   ✅   |    ✅    |       ❌       |
 |      26.2      |   ✅   |    ✅    |       ❌       |
 
-## 开发者指南
-
 > [!WARNING]
 > 本API尚不稳定，随时可能发生破坏性变更。
 
-### 添加依赖
+## 核心概念
 
-#### Modrinth Maven
+### 视角（Perspective）
+
+`Perspective` 定义了一种相机行为。每个视角拥有唯一的 `Identifier`，并通过逐帧回调修改相机的位置、旋转和视场角。它还提供生命周期钩子（`onActivate` / `onDeactivate`）和可用性检查（`isAvailable`）。
+
+当 `applyTransform` 和 `applyFov` 未做任何修改时，相机会回退到由 `cameraType()` 指定的原版视角类型。
+
+切换到该视角或从该视角切换出时的平滑过渡可以独立启用或禁用。
+
+### 视角注册
+
+可以通过 Java SPI 机制（`PerspectiveRegistrar` 接口）自动发现并注册视角，也可以通过注册表手动注册。
+
+### 覆盖链（Override Chain）
+
+覆盖链是一种基于优先级的临时相机控制评估机制。每个覆盖项提供一个 `Supplier<Identifier>`，按优先级从高到低依次评估。第一个返回有效视角 ID 的覆盖项胜出，其视角被应用。适用于需要临时接管相机的场景，如自定义 GUI 或过场动画。
+
+### 视角循环器（Perspective Cycler）
+
+循环器管理玩家通过原版切换键（F5）遍历的视角列表。内置三种视角，分别对应原版的第一人称、第三人称背面和第三人称正面。开发者可以添加自定义视角，通过优先级决定其在循环列表中的位置。
+
+循环器本身是一个低优先级的覆盖项。若高优先级覆盖项生效，循环器的选择将被暂时忽略。
+
+### 视角修饰器（Perspective Modifier）
+
+修饰器在基础视角建立目标状态**之后**、过渡插值**之前**，对相机状态施加额外的数学变换。适用于屏幕震动、移动倾斜等需要叠加在任意视角之上的效果。
+
+修饰器通过 key 注册，按优先级升序依次执行。
+
+**执行顺序：** 基础视角 → 修饰器（按优先级） → 净化 → 过渡
+
+## 添加依赖
+
+### Modrinth Maven
 
 格式： `"maven.modrinth:perspective-api:${version}+${loader}-${minecraft_version}"`
 
@@ -68,59 +95,6 @@ dependencies {
 }
 ```
 
-### 创建自定义视角
+## 演示
 
-实现 `Perspective` 接口以定义新的相机行为。
-
-核心方法说明：
-
-- `id()`: 返回唯一的 `Identifier`，用于注册和引用。
-- `cameraType()`: 当 `applyTransform` 和 `applyFov` 什么也不做时，回退到的原版视角。
-- `allowTransitionIn()` / `allowTransitionOut()`: 控制切换到该视角或从该视角切换出时是否允许平滑过渡。
-- `applyTransform(ctx, position, rotation)`: 每帧调用，用于修改相机的位置和朝向。
-- `applyFov(ctx, vanillaFovDeg)`: 每帧调用，用于修改视场角。
-- `clientTick(minecraft)` / `renderTick(ctx)`: 分别在客户端逻辑 tick 和渲染 tick 中调用，用于更新内部状态。
-- `isAvailable()`: 判断当前视角是否可用。若返回 `false`，覆盖链将跳过此视角。
-- `onActivate()` / `onDeactivate()`: 当该视角成为当前视角或不再是当前视角时调用的生命周期回调。
-
-### 注册视角
-
-你可以实现 `PerspectiveRegistrar` 接口，并通过 Java SPI 机制让本模组在初始化阶段自动发现并注册你的视角。
-
-也可以在你的模组初始化阶段，通过 `PerspectiveAPI.getManager().registry()` 注册。
-
-```java
-PerspectiveAPI.getManager().registry().register(MyCustomPerspective.INSTANCE);
-```
-
-(可选) 将其加入视角循环列表，使其可通过视角切换键（默认 F5）切换。 `priority` 决定其在循环列表中的顺序
-
-```java
-PerspectiveAPI.getManager().cycler().add(MyCustomPerspective.ID, 60);
-```
-
-### 管理临时视角覆盖
-
-当需要临时接管相机控制权时（例如：打开特殊 GUI、播放过场动画），请使用覆盖链 (Override Chain)。
-
-覆盖链根据优先级评估每个覆盖项的 `Supplier<Identifier>`。一旦某个覆盖项返回有效的视角 ID，评估即停止并应用该视角。
-
-```java
-Identifier id = /* ... */;
-
-PerspectiveAPI.getManager().overrides().push(id, 100, () -> MyGuiPerspective.ID);
-```
-
-移除覆盖项以恢复默认行为：
-
-```java
-PerspectiveAPI.getManager().overrides().pop(id);
-```
-
-### 配置视角循环（可选）
-
-视角循环器 (`PerspectiveCycler`) 管理着玩家通过原版切换键遍历的视角列表。其中内置三种视角，分别对应原版的第一人称、第三人称背面、第三人称正面。
-
-开发者可通过 `manager.cycler().add(id, priority)` 将自定义视角加入循环列表。
-
-循环器本身是一个低优先级的覆盖项，它提供当前循环器中选中的视角 ID。若高优先级覆盖项生效，循环器的选择将被暂时忽略。
+参考模组[视角API演示](https://github.com/Leawind/Perspective-API-Demo)。

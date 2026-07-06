@@ -3,9 +3,11 @@
 
 <div align="center">
 
-<img src="src/main/resources/logo.64x.png" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
+<img src="src/main/resources/logo.png" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
 
 # Perspective API
+
+[中文](README.zh.md) | English
 
 ![API version](https://img.shields.io/github/v/tag/Leawind/Perspective-API?label=API&color=818181)
 
@@ -14,16 +16,14 @@
 
 </div>
 
-Perspective API is a camera perspective management framework designed for Minecraft client-side mods. It provides a standardized set of interfaces that leverage the JOML library to handle camera states such as position and rotation, while remaining decoupled from Minecraft's underlying code.
-
-The framework includes built-in smooth transition animations, a priority-based perspective override chain, and a configurable perspective cycling mechanism.
+Perspective API is a camera perspective management framework for Minecraft client-side mods. It provides standardized interfaces using the JOML library to handle camera states (position, rotation, FOV), decoupled from Minecraft internals.
 
 ## Key Features
 
-- **Roll**: You can specify camera rotation with quaternion, roll is supported
-- **Smooth Transitions**: Supports interpolated transitions for camera position, rotation, and Field of View (FOV), ensuring natural and fluid perspective switches
-- **Priority-Based Override Chain**: Introduces a dynamic evaluation mechanism based on priority. High-priority temporary perspectives (e.g., cutscenes, GUI-forced views) automatically override base perspectives
-- **Built-in Perspective Cycler**: Takes over the vanilla perspective toggle key (F5), allowing players to cycle through registered perspectives
+- **Roll**: Camera rotation is specified with quaternions, so roll is fully supported
+- **Smooth Transitions**: Interpolated transitions for position, rotation, and FOV ensure natural perspective switches
+- **Priority-Based Override Chain**: High-priority temporary perspectives (e.g., cutscenes, GUI-forced views) automatically override base perspectives
+- **Built-in Perspective Cycler**: Takes over the vanilla F5 toggle key, allowing players to cycle through registered perspectives
 
 ## Compatibility Matrix
 
@@ -37,14 +37,44 @@ The framework includes built-in smooth transition animations, a priority-based p
 |      26.1.x       |   ✅   |    ✅    |       ❌       |
 |       26.2        |   ✅   |    ✅    |       ❌       |
 
-## Developer Guide
-
 > [!WARNING]
 > This API is currently unstable and subject to breaking changes at any time.
 
-### Adding Dependencies
+## Core Concepts
 
-#### Modrinth Maven
+### Perspective
+
+A `Perspective` defines a camera behavior. Each perspective has a unique `Identifier` and implements per-frame callbacks to modify camera position, rotation, and FOV. It also exposes lifecycle hooks (`onActivate` / `onDeactivate`) and availability checks (`isAvailable`).
+
+When `applyTransform` and `applyFov` make no modifications, the camera falls back to a vanilla camera type specified by `cameraType()`.
+
+Transitions in and out of a perspective can be individually enabled or disabled.
+
+### Perspective Registration
+
+Perspectives can be registered via the Java SPI mechanism (`PerspectiveRegistrar` interface) for automatic discovery, or manually through the registry.
+
+### Override Chain
+
+The override chain is a priority-based evaluation mechanism for temporary camera control. Each entry provides a `Supplier<Identifier>` evaluated by descending priority. The first entry to return a valid perspective ID wins, and that perspective is applied. This is ideal for scenarios like custom GUIs or cutscenes that need to temporarily take over the camera.
+
+### Perspective Cycler
+
+The cycler manages the list of perspectives players traverse with the vanilla toggle key (F5). It includes three built-in perspectives corresponding to vanilla First-person, Third-person Back, and Third-person Front. Custom perspectives can be added with a priority that determines their position in the cycle.
+
+The cycler itself acts as a low-priority override entry. If a higher-priority override is active, the cycler's selection is temporarily ignored.
+
+### Perspective Modifier
+
+Modifiers apply additional mathematical transformations to the camera state **after** the base perspective establishes the target state but **before** transition interpolation. This is useful for effects like screen shake, movement tilt, or vehicle roll that should layer on top of any perspective.
+
+Modifiers are registered with a key, a priority, and executed in ascending priority order.
+
+**Execution order:** Base Perspective → Modifiers (by priority) → Sanitize → Transition
+
+## Adding Dependencies
+
+### Modrinth Maven
 
 Notation format: `"maven.modrinth:perspective-api:${version}+${loader}-${minecraft_version}"`
 
@@ -68,59 +98,6 @@ dependencies {
 }
 ```
 
-### Creating Custom Perspectives
+## Demo
 
-Implement the `Perspective` interface to define new camera behaviors.
-
-**Core Methods:**
-
-- `id()`: Returns a unique `Identifier` for registration and reference.
-- `cameraType()`: Specifies the vanilla camera type to fall back to when `applyTransform` and `applyFov` perform no modifications.
-- `allowTransitionIn()` / `allowTransitionOut()`: Controls whether smooth transitions are allowed when switching to or from this perspective.
-- `applyTransform(ctx, position, rotation)`: Called every frame to modify the camera's position and orientation.
-- `applyFov(ctx, vanillaFovDeg)`: Called every frame to modify the Field of View.
-- `clientTick(minecraft)` / `renderTick(ctx)`: Called during client logic ticks and render ticks, respectively, to update internal state.
-- `isAvailable()`: Determines if the current perspective is available. If `false`, the override chain will skip this perspective.
-- `onActivate()` / `onDeactivate()`: Lifecycle callbacks invoked when this perspective becomes or ceases to be the current perspective.
-
-### Registering Perspectives
-
-You can implement the `PerspectiveRegistrar` interface and use the Java SPI mechanism to allow the mod to automatically discover and register your perspectives during initialization.
-
-Alternatively, you can register manually during your mod's initialization phase via `PerspectiveAPI.getManager().registry()`.
-
-```java
-PerspectiveAPI.getManager().registry().register(MyCustomPerspective.INSTANCE);
-```
-
-(Optional) Add it to the perspective cycle list to make it switchable via the perspective toggle key (default F5). The `priority` determines its order in the cycle.
-
-```java
-PerspectiveAPI.getManager().cycler().add(MyCustomPerspective.ID, 60);
-```
-
-### Managing Temporary Perspective Overrides
-
-Use the **Override Chain** when you need to temporarily take control of the camera (e.g., when opening a custom GUI or playing a cutscene).
-
-The override chain evaluates the `Supplier<Identifier>` of each entry based on priority. Once an entry returns a valid perspective ID, evaluation stops, and that perspective is applied.
-
-```java
-Identifier id = /* ... */;
-
-PerspectiveAPI.getManager().overrides().push(id, 100, () -> MyGuiPerspective.ID);
-```
-
-Remove the override entry to restore default behavior:
-
-```java
-PerspectiveAPI.getManager().overrides().pop(id);
-```
-
-### Configuring Perspective Cycling (Optional)
-
-The `PerspectiveCycler` manages the list of perspectives traversed by the vanilla toggle key. It includes three built-in perspectives corresponding to vanilla First-person, Third-person Back, and Third-person Front.
-
-Developers can add custom perspectives to the cycle list using `manager.cycler().add(id, priority)`.
-
-The cycler itself acts as a low-priority override entry, providing the ID of the currently selected perspective in the cycle. If a higher-priority override is active, the cycler's selection is temporarily ignored.
+See the demo mod [Perspective API Demo](https://github.com/Leawind/Perspective-API-Demo).
