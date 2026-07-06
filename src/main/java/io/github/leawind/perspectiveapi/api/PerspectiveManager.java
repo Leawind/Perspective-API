@@ -32,8 +32,4 @@ public interface PerspectiveManager {
   default boolean isCurrent(@NonNull Identifier id) {
     return getCurrent().id().equals(id);
   }
-
-  default boolean isCurrent(@NonNull Perspective perspective) {
-    return getCurrent() == perspective;
-  }
 }
