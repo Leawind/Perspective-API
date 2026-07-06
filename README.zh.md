@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src/main/resources/logo.png" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
+<img src="src/main/resources/logo.svg" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
 
 # 视角API（Perspective API）
 
