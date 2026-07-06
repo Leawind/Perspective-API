@@ -1,6 +1,3 @@
-| [中文](README.zh.md) | English |
-| :------------------: | :-----: |
-
 <div align="center">
 
 <img src="src/main/resources/logo.png" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
