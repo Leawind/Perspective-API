@@ -17,6 +17,11 @@ tasks.withType<Jar>().configureEach {
     archiveVersion.set(archivesVersion)
 }
 
+tasks.withType<RemapJarTask>().matching { it.name == "remapJar" }.configureEach {
+    archiveBaseName.set(archivesBaseName)
+    archiveVersion.set(archivesVersion)
+}
+
 modSettings {
     // https://stonecraft.meza.gg/docs/configuration
 
@@ -82,16 +87,6 @@ repositories {
     maven("https://maven.isxander.dev/releases") {
         name = "Xander Maven"
     }
-//    exclusiveContent {
-//        forRepository {
-//            maven("https://api.modrinth.com/maven") {
-//                name = "Modrinth"
-//            }
-//        }
-//        filter {
-//            includeGroup("maven.modrinth")
-//        }
-//    }
     // Modern UI
     maven("https://maven.izzel.io/releases/") {
         name = "Modern UI"
@@ -204,11 +199,6 @@ tasks.test {
     classpath = classpath.filter { file ->
         testExcludePatterns.none { pattern -> file.name.contains(pattern, ignoreCase = true) }
     }
-}
-
-tasks.withType<RemapJarTask>().matching { it.name == "remapJar" }.configureEach {
-    archiveBaseName.set(archivesBaseName)
-    archiveVersion.set(archivesVersion)
 }
 
 tasks.withType<JavaCompile> {
