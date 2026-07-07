@@ -1,8 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
-/// Utility methods for camera and perspective operations.
-public final class PerspectiveApiUtils {
-  private PerspectiveApiUtils() {}
+public final class Utils {
+  private Utils() {}
 
   /// Clamps a float value between min and max.
   ///

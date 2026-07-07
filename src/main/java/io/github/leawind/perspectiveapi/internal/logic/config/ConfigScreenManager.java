@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic.config;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.internal.utils.PerspectiveApiUtils;
+import io.github.leawind.perspectiveapi.internal.utils.Utils;
 import net.minecraft.client.gui.screens.ErrorScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -22,7 +22,7 @@ public final class ConfigScreenManager {
   }
 
   private static @Nullable ConfigScreenBuilder findBuilder() {
-    if (PerspectiveApiUtils.isClassAvailable("dev.isxander.yacl3.api.YetAnotherConfigLib")) {
+    if (Utils.isClassAvailable("dev.isxander.yacl3.api.YetAnotherConfigLib")) {
       return YaclConfigScreenBuilder::build;
     }
     return null;
