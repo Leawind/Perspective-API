@@ -1,8 +1,8 @@
 package io.github.leawind.perspectiveapi.api.compute;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-
 import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 /// Manages an ordered list of perspective IDs for cycling via keybind.
 ///
 /// Perspectives are ordered by priority. Lower priority values appear earlier in the cycle.
-public interface PerspectiveCycler extends PerspectiveComputer {
+public interface PerspectiveCycler extends Supplier<Identifier> {
 
   /// Adds a perspective ID to the cycle list with the given priority. Replaces any existing entry
   /// with the same ID.

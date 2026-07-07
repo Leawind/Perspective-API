@@ -4,15 +4,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 /// Manages an ordered chain of perspective overrides.
 ///
 /// Entries are evaluated in descending order of priority. The chain resolves to the first
 /// non-null identifier that passes the provided validator.
-public interface PerspectiveOverrideChain extends PerspectiveComputer {
-  void push(
-      @NonNull Identifier key, int priority, @NonNull PerspectiveComputer computer);
+public interface PerspectiveOverrideChain extends Supplier<Identifier> {
+  void push(@NonNull Identifier key, int priority, @NonNull Supplier<Identifier> computer);
 
   /// Removes the override entry with the given key.
   void pop(@NonNull Identifier key);

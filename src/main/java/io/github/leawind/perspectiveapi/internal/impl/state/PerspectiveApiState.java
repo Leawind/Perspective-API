@@ -115,7 +115,7 @@ public final class PerspectiveApiState {
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManagerImpl.INSTANCE.getCurrent().id()),
-        Optional.ofNullable(cycler.computeId()),
+        Optional.ofNullable(cycler.get()),
         cycler.isCustomOrderEnabled(),
         cycler.getCustomOrder(),
         transition.getDurationMs());

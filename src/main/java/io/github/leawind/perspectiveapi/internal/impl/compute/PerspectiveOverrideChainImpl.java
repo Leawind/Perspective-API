@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.impl.compute;
 
-import io.github.leawind.perspectiveapi.api.compute.PerspectiveComputer;
 import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,13 +9,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideChain {
   public record Entry(
-      @NonNull Identifier key, int priority, @NonNull PerspectiveComputer computer) {
+      @NonNull Identifier key, int priority, @NonNull Supplier<Identifier> computer) {
     public static Comparator<Entry> COMPARATOR = Comparator.comparingInt(e -> -e.priority);
   }
 
@@ -25,7 +25,19 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
   public PerspectiveOverrideChainImpl() {}
 
   @Override
-  public void push(@NonNull Identifier key, int priority, @NonNull PerspectiveComputer computer) {
+  public @Nullable Identifier get() {
+    List<Entry> snapshot = this.entries;
+    for (Entry entry : snapshot) {
+      Identifier id = entry.computer.get();
+      if (id != null && (validator == null || validator.test(id))) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public void push(@NonNull Identifier key, int priority, @NonNull Supplier<Identifier> computer) {
     Objects.requireNonNull(key);
     Objects.requireNonNull(computer);
     synchronized (this) {
@@ -83,16 +95,5 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
   @Override
   public void setValidator(@Nullable Predicate<@NonNull Identifier> validator) {
     this.validator = validator;
-  }
-
-  public @Nullable Identifier computeId() {
-    List<Entry> snapshot = this.entries;
-    for (Entry entry : snapshot) {
-      Identifier id = entry.computer.computeId();
-      if (id != null && (validator == null || validator.test(id))) {
-        return id;
-      }
-    }
-    return null;
   }
 }

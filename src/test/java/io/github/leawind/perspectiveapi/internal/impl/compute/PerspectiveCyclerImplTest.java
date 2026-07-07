@@ -114,7 +114,7 @@ class PerspectiveCyclerImplTest {
     cycler.clear();
 
     assertTrue(cycler.getIds().isEmpty());
-    assertNull(cycler.computeId());
+    assertNull(cycler.get());
   }
 
   @Test
@@ -209,20 +209,20 @@ class PerspectiveCyclerImplTest {
   }
 
   @Test
-  void testSetActiveAndComputeIdId() {
-    assertNull(cycler.computeId());
+  void testSetActiveAndGet() {
+    assertNull(cycler.get());
 
     cycler.add(ID_A, 10);
     cycler.add(ID_B, 5);
 
     cycler.setActiveId(ID_A);
-    assertEquals(ID_A, cycler.computeId());
+    assertEquals(ID_A, cycler.get());
 
     cycler.setActiveId(ID_B);
-    assertEquals(ID_B, cycler.computeId());
+    assertEquals(ID_B, cycler.get());
 
     cycler.setActiveId(null);
-    assertNull(cycler.computeId());
+    assertNull(cycler.get());
   }
 
   @Test
@@ -235,13 +235,13 @@ class PerspectiveCyclerImplTest {
     cycler.setActiveId(ID_B);
 
     cycler.cycleForward();
-    assertEquals(ID_A, cycler.computeId());
+    assertEquals(ID_A, cycler.get());
 
     cycler.cycleForward();
-    assertEquals(ID_C, cycler.computeId());
+    assertEquals(ID_C, cycler.get());
 
     cycler.cycleForward();
-    assertEquals(ID_B, cycler.computeId()); // Wrap around
+    assertEquals(ID_B, cycler.get()); // Wrap around
   }
 
   @Test
@@ -254,24 +254,24 @@ class PerspectiveCyclerImplTest {
     cycler.setActiveId(ID_C);
 
     cycler.cycleBackward();
-    assertEquals(ID_A, cycler.computeId());
+    assertEquals(ID_A, cycler.get());
 
     cycler.cycleBackward();
-    assertEquals(ID_B, cycler.computeId());
+    assertEquals(ID_B, cycler.get());
 
     cycler.cycleBackward();
-    assertEquals(ID_C, cycler.computeId()); // Wrap around
+    assertEquals(ID_C, cycler.get()); // Wrap around
   }
 
   @Test
   void testCycleWithEmptyList() {
     cycler.clear();
-    assertNull(cycler.computeId());
+    assertNull(cycler.get());
 
     // Cycling with empty list should not throw and active should remain null
     assertDoesNotThrow(cycler::cycleForward);
     assertDoesNotThrow(cycler::cycleBackward);
-    assertNull(cycler.computeId());
+    assertNull(cycler.get());
   }
 
   @Test
@@ -338,10 +338,10 @@ class PerspectiveCyclerImplTest {
     // Cycle should skip D and C since they are not registered
     limitedCycler.setActiveId(ID_B);
     limitedCycler.cycleForward();
-    assertEquals(ID_A, limitedCycler.computeId());
+    assertEquals(ID_A, limitedCycler.get());
 
     limitedCycler.cycleForward();
-    assertEquals(ID_B, limitedCycler.computeId()); // wraps, skips D and C
+    assertEquals(ID_B, limitedCycler.get()); // wraps, skips D and C
   }
 
   @Test

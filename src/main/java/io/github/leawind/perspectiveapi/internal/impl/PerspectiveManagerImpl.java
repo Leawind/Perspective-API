@@ -76,7 +76,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
     overrides = new PerspectiveOverrideChainImpl();
     overrides.setValidator(registry::contains);
-    overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler::computeId);
+    overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler);
 
     onCurrentPerspectiveChanged.on(
         () -> {
@@ -136,7 +136,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   public void clientTick(Minecraft minecraft) {
     // Resolve and update current id from override chain
-    Identifier resolvedId = overrides.computeId();
+    Identifier resolvedId = overrides.get();
     if (resolvedId == null) {
       resolvedId = registry.getDefault().id();
     }

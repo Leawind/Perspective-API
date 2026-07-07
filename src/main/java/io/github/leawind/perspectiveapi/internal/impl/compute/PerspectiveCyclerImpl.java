@@ -1,8 +1,8 @@
 package io.github.leawind.perspectiveapi.internal.impl.compute;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -27,6 +27,11 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
 
   public PerspectiveCyclerImpl(@NonNull PerspectiveRegistry registry) {
     this.registry = Objects.requireNonNull(registry);
+  }
+
+  @Override
+  public @Nullable Identifier get() {
+    return activeId;
   }
 
   @Override
@@ -133,11 +138,6 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
     int idx = indexOfId(list, current);
     if (idx < 0) return list.get(list.size() - 1);
     return list.get((idx - 1 + list.size()) % list.size());
-  }
-
-  @Override
-  public @Nullable Identifier computeId() {
-    return activeId;
   }
 
   @Override
