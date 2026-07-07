@@ -3,8 +3,9 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
+import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveCyclerImpl;
+import io.github.leawind.perspectiveapi.internal.impl.state.StateManagerImpl;
 import java.nio.file.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,13 +60,13 @@ public final class ModEvents {
 
     GameClientEvents.AFTER_MINECRAFT_INIT.on(
         minecraft -> {
-          var stateManager = PerspectiveAPI.getStateManager(minecraft);
+          var stateManager = StateManagerImpl.getInstance(minecraft);
           if (Files.exists(stateManager.filePath())) {
             stateManager.tryLoadAndApply();
           }
         });
     GameClientEvents.ON_MINECRAFT_CLOSE.on(
-        minecraft -> PerspectiveAPI.getStateManager(minecraft).tryExtractAndSave());
+        minecraft -> StateManagerImpl.getInstance(minecraft).tryExtractAndSave());
 
     // endregion
 

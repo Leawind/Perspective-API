@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.api.state;
+package io.github.leawind.perspectiveapi.internal.impl.state;
 
 import java.nio.file.Path;
 import org.jspecify.annotations.NonNull;

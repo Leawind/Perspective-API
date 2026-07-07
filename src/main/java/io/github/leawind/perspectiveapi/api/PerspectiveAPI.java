@@ -1,12 +1,7 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.state.StateManager;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
-import io.github.leawind.perspectiveapi.internal.impl.state.StateManagerImpl;
-import java.nio.file.Path;
-import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 /// Entry point for the Perspective API mod.
 public final class PerspectiveAPI {
@@ -34,20 +29,4 @@ public final class PerspectiveAPI {
   public static @NonNull PerspectiveManager getManager() {
     return PerspectiveManagerImpl.INSTANCE;
   }
-
-  // region state manager
-
-  private static volatile @Nullable StateManager stateManager = null;
-
-  public static @NonNull StateManager getStateManager(@NonNull Minecraft minecraft) {
-    var manager = stateManager;
-    if (manager == null) {
-      String fileName = PerspectiveAPI.MOD_ID + ".json";
-      Path filePath = minecraft.gameDirectory.toPath().resolve("config").resolve(fileName);
-      stateManager = manager = new StateManagerImpl(filePath);
-    }
-    return manager;
-  }
-
-  // endregion
 }

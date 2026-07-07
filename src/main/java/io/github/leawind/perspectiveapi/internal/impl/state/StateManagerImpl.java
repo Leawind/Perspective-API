@@ -1,16 +1,29 @@
 package io.github.leawind.perspectiveapi.internal.impl.state;
 
 import com.google.gson.JsonSyntaxException;
-import io.github.leawind.perspectiveapi.api.state.StateManager;
+import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public record StateManagerImpl(@NonNull Path filePath) implements StateManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(StateManagerImpl.class);
+  private static volatile @Nullable StateManager instance = null;
+
+  public static @NonNull StateManager getInstance(@NonNull Minecraft minecraft) {
+    var manager = instance;
+    if (manager == null) {
+      String fileName = PerspectiveAPI.MOD_ID + ".json";
+      Path filePath = minecraft.gameDirectory.toPath().resolve("config").resolve(fileName);
+      instance = manager = new StateManagerImpl(filePath);
+    }
+    return manager;
+  }
 
   @Override
   public void tryLoadAndApply() {

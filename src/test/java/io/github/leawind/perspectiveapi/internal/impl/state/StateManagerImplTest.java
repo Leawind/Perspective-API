@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.jimfs.Jimfs;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.state.StateManager;
 import io.github.leawind.perspectiveapi.internal.logic.ModEntrypoint;
 import java.io.IOException;
 import java.nio.file.FileSystem;
