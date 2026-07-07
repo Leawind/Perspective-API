@@ -10,7 +10,7 @@ plugins {
 val props: Map<String, Any> = project.properties.mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
 
 val archivesBaseName = mod.id
-val archivesVersion = "${mod.version}-mc${mod.minecraftVersion}-${mod.loader}"
+val archivesVersion = "${mod.version}+${mod.loader}-${mod.minecraftVersion}"
 
 tasks.withType<Jar>().configureEach {
     archiveBaseName.set(archivesBaseName)
