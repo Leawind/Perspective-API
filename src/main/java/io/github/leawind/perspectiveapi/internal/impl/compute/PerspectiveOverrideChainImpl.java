@@ -92,7 +92,6 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
 
   private @Nullable Predicate<@NonNull Identifier> validator = null;
 
-  @Override
   public void setValidator(@Nullable Predicate<@NonNull Identifier> validator) {
     this.validator = validator;
   }

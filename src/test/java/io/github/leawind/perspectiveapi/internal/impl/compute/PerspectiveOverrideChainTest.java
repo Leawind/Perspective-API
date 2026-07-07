@@ -2,7 +2,6 @@ package io.github.leawind.perspectiveapi.internal.impl.compute;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import net.minecraft.resources.Identifier;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class PerspectiveOverrideChainTest {
 
-  private PerspectiveOverrideChain chain;
+  private PerspectiveOverrideChainImpl chain;
 
   @BeforeEach
   void beforeEach() {

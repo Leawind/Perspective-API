@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api.compute;
 
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -23,6 +22,4 @@ public interface PerspectiveOverrideChain extends Supplier<Identifier> {
 
   /// Clears all entries except those with the specified keys.
   void clearExcept(@NonNull Identifier... keys);
-
-  void setValidator(@NonNull Predicate<@NonNull Identifier> validator);
 }
