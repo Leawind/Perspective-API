@@ -16,7 +16,7 @@ import org.jspecify.annotations.Nullable;
 
 public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideChain {
   public record Entry(
-      @NonNull Identifier key, int priority, @NonNull Supplier<Identifier> computer) {
+      @NonNull Identifier key, int priority, @NonNull Supplier<Identifier> supplier) {
     public static Comparator<Entry> COMPARATOR = Comparator.comparingInt(e -> -e.priority);
   }
 
@@ -28,7 +28,7 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
   public @Nullable Identifier get() {
     List<Entry> snapshot = this.entries;
     for (Entry entry : snapshot) {
-      Identifier id = entry.computer.get();
+      Identifier id = entry.supplier.get();
       if (id != null && (validator == null || validator.test(id))) {
         return id;
       }
@@ -37,13 +37,13 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
   }
 
   @Override
-  public void push(@NonNull Identifier key, int priority, @NonNull Supplier<Identifier> computer) {
+  public void push(@NonNull Identifier key, int priority, @NonNull Supplier<Identifier> supplier) {
     Objects.requireNonNull(key);
-    Objects.requireNonNull(computer);
+    Objects.requireNonNull(supplier);
     synchronized (this) {
       List<Entry> newList = new ArrayList<>(entries);
       newList.removeIf(e -> e.key().equals(key));
-      newList.add(new Entry(key, priority, computer));
+      newList.add(new Entry(key, priority, supplier));
       newList.sort(Entry.COMPARATOR);
       this.entries = newList;
     }
