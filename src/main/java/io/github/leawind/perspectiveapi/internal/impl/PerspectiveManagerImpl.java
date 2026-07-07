@@ -159,7 +159,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
     // Run perspective client tick
     try {
-      current.clientTick(minecraft);
+      current.clientTickWhenActive(minecraft);
     } catch (Throwable e) {
       reportException(current, "clientTick", e);
     }
@@ -203,7 +203,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
     // Event: render tick
     try {
-      currentPerspective.renderTick(renderTickContext);
+      currentPerspective.renderTickWhenActive(renderTickContext);
     } catch (Throwable e) {
       reportException(currentPerspective, "renderTick", e);
     }

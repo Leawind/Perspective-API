@@ -32,6 +32,12 @@ public interface PerspectiveModifier {
     return "perspective." + id().getNamespace() + "." + id().getPath();
   }
 
+  /// Returns whether this modifier is currently available.
+  ///
+  /// If `false`, this modifier is skipped during the current frame's camera transformations
+  /// but remains registered in the chain for future frames.
+  ///
+  /// @return `true` to apply, `false` to skip.
   default boolean isAvailable() {
     return true;
   }

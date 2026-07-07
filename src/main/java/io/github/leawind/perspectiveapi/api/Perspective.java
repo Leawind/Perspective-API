@@ -1,5 +1,7 @@
 package io.github.leawind.perspectiveapi.api;
 
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -36,6 +38,22 @@ public interface Perspective extends PerspectiveModifier {
   /// Checked when this perspective is {@link PerspectiveManager#getCurrent()} and is about to be
   /// replaced.
   default boolean allowTransitionOut() {
+    return true;
+  }
+
+  /// Returns whether this perspective is currently available to remain active.
+  ///
+  /// If `false`, the manager will automatically cycle away from this perspective,
+  /// and it will be skipped by the {@link PerspectiveCycler} and {@link PerspectiveOverrideChain}.
+  ///
+  /// ### ⚠️ Deadlock Warning
+  /// If this method returns a cached value, do NOT update the cache in
+  /// {@link #clientTickWhenActive} or {@link #renderTickWhenActive} to make it available again.
+  /// Once unavailable, these callbacks stop being called.
+  ///
+  /// @return `true` if available, `false` to trigger an automatic switch.
+  @Override
+  default boolean isAvailable() {
     return true;
   }
 
@@ -81,17 +99,18 @@ public interface Perspective extends PerspectiveModifier {
   /// @see #onActivate()
   default void onDeactivate() {}
 
-  /// Called every client tick while this perspective is active.
+  /// Called every client tick when this perspective is active.
   ///
-  /// @see #renderTick
-  default void clientTick(@NonNull Minecraft minecraft) {}
+  /// @see #isAvailable()
+  /// @see #renderTickWhenActive
+  default void clientTickWhenActive(@NonNull Minecraft minecraft) {}
 
-  /// Called on every render tick while this perspective is active.
+  /// Called on every render tick when this perspective is active.
   ///
   /// Called before {@link #applyTransform} and {@link #applyFov}.
   ///
-  /// @see #clientTick
-  default void renderTick(@NonNull PerspectiveContext context) {}
+  /// @see #clientTickWhenActive
+  default void renderTickWhenActive(@NonNull PerspectiveContext context) {}
 
   // endregion
 }
