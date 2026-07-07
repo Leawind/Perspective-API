@@ -5,7 +5,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveCyclerImpl;
-import io.github.leawind.perspectiveapi.internal.impl.state.StateManagerImpl;
+import io.github.leawind.perspectiveapi.internal.logic.state.StateManagerImpl;
 import java.nio.file.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

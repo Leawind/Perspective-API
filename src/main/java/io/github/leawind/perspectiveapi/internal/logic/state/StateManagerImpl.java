@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.impl.state;
+package io.github.leawind.perspectiveapi.internal.logic.state;
 
 import com.google.gson.JsonSyntaxException;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;

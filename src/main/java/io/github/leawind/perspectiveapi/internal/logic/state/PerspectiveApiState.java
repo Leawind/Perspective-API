@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.impl.state;
+package io.github.leawind.perspectiveapi.internal.logic.state;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
