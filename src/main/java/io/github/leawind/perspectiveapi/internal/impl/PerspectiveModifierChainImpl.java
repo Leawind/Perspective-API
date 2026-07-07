@@ -60,7 +60,10 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     }
   }
 
-  @Override
+  /// Applies all active modifiers' spatial transformations sequentially.
+  ///
+  /// Called after the base perspective establishes the target state,
+  /// but before transition interpolation.
   public void applyTransform(
       @NonNull PerspectiveContext ctx, @NonNull Vector3d position, @NonNull Quaternionf rotation) {
     for (ModifierEntry entry : entries) {
@@ -74,7 +77,11 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     }
   }
 
-  @Override
+  /// Applies all active modifiers' FOV calculations sequentially.
+  ///
+  /// @param ctx The context containing frame-specific data.
+  /// @param fov The current FOV in degrees, potentially modified by the base perspective.
+  /// @return The final FOV after all modifiers, in degrees.
   public float applyFov(@NonNull PerspectiveContext ctx, float fov) {
     for (ModifierEntry entry : entries) {
       if (entry.modifier().isAvailable()) {
