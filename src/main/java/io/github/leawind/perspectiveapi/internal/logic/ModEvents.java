@@ -3,7 +3,6 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.logic.state.StateManagerImpl;
 import java.nio.file.Files;
@@ -16,7 +15,7 @@ public final class ModEvents {
 
   /// Registers all event handlers for client tick, keybinds, camera setup, and FOV modification.
   public static void register() {
-    PerspectiveManagerImpl manager = PerspectiveManagerImpl.INSTANCE;
+    PerspectiveManager manager = PerspectiveManager.INSTANCE;
 
     GameClientEvents.CLIENT_TICK_START.on(
         minecraft -> {
@@ -30,7 +29,7 @@ public final class ModEvents {
         (minecraft) -> {
           if (!PerspectiveAPI.isEnabled()) return;
           while (minecraft.options.keyTogglePerspective.consumeClick()) {
-            manager.cycler().cycleForward();
+            PerspectiveAPI.getCycler().cycleForward();
           }
         });
 
@@ -72,7 +71,7 @@ public final class ModEvents {
 
     // region internal events
 
-    PerspectiveManagerImpl.INSTANCE.onCurrentPerspectiveChanged.on(
+    PerspectiveManager.INSTANCE.onCurrentPerspectiveChanged.on(
         perspective -> {
           if (!PerspectiveAPI.isEnabled()) return;
           LOGGER.debug("Switching current perspective to {}", perspective.id());

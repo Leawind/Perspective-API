@@ -8,7 +8,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
+import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -98,27 +98,26 @@ public final class PerspectiveApiState {
     PerspectiveAPI.setEnabled(enabled);
 
     if (managerCurrent != null) {
-      PerspectiveManagerImpl.INSTANCE.setCurrentId(managerCurrent);
+      PerspectiveManager.INSTANCE.setCurrentId(managerCurrent);
     }
 
-    var cycler = PerspectiveAPI.getManager().cycler();
+    var cycler = PerspectiveAPI.getCycler();
     cycler.setActiveId(cyclerActive);
     cycler.setCustomOrderEnabled(cyclerUseCustomOrder);
     cycler.setCustomOrder(cyclerCustomOrder);
 
-    PerspectiveAPI.getManager().transition().setDurationMs(transitionDurationMs);
+    PerspectiveAPI.getTransitionController().setDurationMs(transitionDurationMs);
   }
 
   public static PerspectiveApiState extract() {
-    var cycler = PerspectiveAPI.getManager().cycler();
-    var transition = PerspectiveAPI.getManager().transition();
+    var cycler = PerspectiveAPI.getCycler();
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
-        Optional.of(PerspectiveManagerImpl.INSTANCE.getCurrent().id()),
+        Optional.of(PerspectiveManager.INSTANCE.getCurrent().id()),
         Optional.ofNullable(cycler.get()),
         cycler.isCustomOrderEnabled(),
         cycler.getCustomOrder(),
-        transition.getDurationMs());
+        PerspectiveAPI.getTransitionController().getDurationMs());
   }
 
   // endregion

@@ -15,9 +15,8 @@ import org.jspecify.annotations.NonNull;
 /// the base camera state. Additionally, it provides metadata (ID, translation key),
 /// lifecycle callbacks, and a {@link CameraType} to instruct the vanilla rendering pipeline.
 ///
-/// Perspective instances are owned by the {@link PerspectiveRegistry} and
-/// {@link PerspectiveManager}. Implementations should not be stored or
-/// referenced directly anywhere else.
+/// Perspective instances are owned by the {@link PerspectiveRegistry}. Implementations should not
+/// be stored or referenced directly anywhere else.
 public interface Perspective extends PerspectiveModifier {
   // region meta info
 
@@ -28,15 +27,15 @@ public interface Perspective extends PerspectiveModifier {
 
   /// Whether smooth transitions are allowed when switching TO this perspective.
   ///
-  /// Checked when this perspective becomes {@link PerspectiveManager#getCurrent()}.
+  /// Checked when this perspective becomes {@link PerspectiveAPI#getCurrentPerspective()}.
   default boolean allowTransitionIn() {
     return true;
   }
 
   /// Whether smooth transitions are allowed when switching FROM this perspective.
   ///
-  /// Checked when this perspective is {@link PerspectiveManager#getCurrent()} and is about to be
-  /// replaced.
+  /// Checked when this perspective is {@link PerspectiveAPI#getCurrentPerspective()} and is about
+  /// to be replaced.
   default boolean allowTransitionOut() {
     return true;
   }
@@ -88,13 +87,13 @@ public interface Perspective extends PerspectiveModifier {
   // region events
 
   /// Called when this perspective becomes the current perspective (the one obtained from {@link
-  /// PerspectiveManager#getCurrent()}).
+  /// PerspectiveAPI#getCurrentPerspective()}).
   ///
   /// @see #onDeactivate()
   default void onActivate() {}
 
   /// Called when this perspective is no longer the current perspective (the one obtained from
-  /// {@link PerspectiveManager#getCurrent()}).
+  /// {@link PerspectiveAPI#getCurrentPerspective()}).
   ///
   /// @see #onActivate()
   default void onDeactivate() {}

@@ -1,7 +1,6 @@
-package io.github.leawind.perspectiveapi.internal.impl;
+package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveManager;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
@@ -10,6 +9,10 @@ import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import io.github.leawind.perspectiveapi.internal.impl.Transition;
+import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
@@ -28,10 +31,11 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class PerspectiveManagerImpl implements PerspectiveManager {
-  private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManagerImpl.class);
-  public static final PerspectiveManagerImpl INSTANCE =
-      new PerspectiveManagerImpl(VanillaPerspective.FIRST_PERSON);
+/// Manages the lifecycle and state of camera perspectives.
+public final class PerspectiveManager {
+  private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManager.class);
+  public static final PerspectiveManager INSTANCE =
+      new PerspectiveManager(VanillaPerspective.FIRST_PERSON);
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
@@ -61,7 +65,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
         () -> LOGGER.warn("'{}' threw an exception during {}.", id, phase, throwable));
   }
 
-  private PerspectiveManagerImpl(@NonNull Perspective defaultPerspective) {
+  private PerspectiveManager(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
     registry = new PerspectiveRegistryImpl(defaultPerspective);
     cycler = new PerspectiveCyclerImpl(registry);
@@ -100,27 +104,27 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
   private final PerspectiveCyclerImpl cycler;
   private final Transition transition = new TransitionImpl();
 
-  @Override
+  /// @return The perspective registry.
   public @NonNull PerspectiveRegistry registry() {
     return registry;
   }
 
-  @Override
+  /// @return The transition controller.
   public @NonNull TransitionController transition() {
     return transition;
   }
 
-  @Override
+  /// @return The modifier chain for registering camera modifiers.
   public @NonNull PerspectiveModifierChain modifiers() {
     return modifiers;
   }
 
-  @Override
+  /// @return The override chain controller.
   public @NonNull PerspectiveOverrideChain overrides() {
     return overrides;
   }
 
-  @Override
+  /// @return The perspective cycler for cycling through perspectives.
   public @NonNull PerspectiveCycler cycler() {
     return cycler;
   }
@@ -129,7 +133,8 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   // region perspective management
 
-  @Override
+  /// Returns the current active perspective after resolving the override chain.
+  /// Never returns `null`.
   public @NonNull Perspective getCurrent() {
     return currentPerspective;
   }
@@ -165,7 +170,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
     }
 
     if (!current.isAvailable()) {
-      cycler().cycleBackward();
+      cycler.cycleBackward();
     }
   }
 
@@ -173,7 +178,7 @@ public final class PerspectiveManagerImpl implements PerspectiveManager {
 
   // region camera update
 
-  private final PerspectiveContextImpl renderTickContext = new PerspectiveContextImpl(this);
+  private final PerspectiveContextImpl renderTickContext = new PerspectiveContextImpl();
   private final Vector3d backupPosition = new Vector3d();
   private final Quaternionf backupRotation = new Quaternionf();
 

@@ -18,7 +18,7 @@ import net.minecraft.resources.Identifier;
 public final class YaclConfigScreenBuilder {
 
   public static Screen build(Screen parent) {
-    var cycler = PerspectiveAPI.getManager().cycler();
+    var cycler = PerspectiveAPI.getCycler();
 
     return YetAnotherConfigLib.createBuilder()
         .title(text("config_screen.title"))
@@ -44,9 +44,9 @@ public final class YaclConfigScreenBuilder {
                             OptionDescription.of(
                                 text("config_screen.option.transition_duration.desc")))
                         .binding(
-                            PerspectiveAPI.getManager().transition().getDurationMs(),
-                            () -> PerspectiveAPI.getManager().transition().getDurationMs(),
-                            v -> PerspectiveAPI.getManager().transition().setDurationMs(v))
+                            PerspectiveAPI.getTransitionController().getDurationMs(),
+                            () -> PerspectiveAPI.getTransitionController().getDurationMs(),
+                            v -> PerspectiveAPI.getTransitionController().setDurationMs(v))
                         .controller(
                             opt ->
                                 DoubleSliderControllerBuilder.create(opt)

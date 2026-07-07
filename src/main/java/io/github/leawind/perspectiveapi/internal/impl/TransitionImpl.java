@@ -34,7 +34,7 @@ public final class TransitionImpl implements Transition {
 
   // endregion
 
-  TransitionImpl() {}
+  public TransitionImpl() {}
 
   @Override
   public boolean isInTransition(double currentTimeMs) {

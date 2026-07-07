@@ -1,6 +1,9 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveManagerImpl;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
+import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
+import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 
 /// Entry point for the Perspective API mod.
@@ -25,8 +28,31 @@ public final class PerspectiveAPI {
     PerspectiveAPI.enabled = enabled;
   }
 
-  /// @return The global singleton of {@link PerspectiveManager}.
-  public static @NonNull PerspectiveManager getManager() {
-    return PerspectiveManagerImpl.INSTANCE;
+  public static PerspectiveRegistry getRegistry() {
+    return PerspectiveManager.INSTANCE.registry();
+  }
+
+  public static @NonNull TransitionController getTransitionController() {
+    return PerspectiveManager.INSTANCE.transition();
+  }
+
+  public static @NonNull PerspectiveModifierChain getModifierChain() {
+    return PerspectiveManager.INSTANCE.modifiers();
+  }
+
+  public static @NonNull PerspectiveOverrideChain getOverrideChain() {
+    return PerspectiveManager.INSTANCE.overrides();
+  }
+
+  public static @NonNull PerspectiveCycler getCycler() {
+    return PerspectiveManager.INSTANCE.cycler();
+  }
+
+  public static @NonNull Perspective getCurrentPerspective() {
+    return PerspectiveManager.INSTANCE.getCurrent();
+  }
+
+  public static boolean isCurrent(@NonNull Identifier id) {
+    return getCurrentPerspective().id().equals(id);
   }
 }
