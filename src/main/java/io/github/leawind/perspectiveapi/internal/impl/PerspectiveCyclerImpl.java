@@ -59,8 +59,8 @@ public final class PerspectiveCyclerImpl implements PerspectiveCycler {
       }
     }
   }
-
-  @Override
+  
+  /// Removes all entries from the cycle list and resets the default perspective.
   public synchronized void clear() {
     this.entries = List.of();
     this.activeId = null;

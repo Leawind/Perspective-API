@@ -18,9 +18,6 @@ public interface PerspectiveCycler extends Supplier<Identifier> {
   /// Removes a perspective ID from the cycle list. Does nothing if the ID is not present.
   void remove(@Nullable Identifier id);
 
-  /// Removes all entries from the cycle list and resets the default perspective.
-  void clear();
-
   /// Returns the custom order list.
   ///
   /// The returned list is unmodifiable and always contains all IDs in the cycler.

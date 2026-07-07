@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 class PerspectiveCyclerImplTest {
 
-  private PerspectiveCycler cycler;
+  private PerspectiveCyclerImpl cycler;
   private PerspectiveRegistry registry;
 
   // Helper identifiers for testing
