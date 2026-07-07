@@ -1,12 +1,11 @@
-package io.github.leawind.perspectiveapi.internal.impl.compute;
+package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.List;
 import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;

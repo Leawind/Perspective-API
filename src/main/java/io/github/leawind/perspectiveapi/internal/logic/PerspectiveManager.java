@@ -1,20 +1,20 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.TransitionController;
-import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
-import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.impl.Transition;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
-import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveCyclerImpl;
-import io.github.leawind.perspectiveapi.internal.impl.compute.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;

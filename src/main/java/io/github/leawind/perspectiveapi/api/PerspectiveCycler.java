@@ -1,6 +1,5 @@
-package io.github.leawind.perspectiveapi.api.compute;
+package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;

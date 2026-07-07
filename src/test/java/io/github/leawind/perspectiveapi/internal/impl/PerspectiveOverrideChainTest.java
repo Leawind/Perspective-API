@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.impl.compute;
+package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 

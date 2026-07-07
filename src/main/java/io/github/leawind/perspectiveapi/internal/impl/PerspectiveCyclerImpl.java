@@ -1,8 +1,8 @@
-package io.github.leawind.perspectiveapi.internal.impl.compute;
+package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.api.compute.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import java.util.ArrayList;
 import java.util.Comparator;

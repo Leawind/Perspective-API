@@ -1,6 +1,6 @@
-package io.github.leawind.perspectiveapi.internal.impl.compute;
+package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.perspectiveapi.api.compute.PerspectiveOverrideChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
