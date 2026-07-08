@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
@@ -21,15 +22,20 @@ public interface PerspectiveModifier {
   /// Example: `examplemod:free_camera`
   @NonNull Identifier id();
 
-  /// Returns the translation key for this perspective's display name.
-  ///
-  /// The default key follows the format: `perspective.<namespace>.<path>`.
-  /// For example, an ID of `examplemod:free_camera` produces `perspective.examplemod.free_camera`.
-  ///
-  /// This key is intended to be used with Minecraft's translation system
-  /// to display localized perspective names in GUIs.
-  default String translationKey() {
-    return "perspective." + id().getNamespace() + "." + id().getPath();
+  /// ```
+  /// perspective.<mod_id>.<id>.name
+  /// ```
+  default @NonNull Component getNameComponent() {
+    return Component.translatable(
+        "perspective." + id().getNamespace() + "." + id().getPath() + ".name");
+  }
+
+  /// ```
+  /// perspective.<mod_id>.<id>.description
+  /// ```
+  default @NonNull Component getDescriptionComponent() {
+    return Component.translatable(
+        "perspective." + id().getNamespace() + "." + id().getPath() + ".description");
   }
 
   /// Returns whether this modifier is currently available.
