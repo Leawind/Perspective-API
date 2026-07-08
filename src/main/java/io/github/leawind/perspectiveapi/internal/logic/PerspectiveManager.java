@@ -4,14 +4,13 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.api.TransitionController;
+import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveWheelImpl;
-import io.github.leawind.perspectiveapi.internal.impl.Transition;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
@@ -90,7 +89,7 @@ public final class PerspectiveManager {
               isTempStateInited = true;
             }
           }
-          transition.setStartState(Transition.getTimeMs(), tempPosition, tempRotation, tempFov);
+          transition.setStartState(TransitionImpl.getTimeMs(), tempPosition, tempRotation, tempFov);
         });
   }
 
@@ -99,15 +98,15 @@ public final class PerspectiveManager {
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
   private final PerspectiveWheelImpl wheel;
-  private final Transition transition = new TransitionImpl();
+  private final TransitionImpl transition = new TransitionImpl();
 
   /// @return The perspective registry.
   public @NonNull PerspectiveRegistry registry() {
     return registry;
   }
 
-  /// @return The transition controller.
-  public @NonNull TransitionController transition() {
+  /// @return The transition.
+  public @NonNull Transition transition() {
     return transition;
   }
 
@@ -193,7 +192,7 @@ public final class PerspectiveManager {
     Perspective current = currentPerspective;
     Perspective previous = previousPerspective;
 
-    double now = Transition.getTimeMs();
+    double now = TransitionImpl.getTimeMs();
 
     boolean isTransitioning =
         transition.isInTransition(now)
@@ -309,7 +308,7 @@ public final class PerspectiveManager {
     fov = modifiers.applyFov(renderTickContext, fov);
 
     // Apply Transition
-    double now = Transition.getTimeMs();
+    double now = TransitionImpl.getTimeMs();
     if (transition.isInTransition(now)
         && current.allowTransitionIn()
         && (previous == null || previous.allowTransitionOut())) {

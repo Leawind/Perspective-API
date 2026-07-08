@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
+import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.Utils;
 import java.util.Objects;
 import org.joml.Quaternionf;
@@ -7,6 +8,7 @@ import org.joml.Quaternionfc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
+import org.lwjgl.glfw.GLFW;
 
 public final class TransitionImpl implements Transition {
 
@@ -36,7 +38,11 @@ public final class TransitionImpl implements Transition {
 
   public TransitionImpl() {}
 
-  @Override
+  public static double getTimeMs() {
+    return GLFW.glfwGetTime() * 1000;
+  }
+
+  /// Returns `true` if a transition is currently in progress at the given timestamp.
   public boolean isInTransition(double currentTimeMs) {
     return currentTimeMs - startTimeMs < durationMs;
   }
@@ -61,7 +67,12 @@ public final class TransitionImpl implements Transition {
     return blender;
   }
 
-  @Override
+  /// Starts a new transition from the given start state.
+  ///
+  /// @param startTimeMs Current timestamp in milliseconds.
+  /// @param startPosition The start position to transition from.
+  /// @param startRotation The start rotation to transition from.
+  /// @param startFov The start FOV to transition from.
   public void setStartState(
       double startTimeMs, Vector3dc startPosition, Quaternionfc startRotation, float startFov) {
     this.startTimeMs = startTimeMs;
@@ -84,7 +95,13 @@ public final class TransitionImpl implements Transition {
     return t;
   }
 
-  @Override
+  /// Updates the current interpolated position and rotation based on the target state.
+  ///
+  /// @param currentTimeMs Current timestamp in milliseconds.
+  /// @param targetPosition The target position to interpolate towards.
+  /// @param targetRotation The target rotation to interpolate towards.
+  /// @param destPosition The destination position to write the interpolated position to.
+  /// @param destRotation The destination rotation to write the interpolated rotation to.
   public void updateTransform(
       double currentTimeMs,
       Vector3dc targetPosition,
@@ -106,7 +123,11 @@ public final class TransitionImpl implements Transition {
     prevEasedProgress = u;
   }
 
-  @Override
+  /// Updates and returns the current interpolated FOV based on the target FOV.
+  ///
+  /// @param currentTimeMs       Current timestamp in milliseconds.
+  /// @param targetFov The target FOV to interpolate towards.
+  /// @return The interpolated FOV.
   public float updateFov(double currentTimeMs, float targetFov) {
     float easedProgress = computeEasedProgress(currentTimeMs);
     return startFov + (targetFov - startFov) * easedProgress;

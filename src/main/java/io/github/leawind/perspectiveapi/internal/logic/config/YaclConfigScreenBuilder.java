@@ -37,9 +37,9 @@ public final class YaclConfigScreenBuilder {
                             OptionDescription.of(
                                 text("config_screen.option.transition_duration.desc")))
                         .binding(
-                            PerspectiveAPI.getTransitionController().getDurationMs(),
-                            () -> PerspectiveAPI.getTransitionController().getDurationMs(),
-                            v -> PerspectiveAPI.getTransitionController().setDurationMs(v))
+                            PerspectiveAPI.getTransition().getDurationMs(),
+                            () -> PerspectiveAPI.getTransition().getDurationMs(),
+                            v -> PerspectiveAPI.getTransition().setDurationMs(v))
                         .controller(
                             opt ->
                                 DoubleSliderControllerBuilder.create(opt)

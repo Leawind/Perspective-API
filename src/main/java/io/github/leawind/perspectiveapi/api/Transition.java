@@ -6,7 +6,7 @@ import org.jspecify.annotations.NonNull;
 ///
 /// When a perspective switch occurs, the camera interpolates from its previous position/rotation
 /// to the new perspective's values
-public interface TransitionController {
+public interface Transition {
 
   /// Sets the transition duration in milliseconds.
   void setDurationMs(double durationMs);

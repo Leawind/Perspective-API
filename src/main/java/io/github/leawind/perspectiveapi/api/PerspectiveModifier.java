@@ -10,9 +10,8 @@ import org.jspecify.annotations.NonNull;
 /// Represents a pure mathematical modifier that mutates camera states.
 ///
 /// Modifiers are applied sequentially **before** the transition interpolation.
-/// They mutate the target state, and the transition controller will smoothly
-/// interpolate from the previous state to this modified target state.
-///
+/// They mutate the target state, and the transition will smoothly interpolate from the previous
+/// state to this modified target state.
 public interface PerspectiveModifier {
 
   /// Returns the unique identifier of this perspective.

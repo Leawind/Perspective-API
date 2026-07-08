@@ -84,7 +84,7 @@ public final class PerspectiveApiState {
       wheel.apply();
     }
 
-    PerspectiveAPI.getTransitionController().setDurationMs(transitionDurationMs);
+    PerspectiveAPI.getTransition().setDurationMs(transitionDurationMs);
   }
 
   public static PerspectiveApiState extract() {
@@ -92,7 +92,7 @@ public final class PerspectiveApiState {
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManager.INSTANCE.getCurrent().id()),
         Optional.of(PerspectiveWheelState.extract()),
-        PerspectiveAPI.getTransitionController().getDurationMs());
+        PerspectiveAPI.getTransition().getDurationMs());
   }
 
   // endregion

@@ -30,7 +30,7 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.registry();
   }
 
-  public static @NonNull TransitionController getTransitionController() {
+  public static @NonNull Transition getTransition() {
     return PerspectiveManager.INSTANCE.transition();
   }
 
