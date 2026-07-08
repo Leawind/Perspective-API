@@ -39,8 +39,10 @@ public final class ModEvents {
                       builder
                           .setHoldTicks(6)
                           .onPress(() -> PerspectiveManager.INSTANCE.wheel().cycleForward())
-                          .onHold(() -> Bridge.setScreen(ConfigScreenManager.findAndBuild(null))))
-              .tick();
+                          .onHold(() -> Bridge.setScreen(ConfigScreenManager.findAndBuild(null)))
+                          .onHoldStop(() -> LOGGER.debug("Perspective key hold stop")))
+              .tick()
+              .drain();
         });
 
     GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(

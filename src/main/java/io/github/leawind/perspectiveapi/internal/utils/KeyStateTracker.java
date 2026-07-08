@@ -15,10 +15,13 @@ public final class KeyStateTracker {
   private boolean wasDown;
   private int heldTicks;
   private boolean holdTriggered;
+  private boolean pressTriggered;
 
   private @Nullable Runnable onDownHandler;
+  private @Nullable Runnable onUpHandler;
   private @Nullable Runnable onPressHandler;
   private @Nullable Runnable onHoldHandler;
+  private @Nullable Runnable onHoldStopHandler;
 
   private KeyStateTracker(KeyMapping key) {
     this.key = key;
@@ -36,29 +39,38 @@ public final class KeyStateTracker {
   }
 
   /// Call this every tick.
-  public void tick() {
+  public KeyStateTracker tick() {
     if (key.isDown()) {
       if (!wasDown) {
         wasDown = true;
         heldTicks = 0;
         holdTriggered = false;
-        // Drain vanilla click count so handleKeybinds() won't also process this key.
-        while (key.consumeClick()) {}
-        run(onDownHandler);
+        pressTriggered = false;
+        trigger(onDownHandler);
       }
       heldTicks++;
       if (!holdTriggered && heldTicks >= holdTicks) {
         holdTriggered = true;
-        run(onHoldHandler);
+        trigger(onHoldHandler);
       }
     } else {
-      if (wasDown && !holdTriggered) {
-        run(onPressHandler);
+      if (wasDown) {
+        if (!holdTriggered && !pressTriggered) {
+          pressTriggered = true;
+          trigger(onPressHandler);
+        } else if (holdTriggered) {
+          trigger(onHoldStopHandler);
+        }
+        trigger(onUpHandler);
       }
       wasDown = false;
       heldTicks = 0;
-      holdTriggered = false;
     }
+    return this;
+  }
+
+  public void drain() {
+    while (key.consumeClick()) {}
   }
 
   /// Returns the tracked key.
@@ -76,7 +88,7 @@ public final class KeyStateTracker {
     return holdTriggered;
   }
 
-  private static void run(@Nullable Runnable handler) {
+  private static void trigger(@Nullable Runnable handler) {
     if (handler != null) {
       handler.run();
     }
@@ -98,6 +110,12 @@ public final class KeyStateTracker {
       return this;
     }
 
+    /// Sets the callback invoked when the key is released, regardless of hold duration.
+    public Builder onUp(Runnable handler) {
+      KeyStateTracker.this.onUpHandler = handler;
+      return this;
+    }
+
     /// Sets the callback invoked when the key is released before the hold threshold.
     public Builder onPress(Runnable handler) {
       KeyStateTracker.this.onPressHandler = handler;
@@ -107,6 +125,12 @@ public final class KeyStateTracker {
     /// Sets the callback invoked when the key is held past the threshold.
     public Builder onHold(Runnable handler) {
       KeyStateTracker.this.onHoldHandler = handler;
+      return this;
+    }
+
+    /// Sets the callback invoked when a held key is released after the hold threshold was reached.
+    public Builder onHoldStop(Runnable handler) {
+      KeyStateTracker.this.onHoldStopHandler = handler;
       return this;
     }
   }

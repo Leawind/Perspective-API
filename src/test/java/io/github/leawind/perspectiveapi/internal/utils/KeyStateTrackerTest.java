@@ -104,10 +104,10 @@ class KeyStateTrackerTest {
     assertEquals(2, count.get());
   }
 
-  // ========== consumeClick draining ==========
+  // ========== drain ==========
 
   @Test
-  void tickDrainsClickCountOnPress() {
+  void tickDoesNotDrainClicks() {
     var key = new StubKey();
     var tracker = KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS));
 
@@ -116,23 +116,22 @@ class KeyStateTrackerTest {
     key.simulateClick();
     tracker.tick();
 
-    assertFalse(key.consumeClick(), "click count should be drained by tick");
+    assertTrue(key.consumeClick(), "tick no longer drains clicks");
+    assertTrue(key.consumeClick());
+    assertFalse(key.consumeClick());
   }
 
   @Test
-  void tickDoesNotDrainClickWhenAlreadyDown() {
+  void drainRemovesClickCount() {
     var key = new StubKey();
     var tracker = KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS));
 
     key.setDown(true);
     key.simulateClick();
-    tracker.tick();
-
-    // Second tick while still down — should NOT drain again
     key.simulateClick();
-    tracker.tick();
+    tracker.drain();
 
-    assertTrue(key.consumeClick(), "click from second tick should remain");
+    assertFalse(key.consumeClick(), "drain should remove all clicks");
   }
 
   // ========== onPress ==========
@@ -252,6 +251,139 @@ class KeyStateTrackerTest {
     assertFalse(holdFired.get());
   }
 
+  // ========== onUp ==========
+
+  @Test
+  void upFiresOnShortPress() {
+    var key = new StubKey();
+    var upFired = new AtomicBoolean();
+    var tracker =
+        KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onUp(() -> upFired.set(true)));
+
+    key.setDown(true);
+    key.simulateClick();
+    tracker.tick();
+    key.setDown(false);
+    tracker.tick();
+
+    assertTrue(upFired.get());
+  }
+
+  @Test
+  void upFiresAfterHold() {
+    var key = new StubKey();
+    var upFired = new AtomicBoolean();
+    var holdFired = new AtomicBoolean();
+    var tracker =
+        KeyStateTracker.of(
+            key,
+            b ->
+                b.setHoldTicks(HOLD_TICKS)
+                    .onHold(() -> holdFired.set(true))
+                    .onUp(() -> upFired.set(true)));
+
+    key.setDown(true);
+    key.simulateClick();
+    for (int i = 0; i <= HOLD_TICKS; i++) {
+      tracker.tick();
+    }
+    key.setDown(false);
+    tracker.tick();
+
+    assertTrue(holdFired.get());
+    assertTrue(upFired.get());
+  }
+
+  @Test
+  void upFiresEachTime() {
+    var key = new StubKey();
+    var count = new AtomicInteger();
+    var tracker =
+        KeyStateTracker.of(
+            key, b -> b.setHoldTicks(HOLD_TICKS).onUp(() -> count.incrementAndGet()));
+
+    for (int i = 0; i < 3; i++) {
+      key.setDown(true);
+      key.simulateClick();
+      tracker.tick();
+      key.setDown(false);
+      tracker.tick();
+    }
+
+    assertEquals(3, count.get());
+  }
+
+  @Test
+  void upNotFiredWhenKeyNeverPressed() {
+    var key = new StubKey();
+    var upFired = new AtomicBoolean();
+    var tracker =
+        KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onUp(() -> upFired.set(true)));
+
+    tracker.tick();
+
+    assertFalse(upFired.get());
+  }
+
+  // ========== onHoldStop ==========
+
+  @Test
+  void holdStopFiresAfterHold() {
+    var key = new StubKey();
+    var holdStopFired = new AtomicBoolean();
+    var tracker =
+        KeyStateTracker.of(
+            key, b -> b.setHoldTicks(HOLD_TICKS).onHoldStop(() -> holdStopFired.set(true)));
+
+    key.setDown(true);
+    key.simulateClick();
+    for (int i = 0; i <= HOLD_TICKS; i++) {
+      tracker.tick();
+    }
+    key.setDown(false);
+    tracker.tick();
+
+    assertTrue(holdStopFired.get());
+  }
+
+  @Test
+  void holdStopNotFiredOnShortPress() {
+    var key = new StubKey();
+    var holdStopFired = new AtomicBoolean();
+    var tracker =
+        KeyStateTracker.of(
+            key, b -> b.setHoldTicks(HOLD_TICKS).onHoldStop(() -> holdStopFired.set(true)));
+
+    key.setDown(true);
+    key.simulateClick();
+    tracker.tick();
+    key.setDown(false);
+    tracker.tick();
+
+    assertFalse(holdStopFired.get());
+  }
+
+  @Test
+  void holdStopFiresEachTime() {
+    var key = new StubKey();
+    var count = new AtomicInteger();
+    var tracker =
+        KeyStateTracker.of(
+            key, b -> b.setHoldTicks(HOLD_TICKS).onHoldStop(() -> count.incrementAndGet()));
+
+    for (int i = 0; i < 3; i++) {
+      key.setDown(true);
+      key.simulateClick();
+      for (int j = 0; j <= HOLD_TICKS; j++) {
+        tracker.tick();
+      }
+      key.setDown(false);
+      tracker.tick();
+    }
+
+    assertEquals(3, count.get());
+  }
+
   // ========== isDown / isHoldTriggered ==========
 
   @Test
@@ -272,7 +404,7 @@ class KeyStateTrackerTest {
   }
 
   @Test
-  void isHoldTriggeredResetsOnRelease() {
+  void isHoldTriggeredResetsOnNextPress() {
     var key = new StubKey();
     var tracker = KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onHold(() -> {}));
 
@@ -285,7 +417,12 @@ class KeyStateTrackerTest {
 
     key.setDown(false);
     tracker.tick();
-    assertFalse(tracker.isHoldTriggered());
+    assertTrue(tracker.isHoldTriggered(), "still set after release");
+
+    key.setDown(true);
+    key.simulateClick();
+    tracker.tick();
+    assertFalse(tracker.isHoldTriggered(), "reset on new press");
   }
 
   // ========== caching ==========
@@ -308,6 +445,8 @@ class KeyStateTrackerTest {
     var holdCount = new AtomicInteger();
     var pressCount = new AtomicInteger();
     var downCount = new AtomicInteger();
+    var upCount = new AtomicInteger();
+    var holdStopCount = new AtomicInteger();
     var tracker =
         KeyStateTracker.of(
             key,
@@ -315,7 +454,9 @@ class KeyStateTrackerTest {
                 b.setHoldTicks(HOLD_TICKS)
                     .onDown(() -> downCount.incrementAndGet())
                     .onPress(() -> pressCount.incrementAndGet())
-                    .onHold(() -> holdCount.incrementAndGet()));
+                    .onHold(() -> holdCount.incrementAndGet())
+                    .onUp(() -> upCount.incrementAndGet())
+                    .onHoldStop(() -> holdStopCount.incrementAndGet()));
 
     // first press: hold
     key.setDown(true);
@@ -336,6 +477,8 @@ class KeyStateTrackerTest {
     assertEquals(1, holdCount.get());
     assertEquals(1, pressCount.get());
     assertEquals(2, downCount.get());
+    assertEquals(2, upCount.get());
+    assertEquals(1, holdStopCount.get());
   }
 
   // ========== no callbacks ==========
