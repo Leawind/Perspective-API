@@ -6,6 +6,7 @@ import net.minecraft.SharedConstants;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec2;
@@ -88,6 +89,15 @@ public final class Bridge {
     /*? } else {*/
     /*return gameRenderer.getMainCamera();
     *//*? }*/
+  }
+
+  /// Opens a screen in the Minecraft client.
+  public static void setScreen(Screen screen) {
+    /*? if >=26.2 {*/
+    Minecraft.getInstance().setScreenAndShow(screen);
+    /*? } else {*/
+    /*Minecraft.getInstance().setScreen(screen);
+     *//*? }*/
   }
 
   /// Extracts entity rotation as a quaternion.

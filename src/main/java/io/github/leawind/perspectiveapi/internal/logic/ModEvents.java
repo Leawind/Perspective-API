@@ -4,7 +4,9 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveWheelImpl;
+import io.github.leawind.perspectiveapi.internal.logic.config.ConfigScreenManager;
 import io.github.leawind.perspectiveapi.internal.logic.state.StateManagerImpl;
+import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.nio.file.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,8 @@ import org.slf4j.LoggerFactory;
 /// Registers and handles mod event listeners.
 public final class ModEvents {
   private static final Logger LOGGER = LoggerFactory.getLogger(ModEvents.class);
+
+  private static KeyStateTracker perspectiveKeyTracker;
 
   /// Registers all event handlers for client tick, keybinds, camera setup, and FOV modification.
   public static void register() {
@@ -28,9 +32,15 @@ public final class ModEvents {
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         (minecraft) -> {
           if (!PerspectiveAPI.isEnabled()) return;
-          while (minecraft.options.keyTogglePerspective.consumeClick()) {
-            PerspectiveManager.INSTANCE.wheel().cycleForward();
-          }
+
+          KeyStateTracker.of(
+                  minecraft.options.keyTogglePerspective,
+                  builder ->
+                      builder
+                          .setHoldTicks(6)
+                          .onPress(() -> PerspectiveManager.INSTANCE.wheel().cycleForward())
+                          .onHold(() -> Bridge.setScreen(ConfigScreenManager.findAndBuild(null))))
+              .tick();
         });
 
     GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
