@@ -66,12 +66,12 @@ public final class Bridge {
           newCameraType.isFirstPerson() ? minecraft.getCameraEntity() : null);
     }
     minecraft.options.setCameraType(newCameraType);
-    /*? if <26.2 {*/
-    /*var levelRenderer = minecraft.levelRenderer;
-    if (levelRenderer != null) {
-      levelRenderer.needsUpdate();
-    }
-    *//*? }*/
+    // TODO This might cause screen flickering
+    // /*var levelRenderer = minecraft.levelRenderer;
+    // if (levelRenderer != null) {
+    //   levelRenderer.needsUpdate();
+    // }
+    // *//*? }*/
   }
 
   /// Gets the main camera instance.
