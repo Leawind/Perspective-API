@@ -3,7 +3,7 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveWheelImpl;
 import io.github.leawind.perspectiveapi.internal.logic.state.StateManagerImpl;
 import java.nio.file.Files;
 import org.slf4j.Logger;
@@ -29,14 +29,14 @@ public final class ModEvents {
         (minecraft) -> {
           if (!PerspectiveAPI.isEnabled()) return;
           while (minecraft.options.keyTogglePerspective.consumeClick()) {
-            PerspectiveAPI.getCycler().cycleForward();
+            PerspectiveAPI.getWheel().cycleForward();
           }
         });
 
     GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
         ignored -> {
           if (!PerspectiveAPI.isEnabled()) return;
-          manager.overrides().clearExcept(PerspectiveCyclerImpl.KEY);
+          manager.overrides().clearExcept(PerspectiveWheelImpl.KEY);
         });
 
     // region camera

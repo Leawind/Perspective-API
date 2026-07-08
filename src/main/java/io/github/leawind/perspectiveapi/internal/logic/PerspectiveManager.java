@@ -1,7 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveCycler;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
@@ -9,10 +8,10 @@ import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.TransitionController;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveCyclerImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveWheelImpl;
 import io.github.leawind.perspectiveapi.internal.impl.Transition;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
@@ -68,7 +67,7 @@ public final class PerspectiveManager {
   private PerspectiveManager(@NonNull Perspective defaultPerspective) {
     Objects.requireNonNull(defaultPerspective);
     registry = new PerspectiveRegistryImpl(defaultPerspective);
-    cycler = new PerspectiveCyclerImpl(registry);
+    wheel = new PerspectiveWheelImpl(registry);
     modifiers =
         new PerspectiveModifierChainImpl(
             (modifier, e) -> reportException(modifier, "applyTransform", e),
@@ -80,7 +79,7 @@ public final class PerspectiveManager {
 
     overrides = new PerspectiveOverrideChainImpl();
     overrides.setValidator(registry::contains);
-    overrides.push(PerspectiveCyclerImpl.KEY, Integer.MIN_VALUE, cycler);
+    overrides.push(PerspectiveWheelImpl.KEY, Integer.MIN_VALUE, wheel);
 
     onCurrentPerspectiveChanged.on(
         () -> {
@@ -101,7 +100,7 @@ public final class PerspectiveManager {
   private final PerspectiveRegistryImpl registry;
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
-  private final PerspectiveCyclerImpl cycler;
+  private final PerspectiveWheelImpl wheel;
   private final Transition transition = new TransitionImpl();
 
   /// @return The perspective registry.
@@ -125,8 +124,8 @@ public final class PerspectiveManager {
   }
 
   /// @return The perspective cycler for cycling through perspectives.
-  public @NonNull PerspectiveCycler cycler() {
-    return cycler;
+  public @NonNull PerspectiveWheelImpl wheel() {
+    return wheel;
   }
 
   // endregion
@@ -170,7 +169,7 @@ public final class PerspectiveManager {
     }
 
     if (!current.isAvailable()) {
-      cycler.cycleBackward();
+      wheel.cycleBackward();
     }
   }
 

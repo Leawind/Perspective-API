@@ -23,11 +23,10 @@ public final class ModEntrypoint {
         .register(VanillaPerspective.THIRD_PERSON_FRONT);
 
     {
-      PerspectiveAPI.getCycler()
-          .add(VanillaPerspective.FIRST_PERSON.id(), 0)
-          .add(VanillaPerspective.THIRD_PERSON_BACK.id(), 1)
-          .add(VanillaPerspective.THIRD_PERSON_FRONT.id(), 2);
-      PerspectiveAPI.getCycler().setActiveId(VanillaPerspective.FIRST_PERSON.id());
+      PerspectiveAPI.getWheel()
+          .register(VanillaPerspective.FIRST_PERSON.id(), 0)
+          .register(VanillaPerspective.THIRD_PERSON_BACK.id(), 1)
+          .register(VanillaPerspective.THIRD_PERSON_FRONT.id(), 2);
     }
 
     StreamSupport.stream(ServiceLoader.load(PerspectiveRegistrar.class).spliterator(), false)

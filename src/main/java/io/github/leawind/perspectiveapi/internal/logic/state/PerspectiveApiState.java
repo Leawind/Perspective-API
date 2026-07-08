@@ -12,7 +12,6 @@ import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.resources.Identifier;
@@ -29,15 +28,9 @@ public final class PerspectiveApiState {
                       Identifier.CODEC
                           .optionalFieldOf("manager.current")
                           .forGetter(s -> Optional.ofNullable(s.managerCurrent)),
-                      Identifier.CODEC
-                          .optionalFieldOf("cycler.active")
-                          .forGetter(s -> Optional.ofNullable(s.cyclerActive)),
-                      Codec.BOOL
-                          .optionalFieldOf("cycler.use_custom_order", false)
-                          .forGetter(s -> s.cyclerUseCustomOrder),
-                      Codec.list(Identifier.CODEC)
-                          .optionalFieldOf("cycler.custom_order", List.of())
-                          .forGetter(s -> s.cyclerCustomOrder),
+                      PerspectiveWheelState.CODEC
+                          .optionalFieldOf("wheel")
+                          .forGetter(s -> Optional.ofNullable(s.wheel)),
                       Codec.DOUBLE
                           .optionalFieldOf("transition.duration_ms", 300.0)
                           .forGetter(s -> s.transitionDurationMs))
@@ -45,25 +38,19 @@ public final class PerspectiveApiState {
 
   private final boolean enabled;
   private final @Nullable Identifier managerCurrent;
-  private final @Nullable Identifier cyclerActive;
-  private final boolean cyclerUseCustomOrder;
-  private final List<Identifier> cyclerCustomOrder;
+  private final @Nullable PerspectiveWheelState wheel;
   private final double transitionDurationMs;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveApiState(
       boolean enabled,
       Optional<Identifier> managerCurrent,
-      Optional<Identifier> cyclerActive,
-      boolean cyclerUseCustomOrder,
-      List<Identifier> cyclerCustomOrder,
+      Optional<PerspectiveWheelState> wheel,
       double transitionDurationMs) {
 
     this.enabled = enabled;
     this.managerCurrent = managerCurrent.orElse(null);
-    this.cyclerActive = cyclerActive.orElse(null);
-    this.cyclerUseCustomOrder = cyclerUseCustomOrder;
-    this.cyclerCustomOrder = cyclerCustomOrder;
+    this.wheel = wheel.orElse(null);
     this.transitionDurationMs = transitionDurationMs;
   }
 
@@ -72,22 +59,14 @@ public final class PerspectiveApiState {
     if (this == o) return true;
     if (!(o instanceof PerspectiveApiState that)) return false;
     return enabled == that.enabled
-        && cyclerUseCustomOrder == that.cyclerUseCustomOrder
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
         && Objects.equals(managerCurrent, that.managerCurrent)
-        && Objects.equals(cyclerActive, that.cyclerActive)
-        && Objects.equals(cyclerCustomOrder, that.cyclerCustomOrder);
+        && Objects.equals(wheel, that.wheel);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        enabled,
-        managerCurrent,
-        cyclerActive,
-        cyclerUseCustomOrder,
-        cyclerCustomOrder,
-        transitionDurationMs);
+    return Objects.hash(enabled, managerCurrent, wheel, transitionDurationMs);
   }
 
   // endregion
@@ -101,22 +80,18 @@ public final class PerspectiveApiState {
       PerspectiveManager.INSTANCE.setCurrentId(managerCurrent);
     }
 
-    var cycler = PerspectiveAPI.getCycler();
-    cycler.setActiveId(cyclerActive);
-    cycler.setCustomOrderEnabled(cyclerUseCustomOrder);
-    cycler.setCustomOrder(cyclerCustomOrder);
+    if (wheel != null) {
+      wheel.apply();
+    }
 
     PerspectiveAPI.getTransitionController().setDurationMs(transitionDurationMs);
   }
 
   public static PerspectiveApiState extract() {
-    var cycler = PerspectiveAPI.getCycler();
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManager.INSTANCE.getCurrent().id()),
-        Optional.ofNullable(cycler.get()),
-        cycler.isCustomOrderEnabled(),
-        cycler.getCustomOrder(),
+        Optional.of(PerspectiveWheelState.extract()),
         PerspectiveAPI.getTransitionController().getDurationMs());
   }
 

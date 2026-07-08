@@ -42,8 +42,8 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.overrides();
   }
 
-  public static @NonNull PerspectiveCycler getCycler() {
-    return PerspectiveManager.INSTANCE.cycler();
+  public static @NonNull PerspectiveWheel getWheel() {
+    return PerspectiveManager.INSTANCE.wheel();
   }
 
   public static @NonNull Perspective getCurrentPerspective() {
