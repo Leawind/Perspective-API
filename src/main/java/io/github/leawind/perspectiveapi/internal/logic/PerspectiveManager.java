@@ -100,27 +100,22 @@ public final class PerspectiveManager {
   private final PerspectiveWheelImpl wheel;
   private final TransitionImpl transition = new TransitionImpl();
 
-  /// @return The perspective registry.
   public @NonNull PerspectiveRegistry registry() {
     return registry;
   }
 
-  /// @return The transition.
   public @NonNull Transition transition() {
     return transition;
   }
 
-  /// @return The modifier chain for registering camera modifiers.
   public @NonNull PerspectiveModifierChain modifiers() {
     return modifiers;
   }
 
-  /// @return The override chain controller.
   public @NonNull PerspectiveOverrideChainImpl overrides() {
     return overrides;
   }
 
-  /// @return The perspective cycler for cycling through perspectives.
   public @NonNull PerspectiveWheelImpl wheel() {
     return wheel;
   }
