@@ -8,6 +8,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyFieldOfViewContext;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 *//*? }*/
 
 @Mixin(GameRenderer.class)
@@ -15,21 +17,45 @@ public abstract class GameRendererMixin {
 
   /*? if >=26.1 {*/
   /*? } else if >=1.21.11 {*/
-  /*@Unique
+  /*@Unique private boolean perspective_api$useFovSetting;
+
+  @Unique
   private final ModifyFieldOfViewContext perspective_api$context = new ModifyFieldOfViewContext();
+
+  @Inject(method = "getFov", at = @At("HEAD"))
+  private void perspective_api$captureFovArgs(
+      net.minecraft.client.Camera camera,
+      float partialTick,
+      boolean useFovSetting,
+      CallbackInfoReturnable<Float> cir) {
+    this.perspective_api$useFovSetting = useFovSetting;
+  }
 
   @com.llamalad7.mixinextras.injector.ModifyReturnValue(method = "getFov", at = @At("RETURN"))
   private float modifyFov(float fov) {
+    if (!this.perspective_api$useFovSetting) return fov;
     perspective_api$context.setup(fov);
     GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(perspective_api$context);
     return perspective_api$context.fieldOfView;
   }
   *//*? } else if !forge {*/
-  /*@Unique
+  /*@Unique private boolean perspective_api$useFovSetting;
+
+  @Unique
   private final ModifyFieldOfViewContext perspective_api$context = new ModifyFieldOfViewContext();
+
+  @Inject(method = "getFov", at = @At("HEAD"))
+  private void perspective_api$captureFovArgs(
+      net.minecraft.client.Camera camera,
+      float partialTick,
+      boolean useFovSetting,
+      CallbackInfoReturnable<Double> cir) {
+    this.perspective_api$useFovSetting = useFovSetting;
+  }
 
   @com.llamalad7.mixinextras.injector.ModifyReturnValue(method = "getFov", at = @At("RETURN"))
   private double modifyFov(double fov) {
+    if (!this.perspective_api$useFovSetting) return fov;
     perspective_api$context.setup((float) fov);
     GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(perspective_api$context);
     return perspective_api$context.fieldOfView;
