@@ -14,10 +14,4 @@ public interface PerspectiveWheel {
   @NonNull PerspectiveWheel register(@NonNull Identifier id, int priority);
 
   void unregister(@NonNull Identifier id);
-
-  /// Advances the active perspective to the next available one.
-  void cycleForward();
-
-  /// Moves the active perspective to the previous available one.
-  void cycleBackward();
 }

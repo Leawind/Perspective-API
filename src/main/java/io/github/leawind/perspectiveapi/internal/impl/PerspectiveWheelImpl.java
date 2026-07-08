@@ -55,53 +55,6 @@ public class PerspectiveWheelImpl implements PerspectiveWheel, Supplier<Identifi
   }
 
   @Override
-  public synchronized void cycleForward() {
-    var list = getOrdered();
-    if (list.isEmpty()) return;
-
-    Identifier current = get();
-    int idx = list.indexOf(current);
-    int start = idx < 0 ? 0 : (idx + 1) % list.size();
-
-    int attempts = 0;
-    int size = list.size();
-    int i = start;
-    do {
-      Identifier next = list.get(i);
-      var p = registry.get(next);
-      if (p != null && p.isAvailable()) {
-        activeId = next;
-        return;
-      }
-      i = (i + 1) % size;
-      attempts++;
-    } while (attempts < size);
-  }
-
-  @Override
-  public synchronized void cycleBackward() {
-    var list = getOrdered();
-    if (list.isEmpty()) return;
-
-    Identifier current = get();
-    int idx = list.indexOf(current);
-    int size = list.size();
-    int i = idx < 0 ? size - 1 : (idx - 1 + size) % size;
-
-    int attempts = 0;
-    do {
-      Identifier next = list.get(i);
-      var p = registry.get(next);
-      if (p != null && p.isAvailable()) {
-        activeId = next;
-        return;
-      }
-      i = (i - 1 + size) % size;
-      attempts++;
-    } while (attempts < size);
-  }
-
-  @Override
   public synchronized @NonNull PerspectiveWheelImpl register(@NonNull Identifier id, int priority) {
     Objects.requireNonNull(id);
     priorities.put(id, priority);
@@ -190,6 +143,53 @@ public class PerspectiveWheelImpl implements PerspectiveWheel, Supplier<Identifi
     }
     list.addAll(candidate);
     return list;
+  }
+
+  /// Advances the active perspective to the next available one.
+  public synchronized void cycleForward() {
+    var list = getOrdered();
+    if (list.isEmpty()) return;
+
+    Identifier current = get();
+    int idx = list.indexOf(current);
+    int start = idx < 0 ? 0 : (idx + 1) % list.size();
+
+    int attempts = 0;
+    int size = list.size();
+    int i = start;
+    do {
+      Identifier next = list.get(i);
+      var p = registry.get(next);
+      if (p != null && p.isAvailable()) {
+        activeId = next;
+        return;
+      }
+      i = (i + 1) % size;
+      attempts++;
+    } while (attempts < size);
+  }
+
+  /// Moves the active perspective to the previous available one.
+  public synchronized void cycleBackward() {
+    var list = getOrdered();
+    if (list.isEmpty()) return;
+
+    Identifier current = get();
+    int idx = list.indexOf(current);
+    int size = list.size();
+    int i = idx < 0 ? size - 1 : (idx - 1 + size) % size;
+
+    int attempts = 0;
+    do {
+      Identifier next = list.get(i);
+      var p = registry.get(next);
+      if (p != null && p.isAvailable()) {
+        activeId = next;
+        return;
+      }
+      i = (i - 1 + size) % size;
+      attempts++;
+    } while (attempts < size);
   }
 
   public synchronized void restore(
