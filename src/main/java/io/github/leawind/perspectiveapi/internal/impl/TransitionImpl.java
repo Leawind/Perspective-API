@@ -14,7 +14,7 @@ public final class TransitionImpl implements Transition {
 
   // region settings
   private double durationMs = 300;
-  private Blender blender = Blender::easeOut;
+  private Blender blender = Blenders::easeInOut;
   // endregion
 
   private double startTimeMs;
@@ -111,4 +111,5 @@ public final class TransitionImpl implements Transition {
     float easedProgress = computeEasedProgress(currentTimeMs);
     return startFov + (targetFov - startFov) * easedProgress;
   }
+
 }
