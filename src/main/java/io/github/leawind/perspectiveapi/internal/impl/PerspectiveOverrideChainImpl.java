@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -8,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -21,15 +21,18 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
   }
 
   private volatile List<Entry> entries = List.of();
+  private final PerspectiveRegistry registry;
 
-  public PerspectiveOverrideChainImpl() {}
+  public PerspectiveOverrideChainImpl(PerspectiveRegistry registry) {
+    this.registry = registry;
+  }
 
   @Override
   public @Nullable Identifier get() {
     List<Entry> snapshot = this.entries;
     for (Entry entry : snapshot) {
       Identifier id = entry.supplier.get();
-      if (id != null && (validator == null || validator.test(id))) {
+      if (id != null && registry.contains(id)) {
         return id;
       }
     }
@@ -88,11 +91,5 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
         this.entries = List.copyOf(newList);
       }
     }
-  }
-
-  private @Nullable Predicate<@NonNull Identifier> validator = null;
-
-  public void setValidator(@Nullable Predicate<@NonNull Identifier> validator) {
-    this.validator = validator;
   }
 }

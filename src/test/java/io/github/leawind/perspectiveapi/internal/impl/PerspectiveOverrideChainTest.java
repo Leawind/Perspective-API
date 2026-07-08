@@ -2,8 +2,14 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import java.util.List;
+import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,9 +17,61 @@ class PerspectiveOverrideChainTest {
 
   private PerspectiveOverrideChainImpl chain;
 
+  private static PerspectiveRegistry testRegistry() {
+    return new PerspectiveRegistry() {
+      @Override
+      public @NonNull PerspectiveRegistry register(@NonNull Perspective perspective) {
+        return this;
+      }
+
+      @Override
+      public boolean contains(@Nullable Identifier id) {
+        return id != null && "test".equals(id.getNamespace());
+      }
+
+      @Override
+      public @Nullable Perspective get(@Nullable Identifier id) {
+        return null;
+      }
+
+      @Override
+      public @NonNull Perspective getDefault() {
+        return perspective("default");
+      }
+
+      @Override
+      public @Nullable Perspective getOrDefault(@NonNull Identifier id) {
+        return null;
+      }
+
+      @Override
+      public @NonNull List<Perspective> getAll() {
+        return List.of();
+      }
+
+      @Override
+      public void onUpdate(@NonNull Runnable listener) {}
+    };
+  }
+
   @BeforeEach
   void beforeEach() {
-    chain = new PerspectiveOverrideChainImpl();
+    chain = new PerspectiveOverrideChainImpl(testRegistry());
+  }
+
+  private static Perspective perspective(String path) {
+    Identifier perspectiveId = id(path);
+    return new Perspective() {
+      @Override
+      public @NonNull Identifier id() {
+        return perspectiveId;
+      }
+
+      @Override
+      public @NonNull CameraType cameraType() {
+        return CameraType.FIRST_PERSON;
+      }
+    };
   }
 
   private static Identifier id(String path) {
@@ -121,27 +179,9 @@ class PerspectiveOverrideChainTest {
   }
 
   @Test
-  void computeIdSkipsFailingValidator() {
-    Identifier fallback = id("fallback");
-    chain.push(id("invalid"), 100, () -> id("invalid"));
-    chain.push(fallback, 1, () -> fallback);
-
-    chain.setValidator(id -> !"invalid".equals(id.getPath()));
-    assertEquals(fallback, chain.get());
-  }
-
-  @Test
   void computeIdAllFailReturnsNull() {
     chain.push(id("a"), 10, () -> null);
     chain.push(id("b"), 5, () -> null);
-    assertNull(chain.get());
-  }
-
-  @Test
-  void computeIdValidatorRejectsAll() {
-    chain.push(id("a"), 10, () -> id("a"));
-    chain.push(id("b"), 5, () -> id("b"));
-    chain.setValidator(id -> false);
     assertNull(chain.get());
   }
 
@@ -190,33 +230,6 @@ class PerspectiveOverrideChainTest {
 
     // Both have same priority; first pushed should be evaluated first
     assertEquals(first, chain.get());
-  }
-
-  // ========== setValidator ==========
-
-  @Test
-  void setValidatorOverridesValidator() {
-    Identifier a = id("a");
-    Identifier b = id("b");
-    chain.push(a, 10, () -> a);
-    chain.push(b, 5, () -> b);
-
-    // Initially no validator, returns highest priority
-    assertEquals(a, chain.get());
-
-    // Set validator that rejects 'a'
-    chain.setValidator(id -> !"a".equals(id.getPath()));
-    assertEquals(b, chain.get());
-  }
-
-  @Test
-  void setValidatorWithNullSupplier() {
-    Identifier fallback = id("fallback");
-    chain.push(id("null_supplier"), 100, () -> null);
-    chain.push(fallback, 1, () -> fallback);
-
-    chain.setValidator(id -> !"fallback".equals(id.getPath()));
-    assertNull(chain.get());
   }
 
   // ========== null safety ==========

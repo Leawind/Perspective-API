@@ -77,8 +77,7 @@ public final class PerspectiveManager {
     currentId = defaultPerspective.id();
     currentPerspective = defaultPerspective;
 
-    overrides = new PerspectiveOverrideChainImpl();
-    overrides.setValidator(registry::contains);
+    overrides = new PerspectiveOverrideChainImpl(registry);
     overrides.push(PerspectiveWheelImpl.KEY, Integer.MIN_VALUE, wheel);
 
     onCurrentPerspectiveChanged.on(
