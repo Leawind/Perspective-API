@@ -20,7 +20,7 @@ Perspective API is a camera perspective management framework for Minecraft clien
 - **Roll**: Camera rotation is specified with quaternions, so roll is fully supported
 - **Smooth Transitions**: Interpolated transitions for position, rotation, and FOV ensure natural perspective switches
 - **Priority-Based Override Chain**: High-priority temporary perspectives (e.g., cutscenes, GUI-forced views) automatically override base perspectives
-- **Built-in Perspective Cycler**: Takes over the vanilla F5 toggle key, allowing players to cycle through registered perspectives
+- **Built-in Perspective Wheel**: Takes over the vanilla F5 toggle key
 
 ## Compatibility Matrix
 
@@ -55,11 +55,11 @@ Perspectives can be registered via the Java SPI mechanism (`PerspectiveRegistrar
 
 The override chain is a priority-based evaluation mechanism for temporary camera control. Each entry provides a `Supplier<Identifier>` evaluated by descending priority. The first entry to return a valid perspective ID wins, and that perspective is applied. This is ideal for scenarios like custom GUIs or cutscenes that need to temporarily take over the camera.
 
-### Perspective Cycler
+### Perspective Wheel
 
-The cycler manages the list of perspectives players traverse with the vanilla toggle key (F5). It includes three built-in perspectives corresponding to vanilla First-person, Third-person Back, and Third-person Front. Custom perspectives can be added with a priority that determines their position in the cycle.
+The wheel manages the list of perspectives players traverse with the vanilla toggle key (F5). It includes three built-in perspectives corresponding to vanilla First-person, Third-person Back, and Third-person Front. Custom perspectives can be registered with a priority that determines their position in the cycle.
 
-The cycler itself acts as a low-priority override entry. If a higher-priority override is active, the cycler's selection is temporarily ignored.
+The wheel itself acts as a low-priority override entry. If a higher-priority override is active, the wheel's selection is temporarily ignored.
 
 ### Perspective Modifier
 
@@ -67,7 +67,15 @@ Modifiers apply additional mathematical transformations to the camera state **af
 
 Modifiers are registered with a key, a priority, and executed in ascending priority order.
 
-**Execution order:** Base Perspective → Modifiers (by priority) → Sanitize → Transition
+## Perspective State Processing Order
+
+1. Calculate the base perspective via the override chain
+   - If no other override is active, the current perspective from the built-in Perspective Wheel is used, as it is the lowest-priority override in the chain
+2. Apply modifiers in priority order
+   - No modifiers are registered by default
+3. Handle camera state transitions
+   - Transition duration is a fixed value and can be customized
+4. Apply the state to the camera
 
 ## Adding Dependencies
 
@@ -92,7 +100,7 @@ repositories {
 
 dependencies {
   // Use `implementation` for >=26.1
-  modImplementation("maven.modrinth:perspective-api:1.0.0-beta.8+fabric-26.2")
+  modImplementation("maven.modrinth:LIqveQm1:1.0.0-beta.8+fabric-26.2")
 }
 ```
 
