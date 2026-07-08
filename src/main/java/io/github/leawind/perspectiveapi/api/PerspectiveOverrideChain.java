@@ -16,10 +16,4 @@ public interface PerspectiveOverrideChain extends Supplier<Identifier> {
 
   /// Returns `true` if an override entry with the given key exists.
   boolean has(@NonNull Identifier key);
-
-  /// Clears all entries from the chain.
-  void clear();
-
-  /// Clears all entries except those with the specified keys.
-  void clearExcept(@NonNull Identifier... keys);
 }

@@ -72,7 +72,7 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
     return false;
   }
 
-  @Override
+  /// Clears all entries from the chain.
   public void clear() {
     synchronized (this) {
       if (!entries.isEmpty()) {
@@ -81,7 +81,7 @@ public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideCh
     }
   }
 
-  @Override
+  /// Clears all entries except those with the specified keys.
   public void clearExcept(@NonNull Identifier... keys) {
     Objects.requireNonNull(keys);
     Set<Identifier> keep = new HashSet<>(Arrays.asList(keys));

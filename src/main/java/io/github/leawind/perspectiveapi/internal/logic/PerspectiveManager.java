@@ -3,7 +3,6 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
-import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.TransitionController;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
@@ -118,7 +117,7 @@ public final class PerspectiveManager {
   }
 
   /// @return The override chain controller.
-  public @NonNull PerspectiveOverrideChain overrides() {
+  public @NonNull PerspectiveOverrideChainImpl overrides() {
     return overrides;
   }
 
