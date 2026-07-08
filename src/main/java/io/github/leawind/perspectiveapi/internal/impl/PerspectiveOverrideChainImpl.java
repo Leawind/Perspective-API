@@ -14,7 +14,8 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public final class PerspectiveOverrideChainImpl implements PerspectiveOverrideChain {
+public final class PerspectiveOverrideChainImpl
+    implements PerspectiveOverrideChain, Supplier<Identifier> {
   public record Entry(
       @NonNull Identifier key, int priority, @NonNull Supplier<Identifier> supplier) {
     public static Comparator<Entry> COMPARATOR = Comparator.comparingInt(e -> -e.priority);
