@@ -39,14 +39,4 @@ public interface PerspectiveRegistry {
 
   /// Returns all registered perspectives as an unmodifiable list.
   @NonNull List<Perspective> getAll();
-
-  /// Registers a listener that is called when a perspective is registered or replaced.
-  ///
-  /// @param listener callback invoked with the registered perspective
-  void onUpdate(@NonNull Runnable listener);
-
-  /// Returns `true` if the given perspective instance is registered.
-  default boolean contains(@NonNull Perspective perspective) {
-    return get(perspective.id()) == perspective;
-  }
 }

@@ -32,12 +32,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     register(defaultPerspective);
     defaultId = defaultPerspective.id();
   }
-
-  @Override
-  public void onUpdate(@NonNull Runnable listener) {
-    updateListeners.add(listener);
-  }
-
+  
   @Override
   public @NonNull PerspectiveRegistry register(@NonNull Perspective perspective) {
     var id = perspective.id();

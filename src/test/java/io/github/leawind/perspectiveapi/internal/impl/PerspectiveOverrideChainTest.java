@@ -48,9 +48,6 @@ class PerspectiveOverrideChainTest {
       public @NonNull List<Perspective> getAll() {
         return List.of();
       }
-
-      @Override
-      public void onUpdate(@NonNull Runnable listener) {}
     };
   }
 
