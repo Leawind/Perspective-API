@@ -91,10 +91,11 @@ repositories {
 }
 
 dependencies {
-  implementation("maven.modrinth:perspective-api:1.0.0-beta.1+fabric-26.2")
+  // Use `implementation` for >=26.1
+  modImplementation("maven.modrinth:perspective-api:1.0.0-beta.8+fabric-26.2")
 }
 ```
 
-## Demo
+## Example Mod
 
-See the demo mod [Perspective API Demo](https://github.com/Leawind/Perspective-API-Demo).
+The mod [Perspective API Demo](https://github.com/Leawind/Perspective-API-Demo) uses this API to implement some simple yet interesting features. You can refer to its source code for guidance.

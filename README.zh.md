@@ -91,10 +91,11 @@ repositories {
 }
 
 dependencies {
-  implementation("maven.modrinth:perspective-api:1.0.0-beta.1+fabric-26.2")
+  // Use `implementation` for >=26.1
+  modImplementation("maven.modrinth:LIqveQm1:1.0.0-beta.8+fabric-26.2")
 }
 ```
 
-## 演示
+## 示例模组
 
-参考模组[视角API演示](https://github.com/Leawind/Perspective-API-Demo)。
+模组 [视角API演示](https://github.com/Leawind/Perspective-API-Demo) 利用本 API 实现了一些简单而有趣的功能，可以参考其源码。
