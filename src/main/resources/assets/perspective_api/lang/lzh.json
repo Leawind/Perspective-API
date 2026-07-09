@@ -1,9 +1,9 @@
 {
   "modmenu.nameTranslation.perspective_api": "視角卯口",
   "modmenu.descriptionTranslation.perspective_api": "用於管理並擴展客端攝像視角之框架",
-  "perspective.minecraft.first_person": "己目",
-  "perspective.minecraft.third_person_back": "背观",
-  "perspective.minecraft.third_person_front": "面观",
+  "perspective.minecraft.first_person.name": "己目",
+  "perspective.minecraft.third_person_back.name": "背观",
+  "perspective.minecraft.third_person_front.name": "面观",
   "perspective_api.config_screen.title": "視角卯口 設定",
   "perspective_api.config_screen.category.general": "常",
   "perspective_api.config_screen.category.general.desc": "視角卯口 通設定",

@@ -1,9 +1,9 @@
 {
   "modmenu.nameTranslation.perspective_api": "視角API",
   "modmenu.descriptionTranslation.perspective_api": "一個用於管理和擴展攝影機視角的客戶端 API 框架",
-  "perspective.minecraft.first_person": "第一人稱",
-  "perspective.minecraft.third_person_back": "第三人稱背面",
-  "perspective.minecraft.third_person_front": "第三人稱正面",
+  "perspective.minecraft.first_person.name": "第一人稱",
+  "perspective.minecraft.third_person_back.name": "第三人稱背面",
+  "perspective.minecraft.third_person_front.name": "第三人稱正面",
   "perspective_api.config_screen.title": "視角API 設定",
   "perspective_api.config_screen.category.general": "通用",
   "perspective_api.config_screen.category.general.desc": "視角API 的通用設定",
