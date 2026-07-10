@@ -158,34 +158,70 @@ public final class WheelMenuRenderer {
     float cx = layout.centerX();
     float cy = layout.centerY();
     float centerIconSize = layout.centerIconSize();
+    float halfCenterIconSize = layout.centerIconSize() / 2;
 
-    Identifier icon = getPerspectiveIcon(item);
-    if (icon != null) {
-      int ix = (int) (cx - centerIconSize / 2);
-      int iy = (int) (cy - centerIconSize / 2 - 6);
-      int is = (int) centerIconSize;
-      ctx.blit(icon, 0, 0, ix, iy, is, is, is, is);
+    // Icon
+    {
+      Identifier icon = getPerspectiveIcon(item);
+      if (icon != null) {
+        int ix = (int) (cx - halfCenterIconSize);
+        int iy = (int) (cy - halfCenterIconSize - 6);
+        int is = (int) centerIconSize;
+        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is);
+      }
     }
 
-    Minecraft minecraft = Minecraft.getInstance();
-    Font font = minecraft.font;
-    Component name = getDisplayName(item);
-    int textWidth = font.width(name);
-    ctx.text(
-        font,
-        name,
-        (int) (cx - textWidth / 2.0f),
-        (int) (cy + centerIconSize / 2 + 2),
-        applyAlpha(COLOR_TEXT, alpha),
-        true);
+    // Name and description
+    {
+      Minecraft minecraft = Minecraft.getInstance();
+      Font font = minecraft.font;
+
+      // Name
+      {
+        Component text = getDisplayName(item);
+        ctx.text(
+            font,
+            text,
+            (int) (cx - font.width(text) / 2.0f),
+            (int) (cy + halfCenterIconSize + 2),
+            applyAlpha(COLOR_TEXT, alpha),
+            true);
+      }
+
+      // Description
+      {
+        Component text = getDisplayDescription(item);
+        if (text != null) {
+          ctx.text(
+              font,
+              text,
+              (int) (cx - font.width(text) / 2.0f),
+              (int) (cy + halfCenterIconSize + font.lineHeight * 2),
+              applyAlpha(COLOR_TEXT, alpha),
+              true);
+        }
+      }
+    }
   }
 
-  private static Component getDisplayName(WheelMenuItem item) {
-    if (item.perspective() != null) return item.perspective().getNameComponent();
+  @Deprecated
+  private static @NonNull Component getDisplayName(@NonNull WheelMenuItem item) {
+    if (item.perspective() != null) {
+      return item.perspective().getNameComponent();
+    }
     return Component.literal(item.id().toString());
   }
 
-  private static @Nullable Identifier getPerspectiveIcon(WheelMenuItem item) {
+  @Deprecated
+  private static @Nullable Component getDisplayDescription(@NonNull WheelMenuItem item) {
+    if (item.perspective() != null) {
+      return item.perspective().getDescriptionComponent();
+    }
+    return Component.literal(item.id().toString());
+  }
+
+  @Deprecated
+  private static @Nullable Identifier getPerspectiveIcon(@NonNull WheelMenuItem item) {
     if (item.perspective() != null) {
       return item.perspective().icon();
     }
