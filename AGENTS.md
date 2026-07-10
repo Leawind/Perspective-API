@@ -154,6 +154,7 @@ type 必填，scope 可选。
 type 必须从以下列表中选择，semantic-release 会根据 type 决定版本号变更：
 
 - feat：新功能
+- i18n: 语言文件更新
 - fix：错误修复
 - perf：提升性能的代码变更
 - refactor：既不修复错误也不添加功能的代码变更

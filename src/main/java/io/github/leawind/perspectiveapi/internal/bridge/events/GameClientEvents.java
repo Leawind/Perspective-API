@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.bridge.events;
 
+import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import io.github.leawind.perspectiveapi.internal.utils.event.SingleEventEmitter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -18,8 +19,8 @@ public final class GameClientEvents {
   public static final SingleEventEmitter<ClientLevel> AFTER_CLIENT_LEVEL_CHANGE =
       new SingleEventEmitter<>();
 
-  public static final SingleEventEmitter<Minecraft> HANDLE_KEYBINDS_START =
-      new SingleEventEmitter<>();
+  public static final SimpleEventEmitter.Owned<Minecraft> HANDLE_KEYBINDS_START =
+      SimpleEventEmitter.create();
 
   public static final SingleEventEmitter<CameraSetupContext> SETUP_CAMERA =
       new SingleEventEmitter<>();
@@ -27,6 +28,8 @@ public final class GameClientEvents {
   public static final SingleEventEmitter<ModifyFieldOfViewContext> MODIFY_FIELD_OF_VIEW =
       new SingleEventEmitter<>();
 
-  public static final SingleEventEmitter<RegisterConfigScreenContext> REGISTER_CONFIG_SCREEN =
+  public static final SingleEventEmitter<GuiRenderContext> RENDER_GUI_OVERLAY =
+      new SingleEventEmitter<>();
+  public static final SingleEventEmitter<MouseInputContext> MOUSE_INPUT =
       new SingleEventEmitter<>();
 }

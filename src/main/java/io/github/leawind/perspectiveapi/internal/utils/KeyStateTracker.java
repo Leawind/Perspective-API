@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.utils;
 
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 import net.minecraft.client.KeyMapping;
 import org.jspecify.annotations.Nullable;
 
@@ -10,7 +11,7 @@ public final class KeyStateTracker {
   private static final Map<KeyMapping, KeyStateTracker> INSTANCES = new WeakHashMap<>();
 
   private final KeyMapping key;
-  private int holdTicks = 20;
+  private int holdTicks = 4;
 
   private boolean wasDown;
   private int heldTicks;
@@ -27,15 +28,19 @@ public final class KeyStateTracker {
     this.key = key;
   }
 
-  /// Returns a cached tracker for the given key, creating one with the builder if absent.
-  public static KeyStateTracker of(KeyMapping key, java.util.function.Consumer<Builder> builder) {
+  public static KeyStateTracker of(KeyMapping keyMapping, Consumer<Builder> builder) {
     return INSTANCES.computeIfAbsent(
-        key,
+        keyMapping,
         k -> {
           var tracker = new KeyStateTracker(k);
           builder.accept(tracker.new Builder());
           return tracker;
         });
+  }
+
+  public Builder builder(KeyMapping keyMapping) {
+    var tracker = new KeyStateTracker(keyMapping);
+    return tracker.new Builder();
   }
 
   /// Call this every tick.
@@ -66,6 +71,11 @@ public final class KeyStateTracker {
       wasDown = false;
       heldTicks = 0;
     }
+    return this;
+  }
+
+  public KeyStateTracker setHoldTicks(int ticks) {
+    this.holdTicks = ticks;
     return this;
   }
 
@@ -123,7 +133,7 @@ public final class KeyStateTracker {
     }
 
     /// Sets the callback invoked when the key is held past the threshold.
-    public Builder onHold(Runnable handler) {
+    public Builder onHoldStart(Runnable handler) {
       KeyStateTracker.this.onHoldHandler = handler;
       return this;
     }
@@ -132,6 +142,10 @@ public final class KeyStateTracker {
     public Builder onHoldStop(Runnable handler) {
       KeyStateTracker.this.onHoldStopHandler = handler;
       return this;
+    }
+
+    public KeyStateTracker build() {
+      return KeyStateTracker.this;
     }
   }
 }

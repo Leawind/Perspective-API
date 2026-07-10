@@ -1,11 +1,14 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /// Represents a camera perspective that can be applied to the game camera.
 ///
@@ -20,6 +23,30 @@ public interface Perspective extends PerspectiveModifier {
 
   /// Corresponding camera type for this perspective.
   @NonNull CameraType cameraType();
+
+  /// Returns the icon resource for this perspective.
+  ///
+  /// The returned identifier points to a texture resource that will be displayed in the wheel menu
+  /// and other UI elements.
+  ///
+  /// To provide a custom icon, return an identifier pointing to your texture.
+  ///
+  /// - Identifier format: `<namespace>:<path>`
+  /// - File location: `assets/<namespace>/<path>`
+  ///
+  /// A recommended convention is to place the icon at
+  /// `assets/<namespace>/textures/perspective/<path>.png` where `<namespace>` is your mod id and
+  /// `<path>` is the path part of the perspective's {@link #id()}.
+  ///
+  /// For example:
+  ///
+  /// - Identifier: `example_mod:textures/perspective/example_view.png`
+  /// - File location: `assets/example_mod/textures/perspective/example_view.png`
+  ///
+  /// @return the icon identifier points to a texture resource or `null`
+  default @Nullable Identifier icon() {
+    return Bridge.createIdentifier("perspective_api", "textures/perspective/default.png");
+  }
 
   // endregion
 

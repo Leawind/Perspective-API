@@ -24,6 +24,10 @@ public class PerspectiveWheelImpl implements PerspectiveWheel, Supplier<Identifi
   private final PerspectiveRegistry registry;
 
   private volatile @Nullable Identifier activeId;
+
+  /// Temporary override set by the wheel menu while it is open.
+  /// When non-null, {@link #get()} returns this instead of the real active perspective.
+  private volatile @Nullable Identifier previewId;
   private final List<Identifier> selected = new ArrayList<>();
   private final Set<Identifier> disabled = new HashSet<>();
 
@@ -40,6 +44,9 @@ public class PerspectiveWheelImpl implements PerspectiveWheel, Supplier<Identifi
 
   @Override
   public @Nullable Identifier get() {
+    var previewId = this.previewId;
+    if (previewId != null) return previewId;
+
     var list = getOrdered();
     var activeId = this.activeId;
     int start = list.indexOf(activeId);
@@ -126,6 +133,23 @@ public class PerspectiveWheelImpl implements PerspectiveWheel, Supplier<Identifi
 
   public List<@NonNull Identifier> getSelected() {
     return selected;
+  }
+
+  /// Sets the active perspective directly, bypassing the cycling logic.
+  public synchronized void setActive(@NonNull Identifier id) {
+    Objects.requireNonNull(id);
+    this.activeId = id;
+  }
+
+  /// Sets a temporary preview override. While non-null, {@link #get()} returns this ID.
+  public void setPreview(@NonNull Identifier id) {
+    Objects.requireNonNull(id);
+    this.previewId = id;
+  }
+
+  /// Clears the preview override, restoring normal {@link #get()} behavior.
+  public void clearPreview() {
+    this.previewId = null;
   }
 
   TreeSet<@NonNull Identifier> getCandidates() {

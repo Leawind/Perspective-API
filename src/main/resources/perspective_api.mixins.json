@@ -6,6 +6,8 @@
   "client": [
     "fov.CameraMixin",
     "fov.GameRendererMixin",
+    "gui.GuiMixin",
+    "input.MouseHandlerMixin",
     "setupcamera.CameraMixin",
     "setupcamera.GameRendererMixin",
     "CameraAccessorMixin",

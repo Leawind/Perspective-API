@@ -164,7 +164,7 @@ class KeyStateTrackerTest {
             b ->
                 b.setHoldTicks(HOLD_TICKS)
                     .onPress(() -> pressFired.set(true))
-                    .onHold(() -> holdFired.set(true)));
+                    .onHoldStart(() -> holdFired.set(true)));
 
     key.setDown(true);
     key.simulateClick();
@@ -204,7 +204,7 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var holdFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onHold(() -> holdFired.set(true)));
+        KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onHoldStart(() -> holdFired.set(true)));
 
     key.setDown(true);
     key.simulateClick();
@@ -222,7 +222,7 @@ class KeyStateTrackerTest {
     var count = new AtomicInteger();
     var tracker =
         KeyStateTracker.of(
-            key, b -> b.setHoldTicks(HOLD_TICKS).onHold(() -> count.incrementAndGet()));
+            key, b -> b.setHoldTicks(HOLD_TICKS).onHoldStart(() -> count.incrementAndGet()));
 
     key.setDown(true);
     key.simulateClick();
@@ -238,7 +238,7 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var holdFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onHold(() -> holdFired.set(true)));
+        KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onHoldStart(() -> holdFired.set(true)));
 
     key.setDown(true);
     key.simulateClick();
@@ -279,7 +279,7 @@ class KeyStateTrackerTest {
             key,
             b ->
                 b.setHoldTicks(HOLD_TICKS)
-                    .onHold(() -> holdFired.set(true))
+                    .onHoldStart(() -> holdFired.set(true))
                     .onUp(() -> upFired.set(true)));
 
     key.setDown(true);
@@ -406,7 +406,7 @@ class KeyStateTrackerTest {
   @Test
   void isHoldTriggeredResetsOnNextPress() {
     var key = new StubKey();
-    var tracker = KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onHold(() -> {}));
+    var tracker = KeyStateTracker.of(key, b -> b.setHoldTicks(HOLD_TICKS).onHoldStart(() -> {}));
 
     key.setDown(true);
     key.simulateClick();
@@ -454,7 +454,7 @@ class KeyStateTrackerTest {
                 b.setHoldTicks(HOLD_TICKS)
                     .onDown(() -> downCount.incrementAndGet())
                     .onPress(() -> pressCount.incrementAndGet())
-                    .onHold(() -> holdCount.incrementAndGet())
+                    .onHoldStart(() -> holdCount.incrementAndGet())
                     .onUp(() -> upCount.incrementAndGet())
                     .onHoldStop(() -> holdStopCount.incrementAndGet()));
 
