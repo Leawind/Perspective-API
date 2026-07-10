@@ -19,7 +19,6 @@ public final class DrawContext {
   public DrawContext(net.minecraft.client.gui.GuiGraphicsExtractor graphics) {
     this.graphics = graphics;
   }
-
   /*? } else {*/
   /*public DrawContext(net.minecraft.client.gui.GuiGraphics graphics) {
     this.graphics = graphics;
@@ -39,7 +38,9 @@ public final class DrawContext {
   }
 
   public void blit(
-      Identifier texture, int u, int v, int x, int y, int w, int h, int texW, int texH) {
+      Identifier texture, int u, int v, int x, int y, int w, int h, int texW, int texH, float alpha) {
+    if (alpha == 0) return;
+
     /*? if >=1.21.11 {*/
     graphics.blit(
         net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
@@ -52,7 +53,7 @@ public final class DrawContext {
         h,
         texW,
         texH,
-        -1);
+        net.minecraft.util.ARGB.color(alpha, 0xFFFFFF));
     /*? } else {*/
     /*graphics.blit(texture, x, y, 0, (float) u, (float) v, w, h, texW, texH);
      *//*? }*/

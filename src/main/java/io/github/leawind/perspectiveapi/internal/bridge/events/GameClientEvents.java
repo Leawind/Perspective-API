@@ -14,7 +14,8 @@ public final class GameClientEvents {
 
   public static final SingleEventEmitter<Minecraft> ON_MINECRAFT_CLOSE = new SingleEventEmitter<>();
 
-  public static final SingleEventEmitter<Minecraft> CLIENT_TICK_START = new SingleEventEmitter<>();
+  public static final SimpleEventEmitter.Owned<Minecraft> CLIENT_TICK_START =
+      SimpleEventEmitter.create();
 
   public static final SingleEventEmitter<ClientLevel> AFTER_CLIENT_LEVEL_CHANGE =
       new SingleEventEmitter<>();

@@ -9,6 +9,7 @@ import io.github.leawind.perspectiveapi.internal.logic.gui.wheelmenu.WheelMenuRe
 import io.github.leawind.perspectiveapi.internal.logic.state.StateManagerImpl;
 import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.nio.file.Files;
+import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,13 @@ public final class ModEvents {
         });
 
     // region gui & input events
+
+    GameClientEvents.CLIENT_TICK_START.on(
+        minecraft -> {
+          if (!PerspectiveAPI.isEnabled()) return;
+          if (minecraft.level == null || minecraft.player == null) return;
+          WheelMenuManager.getInstance().clientTick();
+        });
 
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         (minecraft) -> {
@@ -64,6 +72,12 @@ public final class ModEvents {
     GameClientEvents.RENDER_GUI_OVERLAY.on(
         ctx -> {
           if (!PerspectiveAPI.isEnabled()) return;
+
+          // TODO add `Minecraft` to GuiRenderContext
+          var minecraft = Minecraft.getInstance();
+          if (minecraft == null) return;
+          if (minecraft.level == null) return;
+
           WheelMenuRenderer.getInstance()
               .render(ctx.drawContext, ctx.screenWidth, ctx.screenHeight);
         });
@@ -72,7 +86,7 @@ public final class ModEvents {
         ctx -> {
           if (!PerspectiveAPI.isEnabled()) return;
           WheelMenuManager wmm = WheelMenuManager.getInstance();
-          if (!wmm.isVisible()) return;
+          if (!wmm.isOpened()) return;
 
           switch (ctx.type) {
             case BUTTON -> wmm.onMouseButton(ctx.button, ctx.action);

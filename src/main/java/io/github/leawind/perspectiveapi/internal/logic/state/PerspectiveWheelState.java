@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.logic.state;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +45,14 @@ public final class PerspectiveWheelState {
       Optional<List<Identifier>> selected,
       Optional<Set<Identifier>> disabled) {
     this.activeId = activeId.orElse(null);
-    this.selected = selected.orElseGet(ArrayList::new);
+    this.selected =
+        selected.orElseGet(
+            () ->
+                new ArrayList<>(
+                    List.of(
+                        VanillaPerspective.FIRST_PERSON.id(),
+                        VanillaPerspective.THIRD_PERSON_BACK.id(),
+                        VanillaPerspective.THIRD_PERSON_FRONT.id())));
     this.disabled = disabled.orElseGet(HashSet::new);
   }
 

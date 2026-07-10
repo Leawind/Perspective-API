@@ -8,21 +8,25 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.joml.Vector2fc;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /// Renders the perspective wheel menu overlay.
 ///
 /// Only the currently selected sector is highlighted with a white semi-transparent
 /// filled ring-sector shape. Icons and center label are drawn on top.
 public final class WheelMenuRenderer {
+  private static final Logger LOGGER = LoggerFactory.getLogger(WheelMenuRenderer.class);
   private static final WheelMenuRenderer INSTANCE = new WheelMenuRenderer();
 
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
   private static final int COLOR_AVAILABLE = 0x00_22_C5_5E;
   private static final int COLOR_UNAVAILABLE = 0xFF_EA_B3_08;
   private static final int COLOR_UNREGISTERED = 0xFF_EF_44_44;
-  private static final float SELECTED_SCALE = 1.35f;
+  static final float SELECTED_SCALE = 1.35f;
 
   private WheelMenuRenderer() {}
 
@@ -30,24 +34,35 @@ public final class WheelMenuRenderer {
     return INSTANCE;
   }
 
-  public void render(DrawContext ctx, int screenWidth, int screenHeight) {
-    WheelMenuManager manager = WheelMenuManager.getInstance();
-    if (!manager.isVisible()) return;
+  private double lastRenderTime = Double.MAX_VALUE;
 
-    float alpha = manager.getAlphaMultiplier();
+  public void render(DrawContext ctx, int screenWidth, int screenHeight) {
+    double now = GLFW.glfwGetTime();
+    double deltaTime = now - lastRenderTime;
+    lastRenderTime = now;
+    deltaTime = Math.max(deltaTime, 0);
+
+    WheelMenuManager manager = WheelMenuManager.getInstance();
+
+    float alphaMultiplier = manager.isOpened() ? 1 : 0;
 
     WheelMenuManager.WheelMenuLayout layout = manager.getLayout(screenWidth, screenHeight);
-    var items = manager.getItems();
+    List<WheelMenuItem> items = manager.getItemList();
 
-    if (!items.isEmpty()) {
-      int selectedIndex = manager.getSelectedIndex();
+    if (items.isEmpty()) {
+      // TODO display something
+      return;
+    }
 
-      drawRingIcons(ctx, layout, items, selectedIndex, alpha);
-      drawCenterInfo(ctx, layout, items, selectedIndex, alpha);
+    WheelMenuItem selected = manager.getSelectedItem();
+
+    drawRingIcons(manager, deltaTime, ctx, layout, items, selected, alphaMultiplier);
+    if (selected != null) {
+      drawCenterInfo(ctx, layout, selected, alphaMultiplier);
     }
 
     if (WheelMenuManager.DEBUG) {
-      drawAnchorDebug(ctx, layout, alpha);
+      drawAnchorDebug(ctx, layout, alphaMultiplier);
     }
   }
 
@@ -58,6 +73,7 @@ public final class WheelMenuRenderer {
   ///     component (e.g., `0xFF_FF_FF`) will be treated as fully transparent.
   /// @param alpha multiplier in `[0.0, 1.0]`
   /// @return the color with adjusted alpha, in ARGB format
+  @Deprecated
   private static int applyAlpha(int color, float alpha) {
     int a = (color >> 24) & 0xFF;
     int r = (color >> 16) & 0xFF;
@@ -85,50 +101,79 @@ public final class WheelMenuRenderer {
   }
 
   private void drawRingIcons(
+      WheelMenuManager manager,
+      double deltaTime,
       DrawContext ctx,
       WheelMenuManager.WheelMenuLayout layout,
       List<WheelMenuItem> items,
-      int selectedIndex,
-      float alpha) {
-    float centerX = layout.centerX();
-    float centerY = layout.centerY();
+      WheelMenuItem selected,
+      float alphaMultiplier) {
+    Vector2fc center = layout.center();
     float iconRadius = layout.iconRadius();
 
     double sectorRad = 2 * Math.PI / items.size();
 
     for (int i = 0; i < items.size(); i++) {
       WheelMenuItem item = items.get(i);
-      boolean isSelected = i == selectedIndex;
+      boolean isSelected = item == selected;
 
-      double itemRad = sectorRad * i + ROTATE_OFFSET_RAD;
-      float iconX = centerX + iconRadius * (float) Math.cos(itemRad);
-      float iconY = centerY + iconRadius * (float) Math.sin(itemRad);
+      var smoothRenderState = item.getSmoothRenderState();
 
-      float iconSize = layout.iconSize();
-      if (isSelected) {
-        iconSize *= SELECTED_SCALE;
+      // Calculate target render state and update current
+      {
+        WheelMenuItem.RenderState target = smoothRenderState.target();
+
+        target.icon = item.icon();
+        target.isSelected = isSelected;
+
+        if (manager.isOpened()) {
+          double itemRad = sectorRad * i + ROTATE_OFFSET_RAD;
+          target.position.set(
+              iconRadius * (float) Math.cos(itemRad), iconRadius * (float) Math.sin(itemRad));
+
+          target.scale = isSelected ? WheelMenuRenderer.SELECTED_SCALE : 1;
+          target.alpha = alphaMultiplier;
+        } else {
+          target.position.set(0, 0);
+          target.scale = 0;
+          target.alpha = 0;
+        }
+        smoothRenderState.update(deltaTime);
       }
+
+      var renderState = smoothRenderState.current();
+
+      float iconSize = layout.iconSize() * renderState.scale;
+      int iconSizeInt = (int) iconSize;
       float halfIconSize = iconSize / 2;
-      int slotSize = (int) iconSize;
+
+      float iconX = center.x() + renderState.position.x();
+      float iconY = center.y() + renderState.position.y();
+
       int sx = (int) (iconX - halfIconSize);
       int sy = (int) (iconY - halfIconSize);
 
-      ctx.drawGamemodeSwitcherSlot(sx, sy, slotSize, slotSize, applyAlpha(0xFF_FF_FF_FF, alpha));
-      if (isSelected) {
-        ctx.drawGamemodeSwitcherSelection(
-            sx, sy, slotSize, slotSize, applyAlpha(0xFF_FF_FF_FF, alpha));
-      }
+      try {
+        ctx.drawGamemodeSwitcherSlot(
+            sx, sy, iconSizeInt, iconSizeInt, applyAlpha(0xFF_FF_FF_FF, renderState.alpha));
+        if (isSelected) {
+          ctx.drawGamemodeSwitcherSelection(
+              sx, sy, iconSizeInt, iconSizeInt, applyAlpha(0xFF_FF_FF_FF, renderState.alpha));
+        }
+        drawAvailabilityIndicator(
+            ctx, item, iconX + halfIconSize, iconY + halfIconSize, renderState.alpha);
 
-      drawAvailabilityIndicator(ctx, item, iconX + halfIconSize, iconY + halfIconSize, alpha);
-
-      // Icon with 5px padding (matching GameModeSwitcherScreen's 16x16 inside 26x26)
-      Identifier icon = getPerspectiveIcon(item);
-      if (icon != null) {
-        float pad = iconSize * 0.19f; // ~5px padding for 26px slot
-        int ix = (int) (iconX - halfIconSize + pad);
-        int iy = (int) (iconY - halfIconSize + pad);
-        int is = (int) (iconSize - pad * 2);
-        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is);
+        // Icon with 5px padding (matching GameModeSwitcherScreen's 16x16 inside 26x26)
+        Identifier icon = item.icon();
+        if (icon != null) {
+          float pad = iconSize * 0.19f; // ~5px padding for 26px slot
+          int ix = (int) (iconX - halfIconSize + pad);
+          int iy = (int) (iconY - halfIconSize + pad);
+          int is = (int) (iconSize - pad * 2);
+          ctx.blit(icon, 0, 0, ix, iy, is, is, is, is, renderState.alpha);
+        }
+      } catch (IllegalStateException e) {
+        LOGGER.warn("Error occurred drawing ring icon", e);
       }
     }
   }
@@ -146,15 +191,8 @@ public final class WheelMenuRenderer {
   }
 
   private void drawCenterInfo(
-      DrawContext ctx,
-      WheelMenuManager.WheelMenuLayout layout,
-      List<WheelMenuItem> items,
-      int selectedIndex,
-      float alpha) {
-    if (items.isEmpty()) return;
+      DrawContext ctx, WheelMenuManager.WheelMenuLayout layout, WheelMenuItem item, float alpha) {
 
-    int idx = Math.floorMod(selectedIndex, items.size());
-    WheelMenuItem item = items.get(idx);
     float cx = layout.centerX();
     float cy = layout.centerY();
     float centerIconSize = layout.centerIconSize();
@@ -162,69 +200,27 @@ public final class WheelMenuRenderer {
 
     // Icon
     {
-      Identifier icon = getPerspectiveIcon(item);
+      Identifier icon = item.icon();
       if (icon != null) {
         int ix = (int) (cx - halfCenterIconSize);
         int iy = (int) (cy - halfCenterIconSize - 6);
         int is = (int) centerIconSize;
-        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is);
+        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is, alpha);
       }
     }
 
-    // Name and description
+    // Name
     {
-      Minecraft minecraft = Minecraft.getInstance();
-      Font font = minecraft.font;
+      Font font = Minecraft.getInstance().font;
 
-      // Name
-      {
-        Component text = getDisplayName(item);
-        ctx.text(
-            font,
-            text,
-            (int) (cx - font.width(text) / 2.0f),
-            (int) (cy + halfCenterIconSize + 2),
-            applyAlpha(COLOR_TEXT, alpha),
-            true);
-      }
-
-      // Description
-      {
-        Component text = getDisplayDescription(item);
-        if (text != null) {
-          ctx.text(
-              font,
-              text,
-              (int) (cx - font.width(text) / 2.0f),
-              (int) (cy + halfCenterIconSize + font.lineHeight * 2),
-              applyAlpha(COLOR_TEXT, alpha),
-              true);
-        }
-      }
+      Component text = item.displayName();
+      ctx.text(
+          font,
+          text,
+          (int) (cx - font.width(text) / 2.0f),
+          (int) (cy + halfCenterIconSize + 2),
+          applyAlpha(COLOR_TEXT, alpha),
+          true);
     }
-  }
-
-  @Deprecated
-  private static @NonNull Component getDisplayName(@NonNull WheelMenuItem item) {
-    if (item.perspective() != null) {
-      return item.perspective().getNameComponent();
-    }
-    return Component.literal(item.id().toString());
-  }
-
-  @Deprecated
-  private static @Nullable Component getDisplayDescription(@NonNull WheelMenuItem item) {
-    if (item.perspective() != null) {
-      return item.perspective().getDescriptionComponent();
-    }
-    return Component.literal(item.id().toString());
-  }
-
-  @Deprecated
-  private static @Nullable Identifier getPerspectiveIcon(@NonNull WheelMenuItem item) {
-    if (item.perspective() != null) {
-      return item.perspective().icon();
-    }
-    return null;
   }
 }

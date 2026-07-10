@@ -1,16 +1,17 @@
 package io.github.leawind.perspectiveapi.internal.logic.gui.wheelmenu;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveWheelImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
-import java.util.ArrayList;
-import java.util.Collections;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
+import io.github.leawind.perspectiveapi.platform.api.Services;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.resources.Identifier;
 import org.joml.Vector2d;
 import org.joml.Vector2dc;
+import org.joml.Vector2f;
+import org.joml.Vector2fc;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -26,13 +27,23 @@ import org.slf4j.LoggerFactory;
 /// (and therefore which perspective) is currently selected.
 public final class WheelMenuManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(WheelMenuManager.class);
-  private static final WheelMenuManager INSTANCE = new WheelMenuManager();
+  private static final WheelMenuManager INSTANCE =
+      new WheelMenuManager(PerspectiveManager.INSTANCE.wheel());
+
+  private final PerspectiveWheelImpl wheel;
+
+  private WheelMenuManager(PerspectiveWheelImpl wheel) {
+    this.wheel = wheel;
+  }
 
   private static final int MAX_ITEMS = 9;
 
   /// Enable debug visuals for the wheel menu (anchor position, etc.).
   public static final boolean DEBUG = false;
-//  public static final boolean DEBUG = Services.PLATFORM_HELPER.isDevelopmentEnvironment();
+  //  public static final boolean DEBUG = Services.PLATFORM_HELPER.isDevelopmentEnvironment();
+
+  /// Invert mouse wheel direction for item rotation.
+  public static final boolean INVERT_ROTATE_DIRECTION = false;
 
   /// Duration of the fade-in animation when the menu opens, in seconds.
   private static final double FADE_IN_DURATION_SEC = 0.2;
@@ -43,46 +54,53 @@ public final class WheelMenuManager {
   private static final float ANCHOR_MAX_RADIUS = 24.0f;
 
   public static final double ROTATE_OFFSET_RAD = -Math.PI / 2;
-  
-  private boolean isVisible;
+
+  /// Updated by:
+  ///
+  /// - {@link #open()}
+  /// - {@link #close()}
+  private boolean isOpened;
 
   /// Timestamp (seconds) when the menu was last opened, used for the fade-in animation.
   private double openTimeSec;
 
-  /// -1 means unselecetd
-  private int selectedIndex = -1;
+  private final Map<Identifier, WheelMenuItem> items = new HashMap<>(); // TODO getItem(
 
-  private List<WheelMenuItem> items = Collections.emptyList();
+  /// Updated by:
+  ///
+  /// - Mouse scroll event
+  /// - Mouse move event
+  private @Nullable WheelMenuItem selectedItem = null;
 
   /// Anchor position relative to the wheel center, in GUI-scaled pixels.
+  ///
+  /// - Set to 0,0 when open the wheel menu
+  /// - Updated by mouse move event
   private final Vector2d anchor = new Vector2d(0, 0);
 
   /// Last known mouse position (GUI-scaled) for computing relative deltas.
   private final Vector2d lastMouse = new Vector2d(0, 0);
   private boolean hasLastMouse;
 
-  private WheelMenuManager() {}
-
   public static @NonNull WheelMenuManager getInstance() {
     return INSTANCE;
   }
 
-  public boolean isVisible() {
-    return isVisible;
-  }
-
-  public int getSelectedIndex() {
-    return selectedIndex;
+  public boolean isOpened() {
+    return isOpened;
   }
 
   public @Nullable WheelMenuItem getSelectedItem() {
-    if (!isVisible || items.isEmpty()) return null;
-    int idx = Math.floorMod(selectedIndex, items.size());
-    return items.get(idx);
+    return selectedItem;
   }
 
-  public @NonNull List<WheelMenuItem> getItems() {
-    return items;
+  public @NonNull WheelMenuItem getItem(Identifier id) {
+    return items.computeIfAbsent(id, WheelMenuItem::new);
+  }
+
+  public @NonNull List<WheelMenuItem> getItemList() {
+    // TODO cache, update in client tick
+    return wheel.getSelected().stream().map(this::getItem).limit(MAX_ITEMS).toList();
   }
 
   /// Returns the current anchor position (for rendering the anchor indicator).
@@ -92,6 +110,7 @@ public final class WheelMenuManager {
 
   /// Returns the current alpha multiplier (0.0 to 1.0) for the fade-in animation.
   /// Uses Blender's easeInOut curve (cubic smoothstep).
+  @Deprecated
   public float getAlphaMultiplier() {
     double t = (GLFW.glfwGetTime() - openTimeSec) / FADE_IN_DURATION_SEC;
     if (t >= 1.0) return 1.0f;
@@ -103,36 +122,30 @@ public final class WheelMenuManager {
   // region lifecycle
 
   public void open() {
-    PerspectiveRegistry registry = PerspectiveAPI.getRegistry();
-    PerspectiveWheelImpl wheel = PerspectiveManager.INSTANCE.wheel();
-
-    List<Identifier> ordered = wheel.getOrdered();
-
-    List<WheelMenuItem> items = new ArrayList<>();
-    int limit = Math.min(ordered.size(), MAX_ITEMS);
-    for (int i = 0; i < limit; i++) {
-      Identifier id = ordered.get(i);
-      Perspective perspective = registry.get(id);
-      WheelMenuItem.Availability availability;
-      if (perspective == null) {
-        availability = WheelMenuItem.Availability.UNREGISTERED;
-      } else if (!perspective.isAvailable()) {
-        availability = WheelMenuItem.Availability.UNAVAILABLE;
-      } else {
-        availability = WheelMenuItem.Availability.AVAILABLE;
+    if (Services.PLATFORM_HELPER.isDevelopmentEnvironment()) {
+      // TODO
+      if (wheel.getSelected().isEmpty()) {
+        wheel.selectAt(0, VanillaPerspective.THIRD_PERSON_BACK.id());
+        wheel.selectAt(0, VanillaPerspective.THIRD_PERSON_FRONT.id());
+        wheel.selectAt(0, VanillaPerspective.FIRST_PERSON.id());
       }
-      items.add(new WheelMenuItem(id, perspective, availability));
+
+      getItemList()
+          .forEach(
+              item -> {
+                item.getSmoothRenderState().current().set(new WheelMenuItem.RenderState());
+
+                // TODO debug
+                item.getSmoothRenderState().setHalflife(0.025);
+              });
     }
 
-    this.items = Collections.unmodifiableList(items);
-
-    selectedIndex = ordered.indexOf(wheel.get());
-    if (selectedIndex < 0) selectedIndex = 0;
-
-    isVisible = true;
+    isOpened = true;
     openTimeSec = GLFW.glfwGetTime();
     anchor.set(0);
     hasLastMouse = false;
+
+    selectedItem = getItem(wheel.get());
 
     updatePreview();
 
@@ -140,28 +153,31 @@ public final class WheelMenuManager {
   }
 
   public void close() {
-    isVisible = false;
-    items = Collections.emptyList();
-    PerspectiveManager.INSTANCE.wheel().clearPreview();
-    LOGGER.debug("Wheel menu closed");
+    isOpened = false;
+    wheel.clearPreview();
   }
 
   public void closeWithSelection() {
-    if (!isVisible) return;
+    if (!isOpened) return;
 
-    WheelMenuItem item = getSelectedItem();
+    WheelMenuItem item = selectedItem;
     close();
 
     if (item != null) {
-      PerspectiveManager.INSTANCE.wheel().setActive(item.id());
+      wheel.setActive(item.id());
       LOGGER.debug("Wheel menu: selected {}", item.id());
     }
   }
 
+  public void clientTick() {
+    // TODO cache item list
+    getItemList().forEach(item -> item.update(PerspectiveManager.INSTANCE.registry()));
+  }
+
   private void updatePreview() {
-    WheelMenuItem item = getSelectedItem();
+    WheelMenuItem item = selectedItem;
     if (item != null) {
-      PerspectiveManager.INSTANCE.wheel().setPreview(item.id());
+      wheel.setPreview(item.id());
     }
   }
 
@@ -170,7 +186,7 @@ public final class WheelMenuManager {
   // region input handling
 
   public void onMouseButton(int button, int action) {
-    if (!isVisible) return;
+    if (!isOpened) return;
 
     if (action == GLFW.GLFW_RELEASE) {
       if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
@@ -181,23 +197,49 @@ public final class WheelMenuManager {
     }
   }
 
-  public void onMouseScroll(double vertical) {
-    if (!isVisible) return;
-    if (items.isEmpty()) return;
+  // TODO private static final boolean FIXED_SLOT_POSITION = false;
 
-    int n = items.size();
-    if (vertical > 0) {
-      selectedIndex = (selectedIndex - 1 + n) % n;
-    } else if (vertical < 0) {
-      selectedIndex = (selectedIndex + 1) % n;
+  public void onMouseScroll(double vertical) {
+    final boolean FIXED_SLOT_POSITION = false;
+
+    if (!isOpened) return;
+    boolean rotateDirection = vertical > 0 ^ INVERT_ROTATE_DIRECTION;
+
+    var list = wheel.getSelected();
+
+    synchronized (list) {
+      // get selected item index
+
+      int index = -1;
+      var item = selectedItem;
+      if (item != null) {
+        index = list.indexOf(item.id());
+      }
+
+      // rotate list
+      if (rotateDirection) {
+        list.add(0, list.remove(list.size() - 1));
+      } else {
+        list.add(list.remove(0));
+      }
+
+      // reset by index
+      if (FIXED_SLOT_POSITION && index >= 0) {
+        selectedItem = getItem(list.get(index));
+      }
+
+      if (!FIXED_SLOT_POSITION) {
+        anchor.set(0, 0);
+      }
     }
+
     updatePreview();
   }
 
   /// Updates the anchor based on relative mouse movement and derives the
   /// selected index from the anchor's direction.
   public void onMouseMove(double mouseX, double mouseY) {
-    if (!isVisible) return;
+    if (!isOpened) return;
     if (!hasLastMouse) {
       lastMouse.set(mouseX, mouseY);
       hasLastMouse = true;
@@ -212,9 +254,20 @@ public final class WheelMenuManager {
     double dist = anchor.length();
     if (dist >= ANCHOR_MAX_RADIUS) {
       anchor.mul(ANCHOR_MAX_RADIUS / dist);
-      if (!items.isEmpty()) {
-        selectedIndex = WheelMenuUtils.getSectorIndex(
-            items.size(), ROTATE_OFFSET_RAD, Math.atan2(anchor.x(), -anchor.y()));
+      var itemList = getItemList();
+
+      if (!itemList.isEmpty()) {
+        int id =
+            WheelMenuUtils.getSectorIndex(
+                itemList.size(), ROTATE_OFFSET_RAD, Math.atan2(anchor.x(), -anchor.y()));
+
+        if (id < itemList.size()) {
+          selectedItem = itemList.get(id);
+        } else {
+          // TODO
+          throw new AssertionError();
+        }
+
         updatePreview();
       }
     }
@@ -229,7 +282,13 @@ public final class WheelMenuManager {
     return new WheelMenuLayout(screenWidth / 2.0f, screenHeight / 2.0f, minEdge);
   }
 
-  public record WheelMenuLayout(float centerX, float centerY, float minEdge) {
+  public record WheelMenuLayout(
+      @Deprecated float centerX, @Deprecated float centerY, float minEdge) {
+
+    // TODO
+    public Vector2fc center() {
+      return new Vector2f(centerX, centerY);
+    }
 
     public float iconRadius() {
       return minEdge * 0.25f;
