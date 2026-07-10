@@ -4,7 +4,6 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.joml.Vector2f;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -21,40 +20,6 @@ public final class WheelMenuItem {
     AVAILABLE
   }
 
-  static class RenderState implements ExpSmooth.Value<RenderState> {
-    public @Nullable Identifier icon = null;
-    public boolean isSelected = false;
-    /// Relative position to wheel center point
-    public final Vector2f position = new Vector2f(0, 0);
-    public float scale = 1.0f;
-    public float alpha = 1.0f;
-
-    public RenderState() {}
-
-    @Override
-    public RenderState set(@NonNull RenderState other) {
-      icon = other.icon;
-      isSelected = other.isSelected;
-      position.set(other.position);
-      scale = other.scale;
-      alpha = other.alpha;
-      return this;
-    }
-
-    @Override
-    public RenderState lerp(RenderState target, float t, RenderState dest) {
-      dest.icon = target.icon;
-      dest.isSelected = target.isSelected;
-      position.lerp(target.position, t, dest.position);
-      dest.scale = scale + (target.scale - scale) * t;
-      dest.alpha = alpha + (target.alpha - alpha) * t;
-      return dest;
-    }
-  }
-
-  private final ExpSmooth<RenderState> smoothRenderState =
-      new ExpSmooth<>(RenderState::new).setHalflife(0.025);
-
   private final @NonNull Identifier id;
   private @Nullable Perspective perspective;
   private @NonNull Availability availability;
@@ -62,10 +27,6 @@ public final class WheelMenuItem {
   public WheelMenuItem(@NonNull Identifier id) {
     this.id = id;
     this.availability = Availability.UNREGISTERED;
-  }
-
-  ExpSmooth<RenderState> getSmoothRenderState() {
-    return smoothRenderState;
   }
 
   public WheelMenuItem update(PerspectiveRegistry registry) {

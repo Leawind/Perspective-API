@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.gui.wheelmenu;
+package io.github.leawind.perspectiveapi.internal.utils.smooth;
 
 import java.util.function.Supplier;
 import org.jspecify.annotations.NonNull;
@@ -11,12 +11,12 @@ public class ExpSmooth<T extends ExpSmooth.Value<T>> {
   }
 
   private double halflife;
-  private final @NonNull T currentValue;
-  private final @NonNull T targetValue;
+  private @NonNull T current;
+  private @NonNull T target;
 
   public ExpSmooth(Supplier<T> factory) {
-    currentValue = factory.get();
-    targetValue = factory.get();
+    current = factory.get();
+    target = factory.get();
   }
 
   public double getHalflife() {
@@ -29,26 +29,30 @@ public class ExpSmooth<T extends ExpSmooth.Value<T>> {
   }
 
   public T target() {
-    return targetValue;
+    return target;
+  }
+
+  public ExpSmooth<T> setTarget(T value) {
+    this.target = value;
+    return this;
   }
 
   public ExpSmooth<T> update(double deltaTime) {
     if (halflife <= 0) {
-      currentValue.set(targetValue);
+      current.set(target);
       return this;
     }
     double ratio = Math.pow(0.5, deltaTime / halflife);
-    currentValue.lerp(targetValue, 1 - (float) ratio, currentValue);
+    current.lerp(target, 1 - (float) ratio, current);
     return this;
   }
 
   public @NonNull T current() {
-    return currentValue;
+    return current;
   }
 
-  @Deprecated
-  public @NonNull ExpSmooth<T> setCurrentValue(T value) {
-    currentValue.set(value);
+  public @NonNull ExpSmooth<T> setCurrent(T value) {
+    current = value;
     return this;
   }
 }

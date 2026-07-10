@@ -3,13 +3,13 @@ package io.github.leawind.perspectiveapi.internal.logic.gui.wheelmenu;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveWheelImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.ExpSmoothDouble;
 import io.github.leawind.perspectiveapi.platform.api.Services;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.resources.Identifier;
 import org.joml.Vector2d;
-import org.joml.Vector2dc;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.jspecify.annotations.NonNull;
@@ -54,6 +54,15 @@ public final class WheelMenuManager {
   private static final float ANCHOR_MAX_RADIUS = 24.0f;
 
   public static final double ROTATE_OFFSET_RAD = -Math.PI / 2;
+  private final ExpSmoothDouble smoothRotation = new ExpSmoothDouble().setHalflife(0.025);
+
+  ExpSmoothDouble smoothRotation() {
+    return smoothRotation;
+  }
+
+  double getRotateOffsetRad() {
+    return ROTATE_OFFSET_RAD + smoothRotation.getCurrent();
+  }
 
   /// Updated by:
   ///
@@ -64,7 +73,7 @@ public final class WheelMenuManager {
   /// Timestamp (seconds) when the menu was last opened, used for the fade-in animation.
   private double openTimeSec;
 
-  private final Map<Identifier, WheelMenuItem> items = new HashMap<>(); // TODO getItem(
+  private final Map<Identifier, WheelMenuItem> items = new HashMap<>();
 
   /// Updated by:
   ///
@@ -76,7 +85,7 @@ public final class WheelMenuManager {
   ///
   /// - Set to 0,0 when open the wheel menu
   /// - Updated by mouse move event
-  private final Vector2d anchor = new Vector2d(0, 0);
+  private final Vector2f anchor = new Vector2f(0, 0);
 
   /// Last known mouse position (GUI-scaled) for computing relative deltas.
   private final Vector2d lastMouse = new Vector2d(0, 0);
@@ -104,7 +113,7 @@ public final class WheelMenuManager {
   }
 
   /// Returns the current anchor position (for rendering the anchor indicator).
-  public Vector2dc getAnchor() {
+  public Vector2fc getAnchor() {
     return anchor;
   }
 
@@ -129,15 +138,6 @@ public final class WheelMenuManager {
         wheel.selectAt(0, VanillaPerspective.THIRD_PERSON_FRONT.id());
         wheel.selectAt(0, VanillaPerspective.FIRST_PERSON.id());
       }
-
-      getItemList()
-          .forEach(
-              item -> {
-                item.getSmoothRenderState().current().set(new WheelMenuItem.RenderState());
-
-                // TODO debug
-                item.getSmoothRenderState().setHalflife(0.025);
-              });
     }
 
     isOpened = true;
@@ -197,13 +197,11 @@ public final class WheelMenuManager {
     }
   }
 
-  // TODO private static final boolean FIXED_SLOT_POSITION = false;
+  private static final boolean FIXED_SLOT_POSITION = false;
 
   public void onMouseScroll(double vertical) {
-    final boolean FIXED_SLOT_POSITION = false;
-
     if (!isOpened) return;
-    boolean rotateDirection = vertical > 0 ^ INVERT_ROTATE_DIRECTION;
+    boolean rotateDirection = vertical < 0 ^ INVERT_ROTATE_DIRECTION;
 
     var list = wheel.getSelected();
 
@@ -233,6 +231,10 @@ public final class WheelMenuManager {
       }
     }
 
+    // Notify renderer for smooth rotation animation
+    double sectorRad = 2 * Math.PI / list.size();
+    WheelMenuRenderer.getInstance().notifyScroll(sectorRad, rotateDirection);
+
     updatePreview();
   }
 
@@ -250,8 +252,8 @@ public final class WheelMenuManager {
     double dy = mouseY - lastMouse.y();
     lastMouse.set(mouseX, mouseY);
 
-    anchor.add(dx, dy);
-    double dist = anchor.length();
+    anchor.add((float) dx, (float) dy);
+    float dist = anchor.length();
     if (dist >= ANCHOR_MAX_RADIUS) {
       anchor.mul(ANCHOR_MAX_RADIUS / dist);
       var itemList = getItemList();
@@ -277,17 +279,10 @@ public final class WheelMenuManager {
 
   // region rendering data
 
-  public @NonNull WheelMenuLayout getLayout(int screenWidth, int screenHeight) {
-    float minEdge = Math.min(screenWidth, screenHeight);
-    return new WheelMenuLayout(screenWidth / 2.0f, screenHeight / 2.0f, minEdge);
-  }
+  public record WheelMenuLayout(Vector2f center, int minEdge) {
 
-  public record WheelMenuLayout(
-      @Deprecated float centerX, @Deprecated float centerY, float minEdge) {
-
-    // TODO
-    public Vector2fc center() {
-      return new Vector2f(centerX, centerY);
+    public WheelMenuLayout(int width, int height) {
+      this(new Vector2f((float) width / 2f, (float) height / 2f), Math.min(width, height));
     }
 
     public float iconRadius() {
