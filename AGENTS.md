@@ -36,6 +36,22 @@
 - 表示角度或弧度的参数和变量名要用后缀表示其单位，Deg是角度，Rad是弧度
 - Mixin类以Mixin为后缀，例如`MinecraftMixin`
 
+## 架构与依赖约束
+
+本项目采用严格的分层架构，各层职责与依赖方向必须严格遵守，严禁反向依赖。
+
+### 包依赖方向
+
+`api` ➜ `logic` / `impl` ➜ `bridge` ➜ `utils`
+
+注：`api` 层原则上不依赖 `internal`，但允许依赖 `bridge` 层中无状态的、纯粹用于构建跨版本基础类型（如 `Identifier`）的工具方法，例如 `Bridge.createIdentifier`。
+
+### 核心约束
+
+1. `bridge` 层禁令：`bridge` 包（包含所有 Mixin）严禁直接 import 或调用 `logic`、`impl` 或 `api` 包中的业务类
+2. 事件驱动解耦：`bridge` 层的 Mixin 仅负责拦截原版调用，并发射通用事件（Event）；`logic` 层负责监听这些事件并执行具体业务
+3. `logic` 层无宏化：`logic` 包和 `api` 包应尽可能保持 100% 无 Stonecutter 条件编译宏，所有 Minecraft 版本差异必须下沉并封装在 `bridge` 层
+
 ## Stonecutter 条件编译语法
 
 当前激活的Minecraft版本可以在 `stonecutter.gradle.kts` 文件中找到
