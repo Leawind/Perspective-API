@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.Utils;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.Blender;
 import java.util.Objects;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
@@ -84,12 +85,12 @@ public final class TransitionImpl implements Transition {
     return durationMs;
   }
 
-  @Override
+  /// Sets the blending function used for easing.
   public void setBlender(@NonNull Blender blender) {
     this.blender = Objects.requireNonNull(blender);
   }
 
-  @Override
+  /// Returns the current blending function.
   public @NonNull Blender getBlender() {
     return blender;
   }
@@ -160,13 +161,12 @@ public final class TransitionImpl implements Transition {
     startPosition.lerp(targetPosition, easedProgress, destPosition);
 
     // Rotation: chase interpolation from previous frame result to dynamic target
-    float u = easedProgress;
-    double k = (u - prevEasedProgress) / (1 - prevEasedProgress);
+    double k = (easedProgress - prevEasedProgress) / (1 - prevEasedProgress);
     k = Utils.clamp(k, 0, 1);
 
     prevRotation.slerp(targetRotation, (float) k, destRotation);
     prevRotation.set(destRotation);
-    prevEasedProgress = u;
+    prevEasedProgress = easedProgress;
   }
 
   private void updateTransformNew(
