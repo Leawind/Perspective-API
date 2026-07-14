@@ -3,17 +3,13 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveWheelImpl;
-import io.github.leawind.perspectiveapi.internal.logic.gui.wheelmenu.WheelMenuManager;
-import io.github.leawind.perspectiveapi.internal.logic.gui.wheelmenu.WheelMenuRenderer;
 import io.github.leawind.perspectiveapi.internal.logic.state.StateManagerImpl;
-import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.nio.file.Files;
-import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /// Registers and handles mod event listeners.
+@SuppressWarnings("ConstantConditions")
 public final class ModEvents {
   private static final Logger LOGGER = LoggerFactory.getLogger(ModEvents.class);
 
@@ -29,80 +25,10 @@ public final class ModEvents {
           manager.clientTick(minecraft);
         });
 
-    // region gui & input events
-
-    GameClientEvents.CLIENT_TICK_START.on(
-        minecraft -> {
-          if (!PerspectiveAPI.isEnabled()) return;
-          if (minecraft.level == null || minecraft.player == null) return;
-          WheelMenuManager.getInstance().clientTick();
-        });
-
-    GameClientEvents.HANDLE_KEYBINDS_START.on(
-        (minecraft) -> {
-          if (!PerspectiveAPI.isEnabled()) return;
-
-          // Refer to Minecraft 26.2 KeyboardHandler#handleDebugKeys
-          //
-          // ```java
-          // if (options.keyDebugSwitchGameMode.matches(event)
-          //     && this.minecraft.level != null
-          //     && this.minecraft.gui.screen() == null) {
-          //   if (this.minecraft.canSwitchGameMode()
-          //       && GameModeCommand.PERMISSION_CHECK.check(this.minecraft.player.permissions())) {
-          //     this.minecraft.gui.setScreen(new GameModeSwitcherScreen());
-          //   } else {
-          //     this.debugFeedbackTranslated("debug.gamemodes.error");
-          //   }
-          //   debugAction = true;
-          // }
-          // ```
-          KeyStateTracker.of(
-                  minecraft.options.keyTogglePerspective,
-                  builder ->
-                      builder
-                          .setHoldTicks(3)
-                          .onPress(() -> manager.wheel().cycleForward())
-                          .onHoldStart(() -> WheelMenuManager.getInstance().open())
-                          .onHoldStop(() -> WheelMenuManager.getInstance().closeWithSelection()))
-              .tick()
-              .drain();
-        });
-
-    GameClientEvents.RENDER_GUI_OVERLAY.on(
-        ctx -> {
-          if (!PerspectiveAPI.isEnabled()) return;
-
-          // TODO add `Minecraft` to GuiRenderContext
-          var minecraft = Minecraft.getInstance();
-          if (minecraft == null) return;
-          if (minecraft.level == null) return;
-
-          WheelMenuRenderer.getInstance()
-              .render(ctx.drawContext, ctx.screenWidth, ctx.screenHeight);
-        });
-
-    GameClientEvents.MOUSE_INPUT.on(
-        ctx -> {
-          if (!PerspectiveAPI.isEnabled()) return;
-          WheelMenuManager wmm = WheelMenuManager.getInstance();
-          if (!wmm.isOpened()) return;
-
-          switch (ctx.type) {
-            case BUTTON -> wmm.onMouseButton(ctx.button, ctx.action);
-            case SCROLL -> wmm.onMouseScroll(ctx.scrollDelta);
-            case MOVE -> wmm.onMouseMove(ctx.mouseX, ctx.mouseY);
-          }
-          // Always consume input when the wheel menu is open
-          ctx.consumed = true;
-        });
-
-    // endregion
-
     GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
         ignored -> {
           if (!PerspectiveAPI.isEnabled()) return;
-          manager.overrides().clearExcept(PerspectiveWheelImpl.KEY);
+          manager.overrides().clearExcept(PerspectiveSwitcherManager.KEY);
         });
 
     // region camera

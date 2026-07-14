@@ -5,12 +5,12 @@ import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.Transition;
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveWheelImpl;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public final class PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManager.class);
   public static final PerspectiveManager INSTANCE =
-      new PerspectiveManager(VanillaPerspective.FIRST_PERSON);
+      new PerspectiveManager(VanillaPerspective.FIRST_PERSON, new DefaultSwitcher());
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
@@ -62,10 +62,11 @@ public final class PerspectiveManager {
         () -> LOGGER.warn("'{}' threw an exception during {}.", id, phase, throwable));
   }
 
-  private PerspectiveManager(@NonNull Perspective defaultPerspective) {
+  private PerspectiveManager(
+      @NonNull Perspective defaultPerspective, @NonNull PerspectiveSwitcher defaultSwitcher) {
     Objects.requireNonNull(defaultPerspective);
     registry = new PerspectiveRegistryImpl(defaultPerspective);
-    wheel = new PerspectiveWheelImpl(registry);
+    switchers = new PerspectiveSwitcherManager(defaultSwitcher);
     modifiers =
         new PerspectiveModifierChainImpl(
             (modifier, e) -> reportException(modifier, "applyTransform", e),
@@ -76,7 +77,7 @@ public final class PerspectiveManager {
     currentPerspective = defaultPerspective;
 
     overrides = new PerspectiveOverrideChainImpl(registry);
-    overrides.push(PerspectiveWheelImpl.KEY, Integer.MIN_VALUE, wheel);
+    overrides.push(PerspectiveSwitcherManager.KEY, Integer.MIN_VALUE, switchers);
 
     onCurrentPerspectiveChanged.on(
         () -> {
@@ -97,7 +98,7 @@ public final class PerspectiveManager {
   private final PerspectiveRegistryImpl registry;
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
-  private final PerspectiveWheelImpl wheel;
+  private final PerspectiveSwitcherManager switchers;
   private final TransitionImpl transition = new TransitionImpl();
 
   public @NonNull PerspectiveRegistry registry() {
@@ -116,8 +117,8 @@ public final class PerspectiveManager {
     return overrides;
   }
 
-  public @NonNull PerspectiveWheelImpl wheel() {
-    return wheel;
+  public @NonNull PerspectiveSwitcherManager switchers() {
+    return switchers;
   }
 
   // endregion
@@ -131,6 +132,9 @@ public final class PerspectiveManager {
   }
 
   public void clientTick(Minecraft minecraft) {
+    // tick switchers
+    switchers.clientTick();
+
     // Resolve and update current id from override chain
     Identifier resolvedId = overrides.get();
     if (resolvedId == null) {
@@ -158,10 +162,6 @@ public final class PerspectiveManager {
       current.clientTickWhenActive(minecraft);
     } catch (Throwable e) {
       reportException(current, "clientTick", e);
-    }
-
-    if (!current.isAvailable()) {
-      wheel.cycleBackward();
     }
   }
 

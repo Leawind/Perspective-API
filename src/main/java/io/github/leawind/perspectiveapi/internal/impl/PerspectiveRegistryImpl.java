@@ -3,7 +3,6 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,17 +21,11 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   private final @NonNull Identifier defaultId;
 
-  // region internal events
-
-  private final List<Runnable> updateListeners = new ArrayList<>();
-
-  // endregion
-
   public PerspectiveRegistryImpl(@NonNull Perspective defaultPerspective) {
     register(defaultPerspective);
     defaultId = defaultPerspective.id();
   }
-  
+
   @Override
   public @NonNull PerspectiveRegistry register(@NonNull Perspective perspective) {
     var id = perspective.id();
@@ -41,7 +34,6 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       perspectives.put(id, perspective);
       rebuildSnapshot();
     }
-    updateListeners.forEach(Runnable::run);
     return this;
   }
 

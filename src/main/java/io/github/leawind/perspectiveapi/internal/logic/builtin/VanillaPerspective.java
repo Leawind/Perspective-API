@@ -13,29 +13,36 @@ public class VanillaPerspective implements Perspective {
   private static final String ICON_SUFFIX = ".png";
 
   public static final VanillaPerspective FIRST_PERSON =
-      new VanillaPerspective("first_person", CameraType.FIRST_PERSON);
+      new VanillaPerspective("first_person", CameraType.FIRST_PERSON, 0);
   public static final VanillaPerspective THIRD_PERSON_BACK =
-      new VanillaPerspective("third_person_back", CameraType.THIRD_PERSON_BACK);
+      new VanillaPerspective("third_person_back", CameraType.THIRD_PERSON_BACK, 1);
   public static final VanillaPerspective THIRD_PERSON_FRONT =
-      new VanillaPerspective("third_person_front", CameraType.THIRD_PERSON_FRONT);
+      new VanillaPerspective("third_person_front", CameraType.THIRD_PERSON_FRONT, 2);
 
   private final Identifier id;
   private final CameraType cameraType;
   private final Identifier icon;
+  private final int priority;
 
-  private VanillaPerspective(String name, CameraType cameraType) {
-    this(Bridge.createIdentifier("minecraft", name), cameraType);
+  private VanillaPerspective(String name, CameraType cameraType, int priority) {
+    this(Bridge.createIdentifier("minecraft", name), cameraType, priority);
   }
 
-  protected VanillaPerspective(Identifier id, CameraType cameraType) {
+  protected VanillaPerspective(Identifier id, CameraType cameraType, int priority) {
     this.id = id;
     this.cameraType = cameraType;
     this.icon = Bridge.createIdentifier(ICON_NAMESPACE, ICON_DIR + id.getPath() + ICON_SUFFIX);
+    this.priority = priority;
   }
 
   @Override
   public @Nullable Identifier icon() {
     return icon;
+  }
+
+  @Override
+  public int priority() {
+    return priority;
   }
 
   @Override

@@ -28,9 +28,6 @@ public final class PerspectiveApiState {
                       Identifier.CODEC
                           .optionalFieldOf("manager.current")
                           .forGetter(s -> Optional.ofNullable(s.managerCurrent)),
-                      PerspectiveWheelState.CODEC
-                          .optionalFieldOf("wheel")
-                          .forGetter(s -> Optional.ofNullable(s.wheel)),
                       Codec.DOUBLE
                           .optionalFieldOf("transition.duration_ms", 300.0)
                           .forGetter(s -> s.transitionDurationMs))
@@ -38,19 +35,14 @@ public final class PerspectiveApiState {
 
   private final boolean enabled;
   private final @Nullable Identifier managerCurrent;
-  private final @Nullable PerspectiveWheelState wheel;
   private final double transitionDurationMs;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveApiState(
-      boolean enabled,
-      Optional<Identifier> managerCurrent,
-      Optional<PerspectiveWheelState> wheel,
-      double transitionDurationMs) {
+      boolean enabled, Optional<Identifier> managerCurrent, double transitionDurationMs) {
 
     this.enabled = enabled;
     this.managerCurrent = managerCurrent.orElse(null);
-    this.wheel = wheel.orElse(null);
     this.transitionDurationMs = transitionDurationMs;
   }
 
@@ -60,13 +52,12 @@ public final class PerspectiveApiState {
     if (!(o instanceof PerspectiveApiState that)) return false;
     return enabled == that.enabled
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
-        && Objects.equals(managerCurrent, that.managerCurrent)
-        && Objects.equals(wheel, that.wheel);
+        && Objects.equals(managerCurrent, that.managerCurrent);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, managerCurrent, wheel, transitionDurationMs);
+    return Objects.hash(enabled, managerCurrent, transitionDurationMs);
   }
 
   // endregion
@@ -80,10 +71,6 @@ public final class PerspectiveApiState {
       PerspectiveManager.INSTANCE.setCurrentId(managerCurrent);
     }
 
-    if (wheel != null) {
-      wheel.apply();
-    }
-
     PerspectiveAPI.getTransition().setDurationMs(transitionDurationMs);
   }
 
@@ -91,7 +78,6 @@ public final class PerspectiveApiState {
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManager.INSTANCE.getCurrent().id()),
-        Optional.of(PerspectiveWheelState.extract()),
         PerspectiveAPI.getTransition().getDurationMs());
   }
 

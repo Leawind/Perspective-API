@@ -24,6 +24,16 @@ public interface Perspective extends PerspectiveModifier {
   /// Corresponding camera type for this perspective.
   @NonNull CameraType cameraType();
 
+  @Deprecated
+  default boolean isSwitchable() {
+    return true;
+  }
+
+  @Deprecated
+  default int priority() {
+    return 0;
+  }
+
   /// Returns the icon resource for this perspective.
   ///
   /// The returned identifier points to a texture resource that will be displayed in the wheel menu
@@ -68,7 +78,8 @@ public interface Perspective extends PerspectiveModifier {
   /// Returns whether this perspective is currently available to remain active.
   ///
   /// If `false`, the manager will automatically cycle away from this perspective,
-  /// and it will be skipped by the {@link PerspectiveWheel} and {@link PerspectiveOverrideChain}.
+  /// and it will be skipped by the {@link PerspectiveSwitcher} and {@link
+  // PerspectiveOverrideChain}.
   ///
   /// ### ⚠️ Deadlock Warning
   /// If this method returns a cached value, do NOT update the cache in
