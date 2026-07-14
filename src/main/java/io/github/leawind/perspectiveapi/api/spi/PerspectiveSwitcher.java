@@ -2,7 +2,6 @@ package io.github.leawind.perspectiveapi.api.spi;
 
 import java.util.List;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -21,9 +20,9 @@ public interface PerspectiveSwitcher {
 
   void onDeactivated(Context context);
 
-  @Nullable Identifier getSelected();
+  @Nullable String getSelected();
 
   interface Context {
-    List<Identifier> getSwitchable();
+    List<String> getSwitchable();
   }
 }

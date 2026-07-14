@@ -19,7 +19,6 @@ import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
@@ -36,7 +35,7 @@ public final class PerspectiveManager {
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
-  private volatile @NonNull Identifier currentId;
+  private volatile @NonNull String currentId;
 
   /// Updated on client tick
   private volatile @NonNull Perspective currentPerspective;
@@ -56,7 +55,7 @@ public final class PerspectiveManager {
 
   private void reportException(
       @NonNull PerspectiveModifier modifier, String phase, Throwable throwable) {
-    String id = modifier.id().toString();
+    String id = modifier.id();
     throttledAction.run(
         id + ":" + phase + ":exception",
         () -> LOGGER.warn("'{}' threw an exception during {}.", id, phase, throwable));
@@ -136,7 +135,7 @@ public final class PerspectiveManager {
     switchers.clientTick();
 
     // Resolve and update current id from override chain
-    Identifier resolvedId = overrides.get();
+    String resolvedId = overrides.get();
     if (resolvedId == null) {
       resolvedId = registry.getDefault().id();
     }
@@ -224,7 +223,7 @@ public final class PerspectiveManager {
     boolean posInvalid = !Sanitizer.isFinite(tempPosition);
     boolean rotInvalid = !Sanitizer.isFinite(tempRotation);
     if (posInvalid || rotInvalid) {
-      String id = currentPerspective.id().toString();
+      String id = currentPerspective.id();
       throttledAction.run(
           id + ":applyTransform:invalid",
           () ->
@@ -290,7 +289,7 @@ public final class PerspectiveManager {
     boolean fovInvalid = !Sanitizer.isFinite(fov) || fov < 0.0f || fov > 180.0f;
     if (fovInvalid) {
       fov = vanillaFov;
-      String id = current.id().toString();
+      String id = current.id();
       throttledAction.run(
           id + ":applyFov:invalid",
           () ->
@@ -324,7 +323,7 @@ public final class PerspectiveManager {
 
   // endregion
 
-  public void setCurrentId(@NonNull Identifier id) {
+  public void setCurrentId(@NonNull String id) {
     currentId = id;
   }
 }

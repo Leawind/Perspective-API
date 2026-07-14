@@ -25,12 +25,12 @@ class PerspectiveOverrideChainTest {
       }
 
       @Override
-      public boolean contains(@Nullable Identifier id) {
-        return id != null && "test".equals(id.getNamespace());
+      public boolean contains(@Nullable String id) {
+        return id != null && id.startsWith("test.");
       }
 
       @Override
-      public @Nullable Perspective get(@Nullable Identifier id) {
+      public @Nullable Perspective get(@Nullable String id) {
         return null;
       }
 
@@ -40,7 +40,7 @@ class PerspectiveOverrideChainTest {
       }
 
       @Override
-      public @Nullable Perspective getOrDefault(@NonNull Identifier id) {
+      public @Nullable Perspective getOrDefault(@Nullable String id) {
         return null;
       }
 
@@ -57,10 +57,10 @@ class PerspectiveOverrideChainTest {
   }
 
   private static Perspective perspective(String path) {
-    Identifier perspectiveId = id(path);
+    String perspectiveId = "test." + path;
     return new Perspective() {
       @Override
-      public @NonNull Identifier id() {
+      public @NonNull String id() {
         return perspectiveId;
       }
 
@@ -81,19 +81,18 @@ class PerspectiveOverrideChainTest {
   void pushAndHas() {
     Identifier key = id("a");
     assertFalse(chain.has(key));
-    chain.push(key, 10, () -> key);
+    chain.push(key, 10, () -> "test.a");
     assertTrue(chain.has(key));
   }
 
   @Test
   void pushReplacesSameKey() {
     Identifier key = id("a");
-    Identifier result = id("b");
-    chain.push(key, 10, () -> key);
-    chain.push(key, 20, () -> result);
+    chain.push(key, 10, () -> "test.a");
+    chain.push(key, 20, () -> "test.b");
 
-    Identifier resolved = chain.get();
-    assertEquals(result, resolved);
+    String resolved = chain.get();
+    assertEquals("test.b", resolved);
   }
 
   // ========== pop ==========
@@ -101,7 +100,7 @@ class PerspectiveOverrideChainTest {
   @Test
   void popRemovesEntry() {
     Identifier key = id("a");
-    chain.push(key, 10, () -> key);
+    chain.push(key, 10, () -> "test.a");
     assertTrue(chain.has(key));
     chain.pop(key);
     assertFalse(chain.has(key));
@@ -117,8 +116,8 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void clearRemovesAllEntries() {
-    chain.push(id("a"), 10, () -> id("a"));
-    chain.push(id("b"), 5, () -> id("b"));
+    chain.push(id("a"), 10, () -> "test.a");
+    chain.push(id("b"), 5, () -> "test.b");
     chain.clear();
     assertFalse(chain.has(id("a")));
     assertFalse(chain.has(id("b")));
@@ -131,9 +130,9 @@ class PerspectiveOverrideChainTest {
     Identifier a = id("a");
     Identifier b = id("b");
     Identifier c = id("c");
-    chain.push(a, 10, () -> a);
-    chain.push(b, 5, () -> b);
-    chain.push(c, 1, () -> c);
+    chain.push(a, 10, () -> "test.a");
+    chain.push(b, 5, () -> "test.b");
+    chain.push(c, 1, () -> "test.c");
 
     chain.clearExcept(a, c);
 
@@ -152,27 +151,27 @@ class PerspectiveOverrideChainTest {
   @Test
   void computeIdSingleEntry() {
     Identifier key = id("a");
-    chain.push(key, 10, () -> key);
-    assertEquals(key, chain.get());
+    chain.push(key, 10, () -> "test.a");
+    assertEquals("test.a", chain.get());
   }
 
   @Test
   void computeIdReturnsHighestPriorityFirst() {
     Identifier low = id("low");
     Identifier high = id("high");
-    chain.push(low, 1, () -> low);
-    chain.push(high, 100, () -> high);
+    chain.push(low, 1, () -> "test.low");
+    chain.push(high, 100, () -> "test.high");
 
-    assertEquals(high, chain.get());
+    assertEquals("test.high", chain.get());
   }
 
   @Test
   void computeIdSkipsNullSupplier() {
     Identifier fallback = id("fallback");
     chain.push(id("null_supplier"), 100, () -> null);
-    chain.push(fallback, 1, () -> fallback);
+    chain.push(fallback, 1, () -> "test.fallback");
 
-    assertEquals(fallback, chain.get());
+    assertEquals("test.fallback", chain.get());
   }
 
   @Test
@@ -187,33 +186,33 @@ class PerspectiveOverrideChainTest {
     Identifier first = id("first");
     Identifier second = id("second");
     Identifier third = id("third");
-    chain.push(third, 1, () -> third);
-    chain.push(first, 100, () -> first);
-    chain.push(second, 50, () -> second);
+    chain.push(third, 1, () -> "test.third");
+    chain.push(first, 100, () -> "test.first");
+    chain.push(second, 50, () -> "test.second");
 
-    assertEquals(first, chain.get());
+    assertEquals("test.first", chain.get());
 
     chain.pop(first);
-    assertEquals(second, chain.get());
+    assertEquals("test.second", chain.get());
 
     chain.pop(second);
-    assertEquals(third, chain.get());
+    assertEquals("test.third", chain.get());
   }
 
   @Test
   void computeIdAfterPop() {
     Identifier a = id("a");
     Identifier b = id("b");
-    chain.push(a, 10, () -> a);
-    chain.push(b, 5, () -> b);
+    chain.push(a, 10, () -> "test.a");
+    chain.push(b, 5, () -> "test.b");
 
     chain.pop(a);
-    assertEquals(b, chain.get());
+    assertEquals("test.b", chain.get());
   }
 
   @Test
   void computeIdAfterClear() {
-    chain.push(id("a"), 10, () -> id("a"));
+    chain.push(id("a"), 10, () -> "test.a");
     chain.clear();
     assertNull(chain.get());
   }
@@ -222,11 +221,11 @@ class PerspectiveOverrideChainTest {
   void pushSamePriorityMaintainsInsertionOrder() {
     Identifier first = id("first");
     Identifier second = id("second");
-    chain.push(first, 10, () -> first);
-    chain.push(second, 10, () -> second);
+    chain.push(first, 10, () -> "test.first");
+    chain.push(second, 10, () -> "test.second");
 
     // Both have same priority; first pushed should be evaluated first
-    assertEquals(first, chain.get());
+    assertEquals("test.first", chain.get());
   }
 
   // ========== null safety ==========

@@ -9,7 +9,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
-import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
@@ -18,7 +17,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
 
   /// Represents a registered modifier with its priority and key.
   private record ModifierEntry(
-      @NonNull Identifier key, int priority, @NonNull PerspectiveModifier modifier) {
+      @NonNull String key, int priority, @NonNull PerspectiveModifier modifier) {
     static final Comparator<ModifierEntry> COMPARATOR =
         Comparator.comparingInt(ModifierEntry::priority);
   }
@@ -36,8 +35,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
   }
 
   @Override
-  public void register(
-      @NonNull Identifier key, int priority, @NonNull PerspectiveModifier modifier) {
+  public void register(@NonNull String key, int priority, @NonNull PerspectiveModifier modifier) {
     Objects.requireNonNull(key);
     Objects.requireNonNull(modifier);
     synchronized (this) {
@@ -50,7 +48,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
   }
 
   @Override
-  public void unregister(@NonNull Identifier key) {
+  public void unregister(@NonNull String key) {
     Objects.requireNonNull(key);
     synchronized (this) {
       List<ModifierEntry> newList = new ArrayList<>(entries);

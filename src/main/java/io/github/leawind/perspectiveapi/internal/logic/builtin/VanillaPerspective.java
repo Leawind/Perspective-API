@@ -13,25 +13,21 @@ public class VanillaPerspective implements Perspective {
   private static final String ICON_SUFFIX = ".png";
 
   public static final VanillaPerspective FIRST_PERSON =
-      new VanillaPerspective("first_person", CameraType.FIRST_PERSON, 0);
+      new VanillaPerspective("minecraft.first_person", CameraType.FIRST_PERSON, 0);
   public static final VanillaPerspective THIRD_PERSON_BACK =
-      new VanillaPerspective("third_person_back", CameraType.THIRD_PERSON_BACK, 1);
+      new VanillaPerspective("minecraft.third_person_back", CameraType.THIRD_PERSON_BACK, 1);
   public static final VanillaPerspective THIRD_PERSON_FRONT =
-      new VanillaPerspective("third_person_front", CameraType.THIRD_PERSON_FRONT, 2);
+      new VanillaPerspective("minecraft.third_person_front", CameraType.THIRD_PERSON_FRONT, 2);
 
-  private final Identifier id;
+  private final String id;
   private final CameraType cameraType;
   private final Identifier icon;
   private final int priority;
 
-  private VanillaPerspective(String name, CameraType cameraType, int priority) {
-    this(Bridge.createIdentifier("minecraft", name), cameraType, priority);
-  }
-
-  protected VanillaPerspective(Identifier id, CameraType cameraType, int priority) {
+  protected VanillaPerspective(String id, CameraType cameraType, int priority) {
     this.id = id;
     this.cameraType = cameraType;
-    this.icon = Bridge.createIdentifier(ICON_NAMESPACE, ICON_DIR + id.getPath() + ICON_SUFFIX);
+    this.icon = Bridge.createIdentifier(ICON_NAMESPACE, ICON_DIR + id + ICON_SUFFIX);
     this.priority = priority;
   }
 
@@ -46,7 +42,7 @@ public class VanillaPerspective implements Perspective {
   }
 
   @Override
-  public final @NonNull Identifier id() {
+  public final @NonNull String id() {
     return id;
   }
 

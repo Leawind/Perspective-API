@@ -6,13 +6,12 @@ import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 class DefaultSwitcher implements PerspectiveSwitcher {
-  private volatile List<Identifier> list = new ArrayList<>();
-  private volatile @Nullable Identifier selected = null;
+  private volatile List<String> list = new ArrayList<>();
+  private volatile @Nullable String selected = null;
 
   @Override
   public void init() {
@@ -50,7 +49,7 @@ class DefaultSwitcher implements PerspectiveSwitcher {
   public void onDeactivated(Context context) {}
 
   @Override
-  public @Nullable Identifier getSelected() {
+  public @Nullable String getSelected() {
     return selected;
   }
 
@@ -58,7 +57,7 @@ class DefaultSwitcher implements PerspectiveSwitcher {
   private synchronized void cycleForward() {
     if (list.isEmpty()) return;
 
-    Identifier current = getSelected();
+    String current = getSelected();
     int idx = list.indexOf(current);
     int start = idx < 0 ? 0 : (idx + 1) % list.size();
 
@@ -66,7 +65,7 @@ class DefaultSwitcher implements PerspectiveSwitcher {
     int size = list.size();
     int i = start;
     do {
-      Identifier next = list.get(i);
+      String next = list.get(i);
       var p = PerspectiveManager.INSTANCE.registry().get(next);
       if (p != null && p.isAvailable()) {
         selected = next;
@@ -81,14 +80,14 @@ class DefaultSwitcher implements PerspectiveSwitcher {
   private synchronized void cycleBackward() {
     if (list.isEmpty()) return;
 
-    Identifier current = getSelected();
+    String current = getSelected();
     int idx = list.indexOf(current);
     int size = list.size();
     int i = idx < 0 ? size - 1 : (idx - 1 + size) % size;
 
     int attempts = 0;
     do {
-      Identifier next = list.get(i);
+      String next = list.get(i);
       var p = PerspectiveManager.INSTANCE.registry().get(next);
       if (p != null && p.isAvailable()) {
         selected = next;

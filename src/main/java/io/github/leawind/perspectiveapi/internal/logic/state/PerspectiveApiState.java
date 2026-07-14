@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
 public final class PerspectiveApiState {
@@ -25,7 +24,7 @@ public final class PerspectiveApiState {
           inst ->
               inst.group(
                       Codec.BOOL.optionalFieldOf("enabled", true).forGetter((s) -> s.enabled),
-                      Identifier.CODEC
+                      Codec.STRING
                           .optionalFieldOf("manager.current")
                           .forGetter(s -> Optional.ofNullable(s.managerCurrent)),
                       Codec.DOUBLE
@@ -34,12 +33,12 @@ public final class PerspectiveApiState {
                   .apply(inst, PerspectiveApiState::new));
 
   private final boolean enabled;
-  private final @Nullable Identifier managerCurrent;
+  private final @Nullable String managerCurrent;
   private final double transitionDurationMs;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveApiState(
-      boolean enabled, Optional<Identifier> managerCurrent, double transitionDurationMs) {
+      boolean enabled, Optional<String> managerCurrent, double transitionDurationMs) {
 
     this.enabled = enabled;
     this.managerCurrent = managerCurrent.orElse(null);

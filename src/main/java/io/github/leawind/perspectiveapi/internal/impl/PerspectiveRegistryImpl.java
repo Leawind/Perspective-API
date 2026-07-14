@@ -6,7 +6,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -15,11 +14,11 @@ import org.slf4j.LoggerFactory;
 public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveAPI.MOD_NAME);
 
-  private final Map<Identifier, Perspective> perspectives = new ConcurrentHashMap<>();
+  private final Map<String, Perspective> perspectives = new ConcurrentHashMap<>();
 
   private volatile List<Perspective> allPerspectivesSnapshot = List.of();
 
-  private final @NonNull Identifier defaultId;
+  private final @NonNull String defaultId;
 
   public PerspectiveRegistryImpl(@NonNull Perspective defaultPerspective) {
     register(defaultPerspective);
@@ -38,12 +37,12 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   }
 
   @Override
-  public boolean contains(@Nullable Identifier id) {
+  public boolean contains(@Nullable String id) {
     return get(id) != null;
   }
 
   @Override
-  public @Nullable Perspective get(@Nullable Identifier id) {
+  public @Nullable Perspective get(@Nullable String id) {
     if (id == null) {
       return null;
     }
@@ -56,7 +55,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   }
 
   @Override
-  public @NonNull Perspective getOrDefault(@Nullable Identifier id) {
+  public @NonNull Perspective getOrDefault(@Nullable String id) {
     if (id == null) {
       return getDefault();
     }

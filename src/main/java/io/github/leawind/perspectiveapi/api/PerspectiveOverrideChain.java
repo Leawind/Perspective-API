@@ -9,7 +9,7 @@ import org.jspecify.annotations.NonNull;
 /// Entries are evaluated in descending order of priority. The chain resolves to the first
 /// non-null identifier that passes the provided validator.
 public interface PerspectiveOverrideChain {
-  void push(@NonNull Identifier key, int priority, @NonNull Supplier<Identifier> supplier);
+  void push(@NonNull Identifier key, int priority, @NonNull Supplier<String> supplier);
 
   /// Removes the override entry with the given key.
   void pop(@NonNull Identifier key);

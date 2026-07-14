@@ -77,10 +77,6 @@ public interface Perspective extends PerspectiveModifier {
 
   /// Returns whether this perspective is currently available to remain active.
   ///
-  /// If `false`, the manager will automatically cycle away from this perspective,
-  /// and it will be skipped by the {@link PerspectiveSwitcher} and {@link
-  // PerspectiveOverrideChain}.
-  ///
   /// ### ⚠️ Deadlock Warning
   /// If this method returns a cached value, do NOT update the cache in
   /// {@link #clientTickWhenActive} or {@link #renderTickWhenActive} to make it available again.

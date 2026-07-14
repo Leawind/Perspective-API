@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 
 /// Manages an ordered chain of {@link PerspectiveModifier}s.
@@ -13,8 +12,8 @@ public interface PerspectiveModifierChain {
   ///
   /// If an entry with the same key already exists, it is replaced.
   /// Lower priority values are applied first.
-  void register(@NonNull Identifier key, int priority, @NonNull PerspectiveModifier modifier);
+  void register(@NonNull String key, int priority, @NonNull PerspectiveModifier modifier);
 
   /// Removes the modifier entry with the given key.
-  void unregister(@NonNull Identifier key);
+  void unregister(@NonNull String key);
 }

@@ -14,7 +14,7 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class PerspectiveSwitcherManager implements Supplier<Identifier> {
+public class PerspectiveSwitcherManager implements Supplier<String> {
   public static final Identifier KEY =
       Bridge.createIdentifier(PerspectiveAPI.MOD_ID, "builtin_switcher_manager");
   private final Collection<PerspectiveSwitcher> switchers = new HashSet<>();
@@ -57,7 +57,7 @@ public class PerspectiveSwitcherManager implements Supplier<Identifier> {
   }
 
   @Override
-  public @Nullable Identifier get() {
+  public @Nullable String get() {
     return getSwitcher().getSelected();
   }
 
@@ -73,14 +73,14 @@ public class PerspectiveSwitcherManager implements Supplier<Identifier> {
 
   private static class SwitcherContext implements PerspectiveSwitcher.Context {
 
-    private List<Identifier> switchable;
+    private List<String> switchable;
 
-    void setup(List<Identifier> switchable) {
+    void setup(List<String> switchable) {
       this.switchable = switchable;
     }
 
     @Override
-    public List<Identifier> getSwitchable() {
+    public List<String> getSwitchable() {
       return switchable;
     }
   }

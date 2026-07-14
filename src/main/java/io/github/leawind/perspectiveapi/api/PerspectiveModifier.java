@@ -2,7 +2,6 @@ package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
@@ -16,25 +15,23 @@ public interface PerspectiveModifier {
 
   /// Returns the unique identifier of this perspective.
   ///
-  /// Recommended format: `<modid>:<path>`
+  /// Recommended format: `<modid>.<path>`
   ///
-  /// Example: `examplemod:free_camera`
-  @NonNull Identifier id();
+  /// Example: `examplemod.free_camera`
+  @NonNull String id();
 
   /// ```
   /// perspective.<mod_id>.<id>.name
   /// ```
   default @NonNull Component getNameComponent() {
-    return Component.translatable(
-        "perspective." + id().getNamespace() + "." + id().getPath() + ".name");
+    return Component.translatable("perspective." + id() + ".name");
   }
 
   /// ```
   /// perspective.<mod_id>.<id>.description
   /// ```
   default @NonNull Component getDescriptionComponent() {
-    return Component.translatable(
-        "perspective." + id().getNamespace() + "." + id().getPath() + ".description");
+    return Component.translatable("perspective." + id() + ".description");
   }
 
   /// Returns whether this modifier is currently available.

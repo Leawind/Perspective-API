@@ -1,7 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 
 /// Entry point for the Perspective API mod.
@@ -46,7 +45,7 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.getCurrent();
   }
 
-  public static boolean isCurrent(@NonNull Identifier id) {
+  public static boolean isCurrent(@NonNull String id) {
     return getCurrentPerspective().id().equals(id);
   }
 }
