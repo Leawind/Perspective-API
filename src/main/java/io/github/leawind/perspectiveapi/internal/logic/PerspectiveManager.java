@@ -1,7 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.Transition;
@@ -53,9 +52,7 @@ public final class PerspectiveManager {
 
   // endregion
 
-  private void reportException(
-      @NonNull PerspectiveModifier modifier, String phase, Throwable throwable) {
-    String id = modifier.id();
+  private void reportException(String id, String phase, Throwable throwable) {
     throttledAction.run(
         id + ":" + phase + ":exception",
         () -> LOGGER.warn("'{}' threw an exception during {}.", id, phase, throwable));
@@ -68,7 +65,7 @@ public final class PerspectiveManager {
     switchers = new PerspectiveSwitcherManager(defaultSwitcher);
     modifiers =
         new PerspectiveModifierChainImpl(
-            (modifier, e) -> reportException(modifier, "applyTransform", e),
+            (modifier, e) -> reportException(modifier.id(), "applyTransform", e),
             (modifier, msg) ->
                 throttledAction.run(
                     modifier.id() + ":applyFov:invalid", () -> LOGGER.warn("{}", msg)));
@@ -160,7 +157,7 @@ public final class PerspectiveManager {
     try {
       current.clientTickWhenActive(minecraft);
     } catch (Throwable e) {
-      reportException(current, "clientTick", e);
+      reportException(currentId, "clientTick", e);
     }
   }
 
@@ -200,7 +197,7 @@ public final class PerspectiveManager {
     try {
       currentPerspective.renderTickWhenActive(renderTickContext);
     } catch (Throwable e) {
-      reportException(currentPerspective, "renderTick", e);
+      reportException(currentId, "renderTick", e);
     }
 
     // Extract current vanilla state and backup
@@ -213,7 +210,7 @@ public final class PerspectiveManager {
     try {
       currentPerspective.applyTransform(renderTickContext, tempPosition, tempRotation);
     } catch (Throwable e) {
-      reportException(currentPerspective, "applyTransform", e);
+      reportException(currentId, "applyTransform", e);
     }
 
     // 2. Apply Modifiers (Further mutates the target state BEFORE transition)
@@ -223,13 +220,12 @@ public final class PerspectiveManager {
     boolean posInvalid = !Sanitizer.isFinite(tempPosition);
     boolean rotInvalid = !Sanitizer.isFinite(tempRotation);
     if (posInvalid || rotInvalid) {
-      String id = currentPerspective.id();
       throttledAction.run(
-          id + ":applyTransform:invalid",
+          currentId + ":applyTransform:invalid",
           () ->
               LOGGER.warn(
                   "Perspective '{}' provided invalid state during applyTransform. Falling back to vanilla. pos: {}, rot: {}",
-                  id,
+                  currentId,
                   tempPosition,
                   tempRotation));
 
@@ -282,20 +278,19 @@ public final class PerspectiveManager {
     try {
       fov = current.applyFov(renderTickContext, vanillaFov);
     } catch (Throwable e) {
-      reportException(current, "applyFov", e);
+      reportException(currentId, "applyFov", e);
       fov = vanillaFov;
     }
     // Sanitize
     boolean fovInvalid = !Sanitizer.isFinite(fov) || fov < 0.0f || fov > 180.0f;
     if (fovInvalid) {
       fov = vanillaFov;
-      String id = current.id();
       throttledAction.run(
-          id + ":applyFov:invalid",
+          currentId + ":applyFov:invalid",
           () ->
               LOGGER.warn(
                   "Perspective '{}' returned invalid FOV during applyFov. Falling back to vanilla.",
-                  id));
+                  currentId));
     }
 
     // Apply Modifiers

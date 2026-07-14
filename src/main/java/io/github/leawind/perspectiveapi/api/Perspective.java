@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
@@ -18,10 +19,34 @@ import org.jspecify.annotations.Nullable;
 ///
 /// Perspective instances are owned by the {@link PerspectiveRegistry}. Implementations should not
 /// be stored or referenced directly anywhere else.
-public interface Perspective extends PerspectiveModifier {
+public interface Perspective {
   // region meta info
+  /// Returns the unique identifier of this perspective.
+  ///
+  /// Recommended format: `<modid>.<path>`
+  ///
+  /// Example: `examplemod.free_camera`
+  @Deprecated
+  @NonNull String id();
+
+  /// ```
+  /// perspective.<mod_id>.<id>.name
+  /// ```
+  @Deprecated
+  default @NonNull Component getNameComponent() {
+    return Component.translatable("perspective." + id() + ".name");
+  }
+
+  /// ```
+  /// perspective.<mod_id>.<id>.description
+  /// ```
+  @Deprecated
+  default @NonNull Component getDescriptionComponent() {
+    return Component.translatable("perspective." + id() + ".description");
+  }
 
   /// Corresponding camera type for this perspective.
+  @Deprecated
   @NonNull CameraType cameraType();
 
   @Deprecated
@@ -54,6 +79,7 @@ public interface Perspective extends PerspectiveModifier {
   /// - File location: `assets/example_mod/textures/perspective/example_view.png`
   ///
   /// @return the icon identifier points to a texture resource or `null`
+  @Deprecated
   default @Nullable Identifier icon() {
     return Bridge.createIdentifier("perspective_api", "textures/perspective/default.png");
   }
@@ -83,7 +109,6 @@ public interface Perspective extends PerspectiveModifier {
   /// Once unavailable, these callbacks stop being called.
   ///
   /// @return `true` if available, `false` to trigger an automatic switch.
-  @Override
   default boolean isAvailable() {
     return true;
   }
@@ -99,7 +124,6 @@ public interface Perspective extends PerspectiveModifier {
   /// @param rotation The vanilla camera rotation. Can be mutated.
   /// @apiNote The arguments `position` and `rotation` must not be stored or referenced outside this
   /// method call.
-  @Override
   default void applyTransform(
       @NonNull PerspectiveContext ctx, @NonNull Vector3d position, @NonNull Quaternionf rotation) {}
 
@@ -111,7 +135,6 @@ public interface Perspective extends PerspectiveModifier {
   /// @param ctx The context containing frame-specific data.
   /// @param vanillaFovDeg The vanilla camera FOV in degrees.
   /// @return The target FOV to be applied, in degrees.
-  @Override
   default float applyFov(@NonNull PerspectiveContext ctx, float vanillaFovDeg) {
     return vanillaFovDeg;
   }
