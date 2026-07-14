@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import org.jspecify.annotations.NonNull;
 
@@ -26,7 +27,7 @@ public final class PerspectiveAPI {
   }
 
   public static PerspectiveRegistry getRegistry() {
-    return PerspectiveManager.INSTANCE.registry();
+    return PerspectiveRegistryImpl.INSTANCE;
   }
 
   public static @NonNull Transition getTransition() {

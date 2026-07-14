@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.chat.Component;
@@ -66,7 +67,7 @@ class DefaultSwitcher implements PerspectiveSwitcher {
     int i = start;
     do {
       String next = list.get(i);
-      var p = PerspectiveManager.INSTANCE.registry().get(next);
+      var p = PerspectiveRegistryImpl.INSTANCE.get(next);
       if (p != null && p.isAvailable()) {
         selected = next;
         return;
@@ -88,7 +89,7 @@ class DefaultSwitcher implements PerspectiveSwitcher {
     int attempts = 0;
     do {
       String next = list.get(i);
-      var p = PerspectiveManager.INSTANCE.registry().get(next);
+      var p = PerspectiveRegistryImpl.INSTANCE.get(next);
       if (p != null && p.isAvailable()) {
         selected = next;
         return;

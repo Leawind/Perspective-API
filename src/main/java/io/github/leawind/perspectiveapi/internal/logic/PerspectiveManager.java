@@ -2,7 +2,6 @@ package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
-import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
@@ -61,7 +60,6 @@ public final class PerspectiveManager {
   private PerspectiveManager(
       @NonNull Perspective defaultPerspective, @NonNull PerspectiveSwitcher defaultSwitcher) {
     Objects.requireNonNull(defaultPerspective);
-    registry = new PerspectiveRegistryImpl(defaultPerspective);
     switchers = new PerspectiveSwitcherManager(defaultSwitcher);
     modifiers =
         new PerspectiveModifierChainImpl(
@@ -72,7 +70,7 @@ public final class PerspectiveManager {
     currentId = defaultPerspective.id();
     currentPerspective = defaultPerspective;
 
-    overrides = new PerspectiveOverrideChainImpl(registry);
+    overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
     overrides.push(PerspectiveSwitcherManager.KEY, Integer.MIN_VALUE, switchers);
 
     onCurrentPerspectiveChanged.on(
@@ -91,15 +89,10 @@ public final class PerspectiveManager {
   }
 
   // region components
-  private final PerspectiveRegistryImpl registry;
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
   private final PerspectiveSwitcherManager switchers;
   private final TransitionImpl transition = new TransitionImpl();
-
-  public @NonNull PerspectiveRegistry registry() {
-    return registry;
-  }
 
   public @NonNull Transition transition() {
     return transition;
@@ -134,12 +127,12 @@ public final class PerspectiveManager {
     // Resolve and update current id from override chain
     String resolvedId = overrides.get();
     if (resolvedId == null) {
-      resolvedId = registry.getDefault().id();
+      resolvedId = PerspectiveRegistryImpl.INSTANCE.getDefault().id();
     }
     currentId = resolvedId;
 
     // Resolve latest current perspective
-    Perspective current = registry.getOrDefault(currentId);
+    Perspective current = PerspectiveRegistryImpl.INSTANCE.getOrDefault(currentId);
 
     // If cached current is outdated, update the cache
     Perspective cachedCurrent = currentPerspective;

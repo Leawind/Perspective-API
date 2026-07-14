@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,6 +14,9 @@ import org.slf4j.LoggerFactory;
 
 public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveAPI.MOD_NAME);
+
+  public static final PerspectiveRegistryImpl INSTANCE =
+      new PerspectiveRegistryImpl(VanillaPerspective.FIRST_PERSON);
 
   private final Map<String, Perspective> perspectives = new ConcurrentHashMap<>();
 
