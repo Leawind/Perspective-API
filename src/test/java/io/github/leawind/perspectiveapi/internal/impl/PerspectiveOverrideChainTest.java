@@ -2,11 +2,9 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import java.util.List;
-import net.minecraft.client.CameraType;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -20,32 +18,12 @@ class PerspectiveOverrideChainTest {
   private static PerspectiveRegistry testRegistry() {
     return new PerspectiveRegistry() {
       @Override
-      public @NonNull PerspectiveRegistry register(@NonNull Perspective perspective) {
-        return this;
-      }
-
-      @Override
       public boolean contains(@Nullable String id) {
         return id != null && id.startsWith("test.");
       }
 
       @Override
-      public @Nullable Perspective get(@Nullable String id) {
-        return null;
-      }
-
-      @Override
-      public @NonNull Perspective getDefault() {
-        return perspective("default");
-      }
-
-      @Override
-      public @Nullable Perspective getOrDefault(@Nullable String id) {
-        return null;
-      }
-
-      @Override
-      public @NonNull List<Perspective> getAll() {
+      public @NonNull List<String> getAll() {
         return List.of();
       }
     };
@@ -54,21 +32,6 @@ class PerspectiveOverrideChainTest {
   @BeforeEach
   void beforeEach() {
     chain = new PerspectiveOverrideChainImpl(testRegistry());
-  }
-
-  private static Perspective perspective(String path) {
-    String perspectiveId = "test." + path;
-    return new Perspective() {
-      @Override
-      public @NonNull String id() {
-        return perspectiveId;
-      }
-
-      @Override
-      public @NonNull CameraType cameraType() {
-        return CameraType.FIRST_PERSON;
-      }
-    };
   }
 
   private static Identifier id(String path) {

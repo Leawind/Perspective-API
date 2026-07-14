@@ -1,102 +1,90 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
-import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 /// Represents a camera perspective that can be applied to the game camera.
 ///
 /// A Perspective acts as the foundational {@link PerspectiveModifier} that establishes
-/// the base camera state. Additionally, it provides metadata (ID, translation key),
-/// lifecycle callbacks, and a {@link CameraType} to instruct the vanilla rendering pipeline.
+/// the base camera state.
 ///
-/// Perspective instances are owned by the {@link PerspectiveRegistry}. Implementations should not
-/// be stored or referenced directly anywhere else.
+/// Perspective instances are discovered via {@link java.util.ServiceLoader} and registered
+/// by the {@link PerspectiveRegistry}. Implementations must be annotated with {@link Meta}.
+///
+/// @see PerspectiveMeta
 public interface Perspective {
-  // region meta info
-  /// Returns the unique identifier of this perspective.
-  ///
-  /// Recommended format: `<modid>.<path>`
-  ///
-  /// Example: `examplemod.free_camera`
-  @Deprecated
-  @NonNull String id();
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.TYPE)
+  @Documented
+  @interface Meta {
+    /// The unique identifier for this perspective.
+    ///
+    /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`).
+    String id();
 
-  /// ```
-  /// perspective.<mod_id>.<id>.name
-  /// ```
-  @Deprecated
-  default @NonNull Component getNameComponent() {
-    return Component.translatable("perspective." + id() + ".name");
+    /// The vanilla {@link CameraType} used as a fallback when this perspective
+    /// does not explicitly modify the camera transform or FOV.
+    CameraType cameraType() default CameraType.THIRD_PERSON_BACK;
+
+    /// The translation key for the perspective's display name.
+    ///
+    /// If left empty, it defaults to `perspective.<id>.name`.
+    ///
+    /// @see PerspectiveMeta#name()
+    String nameKey() default "";
+
+    /// The translation key for the perspective's description.
+    ///
+    /// If left empty, it defaults to `null`.
+    ///
+    /// @see PerspectiveMeta#description()
+    String descriptionKey() default "";
+
+    /// The string representation of the `Identifier` or `ResourceLocation` for the
+    /// perspective's icon texture.
+    ///
+    /// If left empty, it defaults to `null`.
+    ///
+    /// @see PerspectiveMeta#icon()
+    String icon() default "";
+
+    /// Whether this perspective is allowed to be manually selected by the player
+    /// via a {@link PerspectiveSwitcher}
+    ///
+    /// If set to `false`, the perspective can only be activated programmatically
+    /// through the {@link PerspectiveOverrideChain}.
+    boolean switchable() default true;
+
+    /// The sorting priority within the switcher.
+    ///
+    /// Lower values appear earlier in the cycle.
+    /// Only effective when `switchable` is `true`.
+    int priority() default 0;
   }
 
-  /// ```
-  /// perspective.<mod_id>.<id>.description
-  /// ```
-  @Deprecated
-  default @NonNull Component getDescriptionComponent() {
-    return Component.translatable("perspective." + id() + ".description");
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.TYPE)
+  @Documented
+  @interface Default {
+    int priority() default 0;
   }
-
-  /// Corresponding camera type for this perspective.
-  @Deprecated
-  @NonNull CameraType cameraType();
-
-  @Deprecated
-  default boolean isSwitchable() {
-    return true;
-  }
-
-  @Deprecated
-  default int priority() {
-    return 0;
-  }
-
-  /// Returns the icon resource for this perspective.
-  ///
-  /// The returned identifier points to a texture resource that will be displayed in the wheel menu
-  /// and other UI elements.
-  ///
-  /// To provide a custom icon, return an identifier pointing to your texture.
-  ///
-  /// - Identifier format: `<namespace>:<path>`
-  /// - File location: `assets/<namespace>/<path>`
-  ///
-  /// A recommended convention is to place the icon at
-  /// `assets/<namespace>/textures/perspective/<path>.png` where `<namespace>` is your mod id and
-  /// `<path>` is the path part of the perspective's {@link #id()}.
-  ///
-  /// For example:
-  ///
-  /// - Identifier: `example_mod:textures/perspective/example_view.png`
-  /// - File location: `assets/example_mod/textures/perspective/example_view.png`
-  ///
-  /// @return the icon identifier points to a texture resource or `null`
-  @Deprecated
-  default @Nullable Identifier icon() {
-    return Bridge.createIdentifier("perspective_api", "textures/perspective/default.png");
-  }
-
-  // endregion
 
   /// Whether smooth transitions are allowed when switching TO this perspective.
-  ///
-  /// Checked when this perspective becomes {@link PerspectiveAPI#getCurrentPerspective()}.
   default boolean allowTransitionIn() {
     return true;
   }
 
   /// Whether smooth transitions are allowed when switching FROM this perspective.
-  ///
-  /// Checked when this perspective is {@link PerspectiveAPI#getCurrentPerspective()} and is about
-  /// to be replaced.
   default boolean allowTransitionOut() {
     return true;
   }
@@ -141,14 +129,12 @@ public interface Perspective {
 
   // region events
 
-  /// Called when this perspective becomes the current perspective (the one obtained from {@link
-  /// PerspectiveAPI#getCurrentPerspective()}).
+  /// Called when this perspective becomes the current perspective
   ///
   /// @see #onDeactivate()
   default void onActivate() {}
 
-  /// Called when this perspective is no longer the current perspective (the one obtained from
-  /// {@link PerspectiveAPI#getCurrentPerspective()}).
+  /// Called when this perspective is no longer the current perspective
   ///
   /// @see #onActivate()
   default void onDeactivate() {}

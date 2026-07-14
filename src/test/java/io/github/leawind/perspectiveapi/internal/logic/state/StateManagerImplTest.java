@@ -3,12 +3,14 @@ package io.github.leawind.perspectiveapi.internal.logic.state;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.jimfs.Jimfs;
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.internal.logic.ModEntrypoint;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.minecraft.client.CameraType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,11 +18,20 @@ class StateManagerImplTest {
   private FileSystem fs;
   private Path tempDir;
 
+  @Perspective.Default
+  @Perspective.Meta(
+      id = "perspective_api.first_person",
+      cameraType = CameraType.FIRST_PERSON,
+      priority = 0)
+  static class TestPerspective implements Perspective {
+    static final TestPerspective INSTANCE = new TestPerspective();
+  }
+
   @BeforeEach
   void beforeEach() {
     fs = Jimfs.newFileSystem();
     tempDir = fs.getPath("/tmp");
-    ModEntrypoint.initialize();
+    PerspectiveRegistryImpl.INSTANCE.register(TestPerspective.INSTANCE);
   }
 
   @Test

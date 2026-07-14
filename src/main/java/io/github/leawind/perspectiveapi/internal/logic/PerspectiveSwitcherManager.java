@@ -1,12 +1,10 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
@@ -62,12 +60,7 @@ public class PerspectiveSwitcherManager implements Supplier<String> {
   }
 
   void clientTick() {
-    context.setup(
-        PerspectiveRegistryImpl.INSTANCE.getAll().stream()
-            .filter(Perspective::isSwitchable)
-            .sorted(Comparator.comparingInt(Perspective::priority))
-            .map(Perspective::id)
-            .toList());
+    context.setup(PerspectiveRegistryImpl.INSTANCE.getSwitchableIds());
     getSwitcher().clientTickWhenActive(context);
   }
 

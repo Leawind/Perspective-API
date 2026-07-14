@@ -17,8 +17,6 @@ import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
 public final class PerspectiveApiState {
-  // region codec
-
   private static final Codec<PerspectiveApiState> CODEC =
       RecordCodecBuilder.create(
           inst ->
@@ -39,7 +37,6 @@ public final class PerspectiveApiState {
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveApiState(
       boolean enabled, Optional<String> managerCurrent, double transitionDurationMs) {
-
     this.enabled = enabled;
     this.managerCurrent = managerCurrent.orElse(null);
     this.transitionDurationMs = transitionDurationMs;
@@ -59,10 +56,6 @@ public final class PerspectiveApiState {
     return Objects.hash(enabled, managerCurrent, transitionDurationMs);
   }
 
-  // endregion
-
-  // region state <=> Perspective API
-
   public void apply() {
     PerspectiveAPI.setEnabled(enabled);
 
@@ -76,13 +69,9 @@ public final class PerspectiveApiState {
   public static PerspectiveApiState extract() {
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
-        Optional.of(PerspectiveManager.INSTANCE.getCurrent().id()),
+        Optional.of(PerspectiveManager.INSTANCE.getCurrentId()),
         PerspectiveAPI.getTransition().getDurationMs());
   }
-
-  // endregion
-
-  // region state <=> Disk
 
   private static final Gson GSON =
       new GsonBuilder()
@@ -102,6 +91,4 @@ public final class PerspectiveApiState {
     JsonElement jsonElement = GSON.fromJson(json, JsonElement.class);
     return CODEC.parse(JsonOps.INSTANCE, jsonElement).result().orElseThrow();
   }
-
-  // endregion
 }

@@ -67,8 +67,8 @@ class DefaultSwitcher implements PerspectiveSwitcher {
     int i = start;
     do {
       String next = list.get(i);
-      var p = PerspectiveRegistryImpl.INSTANCE.get(next);
-      if (p != null && p.isAvailable()) {
+      var p = PerspectiveRegistryImpl.INSTANCE.getPerspectiveOrThrow(next);
+      if (p.isAvailable()) {
         selected = next;
         return;
       }
@@ -89,8 +89,8 @@ class DefaultSwitcher implements PerspectiveSwitcher {
     int attempts = 0;
     do {
       String next = list.get(i);
-      var p = PerspectiveRegistryImpl.INSTANCE.get(next);
-      if (p != null && p.isAvailable()) {
+      var p = PerspectiveRegistryImpl.INSTANCE.getPerspectiveOrThrow(next);
+      if (p.isAvailable()) {
         selected = next;
         return;
       }

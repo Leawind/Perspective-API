@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
@@ -11,10 +12,7 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainIm
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.VanillaPerspective;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
-import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
-import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -28,71 +26,16 @@ import org.slf4j.LoggerFactory;
 /// Manages the lifecycle and state of camera perspectives.
 public final class PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManager.class);
-  public static final PerspectiveManager INSTANCE =
-      new PerspectiveManager(VanillaPerspective.FIRST_PERSON, new DefaultSwitcher());
+  public static final PerspectiveManager INSTANCE = new PerspectiveManager(new DefaultSwitcher());
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
-  private volatile @NonNull String currentId;
-
-  /// Updated on client tick
-  private volatile @NonNull Perspective currentPerspective;
-  private volatile @Nullable Perspective previousPerspective = null;
-
-  public final SimpleEventEmitter.Owned<Perspective> onCurrentPerspectiveChanged =
-      SimpleEventEmitter.create();
-
-  // region temp states
-
-  private boolean isTempStateInited = false;
-  private final Vector3d tempPosition = new Vector3d();
-  private final Quaternionf tempRotation = new Quaternionf();
-  private float tempFov = 70;
-
-  // endregion
-
-  private void reportException(String id, String phase, Throwable throwable) {
-    throttledAction.run(
-        id + ":" + phase + ":exception",
-        () -> LOGGER.warn("'{}' threw an exception during {}.", id, phase, throwable));
-  }
-
-  private PerspectiveManager(
-      @NonNull Perspective defaultPerspective, @NonNull PerspectiveSwitcher defaultSwitcher) {
-    Objects.requireNonNull(defaultPerspective);
-    switchers = new PerspectiveSwitcherManager(defaultSwitcher);
-    modifiers =
-        new PerspectiveModifierChainImpl(
-            (modifier, e) -> reportException(modifier.id(), "applyTransform", e),
-            (modifier, msg) ->
-                throttledAction.run(
-                    modifier.id() + ":applyFov:invalid", () -> LOGGER.warn("{}", msg)));
-    currentId = defaultPerspective.id();
-    currentPerspective = defaultPerspective;
-
-    overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
-    overrides.push(PerspectiveSwitcherManager.KEY, Integer.MIN_VALUE, switchers);
-
-    onCurrentPerspectiveChanged.on(
-        () -> {
-          if (!isTempStateInited) {
-            Camera camera = Bridge.getMainCamera();
-            if (camera != null) {
-              Bridge.getCameraPosition(camera, tempPosition);
-              Bridge.getCameraRotationQuat(camera, tempRotation);
-              tempFov = 70.0f;
-              isTempStateInited = true;
-            }
-          }
-          transition.setStartState(TransitionImpl.getTimeMs(), tempPosition, tempRotation, tempFov);
-        });
-  }
-
   // region components
+
+  private final TransitionImpl transition;
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
   private final PerspectiveSwitcherManager switchers;
-  private final TransitionImpl transition = new TransitionImpl();
 
   public @NonNull Transition transition() {
     return transition;
@@ -112,43 +55,87 @@ public final class PerspectiveManager {
 
   // endregion
 
+  // region current state
+
+  private volatile @Nullable String currentId;
+  private volatile @Nullable Perspective currentPerspective;
+  private volatile @Nullable Perspective previousPerspective = null;
+
+  // endregion
+
+  // region temp states
+
+  private boolean isTempStateInited = false;
+  private final Vector3d tempPosition = new Vector3d();
+  private final Quaternionf tempRotation = new Quaternionf();
+  private float tempFov = 70;
+
+  // endregion
+
+  private PerspectiveManager(@NonNull PerspectiveSwitcher defaultSwitcher) {
+    switchers = new PerspectiveSwitcherManager(defaultSwitcher);
+
+    overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
+    overrides.push(PerspectiveSwitcherManager.KEY, Integer.MIN_VALUE, switchers);
+
+    modifiers =
+        new PerspectiveModifierChainImpl(
+            (modifier, e) -> reportException(modifier.id(), "applyTransform", e),
+            (modifier, msg) ->
+                throttledAction.run(
+                    modifier.id() + ":applyFov:invalid", () -> LOGGER.warn("{}", msg)));
+
+    transition = new TransitionImpl();
+
+    currentId = PerspectiveRegistryImpl.INSTANCE.getDefaultId();
+    currentPerspective = PerspectiveRegistryImpl.INSTANCE.getDefaultPerspective();
+  }
+
   // region perspective management
 
-  /// Returns the current active perspective after resolving the override chain.
-  /// Never returns `null`.
-  public @NonNull Perspective getCurrent() {
-    return currentPerspective;
+  public @NonNull String getCurrentId() {
+    String currentId = this.currentId;
+    if (currentId == null) {
+      currentId = PerspectiveRegistryImpl.INSTANCE.getDefaultId();
+      this.currentId = currentId;
+    }
+    return currentId;
   }
 
   public void clientTick(Minecraft minecraft) {
     // tick switchers
     switchers.clientTick();
 
-    // Resolve and update current id from override chain
+    // Resolve current id from override chain
     String resolvedId = overrides.get();
     if (resolvedId == null) {
-      resolvedId = PerspectiveRegistryImpl.INSTANCE.getDefault().id();
+      resolvedId = PerspectiveRegistryImpl.INSTANCE.getDefaultId();
     }
     currentId = resolvedId;
 
-    // Resolve latest current perspective
-    Perspective current = PerspectiveRegistryImpl.INSTANCE.getOrDefault(currentId);
+    Perspective resolvedPerspective =
+        PerspectiveRegistryImpl.INSTANCE.getPerspectiveOrDefault(resolvedId);
 
-    // If cached current is outdated, update the cache
-    Perspective cachedCurrent = currentPerspective;
-    if (cachedCurrent != current) {
-      previousPerspective = cachedCurrent;
-      currentPerspective = current;
+    // If the current perspective changed
+    var currentPerspective = this.currentPerspective;
+    if (resolvedPerspective != currentPerspective) {
+      if (currentPerspective != null) {
+        currentPerspective.onDeactivate();
+      }
+      previousPerspective = currentPerspective;
+      this.currentPerspective = resolvedPerspective;
 
-      cachedCurrent.onDeactivate();
-      current.onActivate();
+      resolvedPerspective.onActivate();
 
-      onCurrentPerspectiveChanged.emit(current);
+      PerspectiveMeta meta = PerspectiveRegistryImpl.INSTANCE.getMetaOrDefault(resolvedId);
+      Bridge.updateCameraType(meta.cameraType());
+
+      startTransition();
     }
 
     // Run perspective client tick
     try {
-      current.clientTickWhenActive(minecraft);
+      resolvedPerspective.clientTickWhenActive(minecraft);
     } catch (Throwable e) {
       reportException(currentId, "clientTick", e);
     }
@@ -176,6 +163,10 @@ public final class PerspectiveManager {
     Perspective current = currentPerspective;
     Perspective previous = previousPerspective;
 
+    if (current == null) {
+      return;
+    }
+
     double now = TransitionImpl.getTimeMs();
 
     boolean isTransitioning =
@@ -188,7 +179,7 @@ public final class PerspectiveManager {
 
     // Event: render tick
     try {
-      currentPerspective.renderTickWhenActive(renderTickContext);
+      current.renderTickWhenActive(renderTickContext);
     } catch (Throwable e) {
       reportException(currentId, "renderTick", e);
     }
@@ -201,7 +192,7 @@ public final class PerspectiveManager {
 
     // 1. Apply Base Perspective
     try {
-      currentPerspective.applyTransform(renderTickContext, tempPosition, tempRotation);
+      current.applyTransform(renderTickContext, tempPosition, tempRotation);
     } catch (Throwable e) {
       reportException(currentId, "applyTransform", e);
     }
@@ -313,5 +304,24 @@ public final class PerspectiveManager {
 
   public void setCurrentId(@NonNull String id) {
     currentId = id;
+  }
+
+  private void startTransition() {
+    if (!isTempStateInited) {
+      Camera camera = Bridge.getMainCamera();
+      if (camera != null) {
+        Bridge.getCameraPosition(camera, tempPosition);
+        Bridge.getCameraRotationQuat(camera, tempRotation);
+        tempFov = 70.0f;
+        isTempStateInited = true;
+      }
+    }
+    transition.setStartState(TransitionImpl.getTimeMs(), tempPosition, tempRotation, tempFov);
+  }
+
+  private void reportException(String id, String phase, Throwable throwable) {
+    throttledAction.run(
+        id + ":" + phase + ":exception",
+        () -> LOGGER.warn("'{}' threw an exception during {}.", id, phase, throwable));
   }
 }

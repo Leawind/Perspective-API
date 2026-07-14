@@ -4,7 +4,6 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import org.jspecify.annotations.NonNull;
 
-/// Entry point for the Perspective API mod.
 public final class PerspectiveAPI {
   private PerspectiveAPI() {}
 
@@ -13,15 +12,10 @@ public final class PerspectiveAPI {
 
   private static volatile boolean enabled = true;
 
-  /// Master switch that controls whether all mixins and event handlers are active.
-  /// Set to `false` to completely revert to vanilla behavior.
-  ///
-  /// @see #setEnabled(boolean)
   public static boolean isEnabled() {
     return enabled;
   }
 
-  /// @see #isEnabled()
   public static void setEnabled(boolean enabled) {
     PerspectiveAPI.enabled = enabled;
   }
@@ -42,11 +36,10 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.overrides();
   }
 
-  public static @NonNull Perspective getCurrentPerspective() {
-    return PerspectiveManager.INSTANCE.getCurrent();
-  }
-
   public static boolean isCurrent(@NonNull String id) {
-    return getCurrentPerspective().id().equals(id);
+    if (!PerspectiveRegistryImpl.INSTANCE.isDefaultFound()) {
+      return false;
+    }
+    return PerspectiveManager.INSTANCE.getCurrentId().equals(id);
   }
 }
