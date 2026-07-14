@@ -13,11 +13,12 @@ public class VanillaPerspective implements Perspective {
   private static final String ICON_SUFFIX = ".png";
 
   public static final VanillaPerspective FIRST_PERSON =
-      new VanillaPerspective("minecraft.first_person", CameraType.FIRST_PERSON, 0);
+      new VanillaPerspective("perspective_api.first_person", CameraType.FIRST_PERSON, 0);
   public static final VanillaPerspective THIRD_PERSON_BACK =
-      new VanillaPerspective("minecraft.third_person_back", CameraType.THIRD_PERSON_BACK, 1);
+      new VanillaPerspective("perspective_api.third_person_back", CameraType.THIRD_PERSON_BACK, 1);
   public static final VanillaPerspective THIRD_PERSON_FRONT =
-      new VanillaPerspective("minecraft.third_person_front", CameraType.THIRD_PERSON_FRONT, 2);
+      new VanillaPerspective(
+          "perspective_api.third_person_front", CameraType.THIRD_PERSON_FRONT, 2);
 
   private final String id;
   private final CameraType cameraType;
