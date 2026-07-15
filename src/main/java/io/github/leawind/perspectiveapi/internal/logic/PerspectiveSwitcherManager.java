@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
@@ -33,8 +33,8 @@ public class PerspectiveSwitcherManager implements Supplier<String> {
   private void notifySwitchables() {
     var switchers =
         PerspectiveRegistryImpl.INSTANCE.getAll().stream()
-            .filter(PerspectiveMeta::switchable)
-            .sorted(Comparator.comparingInt(PerspectiveMeta::priority))
+            .filter(Perspective::switchable)
+            .sorted(Comparator.comparingInt(Perspective::priority))
             .toList();
     this.switchers.forEach(switcher -> switcher.onUpdateSwitchables(switchers));
   }
@@ -50,10 +50,6 @@ public class PerspectiveSwitcherManager implements Supplier<String> {
 
   public @NonNull List<PerspectiveSwitcher> getSwitchers() {
     return switchers.stream().toList();
-  }
-
-  public List<PerspectiveMeta> getSwitchablePerspectives() {
-    return PerspectiveRegistryImpl.INSTANCE.getAll();
   }
 
   public @NonNull PerspectiveSwitcher getSwitcher() {

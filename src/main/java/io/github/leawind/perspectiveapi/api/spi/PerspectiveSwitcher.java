@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.api.spi;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
+import io.github.leawind.perspectiveapi.api.Perspective;
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
@@ -21,9 +21,9 @@ public interface PerspectiveSwitcher {
 
   default void init() {}
 
-  void onUpdateSwitchables(@NonNull List<PerspectiveMeta> switchables);
+  void onUpdateSwitchables(@NonNull List<Perspective> switchables);
 
-  void onActivated(@NonNull PerspectiveMeta currentPerspectiveMeta);
+  void onActivated(@NonNull Perspective currentPerspective);
 
   void clientTickWhenActive();
 

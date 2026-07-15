@@ -9,7 +9,7 @@ import org.jspecify.annotations.Nullable;
 public interface PerspectiveRegistry {
   boolean contains(@Nullable String id);
 
-  @NonNull List<PerspectiveMeta> getAll();
+  @NonNull List<Perspective> getAll();
 
   @NonNull SimpleEventEmitter<Void> onUpdate();
 }

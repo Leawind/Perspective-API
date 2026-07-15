@@ -7,7 +7,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// @see PerspectiveBehavior.Meta
-public interface PerspectiveMeta {
+public interface Perspective {
   @NonNull String id();
 
   @Nullable Component name();

@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
@@ -30,8 +30,8 @@ class DefaultSwitcher implements PerspectiveSwitcher {
   }
 
   @Override
-  public void onUpdateSwitchables(@NonNull List<PerspectiveMeta> switchables) {
-    this.list = switchables.stream().map(PerspectiveMeta::id).toList();
+  public void onUpdateSwitchables(@NonNull List<Perspective> switchables) {
+    this.list = switchables.stream().map(Perspective::id).toList();
   }
 
   @Override
@@ -45,9 +45,9 @@ class DefaultSwitcher implements PerspectiveSwitcher {
   }
 
   @Override
-  public void onActivated(@NonNull PerspectiveMeta currentPerspectiveMeta) {
-    if (list.contains(currentPerspectiveMeta.id())) {
-      this.selected = currentPerspectiveMeta.id();
+  public void onActivated(@NonNull Perspective currentPerspective) {
+    if (list.contains(currentPerspective.id())) {
+      this.selected = currentPerspective.id();
     }
   }
 

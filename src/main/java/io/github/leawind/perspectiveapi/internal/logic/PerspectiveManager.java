@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
-import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
@@ -56,7 +56,7 @@ public final class PerspectiveManager {
   // endregion
 
   // region current state
-  private volatile @Nullable PerspectiveMeta current;
+  private volatile @Nullable Perspective current;
   private volatile @Nullable PerspectiveBehavior currentBehavior;
   private volatile @Nullable PerspectiveBehavior previousBehavior = null;
 
@@ -86,16 +86,16 @@ public final class PerspectiveManager {
 
     transition = new TransitionImpl();
 
-    current = PerspectiveRegistryImpl.INSTANCE.getDefaultMeta();
+    current = PerspectiveRegistryImpl.INSTANCE.getDefault();
     currentBehavior = PerspectiveRegistryImpl.INSTANCE.getDefaultBehavior();
   }
 
   // region perspective management
 
-  public @NonNull PerspectiveMeta getCurrent() {
+  public @NonNull Perspective getCurrent() {
     var current = this.current;
     if (current == null) {
-      current = PerspectiveRegistryImpl.INSTANCE.getDefaultMeta();
+      current = PerspectiveRegistryImpl.INSTANCE.getDefault();
       this.current = current;
     }
 
@@ -107,7 +107,7 @@ public final class PerspectiveManager {
     switchers.clientTick();
 
     // Resolve current id from override chain
-    PerspectiveMeta resolved = PerspectiveRegistryImpl.INSTANCE.getMetaOrDefault(overrides.get());
+    Perspective resolved = PerspectiveRegistryImpl.INSTANCE.getOrDefault(overrides.get());
     current = resolved;
 
     PerspectiveBehavior resolvedBehavior =
@@ -156,7 +156,7 @@ public final class PerspectiveManager {
       return;
     }
 
-    PerspectiveMeta current = this.current;
+    Perspective current = this.current;
     PerspectiveBehavior currentBehavior = this.currentBehavior;
     PerspectiveBehavior previousBehavior = this.previousBehavior;
 
@@ -252,7 +252,7 @@ public final class PerspectiveManager {
   public float modifyFov(float vanillaFov) {
     float fov = vanillaFov;
 
-    PerspectiveMeta current = this.current;
+    Perspective current = this.current;
     PerspectiveBehavior currentBehavior = this.currentBehavior;
     PerspectiveBehavior previousBehavior = this.previousBehavior;
 
@@ -304,7 +304,7 @@ public final class PerspectiveManager {
 
   // endregion
 
-  public void setCurrent(@NonNull PerspectiveMeta meta) {
+  public void setCurrent(@NonNull Perspective meta) {
     current = meta;
   }
 

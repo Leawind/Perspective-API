@@ -2,7 +2,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
@@ -27,7 +27,7 @@ class PerspectiveOverrideChainTest {
       }
 
       @Override
-      public @NonNull List<PerspectiveMeta> getAll() {
+      public @NonNull List<Perspective> getAll() {
         return List.of();
       }
 

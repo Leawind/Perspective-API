@@ -8,7 +8,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import java.io.IOException;
@@ -62,8 +62,7 @@ public final class PerspectiveApiState {
     PerspectiveAPI.setEnabled(enabled);
 
     if (managerCurrent != null) {
-      PerspectiveMeta perspective =
-          PerspectiveRegistryImpl.INSTANCE.getMetaOrDefault(managerCurrent);
+      Perspective perspective = PerspectiveRegistryImpl.INSTANCE.getOrDefault(managerCurrent);
       PerspectiveManager.INSTANCE.setCurrent(perspective);
     }
 

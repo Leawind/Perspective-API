@@ -36,7 +36,7 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.overrides();
   }
 
-  public static @NonNull PerspectiveMeta getCurrent() {
+  public static @NonNull Perspective getCurrent() {
     return PerspectiveManager.INSTANCE.getCurrent();
   }
 

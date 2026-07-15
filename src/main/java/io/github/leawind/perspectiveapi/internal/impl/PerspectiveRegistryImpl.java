@@ -1,8 +1,8 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
-import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
@@ -34,7 +34,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       boolean switchable,
       int priority,
       @Nullable Identifier icon)
-      implements PerspectiveMeta {
+      implements Perspective {
 
     private static Entry from(@NonNull PerspectiveBehavior behavior) {
       PerspectiveBehavior.Meta meta =
@@ -130,9 +130,9 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   @SuppressWarnings("unchecked")
   @Override
-  public @NonNull List<PerspectiveMeta> getAll() {
+  public @NonNull List<Perspective> getAll() {
     // TODO snapshot
-    return (List<PerspectiveMeta>) (List<?>) entries.values().stream().toList();
+    return (List<Perspective>) (List<?>) entries.values().stream().toList();
   }
 
   @Override
@@ -172,6 +172,22 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   // endregion
 
+  // region perspective
+
+  public @NonNull Perspective getDefault() {
+    return getDefaultEntry();
+  }
+
+  public @NonNull Perspective getOrThrow(@NonNull String id) {
+    return getEntryOrThrow(id);
+  }
+
+  public @NonNull Perspective getOrDefault(@Nullable String id) {
+    return getEntryOrDefault(id);
+  }
+
+  // endregion
+
   // region behavior
 
   public @NonNull PerspectiveBehavior getDefaultBehavior() {
@@ -188,19 +204,4 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   // endregion
 
-  // region meta
-
-  public @NonNull PerspectiveMeta getDefaultMeta() {
-    return getDefaultEntry();
-  }
-
-  public @NonNull PerspectiveMeta getMetaOrThrow(@NonNull String id) {
-    return getEntryOrThrow(id);
-  }
-
-  public @NonNull PerspectiveMeta getMetaOrDefault(@Nullable String id) {
-    return getEntryOrDefault(id);
-  }
-
-  // endregion
 }

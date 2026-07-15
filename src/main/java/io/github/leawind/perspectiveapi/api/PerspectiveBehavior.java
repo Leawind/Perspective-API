@@ -23,7 +23,7 @@ import org.jspecify.annotations.NonNull;
 ///
 /// Implementations must be annotated with {@link Meta}.
 ///
-/// @see PerspectiveMeta
+/// @see Perspective
 public interface PerspectiveBehavior {
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
@@ -42,14 +42,14 @@ public interface PerspectiveBehavior {
     ///
     /// If left empty, it defaults to `perspective.<id>.name`.
     ///
-    /// @see PerspectiveMeta#name()
+    /// @see Perspective#name()
     String nameKey() default "";
 
     /// The translation key for the perspective's description.
     ///
     /// If left empty, it defaults to `null`.
     ///
-    /// @see PerspectiveMeta#description()
+    /// @see Perspective#description()
     String descriptionKey() default "";
 
     /// The string representation of the `Identifier` or `ResourceLocation` for the
@@ -57,7 +57,7 @@ public interface PerspectiveBehavior {
     ///
     /// If left empty, it defaults to `null`.
     ///
-    /// @see PerspectiveMeta#icon()
+    /// @see Perspective#icon()
     String icon() default "";
 
     /// Whether this perspective is allowed to be manually selected by the player
