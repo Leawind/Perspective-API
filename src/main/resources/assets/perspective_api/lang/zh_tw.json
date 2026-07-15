@@ -18,6 +18,6 @@
   "perspective_api.config_screen.option.switcher.desc": "選擇用於在視角間循環切換的切換器",
   "perspective_api.config_screen.fallback.title": "無可用的配置畫面",
   "perspective_api.config_screen.fallback.message": "請安裝 YACL 以顯示配置畫面",
-  "perspective_api.switcher.default_switcher.name": "預設切換器",
-  "perspective_api.switcher.default_switcher.description": "使用視角切換快捷鍵在可用視角間循環切換"
+  "perspective_api.switcher.wheel_switcher.name": "輪盤切換器",
+  "perspective_api.switcher.wheel_switcher.description": "使用視角切換快捷鍵在可用視角間循環切換，長按開啟輪盤選單"
 }

@@ -12,6 +12,7 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainIm
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel.WheelSwitcher;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /// Manages the lifecycle and state of camera perspectives.
 public final class PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManager.class);
-  public static final PerspectiveManager INSTANCE = new PerspectiveManager(new DefaultSwitcher());
+  public static final PerspectiveManager INSTANCE = new PerspectiveManager(new WheelSwitcher());
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 

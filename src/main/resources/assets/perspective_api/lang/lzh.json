@@ -18,6 +18,6 @@
   "perspective_api.config_screen.option.switcher.desc": "擇切換器以循換諸視角",
   "perspective_api.config_screen.fallback.title": "無置設之幕可用",
   "perspective_api.config_screen.fallback.message": "措置 YACL 以見置設之幕",
-  "perspective_api.switcher.default_switcher.name": "預設切換器",
-  "perspective_api.switcher.default_switcher.description": "以視角切換鍵循換諸可用視角"
+  "perspective_api.switcher.wheel_switcher.name": "輪盤切換器",
+  "perspective_api.switcher.wheel_switcher.description": "以視角切換鍵循換諸可用視角，長按則開輪盤"
 }
