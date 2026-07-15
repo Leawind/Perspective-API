@@ -34,7 +34,6 @@ class DefaultSwitcher implements PerspectiveSwitcher {
     this.list = switchables.stream().map(PerspectiveMeta::id).toList();
   }
 
-  // TODO i18n
   @Override
   public @NonNull Component getNameComponent() {
     return Component.translatable("perspective_api.switcher.default_switcher.name");

@@ -14,6 +14,10 @@
   "perspective_api.config_screen.option.mod_enabled.desc": "控制是否启用所有视角 API 功能的总开关。关闭后将完全恢复原版行为。",
   "perspective_api.config_screen.option.transition_duration": "过渡时长（毫秒）",
   "perspective_api.config_screen.option.transition_duration.desc": "切换视角时平滑相机过渡的持续时间，单位为毫秒。设为 0 可禁用过渡。",
+  "perspective_api.config_screen.option.switcher": "视角切换器",
+  "perspective_api.config_screen.option.switcher.desc": "选择用于在视角间循环切换的切换器",
   "perspective_api.config_screen.fallback.title": "无可用的配置屏幕",
-  "perspective_api.config_screen.fallback.message": "请安装 YACL 以显示配置屏幕"
+  "perspective_api.config_screen.fallback.message": "请安装 YACL 以显示配置屏幕",
+  "perspective_api.switcher.default_switcher.name": "默认切换器",
+  "perspective_api.switcher.default_switcher.description": "使用视角切换快捷键在可用视角间循环切换"
 }

@@ -14,6 +14,10 @@
   "perspective_api.config_screen.option.mod_enabled.desc": "主開關，掌視角卯口諸用之啓閉。閉之則復原制之行。",
   "perspective_api.config_screen.option.transition_duration": "過渡時長（毫秒）",
   "perspective_api.config_screen.option.transition_duration.desc": "換視角時平滑相機過渡之時長，以毫秒計。設為零則禁過渡。",
+  "perspective_api.config_screen.option.switcher": "視角切換器",
+  "perspective_api.config_screen.option.switcher.desc": "擇切換器以循換諸視角",
   "perspective_api.config_screen.fallback.title": "無置設之幕可用",
-  "perspective_api.config_screen.fallback.message": "措置 YACL 以見置設之幕"
+  "perspective_api.config_screen.fallback.message": "措置 YACL 以見置設之幕",
+  "perspective_api.switcher.default_switcher.name": "預設切換器",
+  "perspective_api.switcher.default_switcher.description": "以視角切換鍵循換諸可用視角"
 }
