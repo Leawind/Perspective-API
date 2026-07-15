@@ -1,10 +1,12 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
@@ -18,14 +20,23 @@ public class PerspectiveSwitcherManager implements Supplier<String> {
   private final Collection<PerspectiveSwitcher> switchers = new HashSet<>();
 
   private final PerspectiveSwitcher defaultSwitcher;
-  private @NonNull PerspectiveSwitcher switcher;
-  private final SwitcherContext context = new SwitcherContext();
+  private @Nullable PerspectiveSwitcher currentSwitcher = null;
 
   public PerspectiveSwitcherManager(@NonNull PerspectiveSwitcher defaultSwitcher) {
     this.defaultSwitcher = defaultSwitcher;
     register(defaultSwitcher);
 
-    this.switcher = defaultSwitcher;
+    PerspectiveRegistryImpl.INSTANCE.onUpdate().on(this::notifySwitchables);
+    notifySwitchables();
+  }
+
+  private void notifySwitchables() {
+    var switchers =
+        PerspectiveRegistryImpl.INSTANCE.getAll().stream()
+            .filter(PerspectiveMeta::switchable)
+            .sorted(Comparator.comparingInt(PerspectiveMeta::priority))
+            .toList();
+    this.switchers.forEach(switcher -> switcher.onUpdateSwitchables(switchers));
   }
 
   public void register(PerspectiveSwitcher switcher) {
@@ -37,20 +48,36 @@ public class PerspectiveSwitcherManager implements Supplier<String> {
     return defaultSwitcher;
   }
 
-  public @NonNull PerspectiveSwitcher getSwitcher() {
-    return switcher;
+  public @NonNull List<PerspectiveSwitcher> getSwitchers() {
+    return switchers.stream().toList();
   }
 
-  public void setSwitcher(PerspectiveSwitcher switcher) {
+  public List<PerspectiveMeta> getSwitchablePerspectives() {
+    return PerspectiveRegistryImpl.INSTANCE.getAll();
+  }
+
+  public @NonNull PerspectiveSwitcher getSwitcher() {
+    var currentSwitcher = this.currentSwitcher;
+    if (currentSwitcher == null) {
+      currentSwitcher = this.currentSwitcher = defaultSwitcher;
+      currentSwitcher.onActivated(PerspectiveManager.INSTANCE.getCurrent());
+    }
+
+    return currentSwitcher;
+  }
+
+  public void setCurrent(PerspectiveSwitcher switcher) {
     if (!switchers.contains(switcher)) {
       throw new IllegalArgumentException("Unregistered switcher: " + switcher);
     }
 
-    var old = this.switcher;
+    var old = this.currentSwitcher;
     if (old != switcher) {
-      old.onDeactivated(context);
-      this.switcher = switcher;
-      switcher.onActivated(context);
+      if (old != null) {
+        old.onDeactivated();
+      }
+      this.currentSwitcher = switcher;
+      switcher.onActivated(PerspectiveManager.INSTANCE.getCurrent());
     }
   }
 
@@ -60,21 +87,6 @@ public class PerspectiveSwitcherManager implements Supplier<String> {
   }
 
   void clientTick() {
-    context.setup(PerspectiveRegistryImpl.INSTANCE.getSwitchableIds());
-    getSwitcher().clientTickWhenActive(context);
-  }
-
-  private static class SwitcherContext implements PerspectiveSwitcher.Context {
-
-    private List<String> switchable;
-
-    void setup(List<String> switchable) {
-      this.switchable = switchable;
-    }
-
-    @Override
-    public List<String> getSwitchable() {
-      return switchable;
-    }
+    getSwitcher().clientTickWhenActive();
   }
 }

@@ -4,9 +4,12 @@ import dev.isxander.yacl3.api.ConfigCategory;
 import dev.isxander.yacl3.api.Option;
 import dev.isxander.yacl3.api.OptionDescription;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
+import dev.isxander.yacl3.api.controller.CyclingListControllerBuilder;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
+import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -46,6 +49,22 @@ public final class YaclConfigScreenBuilder {
                                     .range(0.0, 2048.0)
                                     .step(32.0)
                                     .formatValue(v -> Component.literal(v.intValue() + " ms")))
+                        .build())
+                .option(
+                    Option.<PerspectiveSwitcher>createBuilder()
+                        .name(text("config_screen.option.switcher"))
+                        .description(
+                            OptionDescription.of(text("config_screen.option.switcher.desc")))
+                        .binding(
+                            PerspectiveManager.INSTANCE.switchers().getSwitcher(),
+                            () -> PerspectiveManager.INSTANCE.switchers().getSwitcher(),
+                            switcher ->
+                                PerspectiveManager.INSTANCE.switchers().setCurrent(switcher))
+                        .controller(
+                            opt ->
+                                CyclingListControllerBuilder.create(opt)
+                                    .values(PerspectiveManager.INSTANCE.switchers().getSwitchers())
+                                    .formatValue(PerspectiveSwitcher::getNameComponent))
                         .build())
                 .build())
         .build()

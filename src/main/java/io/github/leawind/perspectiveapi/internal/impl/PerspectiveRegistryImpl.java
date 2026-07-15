@@ -5,7 +5,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
-import java.util.Comparator;
+import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -68,8 +68,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private @Nullable String defaultId = null;
   private int defaultPriority = Integer.MIN_VALUE;
   private @Nullable Entry defaultEntry = null;
-
-  private volatile @NonNull List<String> snapshot = List.of();
+  private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
 
   public PerspectiveRegistryImpl() {}
 
@@ -110,8 +109,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
         defaultPriority = defaultAnnotation.priority();
         defaultEntry = entry;
       }
-
-      rebuildSnapshot();
+      onUpdate.emit();
     }
   }
 
@@ -127,9 +125,16 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return entries.containsKey(id);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public @NonNull List<String> getAll() {
-    return snapshot;
+  public @NonNull List<PerspectiveMeta> getAll() {
+    // TODO snapshot
+    return (List<PerspectiveMeta>) (List<?>) entries.values().stream().toList();
+  }
+
+  @Override
+  public @NonNull SimpleEventEmitter<Void> onUpdate() {
+    return onUpdate;
   }
 
   // endregion
@@ -182,6 +187,10 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   // region meta
 
+  public @NonNull PerspectiveMeta getDefaultMeta() {
+    return getDefaultEntry();
+  }
+
   public @NonNull PerspectiveMeta getMetaOrThrow(@NonNull String id) {
     return getEntryOrThrow(id);
   }
@@ -190,21 +199,5 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return getEntryOrDefault(id);
   }
 
-  private @NonNull PerspectiveMeta getDefaultMeta() {
-    return getDefaultEntry();
-  }
-
   // endregion
-
-  public @NonNull List<String> getSwitchableIds() {
-    return entries.values().stream()
-        .filter(Entry::switchable)
-        .sorted(Comparator.comparingInt(Entry::priority))
-        .map(Entry::id)
-        .toList();
-  }
-
-  private synchronized void rebuildSnapshot() {
-    this.snapshot = entries.keySet().stream().toList();
-  }
 }

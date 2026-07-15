@@ -36,10 +36,14 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.overrides();
   }
 
+  public static @NonNull PerspectiveMeta getCurrent() {
+    return PerspectiveManager.INSTANCE.getCurrent();
+  }
+
   public static boolean isCurrent(@NonNull String id) {
     if (!PerspectiveRegistryImpl.INSTANCE.isDefaultFound()) {
       return false;
     }
-    return PerspectiveManager.INSTANCE.getCurrentId().equals(id);
+    return PerspectiveManager.INSTANCE.getCurrent().id().equals(id);
   }
 }

@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
@@ -29,36 +30,60 @@ class DefaultSwitcher implements PerspectiveSwitcher {
   }
 
   @Override
+  public void onUpdateSwitchables(@NonNull List<PerspectiveMeta> switchables) {
+    this.list = switchables.stream().map(PerspectiveMeta::id).toList();
+  }
+
+  // TODO i18n
+  @Override
   public @NonNull Component getNameComponent() {
-    return Component.literal("perspective_api.default_switcher.name");
+    return Component.translatable("perspective_api.switcher.default_switcher.name");
   }
 
   @Override
   public @NonNull Component getDescriptionComponent() {
-    return Component.literal("perspective_api.default_switcher.description");
+    return Component.translatable("perspective_api.switcher.default_switcher.description");
   }
 
   @Override
-  public void onActivated(Context context) {}
-
-  @Override
-  public void clientTickWhenActive(Context context) {
-    this.list = context.getSwitchable().stream().toList();
+  public void onActivated(@NonNull PerspectiveMeta currentPerspectiveMeta) {
+    if (list.contains(currentPerspectiveMeta.id())) {
+      this.selected = currentPerspectiveMeta.id();
+    }
   }
 
   @Override
-  public void onDeactivated(Context context) {}
+  public void clientTickWhenActive() {
+
+    String selected = this.selected;
+    if (selected != null) {
+      var p = PerspectiveRegistryImpl.INSTANCE.getPerspectiveOrThrow(selected);
+      if (!p.isAvailable()) {
+        cycleBackward();
+      }
+    }
+  }
+
+  @Override
+  public void onDeactivated() {}
 
   @Override
   public @Nullable String getSelected() {
-    return selected;
+    var selected = this.selected;
+    if (selected == null) {
+      String current = PerspectiveAPI.getCurrent().id();
+      if (list.contains(current)) {
+        this.selected = current;
+      }
+    }
+    return this.selected;
   }
 
   /// Advances the active perspective to the next available one.
   private synchronized void cycleForward() {
     if (list.isEmpty()) return;
 
-    String current = getSelected();
+    String current = selected;
     int idx = list.indexOf(current);
     int start = idx < 0 ? 0 : (idx + 1) % list.size();
 
@@ -81,7 +106,7 @@ class DefaultSwitcher implements PerspectiveSwitcher {
   private synchronized void cycleBackward() {
     if (list.isEmpty()) return;
 
-    String current = getSelected();
+    String current = selected;
     int idx = list.indexOf(current);
     int size = list.size();
     int i = idx < 0 ? size - 1 : (idx - 1 + size) % size;

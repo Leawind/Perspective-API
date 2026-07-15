@@ -56,8 +56,7 @@ public final class PerspectiveManager {
   // endregion
 
   // region current state
-
-  private volatile @Nullable String currentId;
+  private volatile @Nullable PerspectiveMeta current;
   private volatile @Nullable Perspective currentPerspective;
   private volatile @Nullable Perspective previousPerspective = null;
 
@@ -87,19 +86,20 @@ public final class PerspectiveManager {
 
     transition = new TransitionImpl();
 
-    currentId = PerspectiveRegistryImpl.INSTANCE.getDefaultId();
+    current = PerspectiveRegistryImpl.INSTANCE.getDefaultMeta();
     currentPerspective = PerspectiveRegistryImpl.INSTANCE.getDefaultPerspective();
   }
 
   // region perspective management
 
-  public @NonNull String getCurrentId() {
-    String currentId = this.currentId;
-    if (currentId == null) {
-      currentId = PerspectiveRegistryImpl.INSTANCE.getDefaultId();
-      this.currentId = currentId;
+  public @NonNull PerspectiveMeta getCurrent() {
+    var current = this.current;
+    if (current == null) {
+      current = PerspectiveRegistryImpl.INSTANCE.getDefaultMeta();
+      this.current = current;
     }
-    return currentId;
+
+    return current;
   }
 
   public void clientTick(Minecraft minecraft) {
@@ -107,14 +107,11 @@ public final class PerspectiveManager {
     switchers.clientTick();
 
     // Resolve current id from override chain
-    String resolvedId = overrides.get();
-    if (resolvedId == null) {
-      resolvedId = PerspectiveRegistryImpl.INSTANCE.getDefaultId();
-    }
-    currentId = resolvedId;
+    PerspectiveMeta resolved = PerspectiveRegistryImpl.INSTANCE.getMetaOrDefault(overrides.get());
+    current = resolved;
 
     Perspective resolvedPerspective =
-        PerspectiveRegistryImpl.INSTANCE.getPerspectiveOrDefault(resolvedId);
+        PerspectiveRegistryImpl.INSTANCE.getPerspectiveOrDefault(resolved.id());
 
     // If the current perspective changed
     var currentPerspective = this.currentPerspective;
@@ -127,8 +124,7 @@ public final class PerspectiveManager {
 
       resolvedPerspective.onActivate();
 
-      PerspectiveMeta meta = PerspectiveRegistryImpl.INSTANCE.getMetaOrDefault(resolvedId);
-      Bridge.updateCameraType(meta.cameraType());
+      Bridge.updateCameraType(resolved.cameraType());
 
       startTransition();
     }
@@ -137,7 +133,7 @@ public final class PerspectiveManager {
     try {
       resolvedPerspective.clientTickWhenActive(minecraft);
     } catch (Throwable e) {
-      reportException(currentId, "clientTick", e);
+      reportException(resolved.id(), "clientTick", e);
     }
   }
 
@@ -160,10 +156,11 @@ public final class PerspectiveManager {
       return;
     }
 
-    Perspective current = currentPerspective;
-    Perspective previous = previousPerspective;
+    PerspectiveMeta current = this.current;
+    Perspective currentPerspective = this.currentPerspective;
+    Perspective previousPerspective = this.previousPerspective;
 
-    if (current == null) {
+    if (current == null || currentPerspective == null) {
       return;
     }
 
@@ -171,17 +168,17 @@ public final class PerspectiveManager {
 
     boolean isTransitioning =
         transition.isInTransition(now)
-            && current.allowTransitionIn()
-            && (previous == null || previous.allowTransitionOut());
+            && currentPerspective.allowTransitionIn()
+            && (previousPerspective == null || previousPerspective.allowTransitionOut());
 
     // Setup context object
     renderTickContext.setup(partialTicks, entity, isTransitioning);
 
     // Event: render tick
     try {
-      current.renderTickWhenActive(renderTickContext);
+      currentPerspective.renderTickWhenActive(renderTickContext);
     } catch (Throwable e) {
-      reportException(currentId, "renderTick", e);
+      reportException(current.id(), "renderTick", e);
     }
 
     // Extract current vanilla state and backup
@@ -192,9 +189,9 @@ public final class PerspectiveManager {
 
     // 1. Apply Base Perspective
     try {
-      current.applyTransform(renderTickContext, tempPosition, tempRotation);
+      currentPerspective.applyTransform(renderTickContext, tempPosition, tempRotation);
     } catch (Throwable e) {
-      reportException(currentId, "applyTransform", e);
+      reportException(current.id(), "applyTransform", e);
     }
 
     // 2. Apply Modifiers (Further mutates the target state BEFORE transition)
@@ -205,11 +202,11 @@ public final class PerspectiveManager {
     boolean rotInvalid = !Sanitizer.isFinite(tempRotation);
     if (posInvalid || rotInvalid) {
       throttledAction.run(
-          currentId + ":applyTransform:invalid",
+          current.id() + ":applyTransform:invalid",
           () ->
               LOGGER.warn(
                   "Perspective '{}' provided invalid state during applyTransform. Falling back to vanilla. pos: {}, rot: {}",
-                  currentId,
+                  current.id(),
                   tempPosition,
                   tempRotation));
 
@@ -255,14 +252,19 @@ public final class PerspectiveManager {
   public float modifyFov(float vanillaFov) {
     float fov = vanillaFov;
 
-    Perspective current = currentPerspective;
-    Perspective previous = previousPerspective;
+    PerspectiveMeta current = this.current;
+    Perspective currentPerspective = this.currentPerspective;
+    Perspective previousPerspective = this.previousPerspective;
+
+    if (current == null || currentPerspective == null) {
+      return tempFov = fov;
+    }
 
     // Apply Base Perspective
     try {
-      fov = current.applyFov(renderTickContext, vanillaFov);
+      fov = currentPerspective.applyFov(renderTickContext, vanillaFov);
     } catch (Throwable e) {
-      reportException(currentId, "applyFov", e);
+      reportException(current.id(), "applyFov", e);
       fov = vanillaFov;
     }
     // Sanitize
@@ -270,11 +272,11 @@ public final class PerspectiveManager {
     if (fovInvalid) {
       fov = vanillaFov;
       throttledAction.run(
-          currentId + ":applyFov:invalid",
+          current.id() + ":applyFov:invalid",
           () ->
               LOGGER.warn(
                   "Perspective '{}' returned invalid FOV during applyFov. Falling back to vanilla.",
-                  currentId));
+                  current.id()));
     }
 
     // Apply Modifiers
@@ -283,8 +285,8 @@ public final class PerspectiveManager {
     // Apply Transition
     double now = TransitionImpl.getTimeMs();
     if (transition.isInTransition(now)
-        && current.allowTransitionIn()
-        && (previous == null || previous.allowTransitionOut())) {
+        && currentPerspective.allowTransitionIn()
+        && (previousPerspective == null || previousPerspective.allowTransitionOut())) {
       tempFov = transition.updateFov(now, fov);
       if (!Sanitizer.isFinite(tempFov)) {
         throttledAction.run(
@@ -302,8 +304,8 @@ public final class PerspectiveManager {
 
   // endregion
 
-  public void setCurrentId(@NonNull String id) {
-    currentId = id;
+  public void setCurrent(@NonNull PerspectiveMeta meta) {
+    current = meta;
   }
 
   private void startTransition() {

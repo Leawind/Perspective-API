@@ -2,8 +2,10 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.List;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -17,14 +19,21 @@ class PerspectiveOverrideChainTest {
 
   private static PerspectiveRegistry testRegistry() {
     return new PerspectiveRegistry() {
+      private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
+
       @Override
       public boolean contains(@Nullable String id) {
         return id != null && id.startsWith("test.");
       }
 
       @Override
-      public @NonNull List<String> getAll() {
+      public @NonNull List<PerspectiveMeta> getAll() {
         return List.of();
+      }
+
+      @Override
+      public @NonNull SimpleEventEmitter<Void> onUpdate() {
+        return onUpdate;
       }
     };
   }
