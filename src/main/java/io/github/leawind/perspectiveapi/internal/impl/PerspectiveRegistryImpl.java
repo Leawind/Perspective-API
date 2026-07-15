@@ -28,7 +28,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private record Entry(
       @NonNull PerspectiveBehavior behavior,
       @NonNull String id,
-      @Nullable Component name,
+      @NonNull Component name,
       @Nullable Component description,
       @NonNull CameraType cameraType,
       boolean switchable,

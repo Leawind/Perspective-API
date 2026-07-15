@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 public interface Perspective {
   @NonNull String id();
 
-  @Nullable Component name();
+  @NonNull Component name();
 
   @Nullable Component description();
 
