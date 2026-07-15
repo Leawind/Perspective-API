@@ -1,16 +1,16 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.function.Consumer;
 import net.minecraft.client.KeyMapping;
 import org.jspecify.annotations.Nullable;
 
 /// Tracks key state transitions across ticks for vanilla KeyMapping instances.
 public final class KeyStateTracker {
-  private static final Map<KeyMapping, KeyStateTracker> INSTANCES = new WeakHashMap<>();
+  private static final Map<String, KeyStateTracker> INSTANCES = new HashMap<>();
 
-  private final KeyMapping key;
+  private final KeyMapping keyMapping;
   private int holdTicks = 4;
 
   private boolean wasDown;
@@ -24,15 +24,15 @@ public final class KeyStateTracker {
   private @Nullable Runnable onHoldHandler;
   private @Nullable Runnable onHoldStopHandler;
 
-  private KeyStateTracker(KeyMapping key) {
-    this.key = key;
+  private KeyStateTracker(KeyMapping keyMapping) {
+    this.keyMapping = keyMapping;
   }
 
-  public static KeyStateTracker of(KeyMapping keyMapping, Consumer<Builder> builder) {
+  public static KeyStateTracker of(String key, KeyMapping keyMapping, Consumer<Builder> builder) {
     return INSTANCES.computeIfAbsent(
-        keyMapping,
-        k -> {
-          var tracker = new KeyStateTracker(k);
+        key,
+        ignored -> {
+          var tracker = new KeyStateTracker(keyMapping);
           builder.accept(tracker.new Builder());
           return tracker;
         });
@@ -45,7 +45,7 @@ public final class KeyStateTracker {
 
   /// Call this every tick.
   public KeyStateTracker tick() {
-    if (key.isDown()) {
+    if (keyMapping.isDown()) {
       if (!wasDown) {
         wasDown = true;
         heldTicks = 0;
@@ -80,12 +80,12 @@ public final class KeyStateTracker {
   }
 
   public void drain() {
-    while (key.consumeClick()) {}
+    while (keyMapping.consumeClick()) {}
   }
 
   /// Returns the tracked key.
   public KeyMapping key() {
-    return key;
+    return keyMapping;
   }
 
   /// Returns true if the key is currently held down.

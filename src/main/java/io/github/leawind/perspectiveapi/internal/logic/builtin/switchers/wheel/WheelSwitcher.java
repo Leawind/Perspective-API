@@ -18,7 +18,6 @@ public class WheelSwitcher implements PerspectiveSwitcher {
   public volatile List<String> list = new ArrayList<>();
   private volatile @Nullable String selected = null;
 
-  private @Nullable KeyStateTracker keyTracker;
   private final WheelMenu wheelMenu = new WheelMenu();
 
   @Override
@@ -26,18 +25,18 @@ public class WheelSwitcher implements PerspectiveSwitcher {
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         minecraft -> {
           if (!PerspectiveAPI.isEnabled()) return;
-          if (minecraft.level == null || minecraft.player == null) return;
-          if (PerspectiveManager.INSTANCE.switchers().getSwitcher() != this) return;
 
-          // Suppress keybind clicks while wheel is open or key is held
-          if (wheelMenu.isOpened() || (keyTracker != null && keyTracker.isDown())) {
-            while (minecraft.options.keyTogglePerspective.consumeClick()) {}
-            return;
-          }
-
-          while (minecraft.options.keyTogglePerspective.consumeClick()) {
-            cycleForward();
-          }
+          KeyStateTracker.of(
+                  "perspective_api.wheel_switcher",
+                  minecraft.options.keyTogglePerspective,
+                  builder ->
+                      builder
+                          .setHoldTicks(3)
+                          .onPress(this::cycleForward)
+                          .onHoldStart(this::openWheel)
+                          .onHoldStop(this::closeWheel))
+              .tick()
+              .drain();
         });
     GameClientEvents.RENDER_GUI_OVERLAY.on(
         ctx -> {
@@ -62,22 +61,6 @@ public class WheelSwitcher implements PerspectiveSwitcher {
           // Always consume input when the wheel menu is open
           ctx.consumed = true;
         });
-  }
-
-  /// Lazily initializes the key tracker on first tick, since `init()` is called
-  /// during static initialization of `PerspectiveManager.INSTANCE` where
-  /// `Minecraft` is not yet available.
-  private void ensureKeyTracker() {
-    if (keyTracker != null) return;
-    keyTracker =
-        KeyStateTracker.of(
-            Minecraft.getInstance().options.keyTogglePerspective,
-            builder ->
-                builder
-                    .setHoldTicks(3)
-                    .onPress(this::cycleForward)
-                    .onHoldStart(this::openWheel)
-                    .onHoldStop(this::closeWheel));
   }
 
   @Override
@@ -105,11 +88,6 @@ public class WheelSwitcher implements PerspectiveSwitcher {
   @Override
   public void clientTickWhenActive() {
     wheelMenu.tick();
-
-    ensureKeyTracker();
-    if (keyTracker != null) {
-      keyTracker.tick().drain();
-    }
 
     String selected = this.selected;
     if (selected != null) {
