@@ -9,7 +9,7 @@ import net.minecraft.client.CameraType;
     id = FirstPersonPerspective.ID,
     cameraType = CameraType.FIRST_PERSON,
     priority = 0,
-    icon = "perspective_api:textures/perspective/perspective_api.first_person.png")
+    icon = "perspective_api:textures/perspective/first_person.png")
 public class FirstPersonPerspective implements PerspectiveBehavior {
   public static final String ID = "perspective_api.first_person";
 }

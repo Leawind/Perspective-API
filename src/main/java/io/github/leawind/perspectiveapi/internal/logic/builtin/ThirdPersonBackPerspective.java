@@ -8,7 +8,7 @@ import net.minecraft.client.CameraType;
     id = ThirdPersonBackPerspective.ID,
     cameraType = CameraType.THIRD_PERSON_BACK,
     priority = 1,
-    icon = "perspective_api:textures/perspective/perspective_api.third_person_back.png")
+    icon = "perspective_api:textures/perspective/third_person_back.png")
 public class ThirdPersonBackPerspective implements PerspectiveBehavior {
   public static final String ID = "perspective_api.third_person_back";
 }
