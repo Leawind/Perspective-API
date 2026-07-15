@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
@@ -26,7 +26,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   public static final PerspectiveRegistryImpl INSTANCE = new PerspectiveRegistryImpl();
 
   private record Entry(
-      @NonNull Perspective perspective,
+      @NonNull PerspectiveBehavior behavior,
       @NonNull String id,
       @Nullable Component name,
       @Nullable Component description,
@@ -36,11 +36,14 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       @Nullable Identifier icon)
       implements PerspectiveMeta {
 
-    private static Entry from(@NonNull Perspective perspective) {
-      Perspective.Meta meta = perspective.getClass().getAnnotation(Perspective.Meta.class);
+    private static Entry from(@NonNull PerspectiveBehavior behavior) {
+      PerspectiveBehavior.Meta meta =
+          behavior.getClass().getAnnotation(PerspectiveBehavior.Meta.class);
       if (meta == null) {
         throw new IllegalArgumentException(
-            perspective.getClass().getName() + " must be annotated with @Perspective.Meta");
+            behavior.getClass().getName()
+                + " must be annotated with "
+                + PerspectiveBehavior.Meta.class.getName());
       }
       Identifier icon = meta.icon().isEmpty() ? null : Bridge.parseIdentifier(meta.icon());
 
@@ -52,7 +55,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
           meta.descriptionKey().isEmpty() ? null : Component.translatable(meta.descriptionKey());
 
       return new Entry(
-          perspective,
+          behavior,
           meta.id(),
           name,
           description,
@@ -73,18 +76,18 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   public PerspectiveRegistryImpl() {}
 
   public void discoverAndRegister() {
-    ServiceLoader<Perspective> loader = ServiceLoader.load(Perspective.class);
+    ServiceLoader<PerspectiveBehavior> loader = ServiceLoader.load(PerspectiveBehavior.class);
     var iterator = loader.iterator();
     while (true) {
-      Perspective perspective;
+      PerspectiveBehavior behavior;
       try {
         if (!iterator.hasNext()) break;
-        perspective = iterator.next();
+        behavior = iterator.next();
       } catch (ServiceConfigurationError e) {
-        LOGGER.warn("Failed to load Perspective implementation", e);
+        LOGGER.warn("Failed to load PerspectiveBehavior implementation", e);
         continue;
       }
-      register(perspective);
+      register(behavior);
     }
   }
 
@@ -92,18 +95,18 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return defaultEntry != null;
   }
 
-  public void register(@NonNull Perspective perspective) {
-    Entry entry = Entry.from(perspective);
+  public void register(@NonNull PerspectiveBehavior behavior) {
+    Entry entry = Entry.from(behavior);
     String id = entry.id();
-    LOGGER.info("Registering perspective with id '{}': {}", id, perspective);
+    LOGGER.info("Registering perspective with id '{}': {}", id, behavior);
     synchronized (this) {
       if (entries.containsKey(id)) {
         LOGGER.warn("Perspective with id '{}' already registered, replacing", id);
       }
       entries.put(id, entry);
 
-      Perspective.Default defaultAnnotation =
-          perspective.getClass().getAnnotation(Perspective.Default.class);
+      PerspectiveBehavior.Default defaultAnnotation =
+          behavior.getClass().getAnnotation(PerspectiveBehavior.Default.class);
       if (defaultAnnotation != null && defaultAnnotation.priority() >= defaultPriority) {
         defaultId = id;
         defaultPriority = defaultAnnotation.priority();
@@ -169,18 +172,18 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   // endregion
 
-  // region perspective
+  // region behavior
 
-  public @NonNull Perspective getDefaultPerspective() {
-    return getDefaultEntry().perspective();
+  public @NonNull PerspectiveBehavior getDefaultBehavior() {
+    return getDefaultEntry().behavior();
   }
 
-  public @NonNull Perspective getPerspectiveOrThrow(@NonNull String id) {
-    return getEntryOrThrow(id).perspective();
+  public @NonNull PerspectiveBehavior getBehaviorOrThrow(@NonNull String id) {
+    return getEntryOrThrow(id).behavior();
   }
 
-  public @NonNull Perspective getPerspectiveOrDefault(@Nullable String id) {
-    return getEntryOrDefault(id).perspective();
+  public @NonNull PerspectiveBehavior getBehaviorOrDefault(@Nullable String id) {
+    return getEntryOrDefault(id).behavior();
   }
 
   // endregion

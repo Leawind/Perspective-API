@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveMeta;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.Transition;
@@ -57,8 +57,8 @@ public final class PerspectiveManager {
 
   // region current state
   private volatile @Nullable PerspectiveMeta current;
-  private volatile @Nullable Perspective currentPerspective;
-  private volatile @Nullable Perspective previousPerspective = null;
+  private volatile @Nullable PerspectiveBehavior currentBehavior;
+  private volatile @Nullable PerspectiveBehavior previousBehavior = null;
 
   // endregion
 
@@ -87,7 +87,7 @@ public final class PerspectiveManager {
     transition = new TransitionImpl();
 
     current = PerspectiveRegistryImpl.INSTANCE.getDefaultMeta();
-    currentPerspective = PerspectiveRegistryImpl.INSTANCE.getDefaultPerspective();
+    currentBehavior = PerspectiveRegistryImpl.INSTANCE.getDefaultBehavior();
   }
 
   // region perspective management
@@ -110,19 +110,19 @@ public final class PerspectiveManager {
     PerspectiveMeta resolved = PerspectiveRegistryImpl.INSTANCE.getMetaOrDefault(overrides.get());
     current = resolved;
 
-    Perspective resolvedPerspective =
-        PerspectiveRegistryImpl.INSTANCE.getPerspectiveOrDefault(resolved.id());
+    PerspectiveBehavior resolvedBehavior =
+        PerspectiveRegistryImpl.INSTANCE.getBehaviorOrDefault(resolved.id());
 
     // If the current perspective changed
-    var currentPerspective = this.currentPerspective;
-    if (resolvedPerspective != currentPerspective) {
+    var currentPerspective = this.currentBehavior;
+    if (resolvedBehavior != currentPerspective) {
       if (currentPerspective != null) {
         currentPerspective.onDeactivate();
       }
-      previousPerspective = currentPerspective;
-      this.currentPerspective = resolvedPerspective;
+      previousBehavior = currentPerspective;
+      this.currentBehavior = resolvedBehavior;
 
-      resolvedPerspective.onActivate();
+      resolvedBehavior.onActivate();
 
       Bridge.updateCameraType(resolved.cameraType());
 
@@ -131,7 +131,7 @@ public final class PerspectiveManager {
 
     // Run perspective client tick
     try {
-      resolvedPerspective.clientTickWhenActive(minecraft);
+      resolvedBehavior.clientTickWhenActive(minecraft);
     } catch (Throwable e) {
       reportException(resolved.id(), "clientTick", e);
     }
@@ -157,10 +157,10 @@ public final class PerspectiveManager {
     }
 
     PerspectiveMeta current = this.current;
-    Perspective currentPerspective = this.currentPerspective;
-    Perspective previousPerspective = this.previousPerspective;
+    PerspectiveBehavior currentBehavior = this.currentBehavior;
+    PerspectiveBehavior previousBehavior = this.previousBehavior;
 
-    if (current == null || currentPerspective == null) {
+    if (current == null || currentBehavior == null) {
       return;
     }
 
@@ -168,15 +168,15 @@ public final class PerspectiveManager {
 
     boolean isTransitioning =
         transition.isInTransition(now)
-            && currentPerspective.allowTransitionIn()
-            && (previousPerspective == null || previousPerspective.allowTransitionOut());
+            && currentBehavior.allowTransitionIn()
+            && (previousBehavior == null || previousBehavior.allowTransitionOut());
 
     // Setup context object
     renderTickContext.setup(partialTicks, entity, isTransitioning);
 
     // Event: render tick
     try {
-      currentPerspective.renderTickWhenActive(renderTickContext);
+      currentBehavior.renderTickWhenActive(renderTickContext);
     } catch (Throwable e) {
       reportException(current.id(), "renderTick", e);
     }
@@ -187,9 +187,9 @@ public final class PerspectiveManager {
     backupPosition.set(tempPosition);
     backupRotation.set(tempRotation);
 
-    // 1. Apply Base Perspective
+    // 1. Apply Base PerspectiveBehavior
     try {
-      currentPerspective.applyTransform(renderTickContext, tempPosition, tempRotation);
+      currentBehavior.applyTransform(renderTickContext, tempPosition, tempRotation);
     } catch (Throwable e) {
       reportException(current.id(), "applyTransform", e);
     }
@@ -205,7 +205,7 @@ public final class PerspectiveManager {
           current.id() + ":applyTransform:invalid",
           () ->
               LOGGER.warn(
-                  "Perspective '{}' provided invalid state during applyTransform. Falling back to vanilla. pos: {}, rot: {}",
+                  "PerspectiveBehavior '{}' provided invalid state during applyTransform. Falling back to vanilla. pos: {}, rot: {}",
                   current.id(),
                   tempPosition,
                   tempRotation));
@@ -253,16 +253,16 @@ public final class PerspectiveManager {
     float fov = vanillaFov;
 
     PerspectiveMeta current = this.current;
-    Perspective currentPerspective = this.currentPerspective;
-    Perspective previousPerspective = this.previousPerspective;
+    PerspectiveBehavior currentBehavior = this.currentBehavior;
+    PerspectiveBehavior previousBehavior = this.previousBehavior;
 
-    if (current == null || currentPerspective == null) {
+    if (current == null || currentBehavior == null) {
       return tempFov = fov;
     }
 
-    // Apply Base Perspective
+    // Apply Base PerspectiveBehavior
     try {
-      fov = currentPerspective.applyFov(renderTickContext, vanillaFov);
+      fov = currentBehavior.applyFov(renderTickContext, vanillaFov);
     } catch (Throwable e) {
       reportException(current.id(), "applyFov", e);
       fov = vanillaFov;
@@ -275,7 +275,7 @@ public final class PerspectiveManager {
           current.id() + ":applyFov:invalid",
           () ->
               LOGGER.warn(
-                  "Perspective '{}' returned invalid FOV during applyFov. Falling back to vanilla.",
+                  "PerspectiveBehavior '{}' returned invalid FOV during applyFov. Falling back to vanilla.",
                   current.id()));
     }
 
@@ -285,8 +285,8 @@ public final class PerspectiveManager {
     // Apply Transition
     double now = TransitionImpl.getTimeMs();
     if (transition.isInTransition(now)
-        && currentPerspective.allowTransitionIn()
-        && (previousPerspective == null || previousPerspective.allowTransitionOut())) {
+        && currentBehavior.allowTransitionIn()
+        && (previousBehavior == null || previousBehavior.allowTransitionOut())) {
       tempFov = transition.updateFov(now, fov);
       if (!Sanitizer.isFinite(tempFov)) {
         throttledAction.run(

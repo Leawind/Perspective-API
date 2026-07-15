@@ -18,11 +18,13 @@ import org.jspecify.annotations.NonNull;
 /// A Perspective acts as the foundational {@link PerspectiveModifier} that establishes
 /// the base camera state.
 ///
-/// Perspective instances are discovered via {@link java.util.ServiceLoader} and registered
-/// by the {@link PerspectiveRegistry}. Implementations must be annotated with {@link Meta}.
+/// PerspectiveBehavior implementations are discovered via {@link java.util.ServiceLoader} and
+/// registered by the {@link PerspectiveRegistry}.
+///
+/// Implementations must be annotated with {@link Meta}.
 ///
 /// @see PerspectiveMeta
-public interface Perspective {
+public interface PerspectiveBehavior {
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   @Documented

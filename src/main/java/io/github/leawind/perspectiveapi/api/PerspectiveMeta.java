@@ -6,9 +6,7 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-/// Read-only metadata extracted from a {@link Perspective}'s {@link Perspective.Meta} annotation.
-///
-/// @see Perspective.Meta
+/// @see PerspectiveBehavior.Meta
 public interface PerspectiveMeta {
   @NonNull String id();
 

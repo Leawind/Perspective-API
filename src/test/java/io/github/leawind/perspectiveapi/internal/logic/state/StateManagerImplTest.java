@@ -3,8 +3,8 @@ package io.github.leawind.perspectiveapi.internal.logic.state;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.jimfs.Jimfs;
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -18,12 +18,12 @@ class StateManagerImplTest {
   private FileSystem fs;
   private Path tempDir;
 
-  @Perspective.Default
-  @Perspective.Meta(
+  @PerspectiveBehavior.Default
+  @PerspectiveBehavior.Meta(
       id = "perspective_api.first_person",
       cameraType = CameraType.FIRST_PERSON,
       priority = 0)
-  static class TestPerspective implements Perspective {
+  static class TestPerspective implements PerspectiveBehavior {
     static final TestPerspective INSTANCE = new TestPerspective();
   }
 
