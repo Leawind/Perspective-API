@@ -316,7 +316,6 @@ public final class PerspectiveManager {
       if (camera != null) {
         Bridge.getCameraPosition(camera, tempPosition);
         Bridge.getCameraRotationQuat(camera, tempRotation);
-        tempFov = 70.0f;
         isTempStateInited = true;
       }
     }

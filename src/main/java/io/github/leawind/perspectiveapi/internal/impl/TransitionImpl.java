@@ -21,6 +21,7 @@ import org.lwjgl.glfw.GLFW;
 public final class TransitionImpl implements Transition {
 
   private static final double MIN_DELTA_MS = 0.1;
+  private static final float DEFAULT_FOV = 70.0f;
 
   // region settings
 
@@ -35,7 +36,7 @@ public final class TransitionImpl implements Transition {
   private double startTimeMs;
   private final Vector3d startPosition = new Vector3d();
   private final Quaternionf startRotation = new Quaternionf();
-  private float startFov = 70.0f;
+  private float startFov = DEFAULT_FOV;
 
   // endregion
 
@@ -52,7 +53,7 @@ public final class TransitionImpl implements Transition {
   private boolean isDeltaFovSet = false;
   private final Vector3d deltaPosition = new Vector3d();
   private final Quaternionf deltaRotation = new Quaternionf();
-  private float deltaFov = 70.0f;
+  private float deltaFov = DEFAULT_FOV;
 
   // endregion
 
