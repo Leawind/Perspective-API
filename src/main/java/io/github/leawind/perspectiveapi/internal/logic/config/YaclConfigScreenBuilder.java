@@ -53,7 +53,11 @@ public final class YaclConfigScreenBuilder {
                     Option.<PerspectiveSwitcher>createBuilder()
                         .name(text("config_screen.option.switcher"))
                         .description(
-                            OptionDescription.of(text("config_screen.option.switcher.desc")))
+                            switcher -> {
+                              Component desc = switcher.getDescriptionComponent();
+                              if (desc == null) return OptionDescription.EMPTY;
+                              return OptionDescription.of(switcher.getDescriptionComponent());
+                            })
                         .binding(
                             PerspectiveAPI.getSwitcherManager().getSwitcher(),
                             () -> PerspectiveAPI.getSwitcherManager().getSwitcher(),
