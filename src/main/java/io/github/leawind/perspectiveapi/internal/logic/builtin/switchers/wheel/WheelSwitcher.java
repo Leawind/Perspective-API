@@ -5,7 +5,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,7 +129,7 @@ public class WheelSwitcher implements PerspectiveSwitcher {
     if (!PerspectiveAPI.isEnabled()) return;
     var minecraft = Minecraft.getInstance();
     if (minecraft.level == null || minecraft.player == null) return;
-    if (PerspectiveManager.INSTANCE.switchers().getSwitcher() != this) return;
+    if (PerspectiveAPI.getCurrentSwitcher() != this) return;
 
     wheelMenu.setOnHover(id -> this.selected = id);
     wheelMenu.open(getSelected(), this.list);
