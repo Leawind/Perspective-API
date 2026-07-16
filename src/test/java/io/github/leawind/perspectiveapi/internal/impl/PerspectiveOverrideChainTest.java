@@ -27,6 +27,11 @@ class PerspectiveOverrideChainTest {
       }
 
       @Override
+      public @Nullable Perspective get(@NonNull String id) {
+        return null;
+      }
+
+      @Override
       public @NonNull List<Perspective> getAll() {
         return List.of();
       }

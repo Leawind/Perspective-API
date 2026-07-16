@@ -64,6 +64,11 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
           meta.priority(),
           icon);
     }
+
+    @Override
+    public boolean isAvailable() {
+      return behavior.isAvailable();
+    }
   }
 
   private final Map<String, Entry> entries = new ConcurrentHashMap<>();
@@ -173,6 +178,11 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   // endregion
 
   // region perspective
+
+  @Override
+  public @Nullable Perspective get(@NonNull String id) {
+    return entries.get(id);
+  }
 
   public @NonNull Perspective getDefault() {
     return getDefaultEntry();

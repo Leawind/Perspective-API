@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -29,12 +29,11 @@ public final class WheelMenuItem {
     this.availability = Availability.UNREGISTERED;
   }
 
-  public WheelMenuItem update(PerspectiveRegistryImpl registry) {
-    perspective = registry.contains(id) ? registry.getOrThrow(id) : null;
-
+  public WheelMenuItem update() {
+    perspective = PerspectiveAPI.getRegistry().get(id);
     if (perspective == null) {
       availability = Availability.UNREGISTERED;
-    } else if (registry.getBehaviorOrThrow(id).isAvailable()) {
+    } else if (perspective.isAvailable()) {
       availability = Availability.AVAILABLE;
     } else {
       availability = Availability.UNAVAILABLE;

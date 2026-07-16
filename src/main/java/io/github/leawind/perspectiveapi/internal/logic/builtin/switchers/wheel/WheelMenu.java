@@ -1,7 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +54,7 @@ public final class WheelMenu {
     int limit = Math.min(availableIds.size(), MAX_ITEMS);
     for (int i = 0; i < limit; i++) {
       String id = availableIds.get(i);
-      items.add(new WheelMenuItem(id).update(PerspectiveRegistryImpl.INSTANCE));
+      items.add(new WheelMenuItem(id).update());
     }
 
     renderer.onOpen();
@@ -78,7 +77,7 @@ public final class WheelMenu {
   /// Ticks the menu to refresh item availability states.
   public void tick() {
     for (WheelMenuItem item : items) {
-      item.update(PerspectiveRegistryImpl.INSTANCE);
+      item.update();
     }
   }
 

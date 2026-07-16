@@ -24,4 +24,9 @@ public interface Perspective {
   int priority();
 
   @Nullable Identifier icon();
+
+  /// Returns whether this perspective is currently available to be selected or remain active.
+  ///
+  /// This delegates to the underlying {@link PerspectiveBehavior#isAvailable()}.
+  boolean isAvailable();
 }

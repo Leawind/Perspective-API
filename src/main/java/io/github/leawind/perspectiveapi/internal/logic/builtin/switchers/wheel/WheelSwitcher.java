@@ -2,9 +2,9 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.ArrayList;
@@ -15,10 +15,16 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class WheelSwitcher implements PerspectiveSwitcher {
-  public volatile List<String> list = new ArrayList<>();
+  private final PerspectiveRegistry registry;
+
+  private volatile List<String> list = new ArrayList<>();
   private volatile @Nullable String selected = null;
 
   private final WheelMenu wheelMenu = new WheelMenu();
+
+  public WheelSwitcher(PerspectiveRegistry registry) {
+    this.registry = registry;
+  }
 
   @Override
   public void init() {
@@ -91,8 +97,8 @@ public class WheelSwitcher implements PerspectiveSwitcher {
 
     String selected = this.selected;
     if (selected != null) {
-      var p = PerspectiveRegistryImpl.INSTANCE.getBehaviorOrThrow(selected);
-      if (!p.isAvailable()) {
+      var p = registry.get(selected);
+      if (p == null || !p.isAvailable()) {
         cycleBackward();
       }
     }
@@ -155,8 +161,8 @@ public class WheelSwitcher implements PerspectiveSwitcher {
     int i = start;
     do {
       String next = list.get(i);
-      var p = PerspectiveRegistryImpl.INSTANCE.getBehaviorOrThrow(next);
-      if (p.isAvailable()) {
+      var p = registry.get(next);
+      if (p != null && p.isAvailable()) {
         selected = next;
         return;
       }
@@ -177,8 +183,9 @@ public class WheelSwitcher implements PerspectiveSwitcher {
     int attempts = 0;
     do {
       String next = list.get(i);
-      var p = PerspectiveRegistryImpl.INSTANCE.getBehaviorOrThrow(next);
-      if (p.isAvailable()) {
+
+      var p = registry.get(next);
+      if (p != null && p.isAvailable()) {
         selected = next;
         return;
       }
