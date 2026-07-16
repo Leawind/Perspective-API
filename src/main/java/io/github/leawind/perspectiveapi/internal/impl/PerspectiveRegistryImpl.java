@@ -6,9 +6,9 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
@@ -121,31 +121,22 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     }
   }
 
-  // region id
-
-  public @NonNull String getDefaultId() {
-    return Objects.requireNonNull(defaultId, "No default perspective found");
-  }
-
   @Override
   public boolean contains(@Nullable String id) {
     if (id == null) return false;
     return entries.containsKey(id);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public @NonNull List<Perspective> getAll() {
     // TODO snapshot
-    return (List<Perspective>) (List<?>) entries.values().stream().toList();
+    return new ArrayList<>(entries.values());
   }
 
   @Override
   public @NonNull SimpleEventEmitter<Void> onUpdate() {
     return onUpdate;
   }
-
-  // endregion
 
   // region entry
 
