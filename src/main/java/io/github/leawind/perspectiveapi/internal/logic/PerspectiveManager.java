@@ -4,7 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
@@ -12,7 +12,7 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainIm
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel.WheelSwitcher;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel.WheelSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public final class PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManager.class);
   public static final PerspectiveManager INSTANCE =
-      new PerspectiveManager(new WheelSwitcher(PerspectiveRegistryImpl.INSTANCE));
+      new PerspectiveManager(new WheelSwitcherBehavior(PerspectiveRegistryImpl.INSTANCE));
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
 
@@ -37,7 +37,7 @@ public final class PerspectiveManager {
   private final TransitionImpl transition;
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
-  private final PerspectiveSwitcherManager switchers;
+  private final PerspectiveSwitcherManagerImpl switchers;
 
   public @NonNull Transition transition() {
     return transition;
@@ -51,7 +51,7 @@ public final class PerspectiveManager {
     return overrides;
   }
 
-  public @NonNull PerspectiveSwitcherManager switchers() {
+  public @NonNull PerspectiveSwitcherManagerImpl switchers() {
     return switchers;
   }
 
@@ -73,11 +73,11 @@ public final class PerspectiveManager {
 
   // endregion
 
-  private PerspectiveManager(@NonNull PerspectiveSwitcher defaultSwitcher) {
-    switchers = new PerspectiveSwitcherManager(defaultSwitcher);
+  private PerspectiveManager(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
+    switchers = new PerspectiveSwitcherManagerImpl(defaultSwitcher);
 
     overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
-    overrides.push(PerspectiveSwitcherManager.KEY, Integer.MIN_VALUE, switchers);
+    overrides.push(PerspectiveSwitcherManagerImpl.KEY, Integer.MIN_VALUE, switchers);
 
     modifiers =
         new PerspectiveModifierChainImpl(

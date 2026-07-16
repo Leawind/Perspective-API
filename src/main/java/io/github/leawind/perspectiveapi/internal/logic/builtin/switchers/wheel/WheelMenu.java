@@ -10,7 +10,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// Manages the lifecycle, state, input, and rendering of the perspective
-/// wheel menu overlay as an internal component of {@link WheelSwitcher}.
+/// wheel menu overlay as an internal component of {@link WheelSwitcherBehavior}.
 public final class WheelMenu {
   private static final int MAX_ITEMS = 9;
 

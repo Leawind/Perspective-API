@@ -3,7 +3,7 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class WheelSwitcher implements PerspectiveSwitcher {
+public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   private final PerspectiveRegistry registry;
 
   private volatile List<String> list = new ArrayList<>();
@@ -21,7 +21,7 @@ public class WheelSwitcher implements PerspectiveSwitcher {
 
   private final WheelMenu wheelMenu = new WheelMenu();
 
-  public WheelSwitcher(PerspectiveRegistry registry) {
+  public WheelSwitcherBehavior(PerspectiveRegistry registry) {
     this.registry = registry;
   }
 
@@ -123,13 +123,11 @@ public class WheelSwitcher implements PerspectiveSwitcher {
     return this.selected;
   }
 
-  // region wheel menu
-
   private void openWheel() {
     if (!PerspectiveAPI.isEnabled()) return;
+    if (PerspectiveAPI.getSwitcherManager().getSwitcher() != this) return;
     var minecraft = Minecraft.getInstance();
     if (minecraft.level == null || minecraft.player == null) return;
-    if (PerspectiveAPI.getCurrentSwitcher() != this) return;
 
     wheelMenu.setOnHover(id -> this.selected = id);
     wheelMenu.open(getSelected(), this.list);
@@ -142,10 +140,6 @@ public class WheelSwitcher implements PerspectiveSwitcher {
       this.selected = finalId;
     }
   }
-
-  // endregion
-
-  // region cycling
 
   /// Advances the active perspective to the next available one.
   private synchronized void cycleForward() {
@@ -192,6 +186,4 @@ public class WheelSwitcher implements PerspectiveSwitcher {
       attempts++;
     } while (attempts < size);
   }
-
-  // endregion
 }

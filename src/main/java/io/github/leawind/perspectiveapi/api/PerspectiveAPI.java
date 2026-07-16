@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import org.jspecify.annotations.NonNull;
@@ -37,6 +36,10 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.overrides();
   }
 
+  public static @NonNull PerspectiveSwitcherManager getSwitcherManager() {
+    return PerspectiveManager.INSTANCE.switchers();
+  }
+
   public static @NonNull Perspective getCurrent() {
     return PerspectiveManager.INSTANCE.getCurrent();
   }
@@ -46,9 +49,5 @@ public final class PerspectiveAPI {
       return false;
     }
     return PerspectiveManager.INSTANCE.getCurrent().id().equals(id);
-  }
-
-  public static PerspectiveSwitcher getCurrentSwitcher() {
-    return PerspectiveManager.INSTANCE.switchers().getSwitcher();
   }
 }

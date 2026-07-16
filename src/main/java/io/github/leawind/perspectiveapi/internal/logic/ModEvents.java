@@ -25,7 +25,7 @@ public final class ModEvents {
     GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
         ignored -> {
           if (!PerspectiveAPI.isEnabled()) return;
-          manager.overrides().clearExcept(PerspectiveSwitcherManager.KEY);
+          manager.overrides().clearExcept(PerspectiveSwitcherManagerImpl.KEY);
         });
 
     GameClientEvents.SETUP_CAMERA.on(

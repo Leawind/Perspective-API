@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -61,7 +61,7 @@ public interface PerspectiveBehavior {
     String icon() default "";
 
     /// Whether this perspective is allowed to be manually selected by the player
-    /// via a {@link PerspectiveSwitcher}
+    /// via a {@link PerspectiveSwitcherBehavior}
     ///
     /// If set to `false`, the perspective can only be activated programmatically
     /// through the {@link PerspectiveOverrideChain}.

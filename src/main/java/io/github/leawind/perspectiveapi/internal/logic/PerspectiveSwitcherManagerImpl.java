@@ -2,9 +2,12 @@ package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -14,15 +17,16 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class PerspectiveSwitcherManager implements Supplier<String> {
+public class PerspectiveSwitcherManagerImpl
+    implements PerspectiveSwitcherManager, Supplier<String> {
   public static final Identifier KEY =
       Bridge.createIdentifier(PerspectiveAPI.MOD_ID, "builtin_switcher_manager");
-  private final Collection<PerspectiveSwitcher> switchers = new HashSet<>();
+  private final Collection<PerspectiveSwitcherBehavior> switchers = new HashSet<>();
 
-  private final PerspectiveSwitcher defaultSwitcher;
-  private @Nullable PerspectiveSwitcher currentSwitcher = null;
+  private final PerspectiveSwitcherBehavior defaultSwitcher;
+  private @Nullable PerspectiveSwitcherBehavior currentSwitcher = null;
 
-  public PerspectiveSwitcherManager(@NonNull PerspectiveSwitcher defaultSwitcher) {
+  public PerspectiveSwitcherManagerImpl(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
     this.defaultSwitcher = defaultSwitcher;
     register(defaultSwitcher);
 
@@ -39,20 +43,18 @@ public class PerspectiveSwitcherManager implements Supplier<String> {
     this.switchers.forEach(switcher -> switcher.onUpdateSwitchables(switchers));
   }
 
-  public void register(PerspectiveSwitcher switcher) {
+  public void register(PerspectiveSwitcherBehavior switcher) {
     switchers.add(switcher);
     switcher.init();
   }
 
-  public PerspectiveSwitcher getDefault() {
-    return defaultSwitcher;
-  }
-
+  @Override
   public @NonNull List<PerspectiveSwitcher> getSwitchers() {
-    return switchers.stream().toList();
+    return new ArrayList<>(switchers);
   }
 
-  public @NonNull PerspectiveSwitcher getSwitcher() {
+  @Override
+  public @NonNull PerspectiveSwitcherBehavior getSwitcher() {
     var currentSwitcher = this.currentSwitcher;
     if (currentSwitcher == null) {
       currentSwitcher = this.currentSwitcher = defaultSwitcher;
@@ -62,18 +64,31 @@ public class PerspectiveSwitcherManager implements Supplier<String> {
     return currentSwitcher;
   }
 
-  public void setCurrent(PerspectiveSwitcher switcher) {
-    if (!switchers.contains(switcher)) {
-      throw new IllegalArgumentException("Unregistered switcher: " + switcher);
+  public PerspectiveSwitcherBehavior getDefault() {
+    return defaultSwitcher;
+  }
+
+  @Override
+  public void setSwitcher(@NonNull PerspectiveSwitcher switcher) {
+    if (!(switcher instanceof PerspectiveSwitcherBehavior behavior)) {
+      throw new IllegalArgumentException(
+          "Expect switcher to implement "
+              + PerspectiveSwitcherBehavior.class
+              + ", but got "
+              + switcher.getClass());
+    }
+
+    if (!switchers.contains(behavior)) {
+      throw new IllegalArgumentException("Unregistered switcher: " + behavior);
     }
 
     var old = this.currentSwitcher;
-    if (old != switcher) {
+    if (old != behavior) {
       if (old != null) {
         old.onDeactivated();
       }
-      this.currentSwitcher = switcher;
-      switcher.onActivated(PerspectiveManager.INSTANCE.getCurrent());
+      this.currentSwitcher = behavior;
+      behavior.onActivated(PerspectiveManager.INSTANCE.getCurrent());
     }
   }
 

@@ -8,8 +8,7 @@ import dev.isxander.yacl3.api.controller.CyclingListControllerBuilder;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher;
-import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -56,14 +55,13 @@ public final class YaclConfigScreenBuilder {
                         .description(
                             OptionDescription.of(text("config_screen.option.switcher.desc")))
                         .binding(
-                            PerspectiveManager.INSTANCE.switchers().getSwitcher(),
-                            () -> PerspectiveManager.INSTANCE.switchers().getSwitcher(),
-                            switcher ->
-                                PerspectiveManager.INSTANCE.switchers().setCurrent(switcher))
+                            PerspectiveAPI.getSwitcherManager().getSwitcher(),
+                            () -> PerspectiveAPI.getSwitcherManager().getSwitcher(),
+                            switcher -> PerspectiveAPI.getSwitcherManager().setSwitcher(switcher))
                         .controller(
                             opt ->
                                 CyclingListControllerBuilder.create(opt)
-                                    .values(PerspectiveManager.INSTANCE.switchers().getSwitchers())
+                                    .values(PerspectiveAPI.getSwitcherManager().getSwitchers())
                                     .formatValue(PerspectiveSwitcher::getNameComponent))
                         .build())
                 .build())

@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
+import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import net.minecraft.client.CameraType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -17,7 +18,7 @@ public interface Perspective {
   @NonNull CameraType cameraType();
 
   /// Whether this perspective is allowed to be manually selected by the player
-  /// via a {@link io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcher}.
+  /// via a {@link PerspectiveSwitcherBehavior}.
   boolean switchable();
 
   /// The sorting priority within the switcher.
