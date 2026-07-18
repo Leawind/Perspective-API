@@ -19,7 +19,7 @@ class StateManagerImplTest {
   private Path tempDir;
 
   @PerspectiveBehavior.Default
-  @PerspectiveBehavior.Meta(
+  @PerspectiveBehavior.Info(
       id = "perspective_api.first_person",
       cameraType = CameraType.FIRST_PERSON,
       priority = 0)

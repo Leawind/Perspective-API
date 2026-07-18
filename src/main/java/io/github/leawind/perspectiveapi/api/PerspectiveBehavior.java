@@ -21,14 +21,14 @@ import org.jspecify.annotations.NonNull;
 /// PerspectiveBehavior implementations are discovered via {@link java.util.ServiceLoader} and
 /// registered by the {@link PerspectiveRegistry}.
 ///
-/// Implementations must be annotated with {@link Meta}.
+/// Implementations must be annotated with {@link Info}.
 ///
 /// @see Perspective
 public interface PerspectiveBehavior {
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   @Documented
-  @interface Meta {
+  @interface Info {
     /// The unique identifier for this perspective.
     ///
     /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`).

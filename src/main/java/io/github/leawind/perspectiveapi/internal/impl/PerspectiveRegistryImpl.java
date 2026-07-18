@@ -37,31 +37,31 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       implements Perspective {
 
     private static Entry from(@NonNull PerspectiveBehavior behavior) {
-      PerspectiveBehavior.Meta meta =
-          behavior.getClass().getAnnotation(PerspectiveBehavior.Meta.class);
-      if (meta == null) {
+      PerspectiveBehavior.Info info =
+          behavior.getClass().getAnnotation(PerspectiveBehavior.Info.class);
+      if (info == null) {
         throw new IllegalArgumentException(
             behavior.getClass().getName()
                 + " must be annotated with "
-                + PerspectiveBehavior.Meta.class.getName());
+                + PerspectiveBehavior.Info.class.getName());
       }
-      Identifier icon = meta.icon().isEmpty() ? null : Bridge.parseIdentifier(meta.icon());
+      Identifier icon = info.icon().isEmpty() ? null : Bridge.parseIdentifier(info.icon());
 
       Component name =
           Component.translatable(
-              meta.nameKey().isEmpty() ? "perspective." + meta.id() + ".name" : meta.nameKey());
+              info.nameKey().isEmpty() ? "perspective." + info.id() + ".name" : info.nameKey());
 
       Component description =
-          meta.descriptionKey().isEmpty() ? null : Component.translatable(meta.descriptionKey());
+          info.descriptionKey().isEmpty() ? null : Component.translatable(info.descriptionKey());
 
       return new Entry(
           behavior,
-          meta.id(),
+          info.id(),
           name,
           description,
-          meta.cameraType(),
-          meta.switchable(),
-          meta.priority(),
+          info.cameraType(),
+          info.switchable(),
+          info.priority(),
           icon);
     }
 

@@ -7,7 +7,7 @@ import net.minecraft.client.CameraType;
 
 @SuppressWarnings("unused")
 @AutoService(PerspectiveBehavior.class)
-@Meta(
+@Info(
     id = ThirdPersonBackPerspective.ID,
     cameraType = CameraType.THIRD_PERSON_BACK,
     priority = 1,

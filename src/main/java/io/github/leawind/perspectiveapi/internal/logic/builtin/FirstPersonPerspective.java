@@ -8,7 +8,7 @@ import net.minecraft.client.CameraType;
 @SuppressWarnings("unused")
 @AutoService(PerspectiveBehavior.class)
 @Default
-@Meta(
+@Info(
     id = FirstPersonPerspective.ID,
     cameraType = CameraType.FIRST_PERSON,
     priority = 0,

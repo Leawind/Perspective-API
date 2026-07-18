@@ -313,8 +313,8 @@ public final class PerspectiveManager {
 
   // endregion
 
-  public void setCurrent(@NonNull Perspective meta) {
-    current = meta;
+  public void setCurrent(@NonNull Perspective perspective) {
+    current = perspective;
   }
 
   private void startTransition() {

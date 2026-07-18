@@ -7,7 +7,7 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-/// @see PerspectiveBehavior.Meta
+/// @see PerspectiveBehavior.Info
 public interface Perspective {
   /// Returns the unique identifier of this perspective.
   @NonNull String id();
