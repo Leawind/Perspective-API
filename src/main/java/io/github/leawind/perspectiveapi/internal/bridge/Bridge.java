@@ -14,10 +14,19 @@ import org.joml.Quaternionfc;
 import org.joml.Vector2fc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public final class Bridge {
   private Bridge() {}
+  
+  public static @Nullable Screen getScreen(@NonNull Minecraft minecraft){
+    /*? if >=26.2 {*/
+    return minecraft.gui.screen();
+    /*? } else {*/
+    /*return minecraft.screen;
+    *//*? }*/
+  }
 
   /// Returns the current Minecraft data version number.
   public static int getDataVersion() {

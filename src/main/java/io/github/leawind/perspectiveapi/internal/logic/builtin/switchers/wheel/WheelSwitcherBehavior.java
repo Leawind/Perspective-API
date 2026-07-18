@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.ArrayList;
@@ -99,6 +100,10 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
       if (p == null || !p.isAvailable()) {
         cycleBackward();
       }
+    }
+
+    if (wheelMenu.isOpened() && Bridge.getScreen(minecraft) != null) {
+      closeWheel();
     }
   }
 
