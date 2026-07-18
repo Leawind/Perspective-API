@@ -10,13 +10,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public final class PerspectiveOverrideChainImpl
     implements PerspectiveOverrideChain, Supplier<String> {
-  public record Entry(@NonNull Identifier key, int priority, @NonNull Supplier<String> supplier) {
+  public record Entry(@NonNull String key, int priority, @NonNull Supplier<String> supplier) {
     public static Comparator<Entry> COMPARATOR = Comparator.comparingInt(e -> -e.priority);
   }
 
@@ -40,7 +39,7 @@ public final class PerspectiveOverrideChainImpl
   }
 
   @Override
-  public void push(@NonNull Identifier key, int priority, @NonNull Supplier<String> supplier) {
+  public void push(@NonNull String key, int priority, @NonNull Supplier<String> supplier) {
     Objects.requireNonNull(key);
     Objects.requireNonNull(supplier);
     synchronized (this) {
@@ -53,7 +52,7 @@ public final class PerspectiveOverrideChainImpl
   }
 
   @Override
-  public void pop(@NonNull Identifier key) {
+  public void pop(@NonNull String key) {
     Objects.requireNonNull(key);
     synchronized (this) {
       List<Entry> newList = new ArrayList<>(entries);
@@ -64,7 +63,7 @@ public final class PerspectiveOverrideChainImpl
   }
 
   @Override
-  public boolean has(@NonNull Identifier key) {
+  public boolean has(@NonNull String key) {
     Objects.requireNonNull(key);
     for (Entry entry : entries) {
       if (entry.key().equals(key)) return true;
@@ -82,9 +81,9 @@ public final class PerspectiveOverrideChainImpl
   }
 
   /// Clears all entries except those with the specified keys.
-  public void clearExcept(@NonNull Identifier... keys) {
+  public void clearExcept(@NonNull String... keys) {
     Objects.requireNonNull(keys);
-    Set<Identifier> keep = new HashSet<>(Arrays.asList(keys));
+    Set<String> keep = new HashSet<>(Arrays.asList(keys));
     synchronized (this) {
       List<Entry> newList = new ArrayList<>(entries);
       if (newList.removeIf(e -> !keep.contains(e.key()))) {

@@ -4,10 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.List;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,15 +46,15 @@ class PerspectiveOverrideChainTest {
     chain = new PerspectiveOverrideChainImpl(testRegistry());
   }
 
-  private static Identifier id(String path) {
-    return Bridge.createIdentifier("test", path);
+  private static String id(String path) {
+    return "test." + path;
   }
 
   // ========== push / has ==========
 
   @Test
   void pushAndHas() {
-    Identifier key = id("a");
+    String key = id("a");
     assertFalse(chain.has(key));
     chain.push(key, 10, () -> "test.a");
     assertTrue(chain.has(key));
@@ -64,7 +62,7 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void pushReplacesSameKey() {
-    Identifier key = id("a");
+    String key = id("a");
     chain.push(key, 10, () -> "test.a");
     chain.push(key, 20, () -> "test.b");
 
@@ -76,7 +74,7 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void popRemovesEntry() {
-    Identifier key = id("a");
+    String key = id("a");
     chain.push(key, 10, () -> "test.a");
     assertTrue(chain.has(key));
     chain.pop(key);
@@ -104,9 +102,9 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void clearExceptKeepsSpecifiedKeys() {
-    Identifier a = id("a");
-    Identifier b = id("b");
-    Identifier c = id("c");
+    String a = id("a");
+    String b = id("b");
+    String c = id("c");
     chain.push(a, 10, () -> "test.a");
     chain.push(b, 5, () -> "test.b");
     chain.push(c, 1, () -> "test.c");
@@ -127,15 +125,15 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void computeIdSingleEntry() {
-    Identifier key = id("a");
+    String key = id("a");
     chain.push(key, 10, () -> "test.a");
     assertEquals("test.a", chain.get());
   }
 
   @Test
   void computeIdReturnsHighestPriorityFirst() {
-    Identifier low = id("low");
-    Identifier high = id("high");
+    String low = id("low");
+    String high = id("high");
     chain.push(low, 1, () -> "test.low");
     chain.push(high, 100, () -> "test.high");
 
@@ -144,7 +142,7 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void computeIdSkipsNullSupplier() {
-    Identifier fallback = id("fallback");
+    String fallback = id("fallback");
     chain.push(id("null_supplier"), 100, () -> null);
     chain.push(fallback, 1, () -> "test.fallback");
 
@@ -160,9 +158,9 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void computeIdPriorityOrdering() {
-    Identifier first = id("first");
-    Identifier second = id("second");
-    Identifier third = id("third");
+    String first = id("first");
+    String second = id("second");
+    String third = id("third");
     chain.push(third, 1, () -> "test.third");
     chain.push(first, 100, () -> "test.first");
     chain.push(second, 50, () -> "test.second");
@@ -178,8 +176,8 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void computeIdAfterPop() {
-    Identifier a = id("a");
-    Identifier b = id("b");
+    String a = id("a");
+    String b = id("b");
     chain.push(a, 10, () -> "test.a");
     chain.push(b, 5, () -> "test.b");
 
@@ -196,8 +194,8 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void pushSamePriorityMaintainsInsertionOrder() {
-    Identifier first = id("first");
-    Identifier second = id("second");
+    String first = id("first");
+    String second = id("second");
     chain.push(first, 10, () -> "test.first");
     chain.push(second, 10, () -> "test.second");
 

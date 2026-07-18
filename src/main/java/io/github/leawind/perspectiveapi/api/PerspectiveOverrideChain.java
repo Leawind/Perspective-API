@@ -1,7 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
 import java.util.function.Supplier;
-import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 
@@ -19,11 +18,11 @@ public interface PerspectiveOverrideChain {
   /// @param key the unique identifier for this override entry
   /// @param priority the evaluation priority
   /// @param supplier a supplier that returns the perspective ID, or `null` to skip
-  void push(@NonNull Identifier key, int priority, @NonNull Supplier<String> supplier);
+  void push(@NonNull String key, int priority, @NonNull Supplier<String> supplier);
 
   /// Removes the override entry with the given key.
-  void pop(@NonNull Identifier key);
+  void pop(@NonNull String key);
 
   /// Returns `true` if an override entry with the given key exists.
-  boolean has(@NonNull Identifier key);
+  boolean has(@NonNull String key);
 }

@@ -3,9 +3,8 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
-import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
-import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,14 +12,12 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class PerspectiveSwitcherManagerImpl
     implements PerspectiveSwitcherManager, Supplier<String> {
-  public static final Identifier KEY =
-      Bridge.createIdentifier(PerspectiveAPI.MOD_ID, "builtin_switcher_manager");
+  public static final String KEY = PerspectiveAPI.MOD_ID + ".builtin_switcher_manager";
   private final Collection<PerspectiveSwitcherBehavior> switchers = new HashSet<>();
 
   private final PerspectiveSwitcherBehavior defaultSwitcher;
