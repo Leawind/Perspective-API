@@ -1,9 +1,9 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import net.minecraft.client.CameraType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -15,6 +15,7 @@ import org.jspecify.annotations.Nullable;
 ///
 /// @see PerspectiveBehavior
 /// @see PerspectiveBehavior.Info
+@ApiStatus.NonExtendable
 public interface Perspective {
   /// Returns the unique identifier of this perspective.
   @NonNull String id();

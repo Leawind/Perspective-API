@@ -1,11 +1,13 @@
 package io.github.leawind.perspectiveapi.api;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 
 /// Manages an ordered chain of {@link PerspectiveModifier}s.
 ///
 /// Modifiers are applied sequentially by ascending priority after the base perspective
 /// establishes the target camera state, but before the transition interpolation.
+@ApiStatus.NonExtendable
 public interface PerspectiveModifierChain {
 
   /// Registers a modifier with the given priority.

@@ -1,7 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,6 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
@@ -24,6 +24,7 @@ import org.jspecify.annotations.NonNull;
 /// Implementations must be annotated with {@link Info}.
 ///
 /// @see Perspective
+@ApiStatus.OverrideOnly
 public interface PerspectiveBehavior {
   /// Annotation that provides metadata for a {@link PerspectiveBehavior}.
   ///

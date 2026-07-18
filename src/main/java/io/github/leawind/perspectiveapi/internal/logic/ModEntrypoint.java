@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.ServiceLoader;
 import java.util.stream.StreamSupport;

@@ -2,12 +2,14 @@ package io.github.leawind.perspectiveapi.api;
 
 import java.util.function.Supplier;
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 
 /// Manages an ordered chain of perspective overrides.
 ///
 /// Entries are evaluated in descending order of priority. The chain resolves to the first
 /// non-null identifier that passes the provided validator.
+@ApiStatus.NonExtendable
 public interface PerspectiveOverrideChain {
   /// Pushes a new override entry to the chain.
   ///

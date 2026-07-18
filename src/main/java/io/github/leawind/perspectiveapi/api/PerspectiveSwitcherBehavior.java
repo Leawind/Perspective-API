@@ -1,7 +1,5 @@
-package io.github.leawind.perspectiveapi.api.spi;
+package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
 import java.util.List;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
@@ -12,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 /// Implementations are discovered via {@link java.util.ServiceLoader} and managed
 /// by the {@link io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager}.
 @ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 public interface PerspectiveSwitcherBehavior extends PerspectiveSwitcher {
 
   /// Called once when the switcher is registered and initialized.

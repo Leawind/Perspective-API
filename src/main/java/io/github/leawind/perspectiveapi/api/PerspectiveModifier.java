@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
@@ -10,6 +11,7 @@ import org.jspecify.annotations.NonNull;
 /// Modifiers are applied sequentially **before** the transition interpolation.
 /// They mutate the target state, and the transition will smoothly interpolate from the previous
 /// state to this modified target state.
+@ApiStatus.OverrideOnly
 public interface PerspectiveModifier {
 
   /// Returns the unique identifier of this perspective.

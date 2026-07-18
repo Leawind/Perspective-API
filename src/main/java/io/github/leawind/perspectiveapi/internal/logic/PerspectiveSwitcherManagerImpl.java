@@ -4,7 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.ArrayList;

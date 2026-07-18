@@ -6,6 +6,7 @@ import org.jspecify.annotations.NonNull;
 
 /// Manages the registered perspective switchers and the currently active switcher.
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 public interface PerspectiveSwitcherManager {
   /// Returns a list of all registered switchers.
   @NonNull List<PerspectiveSwitcher> getSwitchers();

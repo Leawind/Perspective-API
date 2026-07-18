@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
@@ -16,6 +15,7 @@ import org.jspecify.annotations.Nullable;
 /// @see PerspectiveSwitcherBehavior
 /// @see PerspectiveSwitcherManager
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 public interface PerspectiveSwitcher {
 
   /// Returns the display name of this switcher.

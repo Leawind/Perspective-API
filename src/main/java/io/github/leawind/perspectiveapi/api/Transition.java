@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 /// When a perspective switch occurs, the camera interpolates from its previous position/rotation
 /// to the new perspective's values
 @ApiStatus.Experimental
+@ApiStatus.NonExtendable
 public interface Transition {
 
   /// Sets the transition duration in milliseconds.

@@ -7,6 +7,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// Global singleton registry for {@link PerspectiveBehavior} instances.
+@ApiStatus.NonExtendable
 public interface PerspectiveRegistry {
   /// Checks if a perspective with the given ID is registered.
   ///

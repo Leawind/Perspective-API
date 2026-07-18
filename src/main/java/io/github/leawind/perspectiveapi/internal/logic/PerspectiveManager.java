@@ -4,7 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;

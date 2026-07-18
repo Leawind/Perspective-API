@@ -3,7 +3,7 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.ArrayList;
