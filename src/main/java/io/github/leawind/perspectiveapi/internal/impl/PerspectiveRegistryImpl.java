@@ -40,7 +40,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       PerspectiveBehavior.Info info =
           behavior.getClass().getAnnotation(PerspectiveBehavior.Info.class);
       if (info == null) {
-        throw new IllegalArgumentException(
+        throw new ServiceConfigurationError(
             behavior.getClass().getName()
                 + " must be annotated with "
                 + PerspectiveBehavior.Info.class.getName());
