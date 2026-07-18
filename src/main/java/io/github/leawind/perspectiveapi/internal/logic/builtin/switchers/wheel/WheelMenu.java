@@ -35,11 +35,6 @@ public final class WheelMenu {
     return isOpened;
   }
 
-  /// Returns whether the menu is currently playing a close animation.
-  public boolean isAnimating() {
-    return renderer.isAnimating();
-  }
-
   /// Sets the callback invoked when the hovered perspective changes.
   public void setOnHover(@Nullable Consumer<@NonNull String> onHover) {
     this.onHover = onHover;

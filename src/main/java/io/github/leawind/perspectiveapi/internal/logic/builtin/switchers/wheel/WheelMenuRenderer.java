@@ -36,6 +36,7 @@ public final class WheelMenuRenderer {
   public static final double ROTATE_OFFSET_RAD = -Math.PI / 2;
 
   private double lastRenderTime = Double.MAX_VALUE;
+  /// `[0, 1]`
   private final ExpSmoothDouble smoothScale = new ExpSmoothDouble().setHalflife(0.015);
   private final ExpSmoothDouble smoothRotation = new ExpSmoothDouble().setHalflife(0.015);
 
@@ -51,17 +52,12 @@ public final class WheelMenuRenderer {
 
   /// Called when the menu opens. Triggers the scale-in animation.
   public void onOpen() {
-    smoothScale.setCurrent(0).setTarget(1);
+    smoothScale.setTarget(1);
   }
 
   /// Called when the menu closes. Triggers the scale-out animation.
   public void onClose() {
     smoothScale.setTarget(0);
-  }
-
-  /// Returns whether the menu is currently animating (scale > threshold).
-  public boolean isAnimating() {
-    return smoothScale.getCurrent() > 0.001;
   }
 
   public void render(

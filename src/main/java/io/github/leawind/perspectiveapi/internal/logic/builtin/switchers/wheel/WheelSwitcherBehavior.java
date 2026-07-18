@@ -49,9 +49,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
           var minecraft = Minecraft.getInstance();
           if (minecraft.level == null) return;
 
-          if (wheelMenu.isOpened() || wheelMenu.isAnimating()) {
-            wheelMenu.render(ctx.drawContext, ctx.screenWidth, ctx.screenHeight);
-          }
+          wheelMenu.render(ctx.drawContext, ctx.screenWidth, ctx.screenHeight);
         });
     GameClientEvents.MOUSE_INPUT.on(
         ctx -> {
