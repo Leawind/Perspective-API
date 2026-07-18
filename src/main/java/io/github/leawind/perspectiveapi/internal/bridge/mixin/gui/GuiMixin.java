@@ -22,6 +22,7 @@ public abstract class GuiMixin {
   /*? if >=26.2 {*/
   @Shadow @Final private net.minecraft.client.renderer.state.gui.GuiRenderState guiRenderState;
 
+  @SuppressWarnings("ConstantConditions")
   @Inject(method = "extractRenderState", at = @At("TAIL"))
   private void perspectiveApi$afterExtractRenderState(
       net.minecraft.client.DeltaTracker deltaTracker,

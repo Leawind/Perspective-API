@@ -49,6 +49,7 @@ public abstract class MouseHandlerMixin {
     if (perspectiveApi$mouseContext.consumed) ci.cancel();
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Inject(method = "onMove", at = @At("HEAD"), cancellable = true)
   private void perspectiveApi$onMove(long handle, double xpos, double ypos, CallbackInfo ci) {
     Minecraft minecraft = Minecraft.getInstance();

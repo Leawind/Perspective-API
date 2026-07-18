@@ -73,7 +73,6 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   private final Map<String, Entry> entries = new ConcurrentHashMap<>();
 
-  private @Nullable String defaultId = null;
   private int defaultPriority = Integer.MIN_VALUE;
   private @Nullable Entry defaultEntry = null;
   private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
@@ -121,7 +120,6 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       PerspectiveBehavior.Default defaultAnnotation =
           behavior.getClass().getAnnotation(PerspectiveBehavior.Default.class);
       if (defaultAnnotation != null && defaultAnnotation.priority() >= defaultPriority) {
-        defaultId = id;
         defaultPriority = defaultAnnotation.priority();
         defaultEntry = entry;
       }
