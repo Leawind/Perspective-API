@@ -27,6 +27,14 @@ public class WheelAnchor {
     return radius;
   }
 
+  public float getOffsetX() {
+    return offsetX;
+  }
+
+  public float getOffsetY() {
+    return offsetY;
+  }
+
   /// Moves the anchor by the given relative displacement.
   /// Returns `true` if the anchor has reached or exceeded the maximum radius.
   public WheelAnchor moveBy(float dx, float dy) {
@@ -62,6 +70,6 @@ public class WheelAnchor {
   /// This follows the convention where 0 radians points upward (top of the
   /// wheel), and positive angles go clockwise.
   public double getAngleRad() {
-    return Math.atan2(offsetX, offsetY);
+    return Math.atan2(offsetY, offsetX);
   }
 }

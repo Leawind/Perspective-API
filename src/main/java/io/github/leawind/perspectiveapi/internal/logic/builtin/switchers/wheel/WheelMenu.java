@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.joml.Vector2d;
+import org.joml.Vector2f;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -153,8 +154,40 @@ public final class WheelMenu {
     }
   }
 
+  private final Layout layout = new Layout();
+
   /// Renders the menu overlay.
   public void render(DrawContext ctx, int screenWidth, int screenHeight) {
-    renderer.render(ctx, screenWidth, screenHeight, items, currentHoveredId);
+    renderer.render(ctx, layout.setup(screenWidth, screenHeight), anchor, items, currentHoveredId);
+  }
+
+  /// Layout data for positioning menu elements on screen.
+  public static final class Layout {
+    private final Vector2f center = new Vector2f();
+    private int minEdge = 640;
+    private int maxEdge = 720;
+
+    public Layout setup(int width, int height) {
+      center.set((float) width / 2f, (float) height / 2f);
+      minEdge = Math.min(width, height);
+      maxEdge = Math.max(width, height);
+      return this;
+    }
+
+    public Vector2f center() {
+      return center;
+    }
+
+    public int minEdge() {
+      return minEdge;
+    }
+
+    public float vmin(float ratio) {
+      return minEdge * ratio;
+    }
+
+    public float vmax(float ratio) {
+      return maxEdge * ratio;
+    }
   }
 }

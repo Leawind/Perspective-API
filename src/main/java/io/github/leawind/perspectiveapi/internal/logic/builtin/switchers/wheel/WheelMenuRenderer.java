@@ -1,7 +1,9 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
+import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.ExpSmoothDouble;
+import io.github.leawind.perspectiveapi.platform.api.Services;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +11,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -25,6 +26,8 @@ import org.slf4j.LoggerFactory;
 public final class WheelMenuRenderer {
   private static final Logger LOGGER = LoggerFactory.getLogger(WheelMenuRenderer.class);
 
+  // region style
+
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
 
   private static final int COLOR_AVAILABLE = 0x00_22_C5_5E;
@@ -32,8 +35,14 @@ public final class WheelMenuRenderer {
   private static final int COLOR_UNREGISTERED = 0xFF_EF_44_44;
   private static final float SELECTED_SCALE = 1.35f;
 
+  private static final float RING_RADIUS = 0.25f;
+  private static final float RING_ICON_SIZE = 0.08f;
+  private static final float CENTER_ICON_SIZE = 0.10f;
+
   /// Rotation offset: top of circle = -PI/2.
   public static final double ROTATE_OFFSET_RAD = -Math.PI / 2;
+
+  // endregion
 
   private double lastRenderTime = Double.MAX_VALUE;
   /// `[0, 1]`
@@ -62,8 +71,8 @@ public final class WheelMenuRenderer {
 
   public void render(
       DrawContext ctx,
-      int screenWidth,
-      int screenHeight,
+      WheelMenu.Layout layout,
+      @NonNull WheelAnchor anchor,
       @NonNull List<WheelMenuItem> items,
       @Nullable String selectedId) {
     double now = GLFW.glfwGetTime();
@@ -89,8 +98,6 @@ public final class WheelMenuRenderer {
     double scale = smoothScale.getCurrent();
     if (scale < 0.001) return;
 
-    WheelMenuLayout layout = new WheelMenuLayout(screenWidth, screenHeight);
-
     if (items.isEmpty()) return;
 
     WheelMenuItem selected = null;
@@ -107,17 +114,21 @@ public final class WheelMenuRenderer {
     if (selected != null) {
       drawCenterInfo(ctx, layout, selected, scale);
     }
+
+    if (Services.PLATFORM_HELPER.isDevelopmentEnvironment()) {
+      drawDebugAnchor(ctx, layout, anchor);
+    }
   }
 
   private void drawRingIcons(
       DrawContext ctx,
-      WheelMenuLayout layout,
+      WheelMenu.Layout layout,
       @NonNull List<WheelMenuItem> items,
       @Nullable WheelMenuItem selected,
       double scale,
       double rotationOffsetRad) {
     Vector2fc center = layout.center();
-    float iconRadius = layout.iconRadius() * (float) scale;
+    float ringRadius = layout.vmin(RING_RADIUS) * (float) scale;
 
     double sectorRad = 2 * Math.PI / items.size();
 
@@ -127,12 +138,12 @@ public final class WheelMenuRenderer {
 
       double itemRad = sectorRad * i + ROTATE_OFFSET_RAD + rotationOffsetRad;
       float itemScale = (float) (smoothItemScales.get(item.id()).getCurrent() * scale);
-      float iconSize = layout.iconSize() * itemScale;
+      float iconSize = layout.vmin(RING_ICON_SIZE) * itemScale;
       int iconSizeInt = (int) iconSize;
       float halfIconSize = iconSize / 2;
 
-      float iconX = center.x() + iconRadius * (float) Math.cos(itemRad);
-      float iconY = center.y() + iconRadius * (float) Math.sin(itemRad);
+      float iconX = center.x() + ringRadius * (float) Math.cos(itemRad);
+      float iconY = center.y() + ringRadius * (float) Math.sin(itemRad);
 
       int sx = (int) (iconX - halfIconSize);
       int sy = (int) (iconY - halfIconSize);
@@ -170,10 +181,10 @@ public final class WheelMenuRenderer {
   }
 
   private void drawCenterInfo(
-      DrawContext ctx, WheelMenuLayout layout, WheelMenuItem item, double scale) {
+      DrawContext ctx, WheelMenu.Layout layout, WheelMenuItem item, double scale) {
     float cx = layout.center().x();
     float cy = layout.center().y();
-    float centerIconSize = layout.centerIconSize();
+    float centerIconSize = layout.vmin(CENTER_ICON_SIZE);
 
     {
       float scaledIconSize = centerIconSize * (float) scale;
@@ -203,23 +214,20 @@ public final class WheelMenuRenderer {
     }
   }
 
-  /// Layout data for positioning menu elements on screen.
-  public record WheelMenuLayout(Vector2f center, int minEdge) {
+  private void drawDebugAnchor(DrawContext ctx, WheelMenu.Layout layout, WheelAnchor anchor) {
+    final float HALF_SIZE = 1;
+    final int COLOR = 0xFF_FF_FF_00;
 
-    public WheelMenuLayout(int width, int height) {
-      this(new Vector2f((float) width / 2f, (float) height / 2f), Math.min(width, height));
-    }
+    var center = layout.center();
 
-    public float iconRadius() {
-      return minEdge * 0.25f;
-    }
+    float x = center.x() + anchor.getOffsetX();
+    float y = center.y() + anchor.getOffsetY();
 
-    public float iconSize() {
-      return minEdge * 0.08f;
-    }
-
-    public float centerIconSize() {
-      return minEdge * 0.1f;
-    }
+    ctx.fill(
+        (int) (x - HALF_SIZE),
+        (int) (y - HALF_SIZE),
+        (int) (x + HALF_SIZE),
+        (int) (y + HALF_SIZE),
+        COLOR);
   }
 }

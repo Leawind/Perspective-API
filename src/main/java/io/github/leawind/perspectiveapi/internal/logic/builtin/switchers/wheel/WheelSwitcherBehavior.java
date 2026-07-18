@@ -59,7 +59,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
 
           switch (ctx.type) {
             case SCROLL -> wheelMenu.onMouseScroll(ctx.scrollDelta);
-            case MOVE -> wheelMenu.onMouseMove(ctx.mouseX, -ctx.mouseY);
+            case MOVE -> wheelMenu.onMouseMove(ctx.mouseX, ctx.mouseY);
             case BUTTON -> {}
           }
           // Always consume input when the wheel menu is open

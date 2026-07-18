@@ -9,6 +9,15 @@ import net.minecraft.resources.Identifier;
 ///
 /// Bridges the API differences between {@code GuiGraphics} (1.21.x and earlier)
 /// and {@code GuiGraphicsExtractor} (26.x).
+///
+/// ### Coordinate Convension
+///
+/// ```
+/// +------>
+/// |     x+
+/// |
+/// v  y+
+/// ```
 public final class DrawContext {
   /*? if >=26.1 {*/
   private final net.minecraft.client.gui.GuiGraphicsExtractor graphics;
