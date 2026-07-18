@@ -44,7 +44,6 @@ public final class WheelMenu {
   /// IDs.
   public void open(@Nullable String currentSelectedId, @NonNull List<String> availableIds) {
     isOpened = true;
-    anchor.reset();
     hasLastMouse = false;
     moved = false;
     originalSelectedId = currentSelectedId;
@@ -57,6 +56,8 @@ public final class WheelMenu {
       items.add(new WheelMenuItem(id).update());
     }
 
+    anchor.reset();
+    anchor.setRadius(Math.max(8 * items.size(), 24.0f));
     renderer.onOpen();
   }
 

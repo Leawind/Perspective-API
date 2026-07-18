@@ -7,7 +7,7 @@ package io.github.leawind.perspectiveapi.internal.utils;
 /// the origin to the anchor always stays well-defined.
 public class WheelAnchor {
 
-  private final float radius;
+  private float radius;
 
   private float offsetX = 0;
   private float offsetY = 0;
@@ -16,6 +16,15 @@ public class WheelAnchor {
 
   public WheelAnchor(float radius) {
     this.radius = radius;
+  }
+
+  public WheelAnchor setRadius(float radius) {
+    this.radius = radius;
+    return this;
+  }
+
+  public float getRadius() {
+    return radius;
   }
 
   /// Moves the anchor by the given relative displacement.
