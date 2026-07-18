@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
 import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.ExpSmoothDouble;
@@ -28,6 +29,8 @@ public final class WheelMenuRenderer {
 
   // region style
 
+  private static final Identifier DEFAULTICON =
+      Bridge.parseIdentifier("perspective_api:textures/perspective/default.png");
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
 
   private static final int COLOR_AVAILABLE = 0x00_22_C5_5E;
@@ -156,13 +159,16 @@ public final class WheelMenuRenderer {
         drawAvailabilityIndicator(ctx, item, iconX + halfIconSize, iconY + halfIconSize);
 
         Identifier icon = item.icon();
-        if (icon != null) {
-          float pad = iconSize * 0.19f;
-          int ix = (int) (iconX - halfIconSize + pad);
-          int iy = (int) (iconY - halfIconSize + pad);
-          int is = (int) (iconSize - pad * 2);
-          ctx.blit(icon, 0, 0, ix, iy, is, is, is, is, 1.0f);
+        if (icon == null) {
+          icon = DEFAULTICON;
         }
+
+        float pad = iconSize * 0.19f;
+        int ix = (int) (iconX - halfIconSize + pad);
+        int iy = (int) (iconY - halfIconSize + pad);
+        int is = (int) (iconSize - pad * 2);
+        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is, 1.0f);
+
       } catch (IllegalStateException e) {
         LOGGER.warn("Error occurred drawing ring icon", e);
       }
