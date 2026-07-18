@@ -139,6 +139,9 @@ public interface PerspectiveBehavior {
     return vanillaFovDeg;
   }
 
+  /// Called once when the behavior is registered and initialized.
+  default void init() {}
+
   // region events
 
   /// Called when this perspective becomes the current perspective

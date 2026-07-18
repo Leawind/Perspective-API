@@ -105,7 +105,15 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     String id = entry.id();
     LOGGER.info("Registering perspective with id '{}': {}", id, behavior);
     synchronized (this) {
-      if (entries.containsKey(id)) {
+      Entry existing = entries.get(id);
+
+      boolean alreadyRegistered = existing != null && existing.behavior() == behavior;
+      if (existing != null) {
+        if (existing.behavior() == behavior) {
+          LOGGER.warn(
+              "Perspective with id '{}' already registered and it has same behavior, ignoring", id);
+          return;
+        }
         LOGGER.warn("Perspective with id '{}' already registered, replacing", id);
       }
       entries.put(id, entry);
@@ -118,6 +126,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
         defaultEntry = entry;
       }
       onUpdate.emit();
+      behavior.init();
     }
   }
 
