@@ -2,7 +2,9 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.ExpSmoothDouble;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
@@ -35,7 +37,10 @@ public final class WheelMenuRenderer {
 
   private double lastRenderTime = Double.MAX_VALUE;
   private final ExpSmoothDouble smoothScale = new ExpSmoothDouble().setHalflife(0.015);
-  private final ExpSmoothDouble smoothRotation = new ExpSmoothDouble().setHalflife(0.025);
+  private final ExpSmoothDouble smoothRotation = new ExpSmoothDouble().setHalflife(0.015);
+
+  private static final double ITEM_SCALE_HALFLIFE = 0.015;
+  private final Map<String, ExpSmoothDouble> smoothItemScales = new HashMap<>();
 
   /// Called when the list rotates. Adds one sector's worth of angular offset
   /// so the renderer can animate the rotation.
@@ -74,6 +79,16 @@ public final class WheelMenuRenderer {
     smoothScale.update(deltaTime);
     smoothRotation.setTarget(0);
     smoothRotation.update(deltaTime);
+
+    // Per-item scale animators keyed by item id
+    for (var item : items) {
+      smoothItemScales
+          .computeIfAbsent(
+              item.id(),
+              ignored -> new ExpSmoothDouble().setHalflife(ITEM_SCALE_HALFLIFE).setCurrent(1))
+          .setTarget(item.id().equals(selectedId) ? SELECTED_SCALE : 1)
+          .update(deltaTime);
+    }
 
     double scale = smoothScale.getCurrent();
     if (scale < 0.001) return;
@@ -115,7 +130,7 @@ public final class WheelMenuRenderer {
       boolean isSelected = item == selected;
 
       double itemRad = sectorRad * i + ROTATE_OFFSET_RAD + rotationOffsetRad;
-      float itemScale = isSelected ? (float) (SELECTED_SCALE * scale) : (float) scale;
+      float itemScale = (float) (smoothItemScales.get(item.id()).getCurrent() * scale);
       float iconSize = layout.iconSize() * itemScale;
       int iconSizeInt = (int) iconSize;
       float halfIconSize = iconSize / 2;

@@ -3,7 +3,11 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
 import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.joml.Vector2d;
 import org.jspecify.annotations.NonNull;
@@ -18,6 +22,7 @@ public final class WheelMenu {
   private final WheelAnchor anchor = new WheelAnchor(24.0f);
   private final Vector2d lastMouse = new Vector2d(0, 0);
   private boolean hasLastMouse;
+  private final Map<String, WheelMenuItem> itemCache = new LinkedHashMap<>();
   private final List<WheelMenuItem> items = new ArrayList<>();
   private @Nullable String originalSelectedId;
   private @Nullable String currentHoveredId;
@@ -40,21 +45,40 @@ public final class WheelMenu {
     this.onHover = onHover;
   }
 
-  /// Opens the menu with the given current selection and available perspective
-  /// IDs.
-  public void open(@Nullable String currentSelectedId, @NonNull List<String> availableIds) {
+  /// Updates the displayed items to reflect the given available IDs.
+  /// Existing {@link WheelMenuItem} instances are preserved; only new IDs
+  /// cause new instances to be created. Current list order is kept as much
+  /// as possible.
+  public void updateItems(@NonNull List<String> availableIds) {
+    var availableSet = new HashSet<>(availableIds);
+
+    // Remove items no longer available
+    items.removeIf(item -> !availableSet.contains(item.id()));
+
+    // Collect existing IDs in their current order
+    var existingIds = new LinkedHashSet<String>();
+    for (WheelMenuItem item : items) {
+      existingIds.add(item.id());
+    }
+
+    // Append new IDs at the end
+    int limit = Math.min(availableIds.size(), MAX_ITEMS);
+    for (int i = 0; i < limit; i++) {
+      String id = availableIds.get(i);
+      if (existingIds.add(id)) {
+        WheelMenuItem item = itemCache.computeIfAbsent(id, WheelMenuItem::new).update();
+        items.add(item);
+      }
+    }
+  }
+
+  /// Opens the menu with the given current selection.
+  public void open(@Nullable String currentSelectedId) {
     isOpened = true;
     hasLastMouse = false;
     moved = false;
     originalSelectedId = currentSelectedId;
     currentHoveredId = currentSelectedId;
-
-    items.clear();
-    int limit = Math.min(availableIds.size(), MAX_ITEMS);
-    for (int i = 0; i < limit; i++) {
-      String id = availableIds.get(i);
-      items.add(new WheelMenuItem(id).update());
-    }
 
     anchor.reset();
     anchor.setRadius(Math.max(8 * items.size(), 24.0f));

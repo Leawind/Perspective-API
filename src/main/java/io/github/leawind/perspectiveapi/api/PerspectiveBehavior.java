@@ -72,6 +72,7 @@ public interface PerspectiveBehavior {
     ///
     /// If set to `false`, the perspective can only be activated programmatically
     /// through the {@link PerspectiveOverrideChain}.
+    @ApiStatus.Experimental
     boolean switchable() default true;
 
     /// The sorting priority within the switcher.
