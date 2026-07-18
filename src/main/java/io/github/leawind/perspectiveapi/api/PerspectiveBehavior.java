@@ -74,10 +74,13 @@ public interface PerspectiveBehavior {
     int priority() default 0;
   }
 
+  /// Marks a perspective behavior as the default one to be activated on startup.
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   @Documented
   @interface Default {
+    /// The priority of this default perspective. Higher values take precedence
+    /// if multiple defaults are registered.
     int priority() default 0;
   }
 

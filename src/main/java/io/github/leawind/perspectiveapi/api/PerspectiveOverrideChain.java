@@ -9,6 +9,14 @@ import org.jspecify.annotations.NonNull;
 /// Entries are evaluated in descending order of priority. The chain resolves to the first
 /// non-null identifier that passes the provided validator.
 public interface PerspectiveOverrideChain {
+  /// Pushes a new override entry to the chain.
+  ///
+  /// If an entry with the same key already exists, it is replaced.
+  /// Higher priority values are evaluated first.
+  ///
+  /// @param key the unique identifier for this override entry
+  /// @param priority the evaluation priority
+  /// @param supplier a supplier that returns the perspective ID, or `null` to skip
   void push(@NonNull Identifier key, int priority, @NonNull Supplier<String> supplier);
 
   /// Removes the override entry with the given key.
