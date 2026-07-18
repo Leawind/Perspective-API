@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.List;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -11,7 +12,9 @@ public interface PerspectiveRegistry {
 
   @Nullable Perspective get(@NonNull String id);
 
-  @NonNull List<Perspective> getAll();
+  @ApiStatus.Experimental
+  @NonNull List<@NonNull Perspective> getAll();
 
+  @ApiStatus.Experimental
   @NonNull SimpleEventEmitter<Void> onUpdate();
 }

@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 
 public final class PerspectiveAPI {
@@ -24,6 +25,7 @@ public final class PerspectiveAPI {
     return PerspectiveRegistryImpl.INSTANCE;
   }
 
+  @ApiStatus.Experimental
   public static @NonNull Transition getTransition() {
     return PerspectiveManager.INSTANCE.transition();
   }
@@ -36,6 +38,7 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.overrides();
   }
 
+  @ApiStatus.Experimental
   public static @NonNull PerspectiveSwitcherManager getSwitcherManager() {
     return PerspectiveManager.INSTANCE.switchers();
   }
