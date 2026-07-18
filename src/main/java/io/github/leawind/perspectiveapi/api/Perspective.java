@@ -7,6 +7,13 @@ import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+/// A read-only view of a registered perspective.
+///
+/// Each instance is backed by a {@link PerspectiveBehavior} and carries metadata
+/// derived from its {@link PerspectiveBehavior.Info} annotation. Perspectives are
+/// created by the {@link PerspectiveRegistry} and should not be implemented directly.
+///
+/// @see PerspectiveBehavior
 /// @see PerspectiveBehavior.Info
 public interface Perspective {
   /// Returns the unique identifier of this perspective.

@@ -25,6 +25,12 @@ import org.jspecify.annotations.NonNull;
 ///
 /// @see Perspective
 public interface PerspectiveBehavior {
+  /// Annotation that provides metadata for a {@link PerspectiveBehavior}.
+  ///
+  /// Every implementation must carry this annotation so the registry can
+  /// derive a {@link Perspective} from it.
+  ///
+  /// @see Perspective
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   @Documented
