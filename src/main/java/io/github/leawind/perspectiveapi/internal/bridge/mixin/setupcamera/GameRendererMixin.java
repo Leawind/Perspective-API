@@ -34,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
+import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
 import net.minecraft.client.Camera;
 import org.joml.Vector3f;
 
@@ -51,8 +51,8 @@ public abstract class GameRendererMixin {
               ordinal = 2))
   public void doABarrelRoll$renderWorld(
       float tickDelta, long limitTime, PoseStack poseStack, CallbackInfo ci) {
-    var quat = mainCamera.rotation();
-    var eulerDeg = PerspectiveHelper.quatToEulerDeg(quat, new Vector3f());
+    var mcQuat = mainCamera.rotation();
+    var eulerDeg = CameraSpace.mcQuatToEulerDeg(mcQuat, new Vector3f());
     float roll = eulerDeg.z();
     if (roll != 0) {
       poseStack.mulPose(Axis.ZP.rotationDegrees(roll));

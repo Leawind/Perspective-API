@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.bridge;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Camera;
@@ -8,7 +7,6 @@ import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
@@ -27,7 +25,7 @@ public final class Bridge {
     return SharedConstants.getCurrentVersion().dataVersion().version();
     /*? } else {*/
     /*return SharedConstants.getCurrentVersion().getDataVersion().getVersion();
-     *//*? }*/
+    *//*? }*/
   }
 
   public static Identifier parseIdentifier(String identifier) {
@@ -43,7 +41,7 @@ public final class Bridge {
     return Identifier.fromNamespaceAndPath(namespace, path);
     /*? } else {*/
     /*return new Identifier(namespace, path);
-     *//*? }*/
+    *//*? }*/
   }
 
   /// Updates the camera type and triggers necessary side effects.
@@ -97,17 +95,7 @@ public final class Bridge {
     Minecraft.getInstance().setScreenAndShow(screen);
     /*? } else {*/
     /*Minecraft.getInstance().setScreen(screen);
-     *//*? }*/
-  }
-
-  /// Extracts entity rotation as a quaternion.
-  ///
-  /// @param entity the entity to query
-  /// @param partialTicks interpolation factor
-  /// @param quat destination quaternion
-  public static void getEntityRotation(Entity entity, float partialTicks, Quaternionf quat) {
-    PerspectiveHelper.eulerDegToQuat(
-        new Vec2(entity.getViewXRot(partialTicks), entity.getViewYRot(partialTicks)), quat);
+    *//*? }*/
   }
 
   /// Gets camera position in world coordinates.
@@ -121,12 +109,12 @@ public final class Bridge {
     return dest;
   }
 
-  /// Gets camera rotation as a quaternion.
+  /// Gets camera rotation as a quaternion, follow API convention
   ///
   /// @param camera the camera to query
   /// @param dest destination quaternion
   /// @return the destination quaternion for chaining
-  public static Quaternionf getCameraRotationQuat(Camera camera, Quaternionf dest) {
+  public static Quaternionf getCameraRotation(Camera camera, Quaternionf dest) {
     return dest.set(camera.rotation());
   }
 
@@ -145,8 +133,8 @@ public final class Bridge {
   ///
   /// @param camera the camera to modify
   /// @param quat new rotation
-  public static void setCameraRotationQuat(Camera camera, Quaternionfc quat) {
-    CameraAccessor.of(camera).perspective_api$setRotation(quat);
+  public static void setCameraRotation(Camera camera, Quaternionfc mcQuat) {
+    CameraAccessor.of(camera).perspective_api$setRotation(mcQuat);
   }
 
   /// Sets camera rotation from euler angles in degrees.

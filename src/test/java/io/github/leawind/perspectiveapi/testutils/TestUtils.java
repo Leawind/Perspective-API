@@ -59,6 +59,46 @@ public final class TestUtils {
         String.format("Quaternion angle mismatch: %.6f degrees > %.6f", angleDeg, angleDegDelta));
   }
 
+  /**
+   * Helper method: compares two angles for equality, automatically handling 360-degree wrap issues
+   * (e.g., -180 and 180 are considered equal)
+   */
+  public static void assertAngleEquals(float expected, float actual, float delta) {
+    float diff = Math.abs(expected - actual) % 360.0f;
+    if (diff > 180.0f) {
+      diff = 360.0f - diff;
+    }
+    assertTrue(
+        diff <= delta,
+        String.format(" (Expected: %.4f, Actual: %.4f, Diff: %.4f)", expected, actual, diff));
+  }
+
+  public static void assertAngleEquals(float expected, float actual) {
+    assertAngleEquals(expected, actual, 1e-4f);
+  }
+
+  public static void assertAngleEquals(Vector2fc expected, Vector2fc actual, float delta) {
+    assertAngleEquals(expected.x(), actual.x(), delta);
+    assertAngleEquals(expected.y(), actual.y(), delta);
+  }
+
+  public static void assertAngleEquals(Vector2fc expected, Vector2fc actual) {
+    assertAngleEquals(expected.x(), actual.x());
+    assertAngleEquals(expected.y(), actual.y());
+  }
+
+  public static void assertAngleEquals(Vector3fc expected, Vector3fc actual, float delta) {
+    assertAngleEquals(expected.x(), actual.x(), delta);
+    assertAngleEquals(expected.y(), actual.y(), delta);
+    assertAngleEquals(expected.z(), actual.z(), delta);
+  }
+
+  public static void assertAngleEquals(Vector3fc expected, Vector3fc actual) {
+    assertAngleEquals(expected.x(), actual.x());
+    assertAngleEquals(expected.y(), actual.y());
+    assertAngleEquals(expected.z(), actual.z());
+  }
+
   public static Stream<Vector2fc> eulerDegs(float xStep, float yStep) {
     var list = new ArrayList<Vector2fc>();
     for (float xRot = -80; xRot < 80; xRot += xStep) {
@@ -79,23 +119,5 @@ public final class TestUtils {
       }
     }
     return list.stream();
-  }
-
-  /**
-   * Helper method: compares two angles for equality, automatically handling 360-degree wrap issues
-   * (e.g., -180 and 180 are considered equal)
-   */
-  public static void assertAngleEquals(float expected, float actual, float delta) {
-    float diff = Math.abs(expected - actual) % 360.0f;
-    if (diff > 180.0f) {
-      diff = 360.0f - diff;
-    }
-    assertTrue(
-        diff <= delta,
-        String.format(" (Expected: %.4f, Actual: %.4f, Diff: %.4f)", expected, actual, diff));
-  }
-
-  public static void assertAngleEquals(float expected, float actual) {
-    assertAngleEquals(expected, actual, 1e-4f);
   }
 }

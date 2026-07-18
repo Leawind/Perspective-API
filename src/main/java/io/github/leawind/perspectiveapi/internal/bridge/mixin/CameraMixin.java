@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.bridge.mixin;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveHelper;
+import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import net.minecraft.client.Camera;
 import org.joml.Quaternionf;
@@ -46,15 +46,15 @@ public abstract class CameraMixin implements CameraAccessor {
 
   /// Refer to `net.minecraft.client.Camera#setRotation`
   @Override
-  public void perspective_api$setRotation(Quaternionfc quat) {
-    Vector2f eulerDeg = PerspectiveHelper.quatToEulerDeg(quat, new Vector2f());
+  public void perspective_api$setRotation(Quaternionfc mcQuat) {
+    Vector2f eulerDeg = CameraSpace.mcQuatToEulerDeg(mcQuat, new Vector2f());
 
     this.xRot = eulerDeg.x();
     this.yRot = eulerDeg.y();
-    this.rotation.set(quat);
-    PerspectiveHelper.FORWARD.rotate(this.rotation, this.forwards);
-    PerspectiveHelper.UP.rotate(this.rotation, this.up);
-    PerspectiveHelper.LEFT.rotate(this.rotation, this.left);
+    this.rotation.set(mcQuat);
+    CameraSpace.FORWARD.rotate(this.rotation, this.forwards);
+    CameraSpace.UP.rotate(this.rotation, this.up);
+    CameraSpace.LEFT.rotate(this.rotation, this.left);
 
     /*? if >=26.1 {*/
     matrixPropertiesDirty |= 3;

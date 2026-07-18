@@ -6,6 +6,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.api.spi.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
@@ -68,7 +69,11 @@ public final class PerspectiveManager {
 
   private boolean isTempStateInited = false;
   private final Vector3d tempPosition = new Vector3d();
+
+  /// Use API convention
   private final Quaternionf tempRotation = new Quaternionf();
+  private final Quaternionf tempRotationMcQuat =
+      CameraSpace.apiToMc(tempRotation, new Quaternionf());
   private float tempFov = 70;
 
   // endregion
@@ -185,7 +190,9 @@ public final class PerspectiveManager {
 
     // Extract current vanilla state and backup
     Bridge.getCameraPosition(camera, tempPosition);
-    Bridge.getCameraRotationQuat(camera, tempRotation);
+    Bridge.getCameraRotation(camera, tempRotationMcQuat);
+    CameraSpace.mcToApi(tempRotationMcQuat, tempRotation);
+
     backupPosition.set(tempPosition);
     backupRotation.set(tempRotation);
 
@@ -247,7 +254,7 @@ public final class PerspectiveManager {
 
     // Commit to camera
     Bridge.setCameraPosition(camera, tempPosition);
-    Bridge.setCameraRotationQuat(camera, tempRotation);
+    Bridge.setCameraRotation(camera, CameraSpace.apiToMc(tempRotation, tempRotationMcQuat));
   }
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
@@ -315,7 +322,8 @@ public final class PerspectiveManager {
       Camera camera = Bridge.getMainCamera();
       if (camera != null) {
         Bridge.getCameraPosition(camera, tempPosition);
-        Bridge.getCameraRotationQuat(camera, tempRotation);
+        Bridge.getCameraRotation(camera, tempRotationMcQuat);
+        CameraSpace.mcToApi(tempRotationMcQuat, tempRotation);
         isTempStateInited = true;
       }
     }

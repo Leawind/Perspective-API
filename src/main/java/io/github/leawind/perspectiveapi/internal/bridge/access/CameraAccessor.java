@@ -28,5 +28,5 @@ public interface CameraAccessor extends CameraAccessorMixin {
   Vector3f perspective_api$left();
   
   /// Updates all internal camera state including euler angles, quaternion, and direction vectors.
-  void perspective_api$setRotation(Quaternionfc quat);
+  void perspective_api$setRotation(Quaternionfc mcQuat);
 }

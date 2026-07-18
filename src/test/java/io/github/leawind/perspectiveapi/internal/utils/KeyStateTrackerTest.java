@@ -27,8 +27,7 @@ class KeyStateTrackerTest {
       super("test.key", 0, Category.MISC);
       /*? } else {*/
       /*super("test.key", 0, "key.categories.gameplay");
-       */
-      /*? }*/
+      *//*? }*/
     }
 
     public void setDown(boolean down) {
