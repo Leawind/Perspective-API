@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.api;
 
 import java.util.List;
+import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -27,7 +28,7 @@ public interface PerspectiveSwitcherBehavior extends PerspectiveSwitcher {
   void onActivated(@NonNull Perspective currentPerspective);
 
   /// Called every client tick while this switcher is active.
-  void clientTickWhenActive();
+  void clientTickWhenActive(@NonNull Minecraft minecraft);
 
   /// Called when this switcher is deactivated in favor of another switcher.
   void onDeactivated();

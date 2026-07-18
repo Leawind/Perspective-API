@@ -3,8 +3,8 @@ package io.github.leawind.perspectiveapi.internal.logic;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
-import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
+import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
@@ -111,7 +111,7 @@ public final class PerspectiveManager {
 
   public void clientTick(Minecraft minecraft) {
     // tick switchers
-    switchers.clientTick();
+    switchers.clientTick(minecraft);
 
     // Resolve current id from override chain
     Perspective resolved = PerspectiveRegistryImpl.INSTANCE.getOrDefault(overrides.get());

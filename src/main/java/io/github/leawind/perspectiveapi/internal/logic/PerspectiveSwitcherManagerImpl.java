@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -94,7 +95,7 @@ public class PerspectiveSwitcherManagerImpl
     return getSwitcher().getSelected();
   }
 
-  void clientTick() {
-    getSwitcher().clientTickWhenActive();
+  void clientTick(Minecraft minecraft) {
+    getSwitcher().clientTickWhenActive(minecraft);
   }
 }

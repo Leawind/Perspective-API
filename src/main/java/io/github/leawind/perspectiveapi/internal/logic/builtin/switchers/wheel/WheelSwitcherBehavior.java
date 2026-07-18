@@ -92,7 +92,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   @Override
-  public void clientTickWhenActive() {
+  public void clientTickWhenActive(@NonNull Minecraft minecraft) {
     wheelMenu.tick();
 
     String selected = this.selected;
