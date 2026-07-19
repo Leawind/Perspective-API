@@ -145,10 +145,12 @@ public final class WheelMenu {
 
       if (id >= 0 && id < items.size()) {
         WheelMenuItem item = items.get(id);
-        if (!item.id().equals(currentHoveredId) && onHover != null) {
-          onHover.accept(item.id());
+        if (item.availability() == WheelMenuItem.Availability.AVAILABLE) {
+          if (!item.id().equals(currentHoveredId) && onHover != null) {
+            onHover.accept(item.id());
+          }
+          currentHoveredId = item.id();
         }
-        currentHoveredId = item.id();
         moved = true;
       }
     }
