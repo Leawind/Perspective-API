@@ -29,7 +29,12 @@ public final class PerspectiveAPI {
     PerspectiveAPI.enabled = enabled;
   }
 
-  /// Returns the global registry for perspectives
+  /// Returns the global registry for perspectives.
+  ///
+  /// The returned registry may be empty if called before SPI discovery completes during mod
+  /// loading.
+  ///
+  /// Use {@link PerspectiveRegistry#contains} to safely check availability.
   public static @NonNull PerspectiveRegistry getRegistry() {
     return PerspectiveRegistryImpl.INSTANCE;
   }
@@ -56,12 +61,19 @@ public final class PerspectiveAPI {
     return PerspectiveManager.INSTANCE.switchers();
   }
 
-  /// Returns the currently active perspective
-  public static @NonNull Perspective getCurrent() {
+  /// Returns the currently active perspective, or throws if mod is not initialized.
+  ///
+  /// Use {@link #isCurrent(String)} to check if the current perspective has specific id;
+  ///
+  /// @throws IllegalStateException if called before SPI discovery completes during mod loading
+  public static @NonNull Perspective getCurrent() throws IllegalStateException {
     return PerspectiveManager.INSTANCE.getCurrent();
   }
 
-  /// Checks if the currently active perspective matches the given ID
+  /// Checks if the currently active perspective matches the given ID.
+  ///
+  /// Returns `false` if called before SPI discovery completes, unlike {@link #getCurrent()} which
+  /// throws.
   ///
   /// @param id the perspective ID to check
   /// @return `true` if the current perspective has the given ID, `false` otherwise

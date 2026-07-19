@@ -155,6 +155,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return entry;
   }
 
+  /// @throws IllegalStateException if default one is not discovered yet
   private @NonNull Entry getDefaultEntry() throws IllegalStateException {
     Entry entry = defaultEntry;
     if (entry == null) {
@@ -182,7 +183,8 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return entries.get(id);
   }
 
-  public @NonNull Perspective getDefault() {
+  /// @throws IllegalStateException if called before SPI discovery completes during mod loading
+  public @NonNull Perspective getDefault() throws IllegalStateException {
     return getDefaultEntry();
   }
 

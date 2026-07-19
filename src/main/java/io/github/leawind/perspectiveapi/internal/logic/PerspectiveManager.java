@@ -59,8 +59,8 @@ public final class PerspectiveManager {
   // endregion
 
   // region current state
-  private volatile @Nullable Perspective current;
-  private volatile @Nullable PerspectiveBehavior currentBehavior;
+  private volatile @Nullable Perspective current = null;
+  private volatile @Nullable PerspectiveBehavior currentBehavior = null;
   private volatile @Nullable PerspectiveBehavior previousBehavior = null;
 
   // endregion
@@ -96,7 +96,8 @@ public final class PerspectiveManager {
 
   // region perspective management
 
-  public @NonNull Perspective getCurrent() {
+  /// @throws IllegalStateException if called before SPI discovery completes during mod loading
+  public @NonNull Perspective getCurrent() throws IllegalStateException {
     var current = this.current;
     if (current == null) {
       current = PerspectiveRegistryImpl.INSTANCE.getDefault();
