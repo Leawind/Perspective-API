@@ -9,18 +9,21 @@
 ![API version](https://img.shields.io/github/v/tag/Leawind/Perspective-API?label=API&color=818181)
 
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/LIqveQm1?style=flat&logo=modrinth&color=17B85A&cacheSeconds=3600&label=Modrinth)](https://modrinth.com/mod/perspective-api)
-[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1575322?style=flat&logo=curseforge&color=F1643%5E&cacheSeconds=3600&label=CurseForge)](https://www.curseforge.com/minecraft/mc-mods/perspective-api)
+[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1575322?style=flat&logo=curseforge&color=17B85A&cacheSeconds=3600&label=CurseForge)](https://www.curseforge.com/minecraft/mc-mods/perspective-api)
 
 </div>
 
 Perspective API is a camera perspective management framework for Minecraft client-side mods. It provides standardized interfaces using the JOML library to handle camera states (position, rotation, FOV), decoupled from Minecraft internals.
 
+> [!WARNING]
+> This API is currently in **active development preview** and is subject to breaking changes at any time.
+
 ## Key Features
 
-- **Roll**: Camera rotation is specified with quaternions, so roll is fully supported
-- **Smooth Transitions**: Interpolated transitions for position, rotation, and FOV ensure natural perspective switches
-- **Priority-Based Override Chain**: High-priority temporary perspectives (e.g., cutscenes, GUI-forced views) automatically override base perspectives
-- **Built-in Perspective Wheel**: Takes over the vanilla F5 toggle key
+- **Roll Support**: Camera rotation is specified with quaternions, fully supporting roll
+- **Smooth Transitions**: Built-in interpolated transition system ensures natural and fluid perspective switches for position, rotation, and FOV
+- **Priority-Based Override Chain**: A dynamic evaluation mechanism based on priority, where high-priority temporary perspectives (e.g., cutscenes, GUI-forced views) automatically override base perspectives
+- **Built-in Perspective Wheel**: Takes over the vanilla F5 toggle key, supporting short-press cycle switching and long-press to open the perspective wheel
 
 ## Compatibility Matrix
 
@@ -34,48 +37,72 @@ Perspective API is a camera perspective management framework for Minecraft clien
 |      26.1.x       |   ✅   |    ✅    |       ❌       |
 |       26.2        |   ✅   |    ✅    |       ❌       |
 
-> [!WARNING]
-> This API is currently unstable and subject to breaking changes at any time.
+## Internal Logic
 
-## Core Concepts
+The camera state is computed during the render tick as follows:
 
-### Perspective
+1. **Resolve the current perspective**: Evaluate the override chain from highest to lowest priority. If no high-priority override is active, the current perspective from the perspective wheel is used
+2. **Apply the base perspective**: Execute the current `PerspectiveBehavior`'s `applyTransform` and `applyFov` to establish the target camera state
+3. **Apply modifiers**: Execute all registered `PerspectiveModifier` instances in ascending priority order, applying additional transformations to the target state
+4. **Transition interpolation**: Interpolate between the initial state and the target state
+5. **Apply to camera**: Write the final computed result to the Minecraft camera instance
 
-A `Perspective` defines a camera behavior. Each perspective has a unique `Identifier` and implements per-frame callbacks to modify camera position, rotation, and FOV. It also exposes lifecycle hooks (`onActivate` / `onDeactivate`) and availability checks (`isAvailable`).
+## Built-in Features
 
-When `applyTransform` and `applyFov` make no modifications, the camera falls back to a vanilla camera type specified by `cameraType()`.
+### Default Perspectives
 
-Transitions in and out of a perspective can be individually enabled or disabled.
+The three built-in perspectives correspond one-to-one with the vanilla `CameraType` values:
 
-### Perspective Registration
-
-Perspectives can be registered via the Java SPI mechanism (`PerspectiveRegistrar` interface) for automatic discovery, or manually through the registry.
-
-### Override Chain
-
-The override chain is a priority-based evaluation mechanism for temporary camera control. Each entry provides a `Supplier<Identifier>` evaluated by descending priority. The first entry to return a valid perspective ID wins, and that perspective is applied. This is ideal for scenarios like custom GUIs or cutscenes that need to temporarily take over the camera.
+| Perspective ID                       | Name               |
+| ------------------------------------ | ------------------ |
+| `perspective_api.first_person`       | First Person       |
+| `perspective_api.third_person_back`  | Third Person Back  |
+| `perspective_api.third_person_front` | Third Person Front |
 
 ### Perspective Wheel
 
-The wheel manages the list of perspectives players traverse with the vanilla toggle key (F5). It includes three built-in perspectives corresponding to vanilla First-person, Third-person Back, and Third-person Front. Custom perspectives can be registered with a priority that determines their position in the cycle.
+- **Short press F5**: Cycle through available perspectives
+- **Long press F5**: Open the radial wheel menu, move the mouse to select a perspective, release to confirm
+- **Scroll wheel**: Rotate the option list within the wheel menu
 
-The wheel itself acts as a low-priority override entry. If a higher-priority override is active, the wheel's selection is temporarily ignored.
+> [!TIP]
+> The perspective wheel is the lowest-priority override entry in the override chain. When another mod sets a higher-priority temporary perspective via the override chain, the wheel's selection is temporarily ignored.
 
-### Perspective Modifier
+## Math Conventions
 
-Modifiers apply additional mathematical transformations to the camera state **after** the base perspective establishes the target state but **before** transition interpolation. This is useful for effects like screen shake, movement tilt, or vehicle roll that should layer on top of any perspective.
+See the utility class `PerspectiveMath`.
 
-Modifiers are registered with a key, a priority, and executed in ascending priority order.
+### Euler Angles
 
-## Perspective State Processing Order
+The Euler angle convention is consistent with vanilla Minecraft entity and camera code.
 
-1. Calculate the base perspective via the override chain
-   - If no other override is active, the current perspective from the built-in Perspective Wheel is used, as it is the lowest-priority override in the chain
-2. Apply modifiers in priority order
-   - No modifiers are registered by default
-3. Handle camera state transitions
-   - Transition duration is a fixed value and can be customized
-4. Apply the state to the camera
+| Axis | Meaning | Positive Direction         |
+| ---- | ------- | -------------------------- |
+| X    | Pitch   | Rotate downward            |
+| Y    | Yaw     | Clockwise from above       |
+| Z    | Roll    | Clockwise around view axis |
+
+A zero Euler angle $(0, 0, 0)$ corresponds to:
+
+| Direction | Direction Vector |
+| --------- | ---------------- |
+| Forward   | $(0, 0, 1)$      |
+| Up        | $(0, 1, 0)$      |
+| Left      | $(-1, 0, 0)$     |
+
+### Quaternions
+
+> [!TIP]
+>
+> In Minecraft, the camera (`net.minecraft.client.Camera`) computes a quaternion from its Euler angles for rendering. Below 1.21, it uses the +Z axis as the identity quaternion orientation; from 1.21 onward, it uses the -Z axis.
+>
+> This mod abstracts away that difference and aligns with the zero Euler angle, using +Z as the initial rotation.
+
+The identity quaternion $(w=1, x=0, y=0, z=0)$ represents the same orientation as the zero Euler angle.
+
+Quaternions are constructed from Euler angles using the **Y-X-Z** rotation order:
+
+$$R = R_y(\text{yaw}) \cdot R_x(\text{pitch}) \cdot R_z(\text{roll})$$
 
 ## Adding Dependencies
 
@@ -83,7 +110,7 @@ Modifiers are registered with a key, a priority, and executed in ascending prior
 
 Notation format: `"maven.modrinth:perspective-api:${version}+${loader}-${minecraft_version}"`
 
-```build.gradle.kts
+```kotlin
 repositories {
   exclusiveContent {
     forRepository {
@@ -106,4 +133,4 @@ dependencies {
 
 ## Example Mod
 
-The mod [Perspective API Demo](https://github.com/Leawind/Perspective-API-Demo) uses this API to implement some simple yet interesting features. You can refer to its source code for guidance.
+[Perspective API Demo](https://github.com/Leawind/Perspective-API-Demo) implements some custom perspectives using this API and can serve as a development reference.

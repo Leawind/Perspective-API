@@ -2,25 +2,28 @@
 
 <img src="src/main/resources/logo.svg" alt="Perspective API" style="image-rendering:pixelated;height:10em;">
 
-# 视角API（Perspective API）
+# 视角 API（Perspective API）
 
 中文 | [English](README.md)
 
 ![API version](https://img.shields.io/github/v/tag/Leawind/Perspective-API?label=API&color=818181)
 
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/LIqveQm1?style=flat&logo=modrinth&color=17B85A&cacheSeconds=3600&label=Modrinth)](https://modrinth.com/mod/perspective-api)
-[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1575322?style=flat&logo=curseforge&color=F1643%5E&cacheSeconds=3600&label=CurseForge)](https://www.curseforge.com/minecraft/mc-mods/perspective-api)
+[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1575322?style=flat&logo=curseforge&cacheSeconds=3600&label=CurseForge)](https://www.curseforge.com/minecraft/mc-mods/perspective-api)
 
 </div>
 
-Perspective API 是一个为 Minecraft 客户端模组设计的相机视角管理框架。它提供一套标准化的接口，使用 JOML 库处理相机的位置、旋转等状态，与 Minecraft 代码解耦。
+Perspective API 是一个为 Minecraft 客户端模组设计的相机视角管理框架。它提供一套标准化的接口，使用 JOML 库处理相机的位置、旋转等状态，与 Minecraft 原版代码解耦。
+
+> [!WARNING]
+> 本项目目前处于**开发预览阶段**，API 可能随时发生破坏性变更。
 
 ## 核心特性
 
-- **滚转角**：可以通过四元数指定相机的旋转，支持滚转角
-- **平滑过渡**：支持相机位置、旋转角度及视场角 (FOV) 的插值过渡，确保视角切换自然流畅
-- **优先级覆盖链 (Override Chain)**：引入基于优先级的动态评估机制。高优先级的临时视角（如过场动画、GUI 强制视角）会自动覆盖基础视角
-- **内置视角轮盘 (Perspective Wheel)**：接管原版视角切换按键（F5）逻辑
+- **滚转角支持**：通过四元数指定相机旋转，支持滚转角（Roll）
+- **平滑过渡动画**：内置插值过渡系统，确保视角切换时位置、旋转和视场角 (FOV) 自然流畅
+- **优先级覆盖链**：基于优先级的动态评估机制，高优先级临时视角（如过场动画、GUI 强制视角）可自动覆盖基础视角
+- **内置轮盘切换器**：接管原版 F5 按键逻辑，支持短按循环切换与长按打开视角轮盘
 
 ## 兼容性矩阵
 
@@ -34,56 +37,80 @@ Perspective API 是一个为 Minecraft 客户端模组设计的相机视角管�
 |     26.1.x     |   ✅   |    ✅    |       ❌       |
 |      26.2      |   ✅   |    ✅    |       ❌       |
 
-> [!WARNING]
-> 本API尚不稳定，随时可能发生破坏性变更。
+## 内部逻辑
 
-## 核心概念
+本模组在 render tick 中计算相机状态的逻辑如下：
 
-### 视角（Perspective）
+1. **解析当前视角**：通过覆盖链（Override Chain）按优先级从高到低评估，若无高优先级覆盖项生效，将使用轮盘切换器提供的当前视角
+2. **应用基础视角**：执行当前 `PerspectiveBehavior` 的 `applyTransform` 和 `applyFov`，建立目标相机状态
+3. **叠加修饰器**：按优先级升序依次执行所有已注册的 `PerspectiveModifier`，对目标状态施加额外变换
+4. **过渡插值**：在起始状态与目标状态之间进行插值
+5. **应用到相机**：将最终计算结果写入 Minecraft 相机实例
 
-`Perspective` 定义了一种相机行为。每个视角拥有唯一的 `Identifier`，并通过逐帧回调修改相机的位置、旋转和视场角。它还提供生命周期钩子（`onActivate` / `onDeactivate`）和可用性检查（`isAvailable`）。
+## 内置功能
 
-当 `applyTransform` 和 `applyFov` 未做任何修改时，相机会回退到由 `cameraType()` 指定的原版视角类型。
+### 默认视角
 
-切换到该视角或从该视角切换出时的平滑过渡可以独立启用或禁用。
+内置的三个视角与原版的三种 `CameraType` 一一对应：
 
-### 视角注册
+| 视角 ID                              | 名称         |
+| ------------------------------------ | ------------ |
+| `perspective_api.first_person`       | 第一人称     |
+| `perspective_api.third_person_back`  | 第三人称背面 |
+| `perspective_api.third_person_front` | 第三人称正面 |
 
-可以通过 Java SPI 机制（`PerspectiveRegistrar` 接口）自动发现并注册视角，也可以通过注册表手动注册。
+### 视角轮盘
 
-### 覆盖链（Override Chain）
+- **短按 F5**：在可用视角列表中循环切换
+- **长按 F5**：打开径向轮盘菜单，移动鼠标选择视角，松开确认
+- **滚轮**：在轮盘菜单中旋转选项列表
 
-覆盖链是一种基于优先级的临时相机控制评估机制。每个覆盖项提供一个 `Supplier<Identifier>`，按优先级从高到低依次评估。第一个返回有效视角 ID 的覆盖项胜出，其视角被应用。适用于需要临时接管相机的场景，如自定义 GUI 或过场动画。
+> [!TIP]
+> 轮盘切换器是覆盖链中优先级最低的覆盖项。当其他模组通过覆盖链设置了更高优先级的临时视角时，轮盘的选择将被暂时忽略。
 
-### 视角轮盘（Perspective Wheel）
+## 数学约定
 
-轮盘管理玩家通过原版切换键（F5）遍历的视角列表。内置三种视角，分别对应原版的第一人称、第三人称背面和第三人称正面。开发者可以注册自定义视角，通过优先级决定其在循环列表中的位置。
+参考工具类 `PerspectiveMath`。
 
-轮盘本身是覆盖链中的一个低优先级的覆盖项。若高优先级覆盖项生效，轮盘的选择将被暂时忽略。
+### 欧拉角
 
-### 视角修饰器（Perspective Modifier）
+欧拉角约定与 Minecraft 原版实体及相机代码完全一致。
 
-修饰器在基础视角建立目标状态**之后**、过渡插值**之前**，对相机状态施加额外的数学变换。适用于屏幕震动、移动倾斜等需要叠加在任意视角之上的效果。
+| 维度 | 含义  | 正方向           |
+| ---- | ----- | ---------------- |
+| X    | Pitch | 向下旋转         |
+| Y    | Yaw   | 从上往下看顺时针 |
+| Z    | Roll  | 绕视线轴顺时针   |
 
-修饰器通过 key 注册，按优先级升序依次执行。
+零欧拉角 $(0, 0, 0)$ 对应的朝向：
 
-## 视角状态的处理顺序
+| 方向 | 方向向量     |
+| ---- | ------------ |
+| 前方 | $(0, 0, 1)$  |
+| 上方 | $(0, 1, 0)$  |
+| 左方 | $(-1, 0, 0)$ |
 
-1. 通过覆盖链计算基础视角
-   - 如果没有其他覆盖项，则使用视角轮盘提供的当前视角，因为这个内置的视角轮盘是覆盖链中优先级最低的一个覆盖项
-2. 按优先级顺序应用修饰器
-   - 默认没有任何修饰器
-3. 处理相机状态过渡
-   - 过渡时长是固定值，可以自定义
-4. 将状态应用到相机
+### 四元数
+
+> [!TIP] 提示
+>
+> 在 Minecraft 中，相机 `net.minecraft.client.Camera` 会根据自身的欧拉角计算对应的四元数用于渲染，在 1.21 以下，它以 Z 轴正向作为恒等四元数的朝向，在 1.21 及以上则是 Z 轴负向。
+>
+> 本模组屏蔽了这一差异，与零欧拉角对齐，采用 +Z 作为初始旋转。
+
+恒等四元数 $(w=1, x=0, y=0, z=0)$ 与零欧拉角表示相同的朝向。
+
+从欧拉角构造四元数时采用 **Y-X-Z** 旋转顺序：
+
+$$R = R_y(\text{yaw}) \cdot R_x(\text{pitch}) \cdot R_z(\text{roll})$$
 
 ## 添加依赖
 
 ### Modrinth Maven
 
-格式： `"maven.modrinth:perspective-api:${version}+${loader}-${minecraft_version}"`
+格式：`"maven.modrinth:perspective-api:${version}+${loader}-${minecraft_version}"`
 
-```build.gradle.kts
+```kotlin
 repositories {
   exclusiveContent {
     forRepository {
@@ -106,4 +133,4 @@ dependencies {
 
 ## 示例模组
 
-模组 [视角API演示](https://github.com/Leawind/Perspective-API-Demo) 利用本 API 实现了一些简单而有趣的功能，可以参考其源码。
+[视角 API 演示](https://github.com/Leawind/Perspective-API-Demo) 利用本 API 实现了一些自定义视角，可作为开发参考。
