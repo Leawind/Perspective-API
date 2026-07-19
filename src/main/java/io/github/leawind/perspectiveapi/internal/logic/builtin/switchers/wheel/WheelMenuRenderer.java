@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -29,8 +30,9 @@ public final class WheelMenuRenderer {
 
   // region style
 
-  private static final Identifier DEFAULTICON =
+  private static final Identifier DEFAULT_ICON =
       Bridge.parseIdentifier("perspective_api:textures/perspective/default.png");
+
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
 
   private static final int COLOR_AVAILABLE = 0x00_22_C5_5E;
@@ -38,12 +40,26 @@ public final class WheelMenuRenderer {
   private static final int COLOR_UNREGISTERED = 0xFF_EF_44_44;
   private static final float SELECTED_SCALE = 1.35f;
 
+  /// unit: vmin
   private static final float RING_RADIUS = 0.25f;
+  /// unit: vmin
   private static final float RING_ICON_SIZE = 0.08f;
+  /// unit: vmin
   private static final float CENTER_ICON_SIZE = 0.10f;
 
   /// Rotation offset: top of circle = -PI/2.
   public static final double ROTATE_OFFSET_RAD = -Math.PI / 2;
+
+  // availability indicator
+  private static final Identifier UNAVAILABLE_SPRITE =
+      Bridge.parseIdentifier("perspective_api:textures/gui/sprites/hud/unavailable.png");
+  private static final Identifier UNREGISTERED_SPRITE =
+      Bridge.parseIdentifier("perspective_api:textures/gui/sprites/hud/unregistered.png");
+
+  /// unit: ring icon size
+  private static final float AVAILABILITY_INDICATOR_SIZE = 0.75f;
+  /// unit: ring icon size
+  private static final Vector2fc AVAILABILITY_INDICATOR_OFFSET = new Vector2f(0.25f, 0.25f);
 
   // endregion
 
@@ -156,34 +172,54 @@ public final class WheelMenuRenderer {
         if (isSelected) {
           ctx.drawGamemodeSwitcherSelection(sx, sy, iconSizeInt, iconSizeInt, COLOR_TEXT);
         }
-        drawAvailabilityIndicator(ctx, item, iconX + halfIconSize, iconY + halfIconSize);
 
         Identifier icon = item.icon();
         if (icon == null) {
-          icon = DEFAULTICON;
+          icon = DEFAULT_ICON;
         }
 
         float pad = iconSize * 0.19f;
         int ix = (int) (iconX - halfIconSize + pad);
         int iy = (int) (iconY - halfIconSize + pad);
         int is = (int) (iconSize - pad * 2);
-        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is, 1.0f);
+        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is, 1);
 
+        drawAvailabilityIndicator(ctx, item, iconX, iconY, iconSize);
       } catch (IllegalStateException e) {
         LOGGER.warn("Error occurred drawing ring icon", e);
       }
     }
   }
 
-  private void drawAvailabilityIndicator(DrawContext ctx, WheelMenuItem item, float x, float y) {
-    float r = 3;
-    int color =
+  /// NOW
+  private void drawAvailabilityIndicator(
+      DrawContext ctx, WheelMenuItem item, float iconX, float iconY, float iconSize) {
+    float x = iconX + iconSize * AVAILABILITY_INDICATOR_OFFSET.x();
+    float y = iconY + iconSize * AVAILABILITY_INDICATOR_OFFSET.y();
+
+    float size = iconSize * AVAILABILITY_INDICATOR_SIZE;
+    float halfSize = size / 2;
+    int sizeInt = (int) size;
+
+    Identifier sprite =
         switch (item.availability()) {
-          case AVAILABLE -> COLOR_AVAILABLE;
-          case UNAVAILABLE -> COLOR_UNAVAILABLE;
-          case UNREGISTERED -> COLOR_UNREGISTERED;
+          case AVAILABLE -> null;
+          case UNAVAILABLE -> UNAVAILABLE_SPRITE;
+          case UNREGISTERED -> UNREGISTERED_SPRITE;
         };
-    ctx.fill((int) (x - r), (int) (y - r), (int) (x + r), (int) (y + r), color);
+    if (sprite != null) {
+      ctx.blit(
+          sprite,
+          0,
+          0,
+          (int) (x - halfSize),
+          (int) (y - halfSize),
+          sizeInt,
+          sizeInt,
+          sizeInt,
+          sizeInt,
+          1);
+    }
   }
 
   private void drawCenterInfo(
