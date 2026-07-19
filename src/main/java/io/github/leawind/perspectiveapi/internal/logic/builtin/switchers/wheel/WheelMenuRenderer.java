@@ -235,9 +235,9 @@ public final class WheelMenuRenderer {
       Identifier icon = item.icon();
       if (icon != null) {
         int ix = (int) (cx - scaledHalfIconSize);
-        int iy = (int) (cy - scaledHalfIconSize - 6);
+        int iy = (int) (cy - scaledHalfIconSize);
         int is = (int) scaledIconSize;
-        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is, 1.0f);
+        ctx.blit(icon, 0, 0, ix, iy, is, is, is, is, 1);
       }
     }
 
@@ -250,7 +250,7 @@ public final class WheelMenuRenderer {
           font,
           text,
           (int) (cx - font.width(text) / 2.0f),
-          (int) (cy + halfCenterIconSize + 2),
+          (int) (cy + halfCenterIconSize + font.lineHeight),
           COLOR_TEXT,
           true);
     }
