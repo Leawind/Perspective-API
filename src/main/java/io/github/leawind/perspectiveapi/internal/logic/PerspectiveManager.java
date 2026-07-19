@@ -92,9 +92,6 @@ public final class PerspectiveManager {
                     modifier.id() + ":applyFov:invalid", () -> LOGGER.warn("{}", msg)));
 
     transition = new TransitionImpl();
-
-    current = PerspectiveRegistryImpl.INSTANCE.getDefault();
-    currentBehavior = PerspectiveRegistryImpl.INSTANCE.getDefaultBehavior();
   }
 
   // region perspective management
