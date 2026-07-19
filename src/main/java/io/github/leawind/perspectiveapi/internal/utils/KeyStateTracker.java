@@ -1,14 +1,14 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
 import net.minecraft.client.KeyMapping;
 import org.jspecify.annotations.Nullable;
 
 /// Tracks key state transitions across ticks for vanilla KeyMapping instances.
 public final class KeyStateTracker {
-  private static final Map<String, KeyStateTracker> INSTANCES = new HashMap<>();
+  public static Builder builder(KeyMapping keyMapping) {
+    var tracker = new KeyStateTracker(keyMapping);
+    return tracker.new Builder();
+  }
 
   private final KeyMapping keyMapping;
   private int holdTicks = 4;
@@ -22,25 +22,11 @@ public final class KeyStateTracker {
   private @Nullable Runnable onUpHandler;
   private @Nullable Runnable onPressHandler;
   private @Nullable Runnable onHoldHandler;
+
   private @Nullable Runnable onHoldStopHandler;
 
   private KeyStateTracker(KeyMapping keyMapping) {
     this.keyMapping = keyMapping;
-  }
-
-  public static KeyStateTracker of(String key, KeyMapping keyMapping, Consumer<Builder> builder) {
-    return INSTANCES.computeIfAbsent(
-        key,
-        ignored -> {
-          var tracker = new KeyStateTracker(keyMapping);
-          builder.accept(tracker.new Builder());
-          return tracker;
-        });
-  }
-
-  public Builder builder(KeyMapping keyMapping) {
-    var tracker = new KeyStateTracker(keyMapping);
-    return tracker.new Builder();
   }
 
   /// Call this every tick.
@@ -72,6 +58,10 @@ public final class KeyStateTracker {
       heldTicks = 0;
     }
     return this;
+  }
+
+  public int getHoldTicks() {
+    return holdTicks;
   }
 
   public KeyStateTracker setHoldTicks(int ticks) {

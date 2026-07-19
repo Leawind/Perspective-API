@@ -15,6 +15,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
+  private @Nullable KeyStateTracker keyStateTracker;
   private final PerspectiveRegistry registry;
 
   private volatile List<String> list = new ArrayList<>();
@@ -26,23 +27,26 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
     this.registry = registry;
   }
 
+  public @NonNull KeyStateTracker getKeyStateTracker(Minecraft minecraft) {
+    if (keyStateTracker == null) {
+      keyStateTracker =
+          KeyStateTracker.builder(minecraft.options.keyTogglePerspective)
+              .setHoldTicks(3)
+              .onPress(this::cycleForward)
+              .onHoldStart(this::openWheel)
+              .onHoldStop(this::closeWheel)
+              .build();
+    }
+    return keyStateTracker;
+  }
+
   @Override
   public void init() {
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         minecraft -> {
           if (!PerspectiveAPI.isEnabled()) return;
 
-          KeyStateTracker.of(
-                  "perspective_api.wheel_switcher",
-                  minecraft.options.keyTogglePerspective,
-                  builder ->
-                      builder
-                          .setHoldTicks(3)
-                          .onPress(this::cycleForward)
-                          .onHoldStart(this::openWheel)
-                          .onHoldStop(this::closeWheel))
-              .tick()
-              .drain();
+          getKeyStateTracker(minecraft).tick().drain();
         });
     GameClientEvents.RENDER_GUI_OVERLAY.on(
         ctx -> {
