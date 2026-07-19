@@ -14,6 +14,8 @@
   "perspective_api.config_screen.option.mod_enabled.desc": "控制是否啟用所有視角API功能的總開關。關閉後將完全恢復原版行為。",
   "perspective_api.config_screen.option.transition_duration": "過渡時長（毫秒）",
   "perspective_api.config_screen.option.transition_duration.desc": "切換視角時平滑攝影機過渡的持續時間，單位為毫秒。設為 0 可禁用過渡。",
+  "perspective_api.config_screen.option.blend_power": "混合冪",
+  "perspective_api.config_screen.option.blend_power.desc": "應用到緩動曲線的指數。值越小過渡開始越快，值越大過渡開始越慢。值為 1 表示不修改。",
   "perspective_api.config_screen.option.switcher": "視角切換器",
   "perspective_api.config_screen.option.switcher.desc": "選擇用於在視角間循環切換的切換器",
   "perspective_api.config_screen.fallback.title": "無可用的配置畫面",

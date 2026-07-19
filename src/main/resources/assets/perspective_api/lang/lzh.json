@@ -14,6 +14,8 @@
   "perspective_api.config_screen.option.mod_enabled.desc": "主開關，掌視角卯口諸用之啓閉。閉之則復原制之行。",
   "perspective_api.config_screen.option.transition_duration": "過渡時長（毫秒）",
   "perspective_api.config_screen.option.transition_duration.desc": "換視角時平滑相機過渡之時長，以毫秒計。設為零則禁過渡。",
+  "perspective_api.config_screen.option.blend_power": "混冪",
+  "perspective_api.config_screen.option.blend_power.desc": "施於緩曲之指數。值小則過渡速起，值大則過渡遲起。值為一則不變。",
   "perspective_api.config_screen.option.switcher": "視角切換器",
   "perspective_api.config_screen.option.switcher.desc": "擇切換器以循換諸視角",
   "perspective_api.config_screen.fallback.title": "無置設之幕可用",

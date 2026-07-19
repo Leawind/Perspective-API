@@ -27,6 +27,8 @@ public final class TransitionImpl implements Transition {
 
   private double durationMs = 300;
   private Blender blender = Blenders::easeInOut;
+  private double blendPower = 0.6;
+
   private boolean useNewAlgorithm = false;
 
   // endregion
@@ -96,6 +98,14 @@ public final class TransitionImpl implements Transition {
     return blender;
   }
 
+  public void setBlendPower(double blendPower) {
+    this.blendPower = blendPower;
+  }
+
+  public double getBlendPower() {
+    return blendPower;
+  }
+
   /// @return progress in `[0, 1]`
   private float computeEasedProgress(double currentTimeMs) {
     double deltaMs = currentTimeMs - startTimeMs;
@@ -104,6 +114,9 @@ public final class TransitionImpl implements Transition {
     float t = (float) (deltaMs / durationMs);
     t = Utils.clamp(t, 0, 1);
     t = blender.blend(t);
+    if (blendPower != 1) {
+      t = (float) Math.pow(t, blendPower);
+    }
     t = Utils.clamp(t, 0, 1);
     return t;
   }

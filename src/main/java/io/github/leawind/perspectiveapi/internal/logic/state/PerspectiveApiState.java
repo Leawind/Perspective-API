@@ -7,8 +7,8 @@ import com.google.gson.JsonSyntaxException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import java.io.IOException;
@@ -29,19 +29,27 @@ public final class PerspectiveApiState {
                           .forGetter(s -> Optional.ofNullable(s.managerCurrent)),
                       Codec.DOUBLE
                           .optionalFieldOf("transition.duration_ms", 300.0)
-                          .forGetter(s -> s.transitionDurationMs))
+                          .forGetter(s -> s.transitionDurationMs),
+                      Codec.DOUBLE
+                          .optionalFieldOf("transition.blend_power", 1.0)
+                          .forGetter(s -> s.transitionBlendPower))
                   .apply(inst, PerspectiveApiState::new));
 
   private final boolean enabled;
   private final @Nullable String managerCurrent;
   private final double transitionDurationMs;
+  private final double transitionBlendPower;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveApiState(
-      boolean enabled, Optional<String> managerCurrent, double transitionDurationMs) {
+      boolean enabled,
+      Optional<String> managerCurrent,
+      double transitionDurationMs,
+      double transitionBlendPower) {
     this.enabled = enabled;
     this.managerCurrent = managerCurrent.orElse(null);
     this.transitionDurationMs = transitionDurationMs;
+    this.transitionBlendPower = transitionBlendPower;
   }
 
   @Override
@@ -50,12 +58,13 @@ public final class PerspectiveApiState {
     if (!(o instanceof PerspectiveApiState that)) return false;
     return enabled == that.enabled
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
+        && Double.compare(that.transitionBlendPower, transitionBlendPower) == 0
         && Objects.equals(managerCurrent, that.managerCurrent);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, managerCurrent, transitionDurationMs);
+    return Objects.hash(enabled, managerCurrent, transitionDurationMs, transitionBlendPower);
   }
 
   public void apply() {
@@ -67,13 +76,15 @@ public final class PerspectiveApiState {
     }
 
     PerspectiveAPI.getTransition().setDurationMs(transitionDurationMs);
+    PerspectiveAPI.getTransition().setBlendPower(transitionBlendPower);
   }
 
   public static PerspectiveApiState extract() {
     return new PerspectiveApiState(
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManager.INSTANCE.getCurrent().id()),
-        PerspectiveAPI.getTransition().getDurationMs());
+        PerspectiveAPI.getTransition().getDurationMs(),
+        PerspectiveAPI.getTransition().getBlendPower());
   }
 
   private static final Gson GSON =

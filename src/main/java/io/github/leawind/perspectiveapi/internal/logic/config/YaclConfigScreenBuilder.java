@@ -50,6 +50,22 @@ public final class YaclConfigScreenBuilder {
                                     .formatValue(v -> Component.literal(v.intValue() + " ms")))
                         .build())
                 .option(
+                    Option.<Double>createBuilder()
+                        .name(text("config_screen.option.blend_power"))
+                        .description(
+                            OptionDescription.of(text("config_screen.option.blend_power.desc")))
+                        .binding(
+                            1.0,
+                            PerspectiveAPI.getTransition()::getBlendPower,
+                            PerspectiveAPI.getTransition()::setBlendPower)
+                        .controller(
+                            opt ->
+                                DoubleSliderControllerBuilder.create(opt)
+                                    .range(0.1, 4.0)
+                                    .step(0.1)
+                                    .formatValue(v -> Component.literal(String.format("%.1f", v))))
+                        .build())
+                .option(
                     Option.<PerspectiveSwitcher>createBuilder()
                         .name(text("config_screen.option.switcher"))
                         .description(
