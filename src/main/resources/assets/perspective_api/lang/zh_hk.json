@@ -10,6 +10,7 @@
   "perspective_api.config_screen.title": "視角API 設定",
   "perspective_api.config_screen.category.general": "通用",
   "perspective_api.config_screen.category.general.desc": "視角API 的通用設定",
+  "perspective_api.config_screen.group.transition": "過渡",
   "perspective_api.config_screen.option.mod_enabled": "啟用模組",
   "perspective_api.config_screen.option.mod_enabled.desc": "控制是否啟用所有視角API功能的總開關。關閉後將完全恢復原版行為。",
   "perspective_api.config_screen.option.transition_duration": "過渡時長（毫秒）",

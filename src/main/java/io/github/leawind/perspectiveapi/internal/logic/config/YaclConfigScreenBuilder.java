@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.logic.config;
 import dev.isxander.yacl3.api.ConfigCategory;
 import dev.isxander.yacl3.api.Option;
 import dev.isxander.yacl3.api.OptionDescription;
+import dev.isxander.yacl3.api.OptionGroup;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
 import dev.isxander.yacl3.api.controller.CyclingListControllerBuilder;
 import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
@@ -32,38 +33,45 @@ public final class YaclConfigScreenBuilder {
                             PerspectiveAPI::setEnabled)
                         .controller(TickBoxControllerBuilder::create)
                         .build())
-                .option(
-                    Option.<Double>createBuilder()
-                        .name(text("config_screen.option.transition_duration"))
-                        .description(
-                            OptionDescription.of(
-                                text("config_screen.option.transition_duration.desc")))
-                        .binding(
-                            260.0,
-                            () -> PerspectiveAPI.getTransition().getDurationMs(),
-                            v -> PerspectiveAPI.getTransition().setDurationMs(v))
-                        .controller(
-                            opt ->
-                                DoubleSliderControllerBuilder.create(opt)
-                                    .range(0.0, 800.0)
-                                    .step(20.0)
-                                    .formatValue(v -> Component.literal(v.intValue() + " ms")))
-                        .build())
-                .option(
-                    Option.<Double>createBuilder()
-                        .name(text("config_screen.option.blend_power"))
-                        .description(
-                            OptionDescription.of(text("config_screen.option.blend_power.desc")))
-                        .binding(
-                            0.6,
-                            PerspectiveAPI.getTransition()::getBlendPower,
-                            PerspectiveAPI.getTransition()::setBlendPower)
-                        .controller(
-                            opt ->
-                                DoubleSliderControllerBuilder.create(opt)
-                                    .range(0.1, 4.0)
-                                    .step(0.1)
-                                    .formatValue(v -> Component.literal(String.format("%.1f", v))))
+                .group(
+                    OptionGroup.createBuilder()
+                        .name(text("config_screen.group.transition"))
+                        .option(
+                            Option.<Double>createBuilder()
+                                .name(text("config_screen.option.transition_duration"))
+                                .description(
+                                    OptionDescription.of(
+                                        text("config_screen.option.transition_duration.desc")))
+                                .binding(
+                                    260.0,
+                                    () -> PerspectiveAPI.getTransition().getDurationMs(),
+                                    v -> PerspectiveAPI.getTransition().setDurationMs(v))
+                                .controller(
+                                    opt ->
+                                        DoubleSliderControllerBuilder.create(opt)
+                                            .range(0.0, 800.0)
+                                            .step(20.0)
+                                            .formatValue(
+                                                v -> Component.literal(v.intValue() + " ms")))
+                                .build())
+                        .option(
+                            Option.<Double>createBuilder()
+                                .name(text("config_screen.option.blend_power"))
+                                .description(
+                                    OptionDescription.of(
+                                        text("config_screen.option.blend_power.desc")))
+                                .binding(
+                                    0.6,
+                                    PerspectiveAPI.getTransition()::getBlendPower,
+                                    PerspectiveAPI.getTransition()::setBlendPower)
+                                .controller(
+                                    opt ->
+                                        DoubleSliderControllerBuilder.create(opt)
+                                            .range(0.1, 4.0)
+                                            .step(0.1)
+                                            .formatValue(
+                                                v -> Component.literal(String.format("%.1f", v))))
+                                .build())
                         .build())
                 .option(
                     Option.<PerspectiveSwitcher>createBuilder()
