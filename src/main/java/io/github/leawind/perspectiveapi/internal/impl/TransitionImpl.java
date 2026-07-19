@@ -25,7 +25,7 @@ public final class TransitionImpl implements Transition {
 
   // region settings
 
-  private double durationMs = 300;
+  private double durationMs = 260;
   private Blender blender = Blenders::easeInOut;
   private double blendPower = 0.6;
 

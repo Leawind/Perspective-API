@@ -39,14 +39,14 @@ public final class YaclConfigScreenBuilder {
                             OptionDescription.of(
                                 text("config_screen.option.transition_duration.desc")))
                         .binding(
-                            PerspectiveAPI.getTransition().getDurationMs(),
+                            260.0,
                             () -> PerspectiveAPI.getTransition().getDurationMs(),
                             v -> PerspectiveAPI.getTransition().setDurationMs(v))
                         .controller(
                             opt ->
                                 DoubleSliderControllerBuilder.create(opt)
-                                    .range(0.0, 2048.0)
-                                    .step(32.0)
+                                    .range(0.0, 800.0)
+                                    .step(20.0)
                                     .formatValue(v -> Component.literal(v.intValue() + " ms")))
                         .build())
                 .option(
@@ -55,7 +55,7 @@ public final class YaclConfigScreenBuilder {
                         .description(
                             OptionDescription.of(text("config_screen.option.blend_power.desc")))
                         .binding(
-                            1.0,
+                            0.6,
                             PerspectiveAPI.getTransition()::getBlendPower,
                             PerspectiveAPI.getTransition()::setBlendPower)
                         .controller(
