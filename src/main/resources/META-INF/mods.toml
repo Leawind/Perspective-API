@@ -7,30 +7,30 @@ license = "${license}"
 modId = "${id}"
 version = "${version}"
 displayName = "${name}"
-description = '''${description}'''
+description = "${description}"
 authors = "${author}"
 logoFile = "${logo_file}"
 displayURL = "${home_url}"
 logoBlur = false
 
-[[dependencies.${ id }]]
+[["dependencies.${id}"]]
 modId = "minecraft"
 mandatory = true
 versionRange = "[${minecraftVersion},)"
 ordering = "NONE"
 side = "CLIENT"
 
-[[dependencies.${ id }]]
+[["dependencies.${id}"]]
 modId = "forge"
 mandatory = true
 versionRange = "*"
 ordering = "NONE"
 side = "CLIENT"
 
-[[dependencies.${id}]]
+[["dependencies.${id}"]]
 modId = "yet_another_config_lib_v3"
 mandatory = false
 versionRange = "*"
 ordering = "NONE"
 side = "CLIENT"
-referraUrl = "https://modrinth.com/mod/yacl"
+referralUrl = "https://modrinth.com/mod/yacl"

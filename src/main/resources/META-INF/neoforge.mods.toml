@@ -7,34 +7,34 @@ license = "${license}"
 modId = "${id}"
 version = "${version}"
 displayName = "${name}"
-description = '''${description}'''
+description = "${description}"
 authors = "${author}"
 logoFile = "${logo_file}"
 displayURL = "${home_url}"
 logoBlur = false
 
-[[dependencies.${ id }]]
+[["dependencies.${id}"]]
 modId = "minecraft"
 type = "required"
 versionRange = "[${minecraftVersion},)"
 ordering = "NONE"
 side = "CLIENT"
-referraUrl = "https://www.minecraft.net/"
+referralUrl = "https://www.minecraft.net/"
 
-[[dependencies.${ id }]]
+[["dependencies.${id}"]]
 modId = "neoforge"
 type = "required"
 versionRange = "*"
 ordering = "NONE"
 side = "CLIENT"
 
-[[dependencies.${id}]]
+[["dependencies.${id}"]]
 modId = "yet_another_config_lib_v3"
 type = "optional"
 versionRange = "*"
 ordering = "NONE"
 side = "CLIENT"
-referraUrl = "https://modrinth.com/mod/yacl"
+referralUrl = "https://modrinth.com/mod/yacl"
 
 [[mixins]]
 config = "${id}.mixins.json"
