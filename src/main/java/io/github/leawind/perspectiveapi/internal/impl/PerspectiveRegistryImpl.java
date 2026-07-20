@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
@@ -12,7 +13,6 @@ import java.util.Map;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
-import net.minecraft.client.CameraType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -30,7 +30,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       @NonNull String id,
       @NonNull Component name,
       @Nullable Component description,
-      @NonNull CameraType cameraType,
+      @NonNull BaseType baseType,
       boolean switchable,
       int priority,
       @Nullable Identifier icon)
@@ -59,7 +59,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
           info.id(),
           name,
           description,
-          info.cameraType(),
+          info.baseType(),
           info.switchable(),
           info.priority(),
           icon);

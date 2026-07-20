@@ -16,6 +16,7 @@ import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContext
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel.WheelSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import net.minecraft.client.Camera;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import org.joml.Quaternionf;
@@ -129,7 +130,12 @@ public final class PerspectiveManager {
 
       resolvedBehavior.onActivate();
 
-      Bridge.updateCameraType(resolved.cameraType());
+      Bridge.updateCameraType(
+          switch (resolved.baseType()) {
+            case FIRST_PERSON -> CameraType.FIRST_PERSON;
+            case THIRD_PERSON_BACK -> CameraType.THIRD_PERSON_BACK;
+            case THIRD_PERSON_FRONT -> CameraType.THIRD_PERSON_FRONT;
+          });
 
       startTransition();
     }

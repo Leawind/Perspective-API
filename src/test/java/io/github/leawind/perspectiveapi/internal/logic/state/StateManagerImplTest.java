@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.google.common.jimfs.Jimfs;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import net.minecraft.client.CameraType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class StateManagerImplTest {
   @PerspectiveBehavior.Default
   @PerspectiveBehavior.Info(
       id = "perspective_api.first_person",
-      cameraType = CameraType.FIRST_PERSON,
+      baseType = BaseType.FIRST_PERSON,
       priority = 0)
   static class TestPerspective implements PerspectiveBehavior {
     static final TestPerspective INSTANCE = new TestPerspective();

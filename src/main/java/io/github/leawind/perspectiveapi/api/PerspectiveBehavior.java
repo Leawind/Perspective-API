@@ -6,7 +6,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
@@ -26,6 +25,17 @@ import org.jspecify.annotations.NonNull;
 /// @see Perspective
 @ApiStatus.OverrideOnly
 public interface PerspectiveBehavior {
+  /// Logical base types for camera perspectives, decoupled from Minecraft's internal
+  /// implementation.
+  ///
+  /// Using this enum instead of `net.minecraft.client.CameraType` prevents `AnnotationFormatError`
+  /// during early mod initialization and ensures the API remains stable across game versions.
+  enum BaseType {
+    FIRST_PERSON,
+    THIRD_PERSON_BACK,
+    THIRD_PERSON_FRONT;
+  }
+
   /// Annotation that provides metadata for a {@link PerspectiveBehavior}.
   ///
   /// Every implementation must carry this annotation so the registry can
@@ -41,9 +51,9 @@ public interface PerspectiveBehavior {
     /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`).
     String id();
 
-    /// The vanilla {@link CameraType} used as a fallback when this perspective
+    /// The vanilla camera type used as a fallback when this perspective
     /// does not explicitly modify the camera transform or FOV.
-    CameraType cameraType() default CameraType.THIRD_PERSON_BACK;
+    BaseType baseType() default BaseType.THIRD_PERSON_BACK;
 
     /// The translation key for the perspective's display name.
     ///

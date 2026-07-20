@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
-import net.minecraft.client.CameraType;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,7 +28,7 @@ public interface Perspective {
 
   /// Returns the vanilla camera type used as a fallback when this perspective
   /// does not explicitly modify the camera transform or FOV.
-  @NonNull CameraType cameraType();
+  @NonNull BaseType baseType();
 
   /// Whether this perspective is allowed to be manually selected by the player
   /// via a {@link PerspectiveSwitcherBehavior}.
