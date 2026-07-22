@@ -51,6 +51,7 @@ public final class PerspectiveAPI {
   }
 
   /// Returns the priority-based chain for temporary camera overrides
+  @ApiStatus.Experimental
   public static @NonNull PerspectiveOverrideChain getOverrideChain() {
     return PerspectiveManager.INSTANCE.overrides();
   }

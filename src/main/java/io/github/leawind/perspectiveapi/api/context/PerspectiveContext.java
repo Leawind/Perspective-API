@@ -12,8 +12,10 @@ public interface PerspectiveContext {
   float partialTicks();
 
   /// Returns the camera entity, or `null` if unavailable.
+  @ApiStatus.Experimental
   @Nullable Entity entity();
 
   /// Returns `true` if it is currently transitioning to this perspective.
+  @ApiStatus.Experimental
   boolean isTransitioning();
 }

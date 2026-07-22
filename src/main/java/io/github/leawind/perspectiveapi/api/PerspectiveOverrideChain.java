@@ -8,6 +8,7 @@ import org.jspecify.annotations.NonNull;
 ///
 /// Entries are evaluated in descending order of priority. The chain resolves to the first
 /// non-null identifier that passes the provided validator.
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 public interface PerspectiveOverrideChain {
   /// Pushes a new override entry to the chain.
