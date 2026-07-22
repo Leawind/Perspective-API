@@ -13,7 +13,14 @@ stonecutter active "26.2-fabric"
 allprojects {
     repositories {
         mavenCentral()
-        maven("https://maven.terraformersmc.com/") // ModMenu
+
+        // Sometime it responses 502 Bad Gateway
+        // https://github.com/Leawind/Perspective-API/actions/runs/29914253769/job/88907885668
+        // maven("https://maven.terraformersmc.com/") // ModMenu
+        maven("https://maven.gnomecraft.net/releases") {
+            name = "GnomeCraft (Terraformers Mirror)"
+        }
+
         maven("https://maven.isxander.dev/releases") // YACL
         maven("https://maven.neoforged.net/releases/")
         maven("https://maven.nucleoid.xyz") // Placeholder API (ModMenu dependency)
