@@ -40,22 +40,10 @@ public abstract class GuiMixin {
         new DrawContext(graphics), window.getGuiScaledWidth(), window.getGuiScaledHeight());
     GameClientEvents.RENDER_GUI_OVERLAY.emit(perspectiveApi$guiRenderContext);
   }
-  /*? } else if >=26.1 {*/
-  /*@Inject(method = "extractRenderState", at = @At("TAIL"))
-  private void perspectiveApi$afterExtractRenderState(
-      net.minecraft.client.gui.GuiGraphicsExtractor graphics,
-      net.minecraft.client.DeltaTracker deltaTracker,
-      CallbackInfo ci) {
-    var window = this.minecraft.getWindow();
-    if (window == null) return;
-    perspectiveApi$guiRenderContext.setup(
-        new DrawContext(graphics), window.getGuiScaledWidth(), window.getGuiScaledHeight());
-    GameClientEvents.RENDER_GUI_OVERLAY.emit(perspectiveApi$guiRenderContext);
-  }
-  *//*? } else if >=1.21 {*/
+  /*? } else if >=1.21 {*/
   /*@Inject(method = "render", at = @At("TAIL"))
   private void perspectiveApi$afterRender(
-      net.minecraft.client.gui.GuiGraphics graphics,
+      net.minecraft.client.gui.GuiGraphicsExtractor graphics,
       net.minecraft.client.DeltaTracker deltaTracker,
       CallbackInfo ci) {
     var window = this.minecraft.getWindow();
@@ -67,7 +55,7 @@ public abstract class GuiMixin {
   *//*? } else {*/
   /*@Inject(method = "render", at = @At("TAIL"))
   private void perspectiveApi$afterRender(
-      net.minecraft.client.gui.GuiGraphics graphics,
+      net.minecraft.client.gui.GuiGraphicsExtractor graphics,
       float partialTick,
       CallbackInfo ci) {
     var window = this.minecraft.getWindow();

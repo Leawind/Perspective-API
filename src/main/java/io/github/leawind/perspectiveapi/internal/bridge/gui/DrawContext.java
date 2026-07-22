@@ -7,9 +7,6 @@ import net.minecraft.resources.Identifier;
 
 /// Version-agnostic wrapper for GUI drawing operations.
 ///
-/// Bridges the API differences between {@code GuiGraphics} (1.21.x and earlier)
-/// and {@code GuiGraphicsExtractor} (26.x).
-///
 /// ### Coordinate Convension
 ///
 /// ```
@@ -19,20 +16,11 @@ import net.minecraft.resources.Identifier;
 /// v  y+
 /// ```
 public final class DrawContext {
-  /*? if >=26.1 {*/
   private final net.minecraft.client.gui.GuiGraphicsExtractor graphics;
 
-  /*? } else {*/
-  /*private final net.minecraft.client.gui.GuiGraphics graphics;
-   *//*? }*//*? if >=26.1 {*/
   public DrawContext(net.minecraft.client.gui.GuiGraphicsExtractor graphics) {
     this.graphics = graphics;
   }
-  /*? } else {*/
-  /*public DrawContext(net.minecraft.client.gui.GuiGraphics graphics) {
-    this.graphics = graphics;
-  }
-  *//*? }*/
 
   public void fill(int x0, int y0, int x1, int y1, int color) {
     graphics.fill(x0, y0, x1, y1, color);
