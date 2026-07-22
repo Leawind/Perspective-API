@@ -190,7 +190,7 @@ afterEvaluate {
 
         modLoaders.add(loader)
         modrinth {
-            projectId = providers.environmentVariable("MODRINTH_ID")
+            projectId = System.getenv("MODRINTH_ID")
             minecraftVersions.add(mcVersion)
             if (isFabric) {
                 optional { slug.set("modmenu") }
@@ -198,7 +198,7 @@ afterEvaluate {
             optional { slug.set("yacl") }
         }
         curseforge {
-            projectId = providers.environmentVariable("CURSEFORGE_ID")
+            projectId = System.getenv("CURSEFORGE_ID")
             minecraftVersions.add(mcVersion)
             clientRequired = true
             serverRequired = false
