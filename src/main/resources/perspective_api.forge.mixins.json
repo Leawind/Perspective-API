@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "io.github.leawind.perspectiveapi.platform.forge.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "refmap": "perspective_api.refmap.json",
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

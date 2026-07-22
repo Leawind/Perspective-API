@@ -1,234 +1,214 @@
-import gg.meza.stonecraft.mod
-import net.fabricmc.loom.task.RemapJarTask
-import org.gradle.util.internal.VersionNumber
-
 plugins {
+    id("dev.kikugie.stonecutter")
+    id("dev.isxander.modstitch.base")
     `maven-publish`
-    id("gg.meza.stonecraft")
+    id("me.modmuss50.mod-publish-plugin")
 }
 
-val props: Map<String, Any> = project.properties.mapNotNull { (key, value) -> value?.let { key to it } }.toMap()
+// ========== Versions & Project Info ==========
+val mcVersion: String by project
+val modVersionString = property("mod.version")!!.toString()
 
-val archivesBaseName = mod.id
-val archivesVersion = "${mod.version}+${mod.loader}-${mod.minecraftVersion}"
-
-tasks.withType<Jar>().configureEach {
-    archiveBaseName.set(archivesBaseName)
-    archiveVersion.set(archivesVersion)
+val isFabric = modstitch.isLoom
+val isNeoforge = modstitch.isModDevGradleRegular
+val isForge = modstitch.isModDevGradleLegacy
+val loader = when {
+    isFabric -> "fabric"
+    isNeoforge -> "neoforge"
+    isForge -> "forge"
+    else -> error("Unknown loader")
 }
 
-tasks.withType<RemapJarTask>().matching { it.name == "remapJar" }.configureEach {
-    archiveBaseName.set(archivesBaseName)
-    archiveVersion.set(archivesVersion)
-}
+// Determine if unit testing is supported for this platform/version
+// - Fabric: all versions
+// - NeoForge: >= 1.20.5 (JUnit run type not available in older versions)
+// - Forge: not supported
+val supportsUnitTesting = isFabric || (isNeoforge && stonecutter.current.parsed >= "1.20.5")
 
-modSettings {
-    // https://stonecraft.meza.gg/docs/configuration
+// ========== ModStitch Setup ==========
+modstitch {
+    minecraftVersion = mcVersion
 
-    clientOptions {
-        // https://minecraft.wiki/w/Options.txt
-        fov = 88
-        narrator = false
-        musicVolume = 0.0
-        guiScale = 3
-
-        additionalLines = mapOf(
-            "maxFps" to "60",
-            "renderDistance" to "8",
-            "simulationDistance" to "5",
-            "mouseSensitivity" to "0.22",
-            "key_key.togglePerspective" to "key.keyboard.v",
-        )
+    loom {
+        prop("deps.fabricLoader") { fabricLoaderVersion = it }
     }
 
-    val vars = props
-        .filterKeys { it.startsWith("mod.") }
-        .mapKeys { it.key.removePrefix("mod.") }
-    variableReplacements.putAll(vars)
+    moddevgradle {
+        prop("deps.neoforge") { neoForgeVersion = it }
+        prop("deps.forge") { forgeVersion = it }
+    }
+
+    metadata {
+        modId = "perspective_api"
+        modName = "Perspective API"
+        modVersion = "$modVersionString+$loader-$mcVersion"
+        modGroup = "io.github.leawind.perspectiveapi"
+        modDescription = "A client-side API framework for managing and extending camera perspectives."
+        modLicense = "MIT"
+        modAuthor = "Leawind"
+
+        replacementProperties.put("github", "Leawind/Perspective-API")
+        replacementProperties.put("mc", findProperty("meta.mcDep")?.toString() ?: "*")
+        replacementProperties.put("loaderVersion", findProperty("meta.loaderDep")?.toString() ?: "*")
+    }
+
+    mixin {
+        addMixinsToModManifest = true
+        configs.register("perspective_api")
+        if (isFabric) configs.register("perspective_api.fabric")
+        if (isForge) configs.register("perspective_api.forge")
+        if (isNeoforge) configs.register("perspective_api.neoforge")
+    }
+
+    // Enable unit testing for supported platforms
+    if (supportsUnitTesting) {
+        unitTesting()
+    }
 }
 
+// ========== Stonecutter ==========
 stonecutter {
+    constants {
+        put("fabric", isFabric)
+        put("neoforge", isNeoforge)
+        put("forge", isForge)
+    }
+
     replacements.string(current.parsed >= "1.21.11") {
-        replace(
-            "net.minecraft.resources.ResourceLocation",
-            "net.minecraft.resources.Identifier"
-        )
+        replace("net.minecraft.resources.ResourceLocation", "net.minecraft.resources.Identifier")
         replace("ResourceLocation", "Identifier")
     }
+
+    replacements.string(current.parsed >= "26.1") {
+        replace("net.minecraft.client.gui.GuiGraphics", "net.minecraft.client.gui.GuiGraphicsExtractor")
+        replace("GuiGraphics", "GuiGraphicsExtractor")
+    }
 }
 
-
-repositories {
-    mavenCentral()
-    maven("https://jitpack.io")
-    // Mod Menu (Fabric)
-    maven {
-        name = "Terraformers"
-        url = uri("https://maven.terraformersmc.com/")
-    }
-    // KotlinForForge (required by YACL on NeoForge)
-    maven {
-        name = "Kotlin for Forge"
-        url = uri("https://thedarkcolour.github.io/KotlinForForge/")
-        content { includeGroup("thedarkcolour") }
-    }
-    // NeoForged
-    maven {
-        name = "NeoForged"
-        url = uri("https://maven.neoforged.net/releases")
-    }
-    // Text Placeholder API
-    maven {
-        name = "Nucleoid"
-        url = uri("https://maven.nucleoid.xyz")
-    }
-
-    // Yet Another Config Lib
-    maven("https://maven.isxander.dev/releases") {
-        name = "Xander Maven"
-    }
-
-
-}
-
-fun DependencyHandlerScope.modImplAlias(dependencyNotation: String) {
-    if (VersionNumber.parse(mod.minecraftVersion) >= VersionNumber.parse("26.1")) {
-        implementation(dependencyNotation)
-    } else {
-        add("modImplementation", dependencyNotation)
+// ========== Dependencies ==========
+// Force specific log4j version to avoid dynamic version resolution issues in offline mode
+// (transitive dependency from net.minecraftforge:unsafe uses 2.11.+)
+// Use 2.24.3 which is compatible with both NeoForge and SLF4J bridge
+configurations.all {
+    resolutionStrategy {
+        force("org.apache.logging.log4j:log4j-api:2.24.3")
+        force("org.apache.logging.log4j:log4j-core:2.24.3")
     }
 }
 
 dependencies {
-    if (mod.isForge) {
-        if (VersionNumber.parse(mod.minecraftVersion) <= VersionNumber.parse("1.20.1")) {
-            val mixinextrasDep = "io.github.llamalad7:mixinextras-common:0.4.1"
-            compileOnly(mixinextrasDep)
-            annotationProcessor(mixinextrasDep)
-        }
+    if (isFabric) {
+        prop("deps.fabricApi") { modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:$it") }
+        prop("mod.modmenu_version") { modstitchModImplementation("com.terraformersmc:modmenu:$it") }
     }
 
-    if (mod.isFabric) {
-        // ModMenu (Fabric only)
-        // https://modrinth.com/mod/modmenu/versions
-        modImplAlias("com.terraformersmc:modmenu:${project.property("mod.modmenu_version")}")
-    }
+    prop("mod.yacl_version") { modstitchModImplementation("dev.isxander:yet-another-config-lib:$it-$loader") }
 
-    // https://maven.isxander.dev/releases/dev/isxander/yet-another-config-lib
-    //modImplAlias("dev.isxander:yet-another-config-lib:${project.property("mod.yacl_version")}-${mod.loader}")
-    modImplAlias("dev.isxander:yet-another-config-lib:${project.property("mod.yacl_version")}-${mod.loader}")
-
-
-    // region test
-    testCompileOnly("org.jspecify:jspecify:1.0.0")
-
-    if (mod.isFabric) {
-        testImplementation("net.fabricmc:fabric-loader-junit:${props["loader_version"]}")
-    } else {
-        testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
-    }
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-
-    testImplementation("com.google.jimfs:jimfs:1.3.0") {
-        // conflict with 1.20.1-forge `guava:32.1.1-jre`
-        exclude(group = "com.google.guava", module = "guava")
-    }
-    // endregion
-
-    // region compile only
+    // Compile only
     compileOnly("org.jspecify:jspecify:1.0.0")
     compileOnly("org.jetbrains:annotations:24.0.1")
     compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
     annotationProcessor("com.google.auto.service:auto-service:1.1.1")
-    // endregion
+
+    // Test
+    testCompileOnly("org.jspecify:jspecify:1.0.0")
+    // Note: fabric-loader-junit is added by modstitch.unitTesting() for Fabric
+    if (!isFabric) {
+        testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
+    }
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("com.google.jimfs:jimfs:1.3.0") {
+        exclude(group = "com.google.guava", module = "guava")
+    }
 }
 
+// ========== Tasks ==========
 tasks.test {
     useJUnitPlatform()
+    // Disable tests for unsupported platforms
+    if (!supportsUnitTesting) {
+        enabled = false
+    }
+}
+
+// Skip test compilation for unsupported platforms
+if (!supportsUnitTesting) {
+    tasks.compileTestJava {
+        enabled = false
+    }
 }
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.add("-parameters")
 }
 
-if (mod.isFabric) {
-    fabricApi {
-        configureTests {
-            createSourceSet = true
-            modId = mod.id
-            enableGameTests = false
-            enableClientGameTests = false
-            eula = true
-            // must be false
-            clearRunDirectory = false
-            username = "Player0"
-        }
-    }
-}
-
-if (mod.isForge) {
-    tasks.compileTestJava {
-        dependsOn("generatePackMCMetaJson")
-    }
-}
-
-loom {
-    if (mod.isForge) {
-        forge {
-            mixinConfig("${mod.id}.mixins.json")
-        }
-    }
-}
-
-
 java {
     withSourcesJar()
 }
 
-// Collect sources jar in task `buildAndCollect`
-tasks.configureEach {
-    if (name == "buildAndCollect" && this is Copy) {
-        from(tasks.named("sourcesJar"))
+// Allow duplicate entries in jar (e.g. refmap from both AP and resources)
+tasks.withType<Jar>().configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+// Exclude default refmap for Forge (AP generates it, so resources version would duplicate)
+if (isForge) {
+    tasks.named<ProcessResources>("processResources") {
+        exclude("perspective_api.refmap.json")
     }
 }
 
-publishMods {
-    dryRun = System.getenv("DRY_RUN") != "false"
-    modrinth {
-        // Somehow in 1.20.1-fabric, it fails if not specified
-        // refer to https://github.com/Leawind/Perspective-API/actions/runs/28410673256/job/84182772569
-        projectId = System.getenv("MODRINTH_ID")
-        additionalFiles.from(tasks.named("sourcesJar"))
-        environment = CLIENT_ONLY
+// ========== Publishing ==========
+val buildAndCollect by tasks.registering(Copy::class) {
+    group = "build"
+    dependsOn(modstitch.finalJarTask, tasks.named("sourcesJar"))
+    from(modstitch.finalJarTask.flatMap { it.archiveFile })
+    from(tasks.named("sourcesJar").flatMap { (it as org.gradle.jvm.tasks.Jar).archiveFile })
+    into(rootProject.layout.buildDirectory.dir("libs"))
+}
 
-        if (mod.isFabric) {
-            optional("modmenu")
-        }
-        optional("yacl")
-    }
-    curseforge {
-        projectId = System.getenv("CURSEFORGE_ID")
-        client = true
-        server = false
+// Skip publishMods for Forge (ModDevGradle Legacy) due to reobfJar task timing issue
+if (!isForge) {
+    publishMods {
+        dryRun.set(System.getenv("DRY_RUN") != "false")
+        displayName.set("$modVersionString for $loader $mcVersion")
+        file = modstitch.finalJarTask.flatMap { it.archiveFile }
         additionalFiles.from(tasks.named("sourcesJar"))
 
-        if (mod.isFabric) {
-            optional("modmenu")
+        type = STABLE
+        modLoaders.add(loader)
+
+        modrinth {
+            projectId = providers.environmentVariable("MODRINTH_ID")
+            minecraftVersions.add(mcVersion)
+            if (isFabric) {
+                optional { slug.set("modmenu") }
+            }
+            optional { slug.set("yacl") }
         }
-        optional("yacl")
+
+        curseforge {
+            projectId = providers.environmentVariable("CURSEFORGE_ID")
+            minecraftVersions.add(mcVersion)
+            clientRequired = true
+            serverRequired = false
+            if (isFabric) {
+                optional { slug.set("modmenu") }
+            }
+            optional { slug.set("yacl") }
+        }
     }
 }
 
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            artifactId = archivesBaseName
-            version = archivesVersion
+            artifactId = "perspective_api"
+            version = "$modVersionString+$loader-$mcVersion"
             from(components["java"])
             pom {
-                name.set(mod.name)
-                description.set(mod.description)
+                name.set("Perspective API")
+                description.set("A client-side API framework for managing and extending camera perspectives.")
             }
         }
     }
@@ -236,4 +216,9 @@ publishing {
     repositories {
         mavenLocal()
     }
+}
+
+// ========== Helpers ==========
+fun <T> prop(property: String, block: (String) -> T?): T? {
+    return findProperty(property)?.toString()?.takeIf { it.isNotBlank() }?.let(block)
 }

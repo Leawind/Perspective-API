@@ -32,7 +32,6 @@ build/
 # other
 bin/
 run/
-.architectury-transformer/
 *.log
 *.log.gz
 
@@ -61,7 +60,7 @@ forge*changelog.txt
 
 AGENTS-*.md
 
-# stonecraft
+# stonecutter
 /versions/*-*/
 
 # dotenv
