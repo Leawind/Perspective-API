@@ -61,7 +61,8 @@ forge*changelog.txt
 AGENTS-*.md
 
 # stonecutter
-/versions/*-*/
+/versions/*-*/*
+!/versions/*-*/gradle.properties
 
 # dotenv
 .env
