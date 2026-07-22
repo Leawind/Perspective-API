@@ -167,17 +167,28 @@ val buildAndCollect by tasks.registering(Copy::class) {
     into(rootProject.layout.buildDirectory.dir("libs"))
 }
 
-// Skip publishMods for Forge (ModDevGradle Legacy) due to reobfJar task timing issue
-if (!isForge) {
+// read changelog
+val changelogFile = rootProject.file("CHANGELOG.md")
+val changelogText = if (changelogFile.exists()) changelogFile.readText() else ""
+
+afterEvaluate {
     publishMods {
+        // Always dry run until environment variable `DRY_RUN` is set to `false`
         dryRun.set(System.getenv("DRY_RUN") != "false")
-        displayName.set("$modVersionString for $loader $mcVersion")
+        displayName.set("$modVersionString for $mcVersion $loader")
         file = modstitch.finalJarTask.flatMap { it.archiveFile }
         additionalFiles.from(tasks.named("sourcesJar"))
+        changelog.set(changelogText)
 
-        type = STABLE
+        type = if (modVersionString.contains("beta", true)) {
+            BETA
+        } else if (modVersionString.contains("alpha", true)) {
+            ALPHA
+        } else {
+            STABLE
+        }
+
         modLoaders.add(loader)
-
         modrinth {
             projectId = providers.environmentVariable("MODRINTH_ID")
             minecraftVersions.add(mcVersion)
@@ -186,7 +197,6 @@ if (!isForge) {
             }
             optional { slug.set("yacl") }
         }
-
         curseforge {
             projectId = providers.environmentVariable("CURSEFORGE_ID")
             minecraftVersions.add(mcVersion)

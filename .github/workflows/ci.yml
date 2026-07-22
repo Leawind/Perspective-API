@@ -47,11 +47,9 @@ jobs:
         id: get-next-version
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          # DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         uses: cycjimmy/semantic-release-action@v4
         with:
           dry_run: true
-          # extra_plutins: semantic-release-discord-notifier
           extra_plugins: |
             @semantic-release/changelog
             @semantic-release/exec
@@ -72,11 +70,9 @@ jobs:
           CURSEFORGE_SLUG: ${{ vars.CURSEFORGE_SLUG }}
           CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
-          # DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         uses: cycjimmy/semantic-release-action@v4
         with:
           dry_run: ${{ vars.DRY_RUN != 'false' }}
-          # extra_plugins: semantic-release-discord-notifier
           extra_plugins: |
             @semantic-release/changelog
             @semantic-release/exec
