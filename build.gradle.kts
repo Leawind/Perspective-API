@@ -190,6 +190,7 @@ afterEvaluate {
 
         modLoaders.add(loader)
         modrinth {
+            accessToken = System.getenv("MODRINTH_TOKEN")
             projectId = System.getenv("MODRINTH_ID")
             minecraftVersions.add(mcVersion)
             if (isFabric) {
@@ -198,6 +199,7 @@ afterEvaluate {
             optional { slug.set("yacl") }
         }
         curseforge {
+            accessToken = System.getenv("CURSEFORGE_TOKEN")
             projectId = System.getenv("CURSEFORGE_ID")
             minecraftVersions.add(mcVersion)
             clientRequired = true
