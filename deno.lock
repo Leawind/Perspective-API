@@ -8,6 +8,7 @@
     "jsr:@std/internal@^1.0.12": "1.0.13",
     "jsr:@std/path@^1.1.4": "1.1.4",
     "npm:commander@*": "14.0.3",
+    "npm:java-parser@*": "3.0.1",
     "npm:lay-sing@~0.4.2": "0.4.2",
     "npm:minimatch@*": "10.2.5",
     "npm:minimatch@^10.2.5": "10.2.5"
@@ -47,6 +48,30 @@
     }
   },
   "npm": {
+    "@chevrotain/cst-dts-gen@11.0.3": {
+      "integrity": "sha512-BvIKpRLeS/8UbfxXxgC33xOumsacaeCKAjAeLyOn7Pcp95HiRbrpl14S+9vaZLolnbssPIUuiUd8IvgkRyt6NQ==",
+      "dependencies": [
+        "@chevrotain/gast",
+        "@chevrotain/types",
+        "lodash-es"
+      ]
+    },
+    "@chevrotain/gast@11.0.3": {
+      "integrity": "sha512-+qNfcoNk70PyS/uxmj3li5NiECO+2YKZZQMbmjTqRI3Qchu8Hig/Q9vgkHpI3alNjr7M+a2St5pw5w5F6NL5/Q==",
+      "dependencies": [
+        "@chevrotain/types",
+        "lodash-es"
+      ]
+    },
+    "@chevrotain/regexp-to-ast@11.0.3": {
+      "integrity": "sha512-1fMHaBZxLFvWI067AVbGJav1eRY7N8DDvYCTwGBiE/ytKBgP8azTdgyrKyWZ9Mfh09eHWb5PgTSO8wi7U824RA=="
+    },
+    "@chevrotain/types@11.0.3": {
+      "integrity": "sha512-gsiM3G8b58kZC2HaWR50gu6Y1440cHiJ+i3JUvcp/35JchYejb2+5MVeJK0iKThYpAa/P2PYFV4hoi44HD+aHQ=="
+    },
+    "@chevrotain/utils@11.0.3": {
+      "integrity": "sha512-YslZMgtJUyuMbZ+aKvfF3x1f5liK4mWNxghFRv7jqRR9C3R3fAOGTTKvxXDa2Y1s9zSbcpuO0cAxDYsc9SrXoQ=="
+    },
     "balanced-match@4.0.4": {
       "integrity": "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="
     },
@@ -56,11 +81,43 @@
         "balanced-match"
       ]
     },
+    "chevrotain-allstar@0.3.1_chevrotain@11.0.3": {
+      "integrity": "sha512-b7g+y9A0v4mxCW1qUhf3BSVPg+/NvGErk/dOkrDaHA0nQIQGAtrOjlX//9OQtRlSCy+x9rfB5N8yC71lH1nvMw==",
+      "dependencies": [
+        "chevrotain",
+        "lodash-es"
+      ]
+    },
+    "chevrotain@11.0.3": {
+      "integrity": "sha512-ci2iJH6LeIkvP9eJW6gpueU8cnZhv85ELY8w8WiFtNjMHA5ad6pQLaJo9mEly/9qUyCpvqX8/POVUTf18/HFdw==",
+      "dependencies": [
+        "@chevrotain/cst-dts-gen",
+        "@chevrotain/gast",
+        "@chevrotain/regexp-to-ast",
+        "@chevrotain/types",
+        "@chevrotain/utils",
+        "lodash-es"
+      ]
+    },
     "commander@14.0.3": {
       "integrity": "sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw=="
     },
+    "java-parser@3.0.1": {
+      "integrity": "sha512-sDIR7u9b7O2JViNUxiZRhnRz7URII/eE7g2B+BmGxDeS6Ex3OYAcCyz5oh0H4LQ+hL/BS8OJTz8apMy9xtGmrQ==",
+      "dependencies": [
+        "chevrotain",
+        "chevrotain-allstar",
+        "lodash"
+      ]
+    },
     "lay-sing@0.4.2": {
       "integrity": "sha512-kEkJosE2aguIdIhfS82UGXBdHm05Egc103FqPIy8t1+iC0ardeK58ZB28DTkuV1FV31oa97RpCWmWaCuMbm/LQ=="
+    },
+    "lodash-es@4.17.21": {
+      "integrity": "sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw=="
+    },
+    "lodash@4.17.21": {
+      "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
     },
     "minimatch@10.2.5": {
       "integrity": "sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==",

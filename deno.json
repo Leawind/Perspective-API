@@ -3,6 +3,7 @@
     "clean_run_configs": "./scripts/clean_run_configs.sh",
     "collect": "deno -A scripts/collect.ts",
     "gen-releaserc": "deno -A scripts/gen-releaserc.ts",
+    "gen-skills": "deno -A scripts/gen-skills.ts",
     "publishToMavenLocal": "./gradlew publishToMavenLocal --no-parallel"
   },
   "imports": {
