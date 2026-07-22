@@ -3,7 +3,9 @@
   "package": "io.github.leawind.perspectiveapi.platform.neoforge.mixin",
   "compatibilityLevel": "JAVA_17",
   "minVersion": "0.8",
-  "client": [],
+  "client": [
+    "ExtendedGuiMixin"
+  ],
   "mixins": [],
   "injectors": {
     "defaultRequire": 1
