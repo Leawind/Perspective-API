@@ -167,6 +167,18 @@ public final class PerspectiveManager {
 
   /// Updates camera position and rotation based on the current perspective.
   ///
+  /// ### Steps
+  ///
+  /// 1. Validate state — return early if entity or behavior is null
+  /// 2. Call current behavior's `renderTickWhenActive`
+  /// 3. Apply current behavior's `applyTransform` and sanitize, fall back if invalid
+  /// 5. Apply modifier chain transforms
+  ///    - For each modifier:
+  ///       1. Apply modifier
+  ///       2. Sanitize - fallback if invalid
+  /// 6. Apply transition interpolation if transitioning and sanitize, fall back if invalid
+  /// 7. Commit to camera
+  ///
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
   public void updateCamera(float partialTicks, Camera camera) {
@@ -194,30 +206,25 @@ public final class PerspectiveManager {
     // Setup context object
     renderTickContext.setup(partialTicks, entity, isTransitioning);
 
-    // Event: render tick
     try {
       currentBehavior.renderTickWhenActive(renderTickContext);
     } catch (Throwable e) {
       reportException(current.id(), "renderTick", e);
     }
 
-    // Extract current vanilla state and backup
+    // Extract current vanilla state and backup for fallback
     Bridge.getCameraPosition(camera, tempPosition);
     Bridge.getCameraRotation(camera, tempRotationMcQuat);
     CameraSpace.mcToApi(tempRotationMcQuat, tempRotation);
-
     backupPosition.set(tempPosition);
     backupRotation.set(tempRotation);
 
-    // 1. Apply Base PerspectiveBehavior
+    // Apply current behavior
     try {
       currentBehavior.applyTransform(renderTickContext, tempPosition, tempRotation);
     } catch (Throwable e) {
       reportException(current.id(), "applyTransform", e);
     }
-
-    // 2. Apply Modifiers (Further mutates the target state BEFORE transition)
-    modifiers.applyTransform(renderTickContext, tempPosition, tempRotation);
 
     // Sanitize and fallback if needed
     boolean posInvalid = !Sanitizer.isFinite(tempPosition);
@@ -239,6 +246,9 @@ public final class PerspectiveManager {
         tempRotation.set(backupRotation);
       }
     }
+
+    // Apply Modifiers and sanitize
+    modifiers.applyTransform(renderTickContext, tempPosition, tempRotation);
 
     // Apply transition
     if (isTransitioning) {
