@@ -5,7 +5,7 @@ plugins {
     id("me.modmuss50.mod-publish-plugin")
 }
 
-// ========== Versions & Project Info ==========
+// region Versions & Project Info
 val mcVersion: String by project
 val modVersionString = property("mod.version")!!.toString()
 
@@ -24,8 +24,9 @@ val loader = when {
 // - NeoForge: >= 1.20.5 (JUnit run type not available in older versions)
 // - Forge: not supported
 val supportsUnitTesting = isFabric || (isNeoforge && stonecutter.current.parsed >= "1.20.5")
+// endregion
 
-// ========== ModStitch Setup ==========
+// region ModStitch Setup
 modstitch {
     minecraftVersion = mcVersion
 
@@ -65,8 +66,9 @@ modstitch {
         unitTesting()
     }
 }
+// endregion
 
-// ========== Stonecutter ==========
+// region Stonecutter
 stonecutter {
     constants {
         put("fabric", isFabric)
@@ -84,8 +86,10 @@ stonecutter {
         replace("GuiGraphics", "GuiGraphicsExtractor")
     }
 }
+// endregion
 
-// ========== Dependencies ==========
+// region Dependencies
+
 // Force specific log4j version to avoid dynamic version resolution issues in offline mode
 // (transitive dependency from net.minecraftforge:unsafe uses 2.11.+)
 // Use 2.24.3 which is compatible with both NeoForge and SLF4J bridge
@@ -121,8 +125,8 @@ dependencies {
         exclude(group = "com.google.guava", module = "guava")
     }
 }
+// endregion
 
-// ========== Tasks ==========
 tasks.test {
     useJUnitPlatform()
     // Disable tests for unsupported platforms
@@ -230,7 +234,8 @@ publishing {
     }
 }
 
-// ========== Helpers ==========
+// region Helpers
 fun <T> prop(property: String, block: (String) -> T?): T? {
     return findProperty(property)?.toString()?.takeIf { it.isNotBlank() }?.let(block)
 }
+// endregion
