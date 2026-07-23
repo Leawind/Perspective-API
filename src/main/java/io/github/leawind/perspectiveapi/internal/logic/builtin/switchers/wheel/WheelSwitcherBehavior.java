@@ -9,6 +9,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
@@ -73,8 +74,9 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
 
   @Override
   public void onUpdateSwitchables(@NonNull List<Perspective> switchables) {
-    this.list = new ArrayList<>(switchables.stream().map(Perspective::id).toList());
-    wheelMenu.updateItems(this.list);
+    list =
+        switchables.stream().map(Perspective::id).collect(Collectors.toCollection(ArrayList::new));
+    wheelMenu.updateItems(list);
   }
 
   @Override
