@@ -91,22 +91,22 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
         LOGGER.warn("Failed to load PerspectiveBehavior implementation", e);
         continue;
       }
-      register(behavior);
+      registerSilent(behavior);
     }
+    onUpdate.emit();
   }
 
   public boolean isDefaultFound() {
     return defaultEntry != null;
   }
 
-  public void register(@NonNull PerspectiveBehavior behavior) {
+  public void registerSilent(@NonNull PerspectiveBehavior behavior) {
     Entry entry = Entry.from(behavior);
     String id = entry.id();
     LOGGER.info("Registering perspective with id '{}': {}", id, behavior);
     synchronized (this) {
       Entry existing = entries.get(id);
 
-      boolean alreadyRegistered = existing != null && existing.behavior() == behavior;
       if (existing != null) {
         if (existing.behavior() == behavior) {
           LOGGER.warn(
@@ -123,7 +123,6 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
         defaultPriority = defaultAnnotation.priority();
         defaultEntry = entry;
       }
-      onUpdate.emit();
       behavior.init();
     }
   }

@@ -31,7 +31,7 @@ class StateManagerImplTest {
   void beforeEach() {
     fs = Jimfs.newFileSystem();
     tempDir = fs.getPath("/tmp");
-    PerspectiveRegistryImpl.INSTANCE.register(TestPerspective.INSTANCE);
+    PerspectiveRegistryImpl.INSTANCE.registerSilent(TestPerspective.INSTANCE);
   }
 
   @Test
