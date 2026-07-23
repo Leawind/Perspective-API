@@ -14,8 +14,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
+  private static final Logger LOGGER = LoggerFactory.getLogger(WheelSwitcherBehavior.class);
+
   private @Nullable KeyStateTracker keyStateTracker;
   private final PerspectiveRegistry registry;
 
@@ -76,6 +80,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   public void onUpdateSwitchables(@NonNull List<Perspective> switchables) {
     list =
         switchables.stream().map(Perspective::id).collect(Collectors.toCollection(ArrayList::new));
+    LOGGER.info("Switchable perspective list updated: {}", list);
     wheelMenu.updateItems(list);
   }
 

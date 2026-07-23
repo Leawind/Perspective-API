@@ -3,11 +3,9 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
 import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import org.joml.Vector2d;
 import org.joml.Vector2f;
@@ -23,7 +21,7 @@ public final class WheelMenu {
   private final WheelAnchor anchor = new WheelAnchor(24.0f);
   private final Vector2d lastMouse = new Vector2d(0, 0);
   private boolean hasLastMouse;
-  private final Map<String, WheelMenuItem> itemCache = new LinkedHashMap<>();
+  private final Map<String, WheelMenuItem> itemCache = new ConcurrentHashMap<>();
   private final List<WheelMenuItem> items = new ArrayList<>();
   private @Nullable String originalSelectedId;
   private @Nullable String currentHoveredId;
@@ -46,25 +44,13 @@ public final class WheelMenu {
   /// cause new instances to be created. Current list order is kept as much
   /// as possible.
   public void updateItems(@NonNull List<String> availableIds) {
-    var availableSet = new HashSet<>(availableIds);
-
-    // Remove items no longer available
-    items.removeIf(item -> !availableSet.contains(item.id()));
-
-    // Collect existing IDs in their current order
-    var existingIds = new LinkedHashSet<String>();
-    for (WheelMenuItem item : items) {
-      existingIds.add(item.id());
-    }
-
-    // Append new IDs at the end
-    int limit = Math.min(availableIds.size(), MAX_ITEMS);
-    for (int i = 0; i < limit; i++) {
-      String id = availableIds.get(i);
-      if (existingIds.add(id)) {
-        WheelMenuItem item = itemCache.computeIfAbsent(id, WheelMenuItem::new).update();
-        items.add(item);
-      }
+    synchronized (items) {
+      items.clear();
+      items.addAll(
+          availableIds.stream()
+              .limit(MAX_ITEMS)
+              .map(id -> itemCache.computeIfAbsent(id, WheelMenuItem::new).update())
+              .toList());
     }
   }
 
