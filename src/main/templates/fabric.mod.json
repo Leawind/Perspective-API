@@ -6,13 +6,13 @@
   "description": "${mod_description}",
   "authors": ["${mod_author}"],
   "contact": {
-    "homepage": "https://github.com/${github}",
-    "issues": "https://github.com/${github}/issues",
-    "sources": "https://github.com/${github}",
-    "email": "leawind@yeah.net"
+    "homepage": "${home_url}",
+    "issues": "${issues_url}",
+    "sources": "${source_url}",
+    "email": "${email}"
   },
   "license": "${mod_license}",
-  "icon": "logo.png",
+  "icon": "${logo_file}",
   "environment": "client",
   "entrypoints": {
     "client": ["${mod_group}.platform.fabric.Entrypoint"],
@@ -30,7 +30,7 @@
   "custom": {
     "modmenu": {
       "links": {
-        "GitHub": "https://github.com/${github}"
+        "GitHub": "${source_url}"
       }
     },
     "modmenu:clientsideOnly": true

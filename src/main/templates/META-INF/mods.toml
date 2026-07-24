@@ -1,6 +1,6 @@
 modLoader = "javafml"
 loaderVersion = "*"
-issueTrackerURL = "https://github.com/${github}/issues"
+issueTrackerURL = "${issues_url}"
 license = "${mod_license}"
 
 [[mods]]
@@ -9,8 +9,8 @@ version = "${mod_version}"
 displayName = "${mod_name}"
 description = "${mod_description}"
 authors = "${mod_author}"
-logoFile = "logo.png"
-displayURL = "https://github.com/${github}"
+logoFile = "${logo_file}"
+displayURL = "${home_url}"
 logoBlur = false
 
 [["dependencies.${mod_id}"]]

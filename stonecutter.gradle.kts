@@ -10,20 +10,50 @@ plugins {
 
 stonecutter active "26.2-fabric"
 
+val buildAndCollect by tasks.registering(Sync::class) {
+    group = "build"
+    description = "Builds and collects all distributable jars."
+    into(layout.buildDirectory.dir("libs"))
+}
+
 allprojects {
     repositories {
         mavenCentral()
 
-        // Sometime it responses 502 Bad Gateway
+        // Sometimes it responds with 502 Bad Gateway.
         // https://github.com/Leawind/Perspective-API/actions/runs/29914253769/job/88907885668
         // maven("https://maven.terraformersmc.com/") // ModMenu
-        maven("https://maven.gnomecraft.net/releases") {
-            name = "GnomeCraft (Terraformers Mirror)"
+        exclusiveContent {
+            forRepository {
+                maven("https://maven.gnomecraft.net/releases") {
+                    name = "GnomeCraft (Terraformers Mirror)"
+                }
+            }
+            filter { includeGroup("com.terraformersmc") }
         }
 
-        maven("https://maven.isxander.dev/releases") // YACL
-        maven("https://maven.neoforged.net/releases/")
-        maven("https://maven.nucleoid.xyz") // Placeholder API (ModMenu dependency)
+        exclusiveContent {
+            forRepository { maven("https://maven.isxander.dev/releases") }
+            filter { includeGroup("dev.isxander") }
+        }
+        exclusiveContent {
+            forRepository { maven("https://maven.quiltmc.org/repository/release") }
+            filter { includeGroup("org.quiltmc.parsers") }
+        }
+        maven("https://maven.neoforged.net/releases/") {
+            content {
+                includeGroupByRegex("net\\.neoforged(\\..*)?")
+            }
+        }
+        maven("https://maven.minecraftforge.net/") {
+            content {
+                includeGroupByRegex("net\\.minecraftforge(\\..*)?")
+            }
+        }
+        exclusiveContent {
+            forRepository { maven("https://maven.nucleoid.xyz") }
+            filter { includeGroupByRegex("eu\\.pb4(\\..*)?") }
+        }
         exclusiveContent {
             forRepository { maven("https://thedarkcolour.github.io/KotlinForForge/") }
             filter { includeGroup("thedarkcolour") }
