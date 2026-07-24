@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
+import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.Utils;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.Blender;
@@ -122,45 +123,35 @@ public final class TransitionImpl implements Transition {
   }
 
   /// Starts a new transition from the given start state.
-  ///
-  /// @param startTimeMs Current timestamp in milliseconds.
-  /// @param startPosition The start position to transition from.
-  /// @param startRotation The start rotation to transition from.
-  /// @param startFov The start FOV to transition from.
-  public void setStartState(
-      double startTimeMs, Vector3dc startPosition, Quaternionfc startRotation, float startFov) {
+  public void setStartState(double startTimeMs, @NonNull PerspectiveState startState) {
     this.startTimeMs = startTimeMs;
-    this.startPosition.set(startPosition);
-    this.startRotation.set(startRotation);
-    this.startFov = startFov;
-
+    this.startPosition.set(startState.position());
+    this.startRotation.set(startState.rotation());
+    this.startFov = startState.getFovDeg();
     // old algorithm state
-    this.prevRotation.set(startRotation);
+    this.prevRotation.set(startState.rotation());
     this.prevEasedProgress = 0;
-
     // new algorithm state
     this.isDeltaTransformSet = false;
     this.isDeltaFovSet = false;
   }
 
-  /// Updates the current interpolated position and rotation based on the target state.
+  /// Interpolates position, rotation, and FOV from the start state toward
+  /// the target state, writing the result into `dest`.
   ///
-  /// @param currentTimeMs Current timestamp in milliseconds.
-  /// @param targetPosition The target position to interpolate towards.
-  /// @param targetRotation The target rotation to interpolate towards.
-  /// @param destPosition The destination position to write the interpolated position to.
-  /// @param destRotation The destination rotation to write the interpolated rotation to.
-  public void updateTransform(
+  /// `target` and `dest` may be the same instance.
+  public void update(
       double currentTimeMs,
-      Vector3dc targetPosition,
-      Quaternionfc targetRotation,
-      Vector3d destPosition,
-      Quaternionf destRotation) {
+      @NonNull PerspectiveState target,
+      PerspectiveState.@NonNull Mutable dest) {
     if (useNewAlgorithm) {
-      updateTransformNew(currentTimeMs, targetPosition, targetRotation, destPosition, destRotation);
+      updateTransformNew(
+          currentTimeMs, target.position(), target.rotation(), dest.position(), dest.rotation());
     } else {
-      updateTransformOld(currentTimeMs, targetPosition, targetRotation, destPosition, destRotation);
+      updateTransformOld(
+          currentTimeMs, target.position(), target.rotation(), dest.position(), dest.rotation());
     }
+    dest.setFovDeg(updateFov(currentTimeMs, target.getFovDeg()));
   }
 
   private void updateTransformOld(
@@ -205,12 +196,7 @@ public final class TransitionImpl implements Transition {
     targetRotation.slerp(startRotation, easedProgress - 1, destRotation);
   }
 
-  /// Updates and returns the current interpolated FOV based on the target FOV.
-  ///
-  /// @param currentTimeMs Current timestamp in milliseconds.
-  /// @param targetFov The target FOV to interpolate towards.
-  /// @return The interpolated FOV.
-  public float updateFov(double currentTimeMs, float targetFov) {
+  private float updateFov(double currentTimeMs, float targetFov) {
     float easedProgress = computeEasedProgress(currentTimeMs);
     if (useNewAlgorithm) {
       if (!isDeltaFovSet) {

@@ -2,15 +2,14 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
-import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
+import io.github.leawind.perspectiveapi.internal.logic.ThrottledPerspectiveSanitizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
 
 public final class PerspectiveModifierChainImpl implements PerspectiveModifierChain {
@@ -23,15 +22,15 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
   }
 
   private final BiConsumer<@NonNull PerspectiveModifier, @NonNull Throwable> onException;
-  private final BiConsumer<@NonNull PerspectiveModifier, @NonNull String> onInvalidResult;
+  private final ThrottledPerspectiveSanitizer sanitizer;
 
   private volatile List<ModifierEntry> entries = List.of();
 
   public PerspectiveModifierChainImpl(
       @NonNull BiConsumer<@NonNull PerspectiveModifier, @NonNull Throwable> onException,
-      @NonNull BiConsumer<@NonNull PerspectiveModifier, @NonNull String> onInvalidResult) {
+      @NonNull ThrottledPerspectiveSanitizer sanitizer) {
     this.onException = Objects.requireNonNull(onException);
-    this.onInvalidResult = Objects.requireNonNull(onInvalidResult);
+    this.sanitizer = Objects.requireNonNull(sanitizer);
   }
 
   @Override
@@ -58,44 +57,30 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     }
   }
 
-  /// Applies all active modifiers' spatial transformations sequentially.
+  /// Applies all active modifiers' camera state transformations sequentially.
   ///
   /// Called after the base perspective establishes the target state,
   /// but before transition interpolation.
-  public void applyTransform(
-      @NonNull PerspectiveContext ctx, @NonNull Vector3d position, @NonNull Quaternionf rotation) {
-    for (ModifierEntry entry : entries) {
-      if (entry.modifier().isAvailable()) {
-        try {
-          entry.modifier().applyTransform(ctx, position, rotation);
-        } catch (Throwable e) {
-          onException.accept(entry.modifier(), e);
-        }
-      }
-    }
-  }
-
-  /// Applies all active modifiers' FOV calculations sequentially.
   ///
-  /// @param ctx The context containing frame-specific data.
-  /// @param fov The current FOV in degrees, potentially modified by the base perspective.
-  /// @return The final FOV after all modifiers, in degrees.
-  public float applyFov(@NonNull PerspectiveContext ctx, float fov) {
+  /// Position, rotation, and FOV are validated after each modifier;
+  /// invalid fields are individually reverted.
+  public void applyCameraState(
+      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {
+    PerspectiveStateImpl backup = new PerspectiveStateImpl();
     for (ModifierEntry entry : entries) {
       if (entry.modifier().isAvailable()) {
+        backup.set(state);
         try {
-          float newFov = entry.modifier().applyFov(ctx, fov);
-          if (Sanitizer.isFinite(newFov) && newFov >= 0.0f && newFov <= 180.0f) {
-            fov = newFov;
-          } else {
-            onInvalidResult.accept(
-                entry.modifier(), "Modifier '" + entry.key() + "' returned invalid FOV. Ignoring.");
-          }
+          entry.modifier().apply(state, ctx);
+          sanitizer.sanitize(
+              "modifier." + entry.key(),
+              state,
+              backup,
+              () -> "Modifier '" + entry.key() + "' produced invalid state. Reverting.");
         } catch (Throwable e) {
           onException.accept(entry.modifier(), e);
         }
       }
     }
-    return fov;
   }
 }

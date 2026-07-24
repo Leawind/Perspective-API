@@ -2,8 +2,6 @@ package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import org.jetbrains.annotations.ApiStatus;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
 
 /// Represents a pure mathematical modifier that mutates camera states.
@@ -31,20 +29,10 @@ public interface PerspectiveModifier {
     return true;
   }
 
-  /// Mutates spatial target state in-place.
+  /// Mutates the camera target state in-place.
   ///
-  /// @param ctx The context containing frame-specific data.
-  /// @param position The target camera position in world space. Can be mutated.
-  /// @param rotation The target camera rotation. Can be mutated.
-  default void applyTransform(
-      @NonNull PerspectiveContext ctx, @NonNull Vector3d position, @NonNull Quaternionf rotation) {}
-
-  /// Calculates the modified Field of View (FOV).
-  ///
-  /// @param ctx The context containing frame-specific data.
-  /// @param currentFovDeg The FOV in degrees, potentially modified by previous modifiers.
-  /// @return The new FOV in degrees.
-  default float applyFov(@NonNull PerspectiveContext ctx, float currentFovDeg) {
-    return currentFovDeg;
-  }
+  /// @param ctx   The context containing frame-specific data.
+  /// @param state The target camera state, potentially modified by the base
+  ///   perspective and previous modifiers. Can be mutated.
+  default void apply(PerspectiveState.@NonNull Mutable state,@NonNull PerspectiveContext ctx) {}
 }

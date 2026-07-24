@@ -8,8 +8,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
 
 /// Represents a camera perspective that can be applied to the game camera.
@@ -116,38 +114,12 @@ public interface PerspectiveBehavior {
   ///
   /// ### ⚠️ Deadlock Warning
   /// If this method returns a cached value, do NOT update the cache in
-  /// {@link #clientTickWhenActive} or {@link #renderTickWhenActive} to make it available again.
+  /// {@link #clientTickWhenActive} or {@link #preApplyWhenActive} to make it available again.
   /// Once unavailable, these callbacks stop being called.
   ///
   /// @return `true` if available, `false` to trigger an automatic switch.
   default boolean isAvailable() {
     return true;
-  }
-
-  /// Modifies the camera's spatial target state in-place.
-  ///
-  /// As the base perspective, this method receives the vanilla camera state and
-  /// establishes the foundational target state. Subsequent {@link PerspectiveModifier}s
-  /// will further mutate this state before transition interpolation.
-  ///
-  /// @param ctx The context containing frame-specific data.
-  /// @param position The vanilla camera position in world space. Can be mutated.
-  /// @param rotation The vanilla camera rotation. Can be mutated.
-  /// @apiNote The arguments `position` and `rotation` must not be stored or referenced outside this
-  /// method call.
-  default void applyTransform(
-      @NonNull PerspectiveContext ctx, @NonNull Vector3d position, @NonNull Quaternionf rotation) {}
-
-  /// Calculates the target Field of View (FOV).
-  ///
-  /// As the base perspective, this method receives the vanilla FOV and establishes
-  /// the foundational target FOV. Subsequent modifiers will further mutate this value.
-  ///
-  /// @param ctx The context containing frame-specific data.
-  /// @param vanillaFovDeg The vanilla camera FOV in degrees.
-  /// @return The target FOV to be applied, in degrees.
-  default float applyFov(@NonNull PerspectiveContext ctx, float vanillaFovDeg) {
-    return vanillaFovDeg;
   }
 
   /// Called once when the behavior is registered and initialized.
@@ -168,15 +140,49 @@ public interface PerspectiveBehavior {
   /// Called every client tick when this perspective is active.
   ///
   /// @see #isAvailable()
-  /// @see #renderTickWhenActive
+  /// @see #preApplyWhenActive
   default void clientTickWhenActive(@NonNull Minecraft minecraft) {}
 
-  /// Called on every render tick when this perspective is active.
+  // endregion
+
+  // region camera state pipeline
+
+  /// Called on every render frame when this perspective is active,
+  /// **before** {@link #applyCameraState}.
   ///
-  /// Called before {@link #applyTransform} and {@link #applyFov}.
+  /// Use this to prepare per-frame data (e.g. reading input, updating
+  /// internal state).
   ///
-  /// @see #clientTickWhenActive
-  default void renderTickWhenActive(@NonNull PerspectiveContext context) {}
+  /// @see #postApplyWhenActive
+  default void preApplyWhenActive(@NonNull PerspectiveContext context) {}
+
+  /// Modifies the camera's target state in-place.
+  ///
+  /// As the base perspective, this method receives the vanilla camera state and establishes the
+  /// foundational target state.
+  /// Subsequent {@link PerspectiveModifier}s will further mutate this state before transition
+  /// interpolation.
+  ///
+  /// @param ctx   The context containing frame-specific data.
+  /// @param state The vanilla camera state. Can be mutated.
+  /// @apiNote `state` must not be stored or referenced outside this method
+  ///   call.
+  default void applyCameraState(
+      @NonNull PerspectiveContext ctx, PerspectiveState.@NonNull Mutable state) {}
+
+  /// Called on every render frame when this perspective is active,
+  /// **after** the final camera state has been fully computed and applied,
+  /// including all modifier transformations and transition interpolation.
+  ///
+  /// Provides the exact state written to the Minecraft camera, suitable for
+  /// raycasts, hit-testing, or other spatial queries that depend on the
+  /// actual rendered viewpoint.
+  ///
+  /// @param ctx   The context containing frame-specific data.
+  /// @param state The final camera state that has been applied.
+  /// @see #preApplyWhenActive
+  default void postApplyWhenActive(
+      @NonNull PerspectiveContext ctx, @NonNull PerspectiveState state) {}
 
   // endregion
 }

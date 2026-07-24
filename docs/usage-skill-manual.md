@@ -62,16 +62,12 @@ Triggered at the `CLIENT_TICK_START` event, executed once per game tick:
 
 Triggered at the `SETUP_CAMERA` event, executed per render frame:
 
-1. Setup `PerspectiveContext` (including `partialTicks`, `entity`, `isTransitioning`)
-2. Execute render callback: call `PerspectiveBehavior.renderTickWhenActive`
-3. Backup vanilla state: save vanilla camera position and rotation
-4. Apply base perspective: execute `PerspectiveBehavior.applyTransform` to modify position and rotation
-5. Apply modifier chain: execute all `PerspectiveModifier.applyTransform` in ascending priority order
-6. Validate state: check validity of position and rotation, fallback to vanilla state if invalid
-7. Apply transition interpolation: if transitioning, interpolate between the previous frame's state and the target state
-8. Write to camera: write the final result to the Minecraft camera instance
-
-FOV modification is handled separately in the `MODIFY_FIELD_OF_VIEW` event, with a similar process: base perspective `applyFov` → modifier chain → output.
+1. Pre-apply callback: execute `PerspectiveBehavior.preApplyWhenActive`
+2. Apply base perspective: execute `PerspectiveBehavior.applyCameraState`
+3. Apply modifier chain: execute all `PerspectiveModifier.apply`
+4. Transition interpolation: if transitioning, interpolate camera states
+5. Write to camera: write the final result to the Minecraft camera instance
+6. Post-apply callback: execute `PerspectiveBehavior.postApplyWhenActive` with the final read-only camera state
 
 ## Mathematical Conventions
 

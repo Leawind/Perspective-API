@@ -11,6 +11,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateImpl;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel.WheelSwitcherBehavior;
@@ -20,7 +21,6 @@ import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import org.joml.Quaternionf;
-import org.joml.Vector3d;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -42,6 +42,9 @@ public final class PerspectiveManager {
   }
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
+
+  private final ThrottledPerspectiveSanitizer sanitizer =
+      new ThrottledPerspectiveSanitizer(throttledAction);
 
   // region components
 
@@ -75,16 +78,14 @@ public final class PerspectiveManager {
 
   // endregion
 
-  // region temp states
+  // region camera state
 
   private boolean isTempStateInited = false;
-  private final Vector3d tempPosition = new Vector3d();
+  private final Quaternionf tempMcQuat = new Quaternionf();
 
-  /// Use API convention
-  private final Quaternionf tempRotation = new Quaternionf();
-  private final Quaternionf tempRotationMcQuat =
-      CameraSpace.apiToMc(tempRotation, new Quaternionf());
-  private float tempFov = 70;
+  private final PerspectiveStateImpl targetState = new PerspectiveStateImpl();
+  private final PerspectiveStateImpl backupState = new PerspectiveStateImpl();
+  private float cachedVanillaFovDeg = PerspectiveStateImpl.DEFAULT_FOV_DEGREES;
 
   // endregion
 
@@ -96,10 +97,7 @@ public final class PerspectiveManager {
 
     modifiers =
         new PerspectiveModifierChainImpl(
-            (modifier, e) -> reportException(modifier.id(), "applyTransform", e),
-            (modifier, msg) ->
-                throttledAction.run(
-                    modifier.id() + ":applyFov:invalid", () -> LOGGER.warn("{}", msg)));
+            (modifier, e) -> reportException(modifier.id(), "applyCameraState", e), sanitizer);
 
     transition = new TransitionImpl();
   }
@@ -162,176 +160,113 @@ public final class PerspectiveManager {
   // region camera update
 
   private final PerspectiveContextImpl renderTickContext = new PerspectiveContextImpl();
-  private final Vector3d backupPosition = new Vector3d();
-  private final Quaternionf backupRotation = new Quaternionf();
 
-  /// Updates camera position and rotation based on the current perspective.
+  /// Updates camera position, rotation, and FOV based on the current perspective.
   ///
   /// ### Steps
   ///
-  /// 1. Validate state — return early if entity or behavior is null
-  /// 2. Call current behavior's `renderTickWhenActive`
-  /// 3. Apply current behavior's `applyTransform` and sanitize, fall back if invalid
-  /// 5. Apply modifier chain transforms
-  ///    - For each modifier:
-  ///       1. Apply modifier
-  ///       2. Sanitize - fallback if invalid
-  /// 6. Apply transition interpolation if transitioning and sanitize, fall back if invalid
-  /// 7. Commit to camera
+  /// 1. Prepare and validate context — return early if context invalid
+  /// 2. Call `preApplyWhenActive` callback
+  /// 3. Apply base perspective to target state via `applyCameraState`
+  /// 4. Sanitize target state, fallback if invalid
+  /// 5. Apply modifier chain to target state via `applyCameraState`.
+  ///    Sanitize after applying each modifier
+  /// 6. Apply transition interpolation if transitioning, and sanitize
+  /// 7. Write final state to camera
+  /// 8. Call `postApplyWhenActive` callback
   ///
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
   public void updateCamera(float partialTicks, Camera camera) {
-    Entity entity = CameraAccessor.of(camera).getEntity();
-    if (entity == null) {
-      LOGGER.warn("Somehow camera entity is null");
-      return;
-    }
-
-    Perspective current = this.current;
-    PerspectiveBehavior currentBehavior = this.currentBehavior;
-    PerspectiveBehavior previousBehavior = this.previousBehavior;
-
-    if (current == null || currentBehavior == null) {
-      return;
-    }
-
-    double now = TransitionImpl.getTimeMs();
-
-    boolean isTransitioning =
-        transition.isInTransition(now)
-            && currentBehavior.allowTransitionIn()
-            && (previousBehavior == null || previousBehavior.allowTransitionOut());
-
-    // Setup context object
-    renderTickContext.setup(partialTicks, entity, isTransitioning);
-
-    try {
-      currentBehavior.renderTickWhenActive(renderTickContext);
-    } catch (Throwable e) {
-      reportException(current.id(), "renderTick", e);
-    }
-
-    // Extract current vanilla state and backup for fallback
-    Bridge.getCameraPosition(camera, tempPosition);
-    Bridge.getCameraRotation(camera, tempRotationMcQuat);
-    CameraSpace.mcToApi(tempRotationMcQuat, tempRotation);
-    backupPosition.set(tempPosition);
-    backupRotation.set(tempRotation);
-
-    // Apply current behavior
-    try {
-      currentBehavior.applyTransform(renderTickContext, tempPosition, tempRotation);
-    } catch (Throwable e) {
-      reportException(current.id(), "applyTransform", e);
-    }
-
-    // Sanitize and fallback if needed
-    boolean posInvalid = !Sanitizer.isFinite(tempPosition);
-    boolean rotInvalid = !Sanitizer.isFinite(tempRotation);
-    if (posInvalid || rotInvalid) {
-      throttledAction.run(
-          current.id() + ":applyTransform:invalid",
-          () ->
-              LOGGER.warn(
-                  "PerspectiveBehavior '{}' provided invalid state during applyTransform. Falling back to vanilla. pos: {}, rot: {}",
-                  current.id(),
-                  tempPosition,
-                  tempRotation));
-
-      if (posInvalid) {
-        tempPosition.set(backupPosition);
+    // Prepare and validate context
+    Entity entity;
+    Perspective current;
+    PerspectiveBehavior currentBehavior;
+    double now;
+    boolean isTransitioning;
+    {
+      entity = CameraAccessor.of(camera).getEntity();
+      if (entity == null) {
+        LOGGER.warn("Somehow camera entity is null");
+        return;
       }
-      if (rotInvalid) {
-        tempRotation.set(backupRotation);
+      current = this.current;
+      currentBehavior = this.currentBehavior;
+      PerspectiveBehavior previousBehavior = this.previousBehavior;
+
+      if (current == null || currentBehavior == null) {
+        return;
       }
+      now = TransitionImpl.getTimeMs();
+      isTransitioning =
+          transition.isInTransition(now)
+              && currentBehavior.allowTransitionIn()
+              && (previousBehavior == null || previousBehavior.allowTransitionOut());
+
+      renderTickContext.setup(partialTicks, entity, isTransitioning);
     }
 
-    // Apply Modifiers and sanitize
-    modifiers.applyTransform(renderTickContext, tempPosition, tempRotation);
+    // Pre-apply callback
+    try {
+      currentBehavior.preApplyWhenActive(renderTickContext);
+    } catch (Throwable e) {
+      reportException(current.id(), "preApply", e);
+    }
 
-    // Apply transition
+    // Backup vanilla state for fallback
+    {
+      Bridge.getCameraPosition(camera, targetState.position());
+      Bridge.getCameraRotation(camera, tempMcQuat);
+      CameraSpace.mcToApi(tempMcQuat, targetState.rotation());
+      targetState.setFovDeg(cachedVanillaFovDeg);
+      backupState.set(targetState);
+    }
+
+    // Apply perspective
+    try {
+      currentBehavior.applyCameraState(renderTickContext, targetState);
+    } catch (Throwable e) {
+      reportException(current.id(), "apply", e);
+    }
+
+    // Sanitize
+    sanitizer.sanitize(
+        current.id(),
+        targetState,
+        backupState,
+        () -> "Perspective '" + current.id() + "' provided invalid state");
+
+    // Apply modifiers
+    modifiers.applyCameraState(targetState, renderTickContext);
+
+    // Transition interpolation
     if (isTransitioning) {
-      transition.updateTransform(now, tempPosition, tempRotation, tempPosition, tempRotation);
-
-      if (!Sanitizer.isFinite(tempPosition)) {
-        throttledAction.run(
-            "transition:position",
-            () ->
-                LOGGER.warn(
-                    "Transition position is invalid, falling back to vanilla. pos: {}",
-                    tempPosition));
-        tempPosition.set(backupPosition);
-      }
-      if (!Sanitizer.isFinite(tempRotation)) {
-        throttledAction.run(
-            "transition:rotation",
-            () ->
-                LOGGER.warn(
-                    "Transition rotation is invalid, falling back to vanilla. rot: {}",
-                    tempRotation));
-        tempRotation.set(backupRotation);
-      }
+      transition.update(now, targetState, targetState);
+      sanitizer.sanitize(
+          "transition", targetState, backupState, () -> "Transition produced invalid state");
     }
+
     isTempStateInited = true;
 
-    // Commit to camera
-    Bridge.setCameraPosition(camera, tempPosition);
-    Bridge.setCameraRotation(camera, CameraSpace.apiToMc(tempRotation, tempRotationMcQuat));
+    // Write to camera
+    Bridge.setCameraPosition(camera, targetState.position());
+    Bridge.setCameraRotation(camera, CameraSpace.apiToMc(targetState.rotation(), tempMcQuat));
+
+    // Post-apply callback
+    try {
+      currentBehavior.postApplyWhenActive(renderTickContext, targetState);
+    } catch (Throwable e) {
+      reportException(current.id(), "postApply", e);
+    }
   }
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
-  public float modifyFov(float vanillaFov) {
-    float fov = vanillaFov;
-
-    Perspective current = this.current;
-    PerspectiveBehavior currentBehavior = this.currentBehavior;
-    PerspectiveBehavior previousBehavior = this.previousBehavior;
-
-    if (current == null || currentBehavior == null) {
-      return tempFov = fov;
-    }
-
-    // Apply Base PerspectiveBehavior
-    try {
-      fov = currentBehavior.applyFov(renderTickContext, vanillaFov);
-    } catch (Throwable e) {
-      reportException(current.id(), "applyFov", e);
-      fov = vanillaFov;
-    }
-    // Sanitize
-    boolean fovInvalid = !Sanitizer.isFinite(fov) || fov < 0.0f || fov > 180.0f;
-    if (fovInvalid) {
-      fov = vanillaFov;
-      throttledAction.run(
-          current.id() + ":applyFov:invalid",
-          () ->
-              LOGGER.warn(
-                  "PerspectiveBehavior '{}' returned invalid FOV during applyFov. Falling back to vanilla.",
-                  current.id()));
-    }
-
-    // Apply Modifiers
-    fov = modifiers.applyFov(renderTickContext, fov);
-
-    // Apply Transition
-    double now = TransitionImpl.getTimeMs();
-    if (transition.isInTransition(now)
-        && currentBehavior.allowTransitionIn()
-        && (previousBehavior == null || previousBehavior.allowTransitionOut())) {
-      tempFov = transition.updateFov(now, fov);
-      if (!Sanitizer.isFinite(tempFov)) {
-        throttledAction.run(
-            "transition:fov",
-            () ->
-                LOGGER.warn(
-                    "Transition FOV is invalid, falling back to vanilla. fov: {}", tempFov));
-        tempFov = fov;
-      }
-    } else {
-      tempFov = fov;
-    }
-    return tempFov;
+  ///
+  /// Updates the cached vanilla FOV for the next frame and returns the
+  /// already-computed FOV from the current frame's camera state pipeline.
+  public float modifyFov(float vanillaFovDeg) {
+    cachedVanillaFovDeg = vanillaFovDeg;
+    return targetState.getFovDeg();
   }
 
   // endregion
@@ -344,13 +279,13 @@ public final class PerspectiveManager {
     if (!isTempStateInited) {
       Camera camera = Bridge.getMainCamera();
       if (camera != null) {
-        Bridge.getCameraPosition(camera, tempPosition);
-        Bridge.getCameraRotation(camera, tempRotationMcQuat);
-        CameraSpace.mcToApi(tempRotationMcQuat, tempRotation);
+        Bridge.getCameraPosition(camera, targetState.position());
+        Bridge.getCameraRotation(camera, tempMcQuat);
+        CameraSpace.mcToApi(tempMcQuat, targetState.rotation());
         isTempStateInited = true;
       }
     }
-    transition.setStartState(TransitionImpl.getTimeMs(), tempPosition, tempRotation, tempFov);
+    transition.setStartState(TransitionImpl.getTimeMs(), targetState);
   }
 
   private void reportException(String id, String phase, Throwable throwable) {
