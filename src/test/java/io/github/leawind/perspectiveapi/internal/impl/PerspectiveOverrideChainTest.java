@@ -1,11 +1,17 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.List;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +23,6 @@ class PerspectiveOverrideChainTest {
 
   private static PerspectiveRegistry testRegistry() {
     return new PerspectiveRegistry() {
-      private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
-
       @Override
       public boolean contains(@Nullable String id) {
         return id != null && id.startsWith("test.");
@@ -26,17 +30,53 @@ class PerspectiveOverrideChainTest {
 
       @Override
       public @Nullable Perspective get(@NonNull String id) {
-        return null;
+        if (!contains(id)) return null;
+        return new Perspective() {
+          @Override
+          public @NonNull String id() {
+            return id;
+          }
+
+          @Override
+          public @NonNull Component name() {
+            return Component.literal(id);
+          }
+
+          @Override
+          public @Nullable Component description() {
+            return null;
+          }
+
+          @Override
+          public @NonNull BaseType baseType() {
+            return BaseType.FIRST_PERSON;
+          }
+
+          @Override
+          public boolean switchable() {
+            return true;
+          }
+
+          @Override
+          public int priority() {
+            return 0;
+          }
+
+          @Override
+          public @Nullable Identifier icon() {
+            return null;
+          }
+
+          @Override
+          public boolean isAvailable() {
+            return true;
+          }
+        };
       }
 
       @Override
-      public @NonNull List<Perspective> getAll() {
+      public @NonNull List<@NonNull Perspective> getAll() {
         return List.of();
-      }
-
-      @Override
-      public @NonNull SimpleEventEmitter<Void> onUpdate() {
-        return onUpdate;
       }
     };
   }

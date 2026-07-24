@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.impl;
+package io.github.leawind.perspectiveapi.internal.utils.smooth;
 
 public final class Blenders {
   private Blenders() {}

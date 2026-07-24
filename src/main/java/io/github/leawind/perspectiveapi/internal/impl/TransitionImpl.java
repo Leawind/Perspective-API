@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.Utils;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.Blender;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.Blenders;
 import java.util.Objects;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
@@ -81,6 +82,9 @@ public final class TransitionImpl implements Transition {
 
   @Override
   public void setDurationMs(double durationMs) {
+    if (!Double.isFinite(durationMs) || durationMs < 0) {
+      throw new IllegalArgumentException("durationMs must be finite and non-negative");
+    }
     this.durationMs = durationMs;
   }
 
@@ -100,6 +104,9 @@ public final class TransitionImpl implements Transition {
   }
 
   public void setBlendPower(double blendPower) {
+    if (!Double.isFinite(blendPower) || blendPower <= 0) {
+      throw new IllegalArgumentException("blendPower must be finite and positive");
+    }
     this.blendPower = blendPower;
   }
 

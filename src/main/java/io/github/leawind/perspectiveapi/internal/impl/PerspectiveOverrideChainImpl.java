@@ -1,7 +1,9 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -9,37 +11,61 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class PerspectiveOverrideChainImpl
-    implements PerspectiveOverrideChain, Supplier<String> {
-  public record Entry(@NonNull String key, int priority, @NonNull Supplier<String> supplier) {
-    public static Comparator<Entry> COMPARATOR = Comparator.comparingInt(e -> -e.priority);
+    implements PerspectiveOverrideChain, Supplier<@Nullable String> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveOverrideChainImpl.class);
+
+  public record Entry(
+      @NonNull String key, int priority, @NonNull Supplier<@Nullable String> supplier) {
+    public static final Comparator<Entry> COMPARATOR =
+        Comparator.comparingInt(Entry::priority).reversed();
   }
 
   private volatile List<Entry> entries = List.of();
   private final PerspectiveRegistry registry;
+  private final BiConsumer<@NonNull String, @NonNull Throwable> onException;
 
-  public PerspectiveOverrideChainImpl(PerspectiveRegistry registry) {
-    this.registry = registry;
+  public PerspectiveOverrideChainImpl(@NonNull PerspectiveRegistry registry) {
+    this(
+        registry,
+        (key, throwable) ->
+            LOGGER.warn("Override entry '{}' threw while being resolved", key, throwable));
+  }
+
+  public PerspectiveOverrideChainImpl(
+      @NonNull PerspectiveRegistry registry,
+      @NonNull BiConsumer<@NonNull String, @NonNull Throwable> onException) {
+    this.registry = Objects.requireNonNull(registry);
+    this.onException = Objects.requireNonNull(onException);
   }
 
   @Override
   public @Nullable String get() {
     List<Entry> snapshot = this.entries;
     for (Entry entry : snapshot) {
-      String id = entry.supplier.get();
-      if (id != null && registry.contains(id)) {
-        return id;
+      try {
+        String id = entry.supplier.get();
+        if (id == null) continue;
+        Perspective perspective = registry.get(id);
+        if (perspective != null && perspective.isAvailable()) return id;
+      } catch (Throwable throwable) {
+        Exceptions.rethrowIfFatal(throwable);
+        onException.accept(entry.key(), throwable);
       }
     }
     return null;
   }
 
   @Override
-  public void push(@NonNull String key, int priority, @NonNull Supplier<String> supplier) {
+  public void push(
+      @NonNull String key, int priority, @NonNull Supplier<@Nullable String> supplier) {
     Objects.requireNonNull(key);
     Objects.requireNonNull(supplier);
     synchronized (this) {
@@ -47,7 +73,7 @@ public final class PerspectiveOverrideChainImpl
       newList.removeIf(e -> e.key().equals(key));
       newList.add(new Entry(key, priority, supplier));
       newList.sort(Entry.COMPARATOR);
-      this.entries = newList;
+      this.entries = List.copyOf(newList);
     }
   }
 

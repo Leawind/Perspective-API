@@ -77,7 +77,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   @Override
-  public void onUpdateSwitchables(@NonNull List<Perspective> switchables) {
+  public void onUpdateSwitchables(@NonNull List<@NonNull Perspective> switchables) {
     list =
         switchables.stream().map(Perspective::id).collect(Collectors.toCollection(ArrayList::new));
     LOGGER.info("Switchable perspective list updated: {}", list);

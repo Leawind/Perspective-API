@@ -9,7 +9,7 @@ import org.jspecify.annotations.NonNull;
 @ApiStatus.NonExtendable
 public interface PerspectiveSwitcherManager {
   /// Returns a list of all registered switchers.
-  @NonNull List<PerspectiveSwitcher> getSwitchers();
+  @NonNull List<@NonNull PerspectiveSwitcher> getSwitchers();
 
   /// Returns the currently active switcher.
   @NonNull PerspectiveSwitcher getSwitcher();

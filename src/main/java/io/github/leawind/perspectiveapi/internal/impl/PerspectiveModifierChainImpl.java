@@ -4,7 +4,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
-import io.github.leawind.perspectiveapi.internal.logic.ThrottledPerspectiveSanitizer;
+import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -21,13 +21,13 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
         Comparator.comparingInt(ModifierEntry::priority);
   }
 
-  private final BiConsumer<@NonNull PerspectiveModifier, @NonNull Throwable> onException;
+  private final BiConsumer<@NonNull String, @NonNull Throwable> onException;
   private final ThrottledPerspectiveSanitizer sanitizer;
 
   private volatile List<ModifierEntry> entries = List.of();
 
   public PerspectiveModifierChainImpl(
-      @NonNull BiConsumer<@NonNull PerspectiveModifier, @NonNull Throwable> onException,
+      @NonNull BiConsumer<@NonNull String, @NonNull Throwable> onException,
       @NonNull ThrottledPerspectiveSanitizer sanitizer) {
     this.onException = Objects.requireNonNull(onException);
     this.sanitizer = Objects.requireNonNull(sanitizer);
@@ -68,19 +68,34 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {
     PerspectiveStateImpl backup = new PerspectiveStateImpl();
     for (ModifierEntry entry : entries) {
-      if (entry.modifier().isAvailable()) {
-        backup.set(state);
-        try {
-          entry.modifier().apply(state, ctx);
-          sanitizer.sanitize(
-              "modifier." + entry.key(),
-              state,
-              backup,
-              () -> "Modifier '" + entry.key() + "' produced invalid state. Reverting.");
-        } catch (Throwable e) {
-          onException.accept(entry.modifier(), e);
-        }
+      try {
+        if (!entry.modifier().isAvailable()) continue;
+      } catch (Throwable throwable) {
+        Exceptions.rethrowIfFatal(throwable);
+        onException.accept(entry.key(), throwable);
+        continue;
+      }
+
+      backup.set(state);
+      try {
+        entry.modifier().apply(state, ctx);
+        sanitizer.sanitize(
+            "modifier." + entry.key(),
+            state,
+            backup,
+            () -> "Modifier '" + entry.key() + "' produced invalid state. Reverting.");
+      } catch (Throwable throwable) {
+        Exceptions.rethrowIfFatal(throwable);
+        restore(state, backup);
+        onException.accept(entry.key(), throwable);
       }
     }
+  }
+
+  private static void restore(
+      PerspectiveState.@NonNull Mutable target, @NonNull PerspectiveState source) {
+    target.position().set(source.position());
+    target.rotation().set(source.rotation());
+    target.setFovDeg(source.getFovDeg());
   }
 }

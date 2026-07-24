@@ -68,6 +68,13 @@ public final class PerspectiveApiState {
   }
 
   public void apply() {
+    if (!Double.isFinite(transitionDurationMs) || transitionDurationMs < 0) {
+      throw new IllegalArgumentException("transition.duration_ms must be finite and non-negative");
+    }
+    if (!Double.isFinite(transitionBlendPower) || transitionBlendPower <= 0) {
+      throw new IllegalArgumentException("transition.blend_power must be finite and positive");
+    }
+
     PerspectiveAPI.setEnabled(enabled);
 
     if (managerCurrent != null) {

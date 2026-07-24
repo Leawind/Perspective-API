@@ -31,8 +31,9 @@ public interface PerspectiveModifier {
 
   /// Mutates the camera target state in-place.
   ///
-  /// @param ctx   The context containing frame-specific data.
   /// @param state The target camera state, potentially modified by the base
   ///   perspective and previous modifiers. Can be mutated.
-  default void apply(PerspectiveState.@NonNull Mutable state,@NonNull PerspectiveContext ctx) {}
+  /// @param ctx   The context containing frame-specific data.
+  default void apply(
+      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {}
 }

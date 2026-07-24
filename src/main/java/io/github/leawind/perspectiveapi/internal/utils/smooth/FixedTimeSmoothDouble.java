@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.utils.smooth;
 
-import io.github.leawind.perspectiveapi.internal.impl.Blenders;
 import io.github.leawind.perspectiveapi.internal.utils.Utils;
 import org.jspecify.annotations.NonNull;
 

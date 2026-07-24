@@ -34,7 +34,7 @@ import org.jspecify.annotations.NonNull;
 /// | --------- | ---------------- |
 /// | Forward   | `(0, 0, 1)`      |
 /// | Up        | `(0, 1, 0)`      |
-/// | Left      | `(-1, 0, 0)`     |
+/// | Left      | `(1, 0, 0)`      |
 ///
 /// ## Quaternions
 ///
@@ -47,7 +47,7 @@ import org.jspecify.annotations.NonNull;
 /// | --------- | ---------------- |
 /// | Forward   | `(0, 0, 1)`      |
 /// | Up        | `(0, 1, 0)`      |
-/// | Left      | `(-1, 0, 0)`     |
+/// | Left      | `(1, 0, 0)`      |
 ///
 /// Unit quaternions are always used.
 ///

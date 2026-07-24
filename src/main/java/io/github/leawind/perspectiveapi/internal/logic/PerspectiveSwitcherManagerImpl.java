@@ -6,18 +6,28 @@ import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
+import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PerspectiveSwitcherManagerImpl
-    implements PerspectiveSwitcherManager, Supplier<String> {
+    implements PerspectiveSwitcherManager, Supplier<@Nullable String> {
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(PerspectiveSwitcherManagerImpl.class);
+  private static final Sanitizer.ThrottledAction CALLBACK_EXCEPTION_LOG =
+      new Sanitizer.ThrottledAction(5000);
+
   public static final String KEY = PerspectiveAPI.MOD_ID + ".builtin_switcher_manager";
   private final Collection<PerspectiveSwitcherBehavior> switchers = new HashSet<>();
 
@@ -25,29 +35,48 @@ public class PerspectiveSwitcherManagerImpl
   private @Nullable PerspectiveSwitcherBehavior currentSwitcher = null;
 
   public PerspectiveSwitcherManagerImpl(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
-    this.defaultSwitcher = defaultSwitcher;
-    register(defaultSwitcher);
-
+    this.defaultSwitcher = Objects.requireNonNull(defaultSwitcher);
     PerspectiveRegistryImpl.INSTANCE.onUpdate().on(this::notifySwitchables);
-    notifySwitchables();
+    register(defaultSwitcher);
+  }
+
+  private @NonNull List<@NonNull Perspective> getSwitchables() {
+    return PerspectiveRegistryImpl.INSTANCE.getAll().stream()
+        .filter(Perspective::switchable)
+        .sorted(Comparator.comparingInt(Perspective::priority).thenComparing(Perspective::id))
+        .toList();
   }
 
   private void notifySwitchables() {
-    var switchers =
-        PerspectiveRegistryImpl.INSTANCE.getAll().stream()
-            .filter(Perspective::switchable)
-            .sorted(Comparator.comparingInt(Perspective::priority))
-            .toList();
-    this.switchers.forEach(switcher -> switcher.onUpdateSwitchables(switchers));
+    var switchables = getSwitchables();
+    this.switchers.forEach(switcher -> notifySwitchables(switcher, switchables));
   }
 
-  public void register(PerspectiveSwitcherBehavior switcher) {
-    switchers.add(switcher);
-    switcher.init();
+  private void notifySwitchables(
+      @NonNull PerspectiveSwitcherBehavior switcher,
+      @NonNull List<@NonNull Perspective> switchables) {
+    try {
+      switcher.onUpdateSwitchables(switchables);
+    } catch (Throwable throwable) {
+      reportException(switcher, "onUpdateSwitchables", throwable);
+    }
+  }
+
+  public void register(@NonNull PerspectiveSwitcherBehavior switcher) {
+    Objects.requireNonNull(switcher);
+    if (!switchers.add(switcher)) return;
+    try {
+      switcher.init();
+    } catch (Throwable throwable) {
+      Exceptions.rethrowIfFatal(throwable);
+      switchers.remove(switcher);
+      throw Exceptions.propagate(throwable);
+    }
+    notifySwitchables(switcher, getSwitchables());
   }
 
   @Override
-  public @NonNull List<PerspectiveSwitcher> getSwitchers() {
+  public @NonNull List<@NonNull PerspectiveSwitcher> getSwitchers() {
     return new ArrayList<>(switchers);
   }
 
@@ -56,7 +85,11 @@ public class PerspectiveSwitcherManagerImpl
     var currentSwitcher = this.currentSwitcher;
     if (currentSwitcher == null) {
       currentSwitcher = this.currentSwitcher = defaultSwitcher;
-      currentSwitcher.onActivated(PerspectiveManager.INSTANCE.getCurrent());
+      try {
+        currentSwitcher.onActivated(PerspectiveManager.INSTANCE.getCurrent());
+      } catch (Throwable throwable) {
+        reportException(currentSwitcher, "onActivated", throwable);
+      }
     }
 
     return currentSwitcher;
@@ -68,6 +101,7 @@ public class PerspectiveSwitcherManagerImpl
 
   @Override
   public void setSwitcher(@NonNull PerspectiveSwitcher switcher) {
+    Objects.requireNonNull(switcher);
     if (!(switcher instanceof PerspectiveSwitcherBehavior behavior)) {
       throw new IllegalArgumentException(
           "Expect switcher to implement "
@@ -83,10 +117,18 @@ public class PerspectiveSwitcherManagerImpl
     var old = this.currentSwitcher;
     if (old != behavior) {
       if (old != null) {
-        old.onDeactivated();
+        try {
+          old.onDeactivated();
+        } catch (Throwable throwable) {
+          reportException(old, "onDeactivated", throwable);
+        }
       }
       this.currentSwitcher = behavior;
-      behavior.onActivated(PerspectiveManager.INSTANCE.getCurrent());
+      try {
+        behavior.onActivated(PerspectiveManager.INSTANCE.getCurrent());
+      } catch (Throwable throwable) {
+        reportException(behavior, "onActivated", throwable);
+      }
     }
   }
 
@@ -95,7 +137,22 @@ public class PerspectiveSwitcherManagerImpl
     return getSwitcher().getSelected();
   }
 
-  void clientTick(Minecraft minecraft) {
-    getSwitcher().clientTickWhenActive(minecraft);
+  void clientTick(@NonNull Minecraft minecraft) {
+    PerspectiveSwitcherBehavior switcher = getSwitcher();
+    try {
+      switcher.clientTickWhenActive(minecraft);
+    } catch (Throwable throwable) {
+      reportException(switcher, "clientTickWhenActive", throwable);
+    }
+  }
+
+  private static void reportException(
+      @NonNull PerspectiveSwitcherBehavior switcher,
+      @NonNull String phase,
+      @NonNull Throwable throwable) {
+    Exceptions.rethrowIfFatal(throwable);
+    String id = switcher.getClass().getName();
+    CALLBACK_EXCEPTION_LOG.run(
+        id + ":" + phase, () -> LOGGER.warn("Switcher '{}' threw during {}", id, phase, throwable));
   }
 }

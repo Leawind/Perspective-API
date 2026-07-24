@@ -40,8 +40,10 @@ public interface Perspective {
   /// Returns the identifier of the icon texture for this perspective, or `null` if none.
   @Nullable Identifier icon();
 
-  /// Returns whether this perspective is currently available to be selected or remain active.
+  /// Returns whether this perspective is currently eligible to be resolved as active.
   ///
   /// This delegates to the underlying {@link PerspectiveBehavior#isAvailable()}.
+  /// If no available candidate can be resolved, the default perspective is used as a safety
+  /// fallback even if it reports itself as unavailable.
   boolean isAvailable();
 }

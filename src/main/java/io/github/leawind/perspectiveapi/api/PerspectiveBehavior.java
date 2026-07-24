@@ -47,25 +47,25 @@ public interface PerspectiveBehavior {
     /// The unique identifier for this perspective.
     ///
     /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`).
-    String id();
+    @NonNull String id();
 
     /// The vanilla camera type used as a fallback when this perspective
     /// does not explicitly modify the camera transform or FOV.
-    BaseType baseType() default BaseType.THIRD_PERSON_BACK;
+    @NonNull BaseType baseType() default BaseType.THIRD_PERSON_BACK;
 
     /// The translation key for the perspective's display name.
     ///
     /// If left empty, it defaults to `perspective.<id>.name`.
     ///
     /// @see Perspective#name()
-    String nameKey() default "";
+    @NonNull String nameKey() default "";
 
     /// The translation key for the perspective's description.
     ///
     /// If left empty, it defaults to `null`.
     ///
     /// @see Perspective#description()
-    String descriptionKey() default "";
+    @NonNull String descriptionKey() default "";
 
     /// The string representation of the `Identifier` or `ResourceLocation` for the
     /// perspective's icon texture.
@@ -73,7 +73,7 @@ public interface PerspectiveBehavior {
     /// If left empty, it defaults to `null`.
     ///
     /// @see Perspective#icon()
-    String icon() default "";
+    @NonNull String icon() default "";
 
     /// Whether this perspective is allowed to be manually selected by the player
     /// via a {@link PerspectiveSwitcherBehavior}
@@ -110,14 +110,13 @@ public interface PerspectiveBehavior {
     return true;
   }
 
-  /// Returns whether this perspective is currently available to remain active.
+  /// Returns whether this perspective is currently eligible to be resolved as active.
   ///
-  /// ### ⚠️ Deadlock Warning
-  /// If this method returns a cached value, do NOT update the cache in
-  /// {@link #clientTickWhenActive} or {@link #preApplyWhenActive} to make it available again.
-  /// Once unavailable, these callbacks stop being called.
+  /// Switchers and override resolution skip unavailable perspectives. If no available candidate can
+  /// be resolved, the default perspective is used as a safety fallback even if it reports itself as
+  /// unavailable.
   ///
-  /// @return `true` if available, `false` to trigger an automatic switch.
+  /// @return `true` if this perspective is eligible for resolution
   default boolean isAvailable() {
     return true;
   }
@@ -163,12 +162,12 @@ public interface PerspectiveBehavior {
   /// Subsequent {@link PerspectiveModifier}s will further mutate this state before transition
   /// interpolation.
   ///
-  /// @param ctx   The context containing frame-specific data.
   /// @param state The vanilla camera state. Can be mutated.
+  /// @param ctx   The context containing frame-specific data.
   /// @apiNote `state` must not be stored or referenced outside this method
   ///   call.
   default void applyCameraState(
-      @NonNull PerspectiveContext ctx, PerspectiveState.@NonNull Mutable state) {}
+      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {}
 
   /// Called on every render frame when this perspective is active,
   /// **after** the final camera state has been fully computed and applied,
@@ -178,11 +177,11 @@ public interface PerspectiveBehavior {
   /// raycasts, hit-testing, or other spatial queries that depend on the
   /// actual rendered viewpoint.
   ///
-  /// @param ctx   The context containing frame-specific data.
   /// @param state The final camera state that has been applied.
+  /// @param ctx   The context containing frame-specific data.
   /// @see #preApplyWhenActive
   default void postApplyWhenActive(
-      @NonNull PerspectiveContext ctx, @NonNull PerspectiveState state) {}
+      @NonNull PerspectiveState state, @NonNull PerspectiveContext ctx) {}
 
   // endregion
 }

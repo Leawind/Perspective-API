@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.List;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
@@ -24,8 +23,4 @@ public interface PerspectiveRegistry {
   /// Returns a list of all registered perspectives.
   @ApiStatus.Experimental
   @NonNull List<@NonNull Perspective> getAll();
-
-  /// Returns an event emitter that fires whenever the registry is updated.
-  @ApiStatus.Experimental
-  @NonNull SimpleEventEmitter<Void> onUpdate();
 }

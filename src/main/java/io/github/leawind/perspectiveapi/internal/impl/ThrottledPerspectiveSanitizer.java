@@ -1,6 +1,5 @@
-package io.github.leawind.perspectiveapi.internal.logic;
+package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateImpl;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import java.util.function.Supplier;
 import org.joml.Quaternionf;

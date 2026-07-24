@@ -7,12 +7,10 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 
-/// An immutable snapshot of the camera state managed by Perspective API.
+/// A read-only, temporary view of the camera state managed by Perspective API.
 ///
 /// Comprises position (world space), rotation (API convention, +Z forward),
 /// and field of view in degrees.
-///
-/// @see PerspectiveBehavior#postApplyWhenActive
 @ApiStatus.NonExtendable
 public interface PerspectiveState {
 
@@ -29,11 +27,7 @@ public interface PerspectiveState {
   /// modified in-place.
   ///
   /// Passed to {@link PerspectiveBehavior#applyCameraState} and
-  /// {@link PerspectiveModifier#apply} during the camera state
-  /// computation pipeline.
-  ///
-  /// @apiNote Implementations must not store or reference this object outside
-  ///   the method call in which it is received.
+  /// {@link PerspectiveModifier#apply} during the camera state computation pipeline.
   @ApiStatus.NonExtendable
   interface Mutable extends PerspectiveState {
 

@@ -6,8 +6,10 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
+import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceConfigurationError;
@@ -22,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveAPI.MOD_NAME);
+  private static final Sanitizer.ThrottledAction AVAILABILITY_EXCEPTION_LOG =
+      new Sanitizer.ThrottledAction(5000);
 
   public static final PerspectiveRegistryImpl INSTANCE = new PerspectiveRegistryImpl();
 
@@ -67,14 +71,21 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
     @Override
     public boolean isAvailable() {
-      return behavior.isAvailable();
+      try {
+        return behavior.isAvailable();
+      } catch (Throwable throwable) {
+        Exceptions.rethrowIfFatal(throwable);
+        AVAILABILITY_EXCEPTION_LOG.run(
+            id,
+            () -> LOGGER.warn("Perspective '{}' threw while checking availability", id, throwable));
+        return false;
+      }
     }
   }
 
   private final Map<String, Entry> entries = new ConcurrentHashMap<>();
 
-  private int defaultPriority = Integer.MIN_VALUE;
-  private @Nullable Entry defaultEntry = null;
+  private volatile @Nullable Entry defaultEntry = null;
   private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
 
   public PerspectiveRegistryImpl() {}
@@ -87,11 +98,18 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       try {
         if (!iterator.hasNext()) break;
         behavior = iterator.next();
-      } catch (ServiceConfigurationError e) {
-        LOGGER.warn("Failed to load PerspectiveBehavior implementation", e);
+      } catch (Throwable throwable) {
+        Exceptions.rethrowIfFatal(throwable);
+        LOGGER.error("Failed to load PerspectiveBehavior implementation", throwable);
         continue;
       }
-      registerSilent(behavior);
+      try {
+        registerSilent(behavior);
+      } catch (Throwable throwable) {
+        Exceptions.rethrowIfFatal(throwable);
+        LOGGER.error(
+            "Failed to register PerspectiveBehavior implementation {}", behavior, throwable);
+      }
     }
     onUpdate.emit();
   }
@@ -104,8 +122,9 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     Entry entry = Entry.from(behavior);
     String id = entry.id();
     LOGGER.info("Registering perspective with id '{}': {}", id, behavior);
+    Entry existing;
     synchronized (this) {
-      Entry existing = entries.get(id);
+      existing = entries.get(id);
 
       if (existing != null) {
         if (existing.behavior() == behavior) {
@@ -116,15 +135,41 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
         LOGGER.warn("Perspective with id '{}' already registered, replacing", id);
       }
       entries.put(id, entry);
-
-      PerspectiveBehavior.Default defaultAnnotation =
-          behavior.getClass().getAnnotation(PerspectiveBehavior.Default.class);
-      if (defaultAnnotation != null && defaultAnnotation.priority() >= defaultPriority) {
-        defaultPriority = defaultAnnotation.priority();
-        defaultEntry = entry;
-      }
-      behavior.init();
+      recomputeDefault();
     }
+
+    try {
+      behavior.init();
+    } catch (Throwable throwable) {
+      Exceptions.rethrowIfFatal(throwable);
+      synchronized (this) {
+        if (existing == null) {
+          entries.remove(id, entry);
+        } else {
+          entries.replace(id, entry, existing);
+        }
+        recomputeDefault();
+      }
+      throw Exceptions.propagate(throwable);
+    }
+  }
+
+  private void recomputeDefault() {
+    int bestPriority = Integer.MIN_VALUE;
+    @Nullable Entry bestEntry = null;
+    for (Entry candidate : entries.values()) {
+      PerspectiveBehavior.Default annotation =
+          candidate.behavior().getClass().getAnnotation(PerspectiveBehavior.Default.class);
+      if (annotation == null) continue;
+      int priority = annotation.priority();
+      if (bestEntry == null
+          || priority > bestPriority
+          || (priority == bestPriority && candidate.id().compareTo(bestEntry.id()) < 0)) {
+        bestPriority = priority;
+        bestEntry = candidate;
+      }
+    }
+    defaultEntry = bestEntry;
   }
 
   @Override
@@ -134,12 +179,13 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   }
 
   @Override
-  public @NonNull List<Perspective> getAll() {
-    // TODO snapshot
-    return new ArrayList<>(entries.values());
+  public @NonNull List<@NonNull Perspective> getAll() {
+    return entries.values().stream()
+        .sorted(Comparator.comparingInt(Entry::priority).thenComparing(Entry::id))
+        .map(entry -> (Perspective) entry)
+        .toList();
   }
 
-  @Override
   public @NonNull SimpleEventEmitter<Void> onUpdate() {
     return onUpdate;
   }

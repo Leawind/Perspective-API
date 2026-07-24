@@ -5,6 +5,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 
 /// Context provided during perspective evaluation and lifecycle callbacks.
+///
+/// @apiNote This object is valid only for the duration of the callback in which it is received. It
+///   must not be stored or referenced after that callback returns.
 @ApiStatus.NonExtendable
 public interface PerspectiveContext {
 

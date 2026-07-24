@@ -20,7 +20,7 @@ public interface PerspectiveSwitcherBehavior extends PerspectiveSwitcher {
   /// Called when the list of switchable perspectives changes.
   ///
   /// @param switchables the updated list of available perspectives
-  void onUpdateSwitchables(@NonNull List<Perspective> switchables);
+  void onUpdateSwitchables(@NonNull List<@NonNull Perspective> switchables);
 
   /// Called when this switcher becomes the active switcher.
   ///

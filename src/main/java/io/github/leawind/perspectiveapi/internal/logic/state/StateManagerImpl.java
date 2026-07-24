@@ -32,6 +32,8 @@ public record StateManagerImpl(@NonNull Path filePath) implements StateManager {
       PerspectiveApiState.load(filePath).apply();
     } catch (JsonSyntaxException e) {
       LOGGER.warn("Perspective state file is corrupted, skipping {}", filePath, e);
+    } catch (IllegalArgumentException e) {
+      LOGGER.warn("Perspective state contains invalid values, skipping {}", filePath, e);
     } catch (IOException e) {
       LOGGER.warn("Failed to load perspective state from {}", filePath, e);
     }
