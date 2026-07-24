@@ -3,6 +3,10 @@ package io.github.leawind.perspectiveapi.internal.utils.smooth;
 import java.util.function.Supplier;
 import org.jspecify.annotations.NonNull;
 
+/// Exponentially smooths values toward a target.
+///
+/// The time unit is intentionally generic: `halflife` and every `deltaTime`
+/// supplied to {@link #update(double)} must use the same unit.
 public class ExpSmooth<T extends ExpSmooth.Value<T>> {
   public interface Value<T extends Value<T>> {
     T set(@NonNull T other);

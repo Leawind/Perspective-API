@@ -19,10 +19,10 @@ import org.jspecify.annotations.Nullable;
 public interface PerspectiveSwitcher {
 
   /// Returns the display name of this switcher.
-  @NonNull Component getNameComponent();
+  @NonNull Component name();
 
   /// Returns the description of this switcher, or `null` if none.
-  default @Nullable Component getDescriptionComponent() {
+  default @Nullable Component description() {
     return null;
   }
 }

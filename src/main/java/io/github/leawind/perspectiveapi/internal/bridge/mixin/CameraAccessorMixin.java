@@ -17,7 +17,7 @@ public interface CameraAccessorMixin {
   void invokeSetPosition(double x, double y, double z);
 
   @Invoker("setRotation")
-  void invokeSetRotation(float yRot, float xRot);
+  void invokeSetRotation(float yawDeg, float pitchDeg);
 
   /// In 1.20.4, there is a method `getEntity()`, later it's renamed to `entity()`
   ///
@@ -32,8 +32,8 @@ public interface CameraAccessorMixin {
   Vec3 getPosition();
 
   @Accessor("xRot")
-  void setXRot(float xRot);
+  void setXRot(float pitchDeg);
 
   @Accessor("yRot")
-  void setYRot(float yRot);
+  void setYRot(float yawDeg);
 }

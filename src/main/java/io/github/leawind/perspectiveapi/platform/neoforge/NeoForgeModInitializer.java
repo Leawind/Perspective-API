@@ -5,7 +5,7 @@ package io.github.leawind.perspectiveapi.platform.neoforge;
 import io.github.leawind.perspectiveapi.internal.logic.config.ConfigScreenManager;
 import net.neoforged.fml.ModList;
 
-public class NeoforgeModInitializer {
+public class NeoForgeModInitializer {
   static void initialize() {
     /^? if >=1.20.6 {^/
     /^ModList.get()

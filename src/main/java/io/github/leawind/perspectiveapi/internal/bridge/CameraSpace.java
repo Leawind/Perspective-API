@@ -67,10 +67,10 @@ public final class CameraSpace {
   }
 
   public static Quaternionf eulerDegToMcQuat(
-      float xRot, float yRot, float roll, @NonNull Quaternionf dest) {
-    float pitchRad = Math.toRadians(xRot * PITCH_SIGN);
-    float yawRad = YAW_OFFSET_RAD + Math.toRadians(yRot * YAW_SIGN);
-    float rollRad = Math.toRadians(roll);
+      float pitchDeg, float yawDeg, float rollDeg, @NonNull Quaternionf dest) {
+    float pitchRad = Math.toRadians(pitchDeg * PITCH_SIGN);
+    float yawRad = YAW_OFFSET_RAD + Math.toRadians(yawDeg * YAW_SIGN);
+    float rollRad = Math.toRadians(rollDeg);
     return dest.rotationYXZ(yawRad, pitchRad, rollRad);
   }
 

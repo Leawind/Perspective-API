@@ -23,7 +23,7 @@ import org.lwjgl.glfw.GLFW;
 public final class TransitionImpl implements Transition {
 
   private static final double MIN_DELTA_MS = 0.1;
-  private static final float DEFAULT_FOV = 70.0f;
+  private static final float DEFAULT_FOV_DEG = 70.0f;
 
   // region settings
 
@@ -40,7 +40,7 @@ public final class TransitionImpl implements Transition {
   private double startTimeMs;
   private final Vector3d startPosition = new Vector3d();
   private final Quaternionf startRotation = new Quaternionf();
-  private float startFov = DEFAULT_FOV;
+  private float startFovDeg = DEFAULT_FOV_DEG;
 
   // endregion
 
@@ -57,7 +57,7 @@ public final class TransitionImpl implements Transition {
   private boolean isDeltaFovSet = false;
   private final Vector3d deltaPosition = new Vector3d();
   private final Quaternionf deltaRotation = new Quaternionf();
-  private float deltaFov = DEFAULT_FOV;
+  private float deltaFovDeg = DEFAULT_FOV_DEG;
 
   // endregion
 
@@ -134,7 +134,7 @@ public final class TransitionImpl implements Transition {
     this.startTimeMs = startTimeMs;
     this.startPosition.set(startState.position());
     this.startRotation.set(startState.rotation());
-    this.startFov = startState.getFovDeg();
+    this.startFovDeg = startState.getFovDeg();
     // old algorithm state
     this.prevRotation.set(startState.rotation());
     this.prevEasedProgress = 0;
@@ -158,7 +158,7 @@ public final class TransitionImpl implements Transition {
       updateTransformOld(
           currentTimeMs, target.position(), target.rotation(), dest.position(), dest.rotation());
     }
-    dest.setFovDeg(updateFov(currentTimeMs, target.getFovDeg()));
+    dest.setFovDeg(updateFovDeg(currentTimeMs, target.getFovDeg()));
   }
 
   private void updateTransformOld(
@@ -203,15 +203,15 @@ public final class TransitionImpl implements Transition {
     targetRotation.slerp(startRotation, easedProgress - 1, destRotation);
   }
 
-  private float updateFov(double currentTimeMs, float targetFov) {
+  private float updateFovDeg(double currentTimeMs, float targetFovDeg) {
     float easedProgress = computeEasedProgress(currentTimeMs);
     if (useNewAlgorithm) {
       if (!isDeltaFovSet) {
-        deltaFov = targetFov - startFov;
+        deltaFovDeg = targetFovDeg - startFovDeg;
         isDeltaFovSet = true;
       }
-      return targetFov - deltaFov * (1 - easedProgress);
+      return targetFovDeg - deltaFovDeg * (1 - easedProgress);
     }
-    return startFov + (targetFov - startFov) * easedProgress;
+    return startFovDeg + (targetFovDeg - startFovDeg) * easedProgress;
   }
 }

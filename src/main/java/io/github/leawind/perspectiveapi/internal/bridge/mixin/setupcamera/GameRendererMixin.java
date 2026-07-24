@@ -53,9 +53,9 @@ public abstract class GameRendererMixin {
       float tickDelta, long limitTime, PoseStack poseStack, CallbackInfo ci) {
     var mcQuat = mainCamera.rotation();
     var eulerDeg = CameraSpace.mcQuatToEulerDeg(mcQuat, new Vector3f());
-    float roll = eulerDeg.z();
-    if (roll != 0) {
-      poseStack.mulPose(Axis.ZP.rotationDegrees(roll));
+    float rollDeg = eulerDeg.z();
+    if (rollDeg != 0) {
+      poseStack.mulPose(Axis.ZP.rotationDegrees(rollDeg));
     }
   }
 }

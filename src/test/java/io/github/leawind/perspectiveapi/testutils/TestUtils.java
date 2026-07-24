@@ -99,22 +99,23 @@ public final class TestUtils {
     assertAngleEquals(expected.z(), actual.z());
   }
 
-  public static Stream<Vector2fc> eulerDegs(float xStep, float yStep) {
+  public static Stream<Vector2fc> eulerDegs(float pitchStepDeg, float yawStepDeg) {
     var list = new ArrayList<Vector2fc>();
-    for (float xRot = -80; xRot < 80; xRot += xStep) {
-      for (float yRot = -179; yRot < 179; yRot += yStep) {
-        list.add(new Vector2f(xRot, yRot));
+    for (float pitchDeg = -80; pitchDeg < 80; pitchDeg += pitchStepDeg) {
+      for (float yawDeg = -179; yawDeg < 179; yawDeg += yawStepDeg) {
+        list.add(new Vector2f(pitchDeg, yawDeg));
       }
     }
     return list.stream();
   }
 
-  public static Stream<Vector3fc> eulerDegs(float xStep, float yStep, float rollStep) {
+  public static Stream<Vector3fc> eulerDegs(
+      float pitchStepDeg, float yawStepDeg, float rollStepDeg) {
     var list = new ArrayList<Vector3fc>();
-    for (float xRot = -80; xRot < 80; xRot += xStep) {
-      for (float yRot = -179; yRot < 179; yRot += yStep) {
-        for (float roll = -179; roll < 179; roll += rollStep) {
-          list.add(new Vector3f(xRot, yRot, roll));
+    for (float pitchDeg = -80; pitchDeg < 80; pitchDeg += pitchStepDeg) {
+      for (float yawDeg = -179; yawDeg < 179; yawDeg += yawStepDeg) {
+        for (float rollDeg = -179; rollDeg < 179; rollDeg += rollStepDeg) {
+          list.add(new Vector3f(pitchDeg, yawDeg, rollDeg));
         }
       }
     }

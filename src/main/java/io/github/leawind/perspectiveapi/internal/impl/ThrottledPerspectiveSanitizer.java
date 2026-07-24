@@ -58,20 +58,21 @@ public class ThrottledPerspectiveSanitizer {
   }
 
   /// @return `target` if valid, or `fallback` if invalid
-  public float sanitizeFov(String id, float target, float fallback, Supplier<String> message) {
-    if (isValidFovDeg(target)) {
-      return target;
+  public float sanitizeFovDeg(
+      String id, float targetFovDeg, float fallbackFovDeg, Supplier<String> message) {
+    if (isValidFovDeg(targetFovDeg)) {
+      return targetFovDeg;
     }
     throttledAction.run(
         id,
         () -> {
           LOGGER.warn(
               "Invalid fov degrees {}, falling back to {}. Message: {}",
-              target,
-              fallback,
+              targetFovDeg,
+              fallbackFovDeg,
               message.get());
         });
-    return fallback;
+    return fallbackFovDeg;
   }
 
   public void sanitize(
@@ -83,7 +84,7 @@ public class ThrottledPerspectiveSanitizer {
     sanitizeRotation(idPrefix + ".rotation", target.rotation(), fallback.rotation(), message);
     {
       float fovDeg =
-          sanitizeFov(idPrefix + ".fov", target.getFovDeg(), fallback.getFovDeg(), message);
+          sanitizeFovDeg(idPrefix + ".fov", target.getFovDeg(), fallback.getFovDeg(), message);
       target.setFovDeg(fovDeg);
     }
   }

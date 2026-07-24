@@ -85,12 +85,12 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   @Override
-  public @NonNull Component getNameComponent() {
+  public @NonNull Component name() {
     return Component.translatable("perspective_api.switcher.wheel_switcher.name");
   }
 
   @Override
-  public @NonNull Component getDescriptionComponent() {
+  public @NonNull Component description() {
     return Component.translatable("perspective_api.switcher.wheel_switcher.description");
   }
 

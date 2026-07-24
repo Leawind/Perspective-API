@@ -35,7 +35,7 @@ public final class PerspectiveManager {
   public static final PerspectiveManager INSTANCE;
 
   static {
-    PerspectiveAPI.installRuntime(PerspectiveApiRuntimeImpl.INSTANCE);
+    PerspectiveAPI.installRuntime(PerspectiveAPIRuntimeImpl.INSTANCE);
     try {
       INSTANCE =
           new PerspectiveManager(new WheelSwitcherBehavior(PerspectiveRegistryImpl.INSTANCE));

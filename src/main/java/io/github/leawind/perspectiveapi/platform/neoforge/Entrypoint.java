@@ -12,7 +12,7 @@ import net.neoforged.fml.common.Mod;
 public final class Entrypoint {
   public Entrypoint(ModContainer container) {
     ModEntrypoint.initialize();
-    NeoforgeModInitializer.initialize();
+    NeoForgeModInitializer.initialize();
   }
 }
 ^//^?   } else {^/
@@ -28,7 +28,7 @@ public final class Entrypoint {
       return;
     }
     ModEntrypoint.initialize();
-    NeoforgeModInitializer.initialize();
+    NeoForgeModInitializer.initialize();
   }
 }
 /^?   }^/

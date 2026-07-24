@@ -29,7 +29,7 @@ public record StateManagerImpl(@NonNull Path filePath) implements StateManager {
   public void tryLoadAndApply() {
     try {
       LOGGER.info("Loading perspective state from {}", filePath);
-      PerspectiveApiState.load(filePath).apply();
+      PerspectiveAPIState.load(filePath).apply();
     } catch (JsonSyntaxException e) {
       LOGGER.warn("Perspective state file is corrupted, skipping {}", filePath, e);
     } catch (IllegalArgumentException e) {
@@ -43,10 +43,10 @@ public record StateManagerImpl(@NonNull Path filePath) implements StateManager {
   public void tryExtractAndSave() {
     try {
       Files.createDirectories(filePath.getParent());
-      var newState = PerspectiveApiState.extract();
+      var newState = PerspectiveAPIState.extract();
       try {
         if (Files.exists(filePath)) {
-          var existingState = PerspectiveApiState.load(filePath);
+          var existingState = PerspectiveAPIState.load(filePath);
           if (existingState.equals(newState)) {
             return;
           }

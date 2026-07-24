@@ -46,7 +46,7 @@ public class Entrypoint {
     public static void onComputeFov(ViewportEvent.ComputeFov computeFovEvent) {
       modifyFovContext.setup((float) computeFovEvent.getFOV());
       GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(modifyFovContext);
-      computeFovEvent.setFOV(modifyFovContext.fieldOfView);
+      computeFovEvent.setFOV(modifyFovContext.fieldOfViewDeg);
     }
   }
 }

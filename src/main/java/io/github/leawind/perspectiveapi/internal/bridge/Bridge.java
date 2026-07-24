@@ -149,10 +149,10 @@ public final class Bridge {
   /// Sets camera rotation from euler angles in degrees.
   ///
   /// @param camera the camera to modify
-  /// @param xRot pitch in degrees
-  /// @param yRot yaw in degrees
-  public static void setCameraRotationEulerDeg(Camera camera, float xRot, float yRot) {
-    CameraAccessor.of(camera).invokeSetRotation(yRot, xRot);
+  /// @param pitchDeg pitch in degrees
+  /// @param yawDeg yaw in degrees
+  public static void setCameraRotationEulerDeg(Camera camera, float pitchDeg, float yawDeg) {
+    CameraAccessor.of(camera).invokeSetRotation(yawDeg, pitchDeg);
   }
 
   /// Sets camera rotation from euler angles in degrees.

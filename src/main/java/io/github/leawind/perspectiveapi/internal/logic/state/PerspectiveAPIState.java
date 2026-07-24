@@ -18,8 +18,8 @@ import java.util.Objects;
 import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
-public final class PerspectiveApiState {
-  private static final Codec<PerspectiveApiState> CODEC =
+public final class PerspectiveAPIState {
+  private static final Codec<PerspectiveAPIState> CODEC =
       RecordCodecBuilder.create(
           inst ->
               inst.group(
@@ -33,7 +33,7 @@ public final class PerspectiveApiState {
                       Codec.DOUBLE
                           .optionalFieldOf("transition.blend_power", 1.0)
                           .forGetter(s -> s.transitionBlendPower))
-                  .apply(inst, PerspectiveApiState::new));
+                  .apply(inst, PerspectiveAPIState::new));
 
   private final boolean enabled;
   private final @Nullable String managerCurrent;
@@ -41,7 +41,7 @@ public final class PerspectiveApiState {
   private final double transitionBlendPower;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  private PerspectiveApiState(
+  private PerspectiveAPIState(
       boolean enabled,
       Optional<String> managerCurrent,
       double transitionDurationMs,
@@ -55,7 +55,7 @@ public final class PerspectiveApiState {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PerspectiveApiState that)) return false;
+    if (!(o instanceof PerspectiveAPIState that)) return false;
     return enabled == that.enabled
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
         && Double.compare(that.transitionBlendPower, transitionBlendPower) == 0
@@ -86,8 +86,8 @@ public final class PerspectiveApiState {
     PerspectiveAPI.getTransition().setBlendPower(transitionBlendPower);
   }
 
-  public static PerspectiveApiState extract() {
-    return new PerspectiveApiState(
+  public static PerspectiveAPIState extract() {
+    return new PerspectiveAPIState(
         PerspectiveAPI.isEnabled(),
         Optional.of(PerspectiveManager.INSTANCE.getCurrent().id()),
         PerspectiveAPI.getTransition().getDurationMs(),
@@ -107,7 +107,7 @@ public final class PerspectiveApiState {
     Files.writeString(path, json);
   }
 
-  public static PerspectiveApiState load(Path path) throws IOException, JsonSyntaxException {
+  public static PerspectiveAPIState load(Path path) throws IOException, JsonSyntaxException {
     var json = Files.readString(path);
     JsonElement jsonElement = GSON.fromJson(json, JsonElement.class);
     return CODEC.parse(JsonOps.INSTANCE, jsonElement).result().orElseThrow();

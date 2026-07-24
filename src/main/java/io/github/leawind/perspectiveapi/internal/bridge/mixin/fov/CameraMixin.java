@@ -18,10 +18,10 @@ public abstract class CameraMixin {
   private final ModifyFieldOfViewContext modifyFieldOfViewContext = new ModifyFieldOfViewContext();
 
   @ModifyReturnValue(method = "calculateFov", at = @At("RETURN"))
-  private float modifyFov(float fov) {
-    modifyFieldOfViewContext.setup(fov);
+  private float modifyFov(float fovDeg) {
+    modifyFieldOfViewContext.setup(fovDeg);
     GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(modifyFieldOfViewContext);
-    return modifyFieldOfViewContext.fieldOfView;
+    return modifyFieldOfViewContext.fieldOfViewDeg;
   }
   /*? }*/
 }

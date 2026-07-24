@@ -14,7 +14,7 @@ public final class ModEntrypoint {
   private ModEntrypoint() {}
 
   public static void initialize() {
-    PerspectiveAPI.installRuntime(PerspectiveApiRuntimeImpl.INSTANCE);
+    PerspectiveAPI.installRuntime(PerspectiveAPIRuntimeImpl.INSTANCE);
     PerspectiveRegistryImpl.INSTANCE.discoverAndRegister();
 
     var iterator = ServiceLoader.load(PerspectiveSwitcherBehavior.class).iterator();

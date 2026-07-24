@@ -11,10 +11,10 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.Objects;
 import org.jspecify.annotations.NonNull;
 
-final class PerspectiveApiRuntimeImpl implements PerspectiveAPI.Runtime {
-  static final PerspectiveApiRuntimeImpl INSTANCE = new PerspectiveApiRuntimeImpl();
+final class PerspectiveAPIRuntimeImpl implements PerspectiveAPI.Runtime {
+  static final PerspectiveAPIRuntimeImpl INSTANCE = new PerspectiveAPIRuntimeImpl();
 
-  private PerspectiveApiRuntimeImpl() {}
+  private PerspectiveAPIRuntimeImpl() {}
 
   @Override
   public @NonNull PerspectiveRegistry registry() {

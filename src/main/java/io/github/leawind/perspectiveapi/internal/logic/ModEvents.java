@@ -37,7 +37,7 @@ public final class ModEvents {
     GameClientEvents.MODIFY_FIELD_OF_VIEW.on(
         (ctx) -> {
           if (!PerspectiveAPI.isEnabled()) return;
-          ctx.fieldOfView = manager.modifyFov(ctx.fieldOfView);
+          ctx.fieldOfViewDeg = manager.modifyFov(ctx.fieldOfViewDeg);
         });
 
     GameClientEvents.AFTER_MINECRAFT_INIT.on(

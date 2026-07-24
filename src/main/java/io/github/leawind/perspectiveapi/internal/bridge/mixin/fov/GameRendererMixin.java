@@ -32,11 +32,11 @@ public abstract class GameRendererMixin {
   }
 
   @com.llamalad7.mixinextras.injector.ModifyReturnValue(method = "getFov", at = @At("RETURN"))
-  private float modifyFov(float fov) {
-    if (!this.perspective_api$useFovSetting) return fov;
-    perspective_api$context.setup(fov);
+  private float modifyFov(float fovDeg) {
+    if (!this.perspective_api$useFovSetting) return fovDeg;
+    perspective_api$context.setup(fovDeg);
     GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(perspective_api$context);
-    return perspective_api$context.fieldOfView;
+    return perspective_api$context.fieldOfViewDeg;
   }
   *//*? } else if !forge {*/
   /*@Unique private boolean perspective_api$useFovSetting;
@@ -54,11 +54,11 @@ public abstract class GameRendererMixin {
   }
 
   @com.llamalad7.mixinextras.injector.ModifyReturnValue(method = "getFov", at = @At("RETURN"))
-  private double modifyFov(double fov) {
-    if (!this.perspective_api$useFovSetting) return fov;
-    perspective_api$context.setup((float) fov);
+  private double modifyFov(double fovDeg) {
+    if (!this.perspective_api$useFovSetting) return fovDeg;
+    perspective_api$context.setup((float) fovDeg);
     GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(perspective_api$context);
-    return perspective_api$context.fieldOfView;
+    return perspective_api$context.fieldOfViewDeg;
   }
   *//*? }*/
 }
