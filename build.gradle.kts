@@ -44,6 +44,20 @@ modstitch {
     loom {
         if (isFabric) {
             fabricLoaderVersion = requiredProp("deps.fabricLoader")
+            configureLoom {
+                runs.named("client") {
+                    runDir = project.relativePath(rootProject.file("run"))
+                }
+            }
+        }
+    }
+
+    if (!isFabric) {
+        runs {
+            register("client") {
+                client()
+                gameDirectory.set(rootProject.layout.projectDirectory.dir("run"))
+            }
         }
     }
 
@@ -161,6 +175,12 @@ tasks.test {
     // Disable tests for unsupported platforms
     if (!supportsUnitTesting) {
         enabled = false
+    }
+}
+
+tasks.withType<JavaExec>().configureEach {
+    if (name == "runClient") {
+        workingDir(rootProject.layout.projectDirectory.dir("run"))
     }
 }
 
