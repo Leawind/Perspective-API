@@ -3,7 +3,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
+import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -21,6 +20,7 @@ import org.slf4j.LoggerFactory;
 public final class PerspectiveOverrideChainImpl
     implements PerspectiveOverrideChain, Supplier<@Nullable String> {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveOverrideChainImpl.class);
+  private static final ExtensionInvoker EXTENSIONS = new ExtensionInvoker(LOGGER, "Override entry");
 
   public record Entry(
       @NonNull String key, int priority, @NonNull Supplier<@Nullable String> supplier) {
@@ -30,35 +30,27 @@ public final class PerspectiveOverrideChainImpl
 
   private volatile List<Entry> entries = List.of();
   private final PerspectiveRegistry registry;
-  private final BiConsumer<@NonNull String, @NonNull Throwable> onException;
 
   public PerspectiveOverrideChainImpl(@NonNull PerspectiveRegistry registry) {
-    this(
-        registry,
-        (key, throwable) ->
-            LOGGER.warn("Override entry '{}' threw while being resolved", key, throwable));
-  }
-
-  public PerspectiveOverrideChainImpl(
-      @NonNull PerspectiveRegistry registry,
-      @NonNull BiConsumer<@NonNull String, @NonNull Throwable> onException) {
     this.registry = Objects.requireNonNull(registry);
-    this.onException = Objects.requireNonNull(onException);
   }
 
   @Override
   public @Nullable String get() {
     List<Entry> snapshot = this.entries;
     for (Entry entry : snapshot) {
-      try {
-        String id = entry.supplier.get();
-        if (id == null) continue;
-        Perspective perspective = registry.get(id);
-        if (perspective != null && perspective.isAvailable()) return id;
-      } catch (Throwable throwable) {
-        Exceptions.rethrowIfFatal(throwable);
-        onException.accept(entry.key(), throwable);
-      }
+      String id =
+          EXTENSIONS.callOrElse(
+              entry.key(),
+              "resolve",
+              () -> {
+                String candidate = entry.supplier().get();
+                if (candidate == null) return null;
+                Perspective perspective = registry.get(candidate);
+                return perspective != null && perspective.isAvailable() ? candidate : null;
+              },
+              null);
+      if (id != null) return id;
     }
     return null;
   }

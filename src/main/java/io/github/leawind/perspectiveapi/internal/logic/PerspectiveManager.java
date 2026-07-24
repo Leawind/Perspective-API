@@ -17,7 +17,7 @@ import io.github.leawind.perspectiveapi.internal.impl.ThrottledPerspectiveSaniti
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel.WheelSwitcherBehavior;
-import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
+import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -46,6 +46,7 @@ public final class PerspectiveManager {
   }
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
+  private final ExtensionInvoker extensions = new ExtensionInvoker(LOGGER, "Perspective");
 
   private final ThrottledPerspectiveSanitizer sanitizer =
       new ThrottledPerspectiveSanitizer(throttledAction);
@@ -96,15 +97,10 @@ public final class PerspectiveManager {
   private PerspectiveManager(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
     switchers = new PerspectiveSwitcherManagerImpl(defaultSwitcher);
 
-    overrides =
-        new PerspectiveOverrideChainImpl(
-            PerspectiveRegistryImpl.INSTANCE,
-            (key, e) -> reportException(key, "resolveOverride", e));
+    overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
     overrides.push(PerspectiveSwitcherManagerImpl.KEY, Integer.MIN_VALUE, switchers);
 
-    modifiers =
-        new PerspectiveModifierChainImpl(
-            (key, e) -> reportException(key, "applyCameraState", e), sanitizer);
+    modifiers = new PerspectiveModifierChainImpl(sanitizer);
 
     transition = new TransitionImpl();
   }
@@ -137,20 +133,15 @@ public final class PerspectiveManager {
     var currentPerspective = this.currentBehavior;
     if (resolvedBehavior != currentPerspective) {
       if (currentPerspective != null) {
-        try {
-          currentPerspective.onDeactivate();
-        } catch (Throwable e) {
-          reportException(currentPerspective.getClass().getName(), "onDeactivate", e);
-        }
+        extensions.run(
+            currentPerspective.getClass().getName(),
+            "onDeactivate",
+            currentPerspective::onDeactivate);
       }
       previousBehavior = currentPerspective;
       this.currentBehavior = resolvedBehavior;
 
-      try {
-        resolvedBehavior.onActivate();
-      } catch (Throwable e) {
-        reportException(resolved.id(), "onActivate", e);
-      }
+      extensions.run(resolved.id(), "onActivate", resolvedBehavior::onActivate);
 
       Bridge.updateCameraType(
           switch (resolved.baseType()) {
@@ -163,11 +154,8 @@ public final class PerspectiveManager {
     }
 
     // Run perspective client tick
-    try {
-      resolvedBehavior.clientTickWhenActive(minecraft);
-    } catch (Throwable e) {
-      reportException(resolved.id(), "clientTick", e);
-    }
+    extensions.run(
+        resolved.id(), "clientTick", () -> resolvedBehavior.clientTickWhenActive(minecraft));
   }
 
   // endregion
@@ -224,11 +212,8 @@ public final class PerspectiveManager {
     }
 
     // Pre-apply callback
-    try {
-      currentBehavior.preApplyWhenActive(renderTickContext);
-    } catch (Throwable e) {
-      reportException(current.id(), "preApply", e);
-    }
+    extensions.run(
+        current.id(), "preApply", () -> currentBehavior.preApplyWhenActive(renderTickContext));
 
     // Backup vanilla state for fallback
     {
@@ -240,11 +225,11 @@ public final class PerspectiveManager {
     }
 
     // Apply perspective
-    try {
-      currentBehavior.applyCameraState(targetState, renderTickContext);
-    } catch (Throwable e) {
+    if (!extensions.run(
+        current.id(),
+        "apply",
+        () -> currentBehavior.applyCameraState(targetState, renderTickContext))) {
       targetState.set(backupState);
-      reportException(current.id(), "apply", e);
     }
 
     // Sanitize
@@ -271,11 +256,10 @@ public final class PerspectiveManager {
     Bridge.setCameraRotation(camera, CameraSpace.apiToMc(targetState.rotation(), tempMcQuat));
 
     // Post-apply callback
-    try {
-      currentBehavior.postApplyWhenActive(targetState, renderTickContext);
-    } catch (Throwable e) {
-      reportException(current.id(), "postApply", e);
-    }
+    extensions.run(
+        current.id(),
+        "postApply",
+        () -> currentBehavior.postApplyWhenActive(targetState, renderTickContext));
   }
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
@@ -308,18 +292,10 @@ public final class PerspectiveManager {
 
   private boolean allowsTransition(
       @NonNull String id, @NonNull PerspectiveBehavior behavior, boolean incoming) {
-    try {
-      return incoming ? behavior.allowTransitionIn() : behavior.allowTransitionOut();
-    } catch (Throwable throwable) {
-      reportException(id, incoming ? "allowTransitionIn" : "allowTransitionOut", throwable);
-      return false;
-    }
-  }
-
-  private void reportException(String id, String phase, Throwable throwable) {
-    Exceptions.rethrowIfFatal(throwable);
-    throttledAction.run(
-        id + ":" + phase + ":exception",
-        () -> LOGGER.warn("'{}' threw an exception during {}.", id, phase, throwable));
+    return extensions.testOrElse(
+        id,
+        incoming ? "allowTransitionIn" : "allowTransitionOut",
+        incoming ? behavior::allowTransitionIn : behavior::allowTransitionOut,
+        false);
   }
 }

@@ -7,7 +7,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
-import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
+import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Comparator;
 import java.util.List;
@@ -24,8 +24,7 @@ import org.slf4j.LoggerFactory;
 
 public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveAPI.MOD_NAME);
-  private static final Sanitizer.ThrottledAction AVAILABILITY_EXCEPTION_LOG =
-      new Sanitizer.ThrottledAction(5000);
+  private static final ExtensionInvoker EXTENSIONS = new ExtensionInvoker(LOGGER, "Perspective");
 
   public static final PerspectiveRegistryImpl INSTANCE = new PerspectiveRegistryImpl();
 
@@ -71,15 +70,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
     @Override
     public boolean isAvailable() {
-      try {
-        return behavior.isAvailable();
-      } catch (Throwable throwable) {
-        Exceptions.rethrowIfFatal(throwable);
-        AVAILABILITY_EXCEPTION_LOG.run(
-            id,
-            () -> LOGGER.warn("Perspective '{}' threw while checking availability", id, throwable));
-        return false;
-      }
+      return EXTENSIONS.testOrElse(id, "isAvailable", behavior::isAvailable, false);
     }
   }
 

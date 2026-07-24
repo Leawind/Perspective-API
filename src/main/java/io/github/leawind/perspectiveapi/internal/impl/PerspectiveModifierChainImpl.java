@@ -4,15 +4,17 @@ import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
-import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
+import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.LoggerFactory;
 
 public final class PerspectiveModifierChainImpl implements PerspectiveModifierChain {
+  private static final ExtensionInvoker EXTENSIONS =
+      new ExtensionInvoker(LoggerFactory.getLogger(PerspectiveModifierChainImpl.class), "Modifier");
 
   /// Represents a registered modifier with its priority and key.
   private record ModifierEntry(
@@ -21,15 +23,11 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
         Comparator.comparingInt(ModifierEntry::priority);
   }
 
-  private final BiConsumer<@NonNull String, @NonNull Throwable> onException;
   private final ThrottledPerspectiveSanitizer sanitizer;
 
   private volatile List<ModifierEntry> entries = List.of();
 
-  public PerspectiveModifierChainImpl(
-      @NonNull BiConsumer<@NonNull String, @NonNull Throwable> onException,
-      @NonNull ThrottledPerspectiveSanitizer sanitizer) {
-    this.onException = Objects.requireNonNull(onException);
+  public PerspectiveModifierChainImpl(@NonNull ThrottledPerspectiveSanitizer sanitizer) {
     this.sanitizer = Objects.requireNonNull(sanitizer);
   }
 
@@ -68,27 +66,19 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {
     PerspectiveStateImpl backup = new PerspectiveStateImpl();
     for (ModifierEntry entry : entries) {
-      try {
-        if (!entry.modifier().isAvailable()) continue;
-      } catch (Throwable throwable) {
-        Exceptions.rethrowIfFatal(throwable);
-        onException.accept(entry.key(), throwable);
+      if (!EXTENSIONS.testOrElse(entry.key(), "isAvailable", entry.modifier()::isAvailable, false))
         continue;
-      }
 
       backup.set(state);
-      try {
-        entry.modifier().apply(state, ctx);
-        sanitizer.sanitize(
-            "modifier." + entry.key(),
-            state,
-            backup,
-            () -> "Modifier '" + entry.key() + "' produced invalid state. Reverting.");
-      } catch (Throwable throwable) {
-        Exceptions.rethrowIfFatal(throwable);
+      if (!EXTENSIONS.run(entry.key(), "apply", () -> entry.modifier().apply(state, ctx))) {
         restore(state, backup);
-        onException.accept(entry.key(), throwable);
+        continue;
       }
+      sanitizer.sanitize(
+          "modifier." + entry.key(),
+          state,
+          backup,
+          () -> "Modifier '" + entry.key() + "' produced invalid state. Reverting.");
     }
   }
 
