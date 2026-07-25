@@ -140,7 +140,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
 
   private void openWheel() {
     if (!PerspectiveAPI.isEnabled()) return;
-    if (PerspectiveAPI.getSwitcherManager().getSwitcher() != this) return;
+    if (PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() != this) return;
     var minecraft = Minecraft.getInstance();
     if (minecraft.level == null || minecraft.player == null) return;
 

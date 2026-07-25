@@ -44,9 +44,12 @@ public interface PerspectiveBehavior {
   @Target(ElementType.TYPE)
   @Documented
   @interface Info {
-    /// The unique identifier for this perspective.
+    /// The non-empty identifier for this perspective.
     ///
     /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`).
+    /// If multiple behaviors use the same ID, the behavior with the lower {@link #priority()}
+    /// value is registered. Ties are resolved by the lexicographically earlier fully qualified
+    /// behavior class name.
     @NonNull String id();
 
     /// The vanilla camera type used as a fallback when this perspective
@@ -83,10 +86,11 @@ public interface PerspectiveBehavior {
     @ApiStatus.Experimental
     boolean switchable() default true;
 
-    /// The sorting priority within the switcher.
+    /// The sorting priority within the switcher and duplicate-ID resolution.
     ///
-    /// Lower values appear earlier in the cycle.
-    /// Only effective when `switchable` is `true`.
+    /// Lower values appear earlier in the cycle and take precedence over a duplicate ID.
+    /// Switcher ordering is effective only when `switchable` is `true`, but duplicate-ID
+    /// resolution always uses this value.
     int priority() default 0;
   }
 
@@ -165,7 +169,7 @@ public interface PerspectiveBehavior {
   /// @param state The vanilla camera state. Can be mutated.
   /// @param ctx   The context containing frame-specific data.
   /// @apiNote `state` must not be stored or referenced outside this method
-  ///   call.
+  ///   call. `ctx` is also valid only for this call.
   default void applyCameraState(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {}
 
@@ -179,6 +183,7 @@ public interface PerspectiveBehavior {
   ///
   /// @param state The final camera state that has been applied.
   /// @param ctx   The context containing frame-specific data.
+  /// @apiNote Neither argument may be stored or referenced after this method returns.
   /// @see #preApplyWhenActive
   default void postApplyWhenActive(
       @NonNull PerspectiveState state, @NonNull PerspectiveContext ctx) {}

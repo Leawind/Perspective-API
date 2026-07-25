@@ -8,7 +8,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -73,12 +72,12 @@ public class PerspectiveSwitcherManagerImpl
   }
 
   @Override
-  public @NonNull List<@NonNull PerspectiveSwitcher> getSwitchers() {
-    return new ArrayList<>(switchers);
+  public @NonNull List<@NonNull PerspectiveSwitcher> getAvailableSwitchers() {
+    return switchers.stream().map(switcher -> (PerspectiveSwitcher) switcher).toList();
   }
 
   @Override
-  public @NonNull PerspectiveSwitcherBehavior getSwitcher() {
+  public @NonNull PerspectiveSwitcherBehavior getSelectedSwitcher() {
     var currentSwitcher = this.currentSwitcher;
     if (currentSwitcher == null) {
       currentSwitcher = this.currentSwitcher = defaultSwitcher;
@@ -96,14 +95,11 @@ public class PerspectiveSwitcherManagerImpl
   }
 
   @Override
-  public void setSwitcher(@NonNull PerspectiveSwitcher switcher) {
+  public void setSelectedSwitcher(@NonNull PerspectiveSwitcher switcher) {
     Objects.requireNonNull(switcher);
     if (!(switcher instanceof PerspectiveSwitcherBehavior behavior)) {
       throw new IllegalArgumentException(
-          "Expect switcher to implement "
-              + PerspectiveSwitcherBehavior.class
-              + ", but got "
-              + switcher.getClass());
+          "Switcher is not registered: " + switcher);
     }
 
     if (!switchers.contains(behavior)) {
@@ -124,13 +120,13 @@ public class PerspectiveSwitcherManagerImpl
 
   @Override
   public @Nullable String get() {
-    PerspectiveSwitcherBehavior switcher = getSwitcher();
+    PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
     return EXTENSIONS.callOrElse(
         switcher.getClass().getName(), "getSelected", switcher::getSelected, null);
   }
 
   void clientTick(@NonNull Minecraft minecraft) {
-    PerspectiveSwitcherBehavior switcher = getSwitcher();
+    PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
     EXTENSIONS.run(
         switcher.getClass().getName(),
         "clientTickWhenActive",

@@ -20,7 +20,10 @@ public interface PerspectiveRegistry {
   /// @return the perspective, or `null` if not found
   @Nullable Perspective get(@NonNull String id);
 
-  /// Returns a list of all registered perspectives.
+  /// Returns an unmodifiable snapshot of all registered perspectives.
+  ///
+  /// The list is sorted by ascending priority and then by ID. It includes perspectives that are
+  /// currently unavailable.
   @ApiStatus.Experimental
   @NonNull List<@NonNull Perspective> getAll();
 }

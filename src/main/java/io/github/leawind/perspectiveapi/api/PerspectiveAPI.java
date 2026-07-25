@@ -6,6 +6,10 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// The main entry point for the Perspective API framework.
+///
+/// Perspective API invokes extension callbacks on the Minecraft client thread. Unless a method's
+/// documentation says otherwise, callers must also interact with mutable API services on that
+/// thread.
 public final class PerspectiveAPI {
   private PerspectiveAPI() {}
 

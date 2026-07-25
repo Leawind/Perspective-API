@@ -21,9 +21,11 @@ public interface Perspective {
   @NonNull String id();
 
   /// Returns the display name of this perspective.
+  @ApiStatus.Experimental
   @NonNull Component name();
 
   /// Returns the description of this perspective, or `null` if none.
+  @ApiStatus.Experimental
   @Nullable Component description();
 
   /// Returns the vanilla camera type used as a fallback when this perspective

@@ -17,9 +17,14 @@ public interface PerspectiveSwitcherBehavior extends PerspectiveSwitcher {
   /// Called once when the switcher is registered and initialized.
   default void init() {}
 
-  /// Called when the list of switchable perspectives changes.
+  /// Called when the registered list of switchable perspectives changes.
   ///
-  /// @param switchables the updated list of available perspectives
+  /// The list contains every registered perspective whose {@link Perspective#switchable()} value
+  /// is `true`, including perspectives that are currently unavailable. A switcher should consult
+  /// {@link Perspective#isAvailable()} when it needs to decide whether a perspective can be
+  /// selected.
+  ///
+  /// @param switchables the updated list of switchable perspectives
   void onUpdateSwitchables(@NonNull List<@NonNull Perspective> switchables);
 
   /// Called when this switcher becomes the active switcher.

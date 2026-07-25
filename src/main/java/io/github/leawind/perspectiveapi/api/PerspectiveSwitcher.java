@@ -5,12 +5,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-/// Represents a UI mechanism that allows the player to cycle through available perspectives.
+/// Represents a player-facing UI mechanism for selecting perspectives.
 ///
 /// A switcher presents a list of switchable perspectives and provides a display name
 /// (and optional description) for itself. The actual switching logic is defined by
 /// {@link PerspectiveSwitcherBehavior}; this interface exposes only the metadata
-/// visible to other parts of the system.
+/// visible to configuration and persistence systems. Extensions should not use it to change the
+/// player's switcher selection.
 ///
 /// @see PerspectiveSwitcherBehavior
 /// @see PerspectiveSwitcherManager
@@ -19,9 +20,11 @@ import org.jspecify.annotations.Nullable;
 public interface PerspectiveSwitcher {
 
   /// Returns the display name of this switcher.
+  @ApiStatus.Experimental
   @NonNull Component name();
 
   /// Returns the description of this switcher, or `null` if none.
+  @ApiStatus.Experimental
   default @Nullable Component description() {
     return null;
   }

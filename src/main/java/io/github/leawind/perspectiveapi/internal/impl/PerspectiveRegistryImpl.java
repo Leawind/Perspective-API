@@ -48,6 +48,10 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
                 + " must be annotated with "
                 + PerspectiveBehavior.Info.class.getName());
       }
+      if (info.id().isEmpty()) {
+        throw new ServiceConfigurationError(
+            behavior.getClass().getName() + " must declare a non-empty perspective ID");
+      }
       Identifier icon = info.icon().isEmpty() ? null : Bridge.parseIdentifier(info.icon());
 
       Component name =
@@ -123,7 +127,20 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
               "Perspective with id '{}' already registered and it has same behavior, ignoring", id);
           return;
         }
-        LOGGER.warn("Perspective with id '{}' already registered, replacing", id);
+        if (compareRegistration(entry, existing) >= 0) {
+          LOGGER.warn(
+              "Perspective with id '{}' is already registered by {}. Ignoring lower-precedence "
+                  + "candidate {}",
+              id,
+              existing.behavior().getClass().getName(),
+              behavior.getClass().getName());
+          return;
+        }
+        LOGGER.warn(
+            "Perspective with id '{}' is already registered by {}. Replacing it with {}",
+            id,
+            existing.behavior().getClass().getName(),
+            behavior.getClass().getName());
       }
       entries.put(id, entry);
       recomputeDefault();
@@ -143,6 +160,16 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       }
       throw Exceptions.propagate(throwable);
     }
+  }
+
+  /// Orders duplicate perspective registrations by their documented precedence.
+  ///
+  /// Lower priorities win. Equal priorities are resolved by the fully qualified behavior class
+  /// name, so registration order cannot affect the winner for distinct classes.
+  private static int compareRegistration(@NonNull Entry left, @NonNull Entry right) {
+    int priority = Integer.compare(left.priority(), right.priority());
+    if (priority != 0) return priority;
+    return left.behavior().getClass().getName().compareTo(right.behavior().getClass().getName());
   }
 
   private void recomputeDefault() {

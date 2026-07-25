@@ -83,13 +83,15 @@ public final class YaclConfigScreenBuilder {
                               return OptionDescription.of(desc);
                             })
                         .binding(
-                            PerspectiveAPI.getSwitcherManager().getSwitcher(),
-                            () -> PerspectiveAPI.getSwitcherManager().getSwitcher(),
-                            switcher -> PerspectiveAPI.getSwitcherManager().setSwitcher(switcher))
+                            PerspectiveAPI.getSwitcherManager().getSelectedSwitcher(),
+                            () -> PerspectiveAPI.getSwitcherManager().getSelectedSwitcher(),
+                            switcher ->
+                                PerspectiveAPI.getSwitcherManager().setSelectedSwitcher(switcher))
                         .controller(
                             opt ->
                                 CyclingListControllerBuilder.create(opt)
-                                    .values(PerspectiveAPI.getSwitcherManager().getSwitchers())
+                                    .values(
+                                        PerspectiveAPI.getSwitcherManager().getAvailableSwitchers())
                                     .formatValue(PerspectiveSwitcher::name))
                         .build())
                 .build())

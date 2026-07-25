@@ -4,7 +4,7 @@ import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.Nullable;
 
-/// Context provided during perspective evaluation and lifecycle callbacks.
+/// Context provided during perspective evaluation and lifecycle callbacks on the client thread.
 ///
 /// @apiNote This object is valid only for the duration of the callback in which it is received. It
 ///   must not be stored or referenced after that callback returns.

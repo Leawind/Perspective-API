@@ -12,13 +12,6 @@ import org.jspecify.annotations.NonNull;
 @ApiStatus.OverrideOnly
 public interface PerspectiveModifier {
 
-  /// Returns the unique identifier of this perspective.
-  ///
-  /// Recommended format: `<modid>.<path>`
-  ///
-  /// Example: `examplemod.free_camera`
-  @NonNull String id();
-
   /// Returns whether this modifier is currently available.
   ///
   /// If `false`, this modifier is skipped during the current frame's camera transformations
@@ -34,6 +27,7 @@ public interface PerspectiveModifier {
   /// @param state The target camera state, potentially modified by the base
   ///   perspective and previous modifiers. Can be mutated.
   /// @param ctx   The context containing frame-specific data.
+  /// @apiNote Both arguments are temporary and must not be retained after this method returns.
   default void apply(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {}
 }
