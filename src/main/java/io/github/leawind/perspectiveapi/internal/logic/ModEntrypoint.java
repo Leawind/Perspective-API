@@ -31,5 +31,6 @@ public final class ModEntrypoint {
     }
 
     ModEvents.register();
+    PerspectiveAPI.finishInitialization();
   }
 }

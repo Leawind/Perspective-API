@@ -9,7 +9,8 @@ import org.jspecify.annotations.Nullable;
 ///
 /// Perspective API invokes extension callbacks on the Minecraft client thread. Unless a method's
 /// documentation says otherwise, callers must also interact with mutable API services on that
-/// thread.
+/// thread. Actions passed to {@link #runWhenReady(String, Runnable)} follow that method's threading
+/// contract instead.
 public final class PerspectiveAPI {
   private PerspectiveAPI() {}
 
@@ -21,6 +22,8 @@ public final class PerspectiveAPI {
 
   private static volatile boolean enabled = true;
   private static volatile @Nullable Runtime runtime;
+  private static final Object RUNTIME_LOCK = new Object();
+  private static final InitializationCoordinator INITIALIZATION = new InitializationCoordinator();
 
   /// Runtime services installed by the internal implementation during mod initialization.
   @ApiStatus.Internal
@@ -44,11 +47,16 @@ public final class PerspectiveAPI {
   @ApiStatus.Internal
   public static void installRuntime(@NonNull Runtime runtime) {
     Objects.requireNonNull(runtime);
-    Runtime existing = PerspectiveAPI.runtime;
-    if (existing != null && existing.getClass() != runtime.getClass()) {
-      throw new IllegalStateException("Perspective API runtime is already installed");
+    synchronized (RUNTIME_LOCK) {
+      Runtime existing = PerspectiveAPI.runtime;
+      if (existing != null) {
+        if (existing.getClass() != runtime.getClass()) {
+          throw new IllegalStateException("Perspective API runtime is already installed");
+        }
+        return;
+      }
+      PerspectiveAPI.runtime = runtime;
     }
-    PerspectiveAPI.runtime = runtime;
   }
 
   private static @NonNull Runtime requireRuntime() {
@@ -57,6 +65,32 @@ public final class PerspectiveAPI {
       throw new IllegalStateException("Perspective API runtime is not initialized");
     }
     return runtime;
+  }
+
+  /// Runs an action after Perspective API has completed initialization.
+  ///
+  /// If the API is already ready, the action runs synchronously before this method returns.
+  /// Otherwise, it runs synchronously on the thread that completes API initialization. Callers
+  /// must not assume a particular thread or rely on the execution order of actions registered by
+  /// different threads.
+  ///
+  /// The action is invoked exactly once. If multiple queued actions fail, all actions are invoked
+  /// before their failures are reported together.
+  ///
+  /// @param key an identifier used to attribute failures
+  /// @param action the initialization action
+  public static void runWhenReady(@NonNull String key, @NonNull Runnable action) {
+    INITIALIZATION.runWhenReady(key, action);
+  }
+
+  /// Marks Perspective API as ready and runs all queued initialization actions.
+  @ApiStatus.Internal
+  public static void finishInitialization() {
+    if (runtime == null) {
+      throw new IllegalStateException(
+          "Cannot finish Perspective API initialization before installing its runtime");
+    }
+    INITIALIZATION.finish();
   }
 
   /// @return whether the mod Perspective API is currently enabled
