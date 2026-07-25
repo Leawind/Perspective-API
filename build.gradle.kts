@@ -37,7 +37,6 @@ val loader = when {
 val supportsUnitTesting = isFabric || (isNeoforge && stonecutter.current.parsed >= "1.20.5")
 // endregion
 
-// region ModStitch Setup
 modstitch {
     minecraftVersion = mcVersion
 
@@ -103,9 +102,7 @@ modstitch {
         unitTesting()
     }
 }
-// endregion
 
-// region Stonecutter
 stonecutter {
     constants {
         put("fabric", isFabric)
@@ -123,7 +120,6 @@ stonecutter {
         replace("GuiGraphics", "GuiGraphicsExtractor")
     }
 }
-// endregion
 
 // region Dependencies
 
@@ -170,6 +166,7 @@ dependencies {
 }
 // endregion
 
+// region Tasks
 tasks.test {
     useJUnitPlatform()
     // Disable tests for unsupported platforms
@@ -205,8 +202,9 @@ if (isForge) {
         exclude("perspective_api.refmap.json")
     }
 }
+// endregion
 
-// ========== Publishing ==========
+// region Publishing
 val sourcesJar = tasks.named<Jar>("sourcesJar")
 rootProject.tasks.named<Sync>("buildAndCollect") {
     dependsOn(modstitch.finalJarTask, sourcesJar)
@@ -276,6 +274,7 @@ publishing {
         mavenLocal()
     }
 }
+// endregion
 
 // region Helpers
 fun requiredProp(property: String): String =
