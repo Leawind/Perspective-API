@@ -29,6 +29,16 @@ val loader = when {
     isForge -> "forge"
     else -> error("Unknown loader")
 }
+// Extra version labels are declared by each version variant for publishing platforms.
+val publishedMinecraftVersions = buildList {
+    add(mcVersion)
+    findProperty("publish.additionalMcVersions")
+        ?.toString()
+        ?.split(',')
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.forEach { add(it) }
+}.distinct()
 
 // Determine if unit testing is supported for this platform/version
 // - Fabric: all versions
@@ -237,7 +247,7 @@ afterEvaluate {
         modrinth {
             accessToken = System.getenv("MODRINTH_TOKEN")
             projectId = System.getenv("MODRINTH_ID")
-            minecraftVersions.add(mcVersion)
+            minecraftVersions.addAll(publishedMinecraftVersions)
             if (isFabric) {
                 optional { slug.set("modmenu") }
             }
@@ -246,7 +256,7 @@ afterEvaluate {
         curseforge {
             accessToken = System.getenv("CURSEFORGE_TOKEN")
             projectId = System.getenv("CURSEFORGE_ID")
-            minecraftVersions.add(mcVersion)
+            minecraftVersions.addAll(publishedMinecraftVersions)
             clientRequired = true
             serverRequired = false
             if (isFabric) {
