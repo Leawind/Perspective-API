@@ -29,6 +29,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   public static final PerspectiveRegistryImpl INSTANCE = new PerspectiveRegistryImpl();
 
   private record Entry(
+      @NonNull PerspectiveRegistryImpl owner,
       @NonNull PerspectiveBehavior behavior,
       @NonNull String id,
       @NonNull Component name,
@@ -39,7 +40,8 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       @Nullable Identifier icon)
       implements Perspective {
 
-    private static Entry from(@NonNull PerspectiveBehavior behavior) {
+    private static Entry from(
+        @NonNull PerspectiveRegistryImpl owner, @NonNull PerspectiveBehavior behavior) {
       PerspectiveBehavior.Info info =
           behavior.getClass().getAnnotation(PerspectiveBehavior.Info.class);
       if (info == null) {
@@ -62,6 +64,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
           info.descriptionKey().isEmpty() ? null : Component.translatable(info.descriptionKey());
 
       return new Entry(
+          owner,
           behavior,
           info.id(),
           name,
@@ -72,15 +75,28 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
           icon);
     }
 
+    private boolean evaluateAvailability() {
+      return EXTENSIONS.testOrElse(id, "isAvailable", behavior::isAvailable, false);
+    }
+
     @Override
     public boolean isAvailable() {
-      return EXTENSIONS.testOrElse(id, "isAvailable", behavior::isAvailable, false);
+      return owner.availabilitySnapshot.isAvailable(this);
+    }
+  }
+
+  private static final class AvailabilitySnapshot {
+    private final Map<Entry, Boolean> values = new ConcurrentHashMap<>();
+
+    private boolean isAvailable(@NonNull Entry entry) {
+      return values.computeIfAbsent(entry, Entry::evaluateAvailability);
     }
   }
 
   private final Map<String, Entry> entries = new ConcurrentHashMap<>();
 
   private volatile @Nullable Entry defaultEntry = null;
+  private volatile AvailabilitySnapshot availabilitySnapshot = new AvailabilitySnapshot();
   private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
 
   public PerspectiveRegistryImpl() {}
@@ -113,8 +129,17 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return defaultEntry != null;
   }
 
+  /// Starts a new lazily evaluated perspective-availability snapshot.
+  ///
+  /// Within one snapshot, each registered perspective behavior is evaluated at most once. All
+  /// subsequent {@link Perspective#isAvailable()} calls reuse that result until this method is
+  /// called for the next client tick.
+  public void beginAvailabilitySnapshot() {
+    availabilitySnapshot = new AvailabilitySnapshot();
+  }
+
   public void registerSilent(@NonNull PerspectiveBehavior behavior) {
-    Entry entry = Entry.from(behavior);
+    Entry entry = Entry.from(this, behavior);
     String id = entry.id();
     LOGGER.info("Registering perspective with id '{}': {}", id, behavior);
     Entry existing;

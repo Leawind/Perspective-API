@@ -119,6 +119,8 @@ public final class PerspectiveManager {
   }
 
   public void clientTick(Minecraft minecraft) {
+    PerspectiveRegistryImpl.INSTANCE.beginAvailabilitySnapshot();
+
     // tick switchers
     switchers.clientTick(minecraft);
 

@@ -120,6 +120,10 @@ public interface PerspectiveBehavior {
   /// be resolved, the default perspective is used as a safety fallback even if it reports itself as
   /// unavailable.
   ///
+  /// The registry evaluates this method lazily at most once per active client tick and shares the
+  /// result with every {@link Perspective#isAvailable()} call during that tick. Implementations
+  /// should not rely on invocation count or side effects.
+  ///
   /// @return `true` if this perspective is eligible for resolution
   default boolean isAvailable() {
     return true;

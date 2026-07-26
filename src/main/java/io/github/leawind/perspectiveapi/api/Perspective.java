@@ -44,7 +44,9 @@ public interface Perspective {
 
   /// Returns whether this perspective is currently eligible to be resolved as active.
   ///
-  /// This delegates to the underlying {@link PerspectiveBehavior#isAvailable()}.
+  /// The underlying {@link PerspectiveBehavior#isAvailable()} is evaluated lazily at most once per
+  /// active client tick. Repeated calls during the same tick reuse the same result.
+  ///
   /// If no available candidate can be resolved, the default perspective is used as a safety
   /// fallback even if it reports itself as unavailable.
   boolean isAvailable();
