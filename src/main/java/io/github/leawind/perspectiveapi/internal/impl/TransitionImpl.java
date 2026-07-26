@@ -198,9 +198,9 @@ public final class TransitionImpl implements Transition {
     // Position: interpolate from fixed start to dynamic target
     startPosition.lerp(targetPosition, easedProgress, destPosition);
 
-    // Rotation: chase interpolation from previous frame result to dynamic target
+    // Reconstruct a dynamic start from the fixed delta, then interpolate toward the target.
     deltaRotation.conjugate(startRotation).mul(targetRotation, startRotation);
-    targetRotation.slerp(startRotation, easedProgress - 1, destRotation);
+    startRotation.slerp(targetRotation, easedProgress, destRotation);
   }
 
   private float updateFovDeg(double currentTimeMs, float targetFovDeg) {
