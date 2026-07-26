@@ -69,7 +69,7 @@ class PerspectiveOverrideChainTest {
 
           @Override
           public boolean isAvailable() {
-            return true;
+            return !id.endsWith("unavailable");
           }
         };
       }
@@ -243,6 +243,39 @@ class PerspectiveOverrideChainTest {
     assertEquals("test.first", chain.get());
   }
 
+  @Test
+  void replacingSamePriorityEntryMovesItToEnd() {
+    String first = id("first");
+    String second = id("second");
+    chain.push(first, 10, () -> "test.first");
+    chain.push(second, 10, () -> "test.second");
+    chain.push(first, 10, () -> null);
+
+    assertEquals("test.second", chain.get());
+  }
+
+  @Test
+  void skipsUnregisteredAndUnavailableCandidates() {
+    chain.push(id("missing"), 30, () -> "missing.id");
+    chain.push(id("unavailable"), 20, () -> "test.unavailable");
+    chain.push(id("available"), 10, () -> "test.available");
+
+    assertEquals("test.available", chain.get());
+  }
+
+  @Test
+  void supplierFailureDoesNotStopFallbackResolution() {
+    chain.push(
+        id("failure"),
+        20,
+        () -> {
+          throw new IllegalStateException("failure");
+        });
+    chain.push(id("fallback"), 10, () -> "test.fallback");
+
+    assertEquals("test.fallback", chain.get());
+  }
+
   // ========== null safety ==========
 
   @Test
@@ -263,5 +296,10 @@ class PerspectiveOverrideChainTest {
   @Test
   void hasNullKeyThrows() {
     assertThrows(NullPointerException.class, () -> chain.has(null));
+  }
+
+  @Test
+  void clearExceptNullArrayThrows() {
+    assertThrows(NullPointerException.class, () -> chain.clearExcept((String[]) null));
   }
 }

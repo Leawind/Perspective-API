@@ -1,11 +1,15 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.client.KeyMapping;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class KeyStateTrackerTest {
@@ -21,7 +25,8 @@ class KeyStateTrackerTest {
       super("test.key", 0, Category.MISC);
       /*? } else {*/
       /*super("test.key", 0, "key.categories.gameplay");
-       *//*? }*/
+       */
+      /*? }*/
     }
 
     public void setDown(boolean down) {
@@ -45,9 +50,6 @@ class KeyStateTrackerTest {
       return true;
     }
   }
-
-  @BeforeEach
-  void clearCache() {}
 
   // ========== onDown ==========
 
@@ -216,6 +218,26 @@ class KeyStateTrackerTest {
       tracker.tick();
     }
 
+    assertTrue(holdFired.get());
+  }
+
+  @Test
+  void holdFiresExactlyAtThreshold() {
+    var key = new StubKey();
+    var holdFired = new AtomicBoolean();
+    var tracker =
+        KeyStateTracker.builder(key)
+            .setHoldTicks(HOLD_TICKS)
+            .onHoldStart(() -> holdFired.set(true))
+            .build();
+
+    key.setDown(true);
+    for (int i = 0; i < HOLD_TICKS - 1; i++) {
+      tracker.tick();
+    }
+    assertFalse(holdFired.get());
+
+    tracker.tick();
     assertTrue(holdFired.get());
   }
 
@@ -471,6 +493,27 @@ class KeyStateTrackerTest {
     assertEquals(1, holdStopCount.get());
   }
 
+  @Test
+  void callbacksRunInLifecycleOrder() {
+    var key = new StubKey();
+    List<String> calls = new ArrayList<>();
+    var tracker =
+        KeyStateTracker.builder(key)
+            .setHoldTicks(1)
+            .onDown(() -> calls.add("down"))
+            .onHoldStart(() -> calls.add("hold-start"))
+            .onHoldStop(() -> calls.add("hold-stop"))
+            .onUp(() -> calls.add("up"))
+            .build();
+
+    key.setDown(true);
+    tracker.tick();
+    key.setDown(false);
+    tracker.tick();
+
+    assertEquals(List.of("down", "hold-start", "hold-stop", "up"), calls);
+  }
+
   // ========== no callbacks ==========
 
   @Test
@@ -492,5 +535,15 @@ class KeyStateTrackerTest {
     var tracker = KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).build();
 
     assertSame(key, tracker.key());
+  }
+
+  @Test
+  void holdTickSettingCanBeReadAndChangedAfterBuild() {
+    var key = new StubKey();
+    var tracker = KeyStateTracker.builder(key).build();
+
+    assertEquals(4, tracker.getHoldTicks());
+    assertSame(tracker, tracker.setHoldTicks(9));
+    assertEquals(9, tracker.getHoldTicks());
   }
 }

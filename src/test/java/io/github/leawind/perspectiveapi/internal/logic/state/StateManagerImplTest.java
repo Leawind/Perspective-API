@@ -1,6 +1,9 @@
 package io.github.leawind.perspectiveapi.internal.logic.state;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.jimfs.Jimfs;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
@@ -11,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +36,14 @@ class StateManagerImplTest {
     fs = Jimfs.newFileSystem();
     tempDir = fs.getPath("/tmp");
     PerspectiveRegistryImpl.INSTANCE.registerSilent(TestPerspective.INSTANCE);
+  }
+
+  @AfterEach
+  void afterEach() throws IOException {
+    PerspectiveAPI.setEnabled(true);
+    PerspectiveAPI.getTransition().setDurationMs(260.0);
+    PerspectiveAPI.getTransition().setBlendPower(0.6);
+    fs.close();
   }
 
   @Test
@@ -89,6 +101,43 @@ class StateManagerImplTest {
 
     PerspectiveAPI.setEnabled(false);
     manager.tryLoadAndApply();
+    assertTrue(PerspectiveAPI.isEnabled());
+  }
+
+  @Test
+  void roundTripPreservesTransitionSettings() {
+    Path filePath = tempDir.resolve("transition.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    PerspectiveAPI.getTransition().setDurationMs(450.0);
+    PerspectiveAPI.getTransition().setBlendPower(1.25);
+
+    manager.tryExtractAndSave();
+    PerspectiveAPI.getTransition().setDurationMs(1.0);
+    PerspectiveAPI.getTransition().setBlendPower(1.0);
+    manager.tryLoadAndApply();
+
+    assertEquals(450.0, PerspectiveAPI.getTransition().getDurationMs());
+    assertEquals(1.25, PerspectiveAPI.getTransition().getBlendPower());
+  }
+
+  @Test
+  void invalidTransitionSettingsAreNotPartiallyApplied() throws IOException {
+    Path filePath = tempDir.resolve("invalid-values.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    Files.createDirectories(filePath.getParent());
+    Files.writeString(
+        filePath,
+        """
+        {
+          "enabled": false,
+          "transition.duration_ms": -1.0,
+          "transition.blend_power": 1.0
+        }
+        """);
+    PerspectiveAPI.setEnabled(true);
+
+    manager.tryLoadAndApply();
+
     assertTrue(PerspectiveAPI.isEnabled());
   }
 }

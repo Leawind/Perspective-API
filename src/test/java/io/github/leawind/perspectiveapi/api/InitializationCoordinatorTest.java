@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.api;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
@@ -40,6 +41,17 @@ class InitializationCoordinatorTest {
 
     AtomicInteger calls = new AtomicInteger();
     coordinator.runWhenReady("test.immediate", calls::incrementAndGet);
+
+    assertEquals(1, calls.get());
+  }
+
+  @Test
+  void finishIsIdempotent() {
+    AtomicInteger calls = new AtomicInteger();
+    coordinator.runWhenReady("test.once", calls::incrementAndGet);
+
+    coordinator.finish();
+    coordinator.finish();
 
     assertEquals(1, calls.get());
   }
@@ -102,6 +114,34 @@ class InitializationCoordinatorTest {
 
     assertEquals(
         "Perspective API initialization action 'test.failure' failed", exception.getMessage());
+    assertEquals("failure", exception.getCause().getMessage());
+  }
+
+  @Test
+  void failedFinishStillMarksCoordinatorReady() {
+    coordinator.runWhenReady(
+        "test.failure",
+        () -> {
+          throw new IllegalStateException("failure");
+        });
+    assertThrows(RuntimeException.class, coordinator::finish);
+    AtomicInteger calls = new AtomicInteger();
+
+    coordinator.runWhenReady("test.after-failure", calls::incrementAndGet);
+
+    assertEquals(1, calls.get());
+  }
+
+  @Test
+  void fatalFailureIsRethrownUnwrapped() {
+    TestVirtualMachineError fatal = new TestVirtualMachineError();
+    coordinator.runWhenReady(
+        "test.fatal",
+        () -> {
+          throw fatal;
+        });
+
+    assertSame(fatal, assertThrows(TestVirtualMachineError.class, coordinator::finish));
   }
 
   @Test
@@ -163,4 +203,6 @@ class InitializationCoordinatorTest {
       throw new RuntimeException(exception.getCause());
     }
   }
+
+  private static final class TestVirtualMachineError extends VirtualMachineError {}
 }
