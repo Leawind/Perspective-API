@@ -3,9 +3,9 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
 import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import org.joml.Vector2d;
 import org.joml.Vector2f;
@@ -21,7 +21,7 @@ public final class WheelMenu {
   private final WheelAnchor anchor = new WheelAnchor(24.0f);
   private final Vector2d lastMouse = new Vector2d(0, 0);
   private boolean hasLastMouse;
-  private final Map<String, WheelMenuItem> itemCache = new ConcurrentHashMap<>();
+  private final Map<String, WheelMenuItem> itemCache = new HashMap<>();
   private final List<WheelMenuItem> items = new ArrayList<>();
   private @Nullable String originalSelectedId;
   private @Nullable String currentHoveredId;
@@ -44,14 +44,12 @@ public final class WheelMenu {
   /// cause new instances to be created. Current list order is kept as much
   /// as possible.
   public void updateItems(@NonNull List<String> availableIds) {
-    synchronized (items) {
-      items.clear();
-      items.addAll(
-          availableIds.stream()
-              .limit(MAX_ITEMS)
-              .map(id -> itemCache.computeIfAbsent(id, WheelMenuItem::new).update())
-              .toList());
-    }
+    items.clear();
+    items.addAll(
+        availableIds.stream()
+            .limit(MAX_ITEMS)
+            .map(id -> itemCache.computeIfAbsent(id, WheelMenuItem::new).update())
+            .toList());
   }
 
   /// Opens the menu with the given current selection.
@@ -94,18 +92,16 @@ public final class WheelMenu {
 
     boolean clockwise = vertical < 0;
 
-    synchronized (this) {
-      if (clockwise) {
-        items.add(0, items.remove(items.size() - 1));
-      } else {
-        items.add(items.remove(0));
-      }
-
-      anchor.reset();
-
-      double sectorRad = 2 * Math.PI / items.size();
-      renderer.notifyScroll(sectorRad, clockwise);
+    if (clockwise) {
+      items.add(0, items.remove(items.size() - 1));
+    } else {
+      items.add(items.remove(0));
     }
+
+    anchor.reset();
+
+    double sectorRad = 2 * Math.PI / items.size();
+    renderer.notifyScroll(sectorRad, clockwise);
   }
 
   /// Handles mouse movement to update the anchor and derive the hovered

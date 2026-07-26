@@ -23,8 +23,8 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   private @Nullable KeyStateTracker keyStateTracker;
   private final PerspectiveRegistry registry;
 
-  private volatile List<String> list = new ArrayList<>();
-  private volatile @Nullable String selected = null;
+  private List<String> list = new ArrayList<>();
+  private @Nullable String selected = null;
 
   private final WheelMenu wheelMenu = new WheelMenu();
 
@@ -157,7 +157,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   /// Advances the active perspective to the next available one.
-  private synchronized void cycleForward() {
+  private void cycleForward() {
     if (list.isEmpty()) return;
 
     String current = selected;
@@ -180,7 +180,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   /// Moves the active perspective to the previous available one.
-  private synchronized void cycleBackward() {
+  private void cycleBackward() {
     if (list.isEmpty()) return;
 
     String current = selected;

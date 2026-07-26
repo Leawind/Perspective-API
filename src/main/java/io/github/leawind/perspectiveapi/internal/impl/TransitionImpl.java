@@ -15,11 +15,8 @@ import org.lwjgl.glfw.GLFW;
 
 /// Controls smooth camera transitions between perspectives.
 ///
-/// Supports two interpolation algorithms switchable via `useNewAlgorithm`:
-/// - **Old** (default): Chase interpolation — each frame steps from the previous result
-///   toward the current target, with step size driven by progress increment.
-/// - **New**: Delta synthesis — computes a fixed delta on the first frame, then
-///   synthesizes interpolation from the delta and the dynamic target.
+/// Position and FOV interpolate from the fixed transition start toward the current target. Rotation
+/// uses chase interpolation so a moving target remains smooth between rendered frames.
 public final class TransitionImpl implements Transition {
 
   private static final double MIN_DELTA_MS = 0.1;
@@ -30,8 +27,6 @@ public final class TransitionImpl implements Transition {
   private double durationMs = 260;
   private Blender blender = Blenders::easeInOut;
   private double blendPower = 0.6;
-
-  private boolean useNewAlgorithm = false;
 
   // endregion
 
@@ -44,20 +39,10 @@ public final class TransitionImpl implements Transition {
 
   // endregion
 
-  // region old algorithm state
+  // region interpolation state
 
   private final Quaternionf prevRotation = new Quaternionf();
   private float prevEasedProgress = 0;
-
-  // endregion
-
-  // region new algorithm state
-
-  private boolean isDeltaTransformSet = false;
-  private boolean isDeltaFovSet = false;
-  private final Vector3d deltaPosition = new Vector3d();
-  private final Quaternionf deltaRotation = new Quaternionf();
-  private float deltaFovDeg = DEFAULT_FOV_DEG;
 
   // endregion
 
@@ -70,14 +55,6 @@ public final class TransitionImpl implements Transition {
   /// Returns `true` if a transition is currently in progress at the given timestamp.
   public boolean isInTransition(double currentTimeMs) {
     return currentTimeMs - startTimeMs < durationMs;
-  }
-
-  public boolean isUseNewAlgorithm() {
-    return useNewAlgorithm;
-  }
-
-  public void setUseNewAlgorithm(boolean useNewAlgorithm) {
-    this.useNewAlgorithm = useNewAlgorithm;
   }
 
   @Override
@@ -135,12 +112,8 @@ public final class TransitionImpl implements Transition {
     this.startPosition.set(startState.position());
     this.startRotation.set(startState.rotation());
     this.startFovDeg = startState.getFovDeg();
-    // old algorithm state
     this.prevRotation.set(startState.rotation());
     this.prevEasedProgress = 0;
-    // new algorithm state
-    this.isDeltaTransformSet = false;
-    this.isDeltaFovSet = false;
   }
 
   /// Interpolates position, rotation, and FOV from the start state toward
@@ -151,17 +124,12 @@ public final class TransitionImpl implements Transition {
       double currentTimeMs,
       @NonNull PerspectiveState target,
       PerspectiveState.@NonNull Mutable dest) {
-    if (useNewAlgorithm) {
-      updateTransformNew(
-          currentTimeMs, target.position(), target.rotation(), dest.position(), dest.rotation());
-    } else {
-      updateTransformOld(
-          currentTimeMs, target.position(), target.rotation(), dest.position(), dest.rotation());
-    }
+    updateTransform(
+        currentTimeMs, target.position(), target.rotation(), dest.position(), dest.rotation());
     dest.setFovDeg(updateFovDeg(currentTimeMs, target.getFovDeg()));
   }
 
-  private void updateTransformOld(
+  private void updateTransform(
       double currentTimeMs,
       Vector3dc targetPosition,
       Quaternionfc targetRotation,
@@ -181,37 +149,8 @@ public final class TransitionImpl implements Transition {
     prevEasedProgress = easedProgress;
   }
 
-  private void updateTransformNew(
-      double currentTimeMs,
-      Vector3dc targetPosition,
-      Quaternionfc targetRotation,
-      Vector3d destPosition,
-      Quaternionf destRotation) {
-    if (!isDeltaTransformSet) {
-      targetPosition.sub(startPosition, deltaPosition);
-      targetRotation.mul(startRotation.conjugate(deltaRotation), deltaRotation);
-      isDeltaTransformSet = true;
-    }
-
-    float easedProgress = computeEasedProgress(currentTimeMs);
-
-    // Position: interpolate from fixed start to dynamic target
-    startPosition.lerp(targetPosition, easedProgress, destPosition);
-
-    // Reconstruct a dynamic start from the fixed delta, then interpolate toward the target.
-    deltaRotation.conjugate(startRotation).mul(targetRotation, startRotation);
-    startRotation.slerp(targetRotation, easedProgress, destRotation);
-  }
-
   private float updateFovDeg(double currentTimeMs, float targetFovDeg) {
     float easedProgress = computeEasedProgress(currentTimeMs);
-    if (useNewAlgorithm) {
-      if (!isDeltaFovSet) {
-        deltaFovDeg = targetFovDeg - startFovDeg;
-        isDeltaFovSet = true;
-      }
-      return targetFovDeg - deltaFovDeg * (1 - easedProgress);
-    }
     return startFovDeg + (targetFovDeg - startFovDeg) * easedProgress;
   }
 }

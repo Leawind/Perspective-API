@@ -35,18 +35,14 @@ class TransitionImplTest {
     TransitionImpl defaults = new TransitionImpl();
     assertEquals(260.0, defaults.getDurationMs());
     assertEquals(0.6, defaults.getBlendPower());
-    assertFalse(defaults.isUseNewAlgorithm());
-
     Blender blender = x -> x * x;
     defaults.setDurationMs(500.0);
     defaults.setBlendPower(2.0);
     defaults.setBlender(blender);
-    defaults.setUseNewAlgorithm(true);
 
     assertEquals(500.0, defaults.getDurationMs());
     assertEquals(2.0, defaults.getBlendPower());
     assertSame(blender, defaults.getBlender());
-    assertTrue(defaults.isUseNewAlgorithm());
   }
 
   @Test
@@ -69,39 +65,12 @@ class TransitionImplTest {
   }
 
   @Test
-  void oldAlgorithmInterpolatesAllFieldsAtHalfwayPoint() {
+  void interpolatesAllFieldsAtHalfwayPoint() {
     PerspectiveStateImpl dest = new PerspectiveStateImpl();
 
     transition.update(1_050.0, target, dest);
 
     assertHalfway(dest);
-  }
-
-  @Test
-  void newAlgorithmInterpolatesAllFieldsAtHalfwayPoint() {
-    transition.setUseNewAlgorithm(true);
-    PerspectiveStateImpl dest = new PerspectiveStateImpl();
-
-    transition.update(1_050.0, target, dest);
-
-    assertHalfway(dest);
-  }
-
-  @Test
-  void newAlgorithmKeepsInitialDeltaWhenTargetMoves() {
-    transition.setUseNewAlgorithm(true);
-    PerspectiveStateImpl dest = new PerspectiveStateImpl();
-    transition.update(1_025.0, target, dest);
-
-    target.position().set(20.0, 0.0, 0.0);
-    target.rotation().rotationY((float) Math.toRadians(120.0));
-    target.setFovDeg(120.0f);
-    transition.update(1_050.0, target, dest);
-
-    TestUtils.assertVectorEquals(new Vector3d(10.0, 0.0, 0.0), dest.position());
-    TestUtils.assertQuatEquals(
-        new Quaternionf().rotationY((float) Math.toRadians(75.0)), dest.rotation());
-    assertEquals(100.0f, dest.getFovDeg(), 1.0e-4f);
   }
 
   @Test

@@ -19,8 +19,8 @@ import org.jspecify.annotations.Nullable;
 
 public final class Bridge {
   private Bridge() {}
-  
-  public static @Nullable Screen getScreen(@NonNull Minecraft minecraft){
+
+  public static @Nullable Screen getScreen(@NonNull Minecraft minecraft) {
     /*? if >=26.2 {*/
     return minecraft.gui.screen();
     /*? } else {*/

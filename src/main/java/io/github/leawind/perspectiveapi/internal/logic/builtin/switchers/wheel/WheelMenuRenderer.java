@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
+import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.ExpSmoothDouble;
 import io.github.leawind.perspectiveapi.platform.api.Services;
@@ -27,6 +28,8 @@ import org.slf4j.LoggerFactory;
 /// drawn on top.
 public final class WheelMenuRenderer {
   private static final Logger LOGGER = LoggerFactory.getLogger(WheelMenuRenderer.class);
+  private static final Sanitizer.ThrottledAction DRAW_ERROR_LOG =
+      new Sanitizer.ThrottledAction(5000);
 
   // region style
 
@@ -35,7 +38,6 @@ public final class WheelMenuRenderer {
 
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
 
-  private static final int COLOR_AVAILABLE = 0x00_22_C5_5E;
   private static final int COLOR_UNAVAILABLE = 0xFF_EA_B3_08;
   private static final int COLOR_UNREGISTERED = 0xFF_EF_44_44;
   private static final float SELECTED_SCALE = 1.35f;
@@ -186,12 +188,12 @@ public final class WheelMenuRenderer {
 
         drawAvailabilityIndicator(ctx, item, iconX, iconY, iconSize);
       } catch (IllegalStateException e) {
-        LOGGER.warn("Error occurred drawing ring icon", e);
+        DRAW_ERROR_LOG.run(
+            item.id(), () -> LOGGER.warn("Failed to draw wheel item '{}'", item.id(), e));
       }
     }
   }
 
-  /// NOW
   private void drawAvailabilityIndicator(
       DrawContext ctx, WheelMenuItem item, float iconX, float iconY, float iconSize) {
     float x = iconX + iconSize * AVAILABILITY_INDICATOR_OFFSET.x();
