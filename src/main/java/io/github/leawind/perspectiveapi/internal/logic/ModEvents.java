@@ -16,8 +16,12 @@ public final class ModEvents {
 
     GameClientEvents.CLIENT_TICK_START.on(
         minecraft -> {
-          if (!PerspectiveAPI.isEnabled()) return;
-          if (minecraft.level == null || minecraft.player == null) return;
+          if (!PerspectiveAPI.isEnabled()
+              || minecraft.level == null
+              || minecraft.player == null) {
+            manager.resetLogicUpdateScheduler();
+            return;
+          }
 
           manager.clientTick(minecraft);
         });

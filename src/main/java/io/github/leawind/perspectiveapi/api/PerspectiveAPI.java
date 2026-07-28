@@ -20,7 +20,11 @@ public final class PerspectiveAPI {
   /// The display name of Perspective API
   public static final String MOD_NAME = "Perspective API";
 
+  /// Default number of client ticks between logic updates.
+  @ApiStatus.Internal public static final int DEFAULT_LOGIC_TICK_INTERVAL = 1;
+
   private static volatile boolean enabled = true;
+  private static volatile int logicTickInterval = DEFAULT_LOGIC_TICK_INTERVAL;
   private static volatile @Nullable Runtime runtime;
   private static final Object RUNTIME_LOCK = new Object();
   private static final InitializationCoordinator INITIALIZATION = new InitializationCoordinator();
@@ -103,6 +107,23 @@ public final class PerspectiveAPI {
   /// When disabled, the mod reverts to vanilla camera behavior
   public static void setEnabled(boolean enabled) {
     PerspectiveAPI.enabled = enabled;
+  }
+
+  /// Returns the number of client ticks between Perspective API logic updates.
+  @ApiStatus.Internal
+  public static int getLogicTickInterval() {
+    return logicTickInterval;
+  }
+
+  /// Sets the number of client ticks between Perspective API logic updates.
+  ///
+  /// @throws IllegalArgumentException if `logicTickInterval` is less than `1`
+  @ApiStatus.Internal
+  public static void setLogicTickInterval(int logicTickInterval) {
+    if (logicTickInterval < 1) {
+      throw new IllegalArgumentException("logicTickInterval must be at least 1");
+    }
+    PerspectiveAPI.logicTickInterval = logicTickInterval;
   }
 
   /// Returns the global registry for perspectives.

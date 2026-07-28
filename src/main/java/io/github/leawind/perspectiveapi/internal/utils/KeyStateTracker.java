@@ -1,16 +1,14 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
-import net.minecraft.client.KeyMapping;
 import org.jspecify.annotations.Nullable;
 
-/// Tracks key state transitions across ticks for vanilla KeyMapping instances.
+/// Tracks key state transitions across ticks.
 public final class KeyStateTracker {
-  public static Builder builder(KeyMapping keyMapping) {
-    var tracker = new KeyStateTracker(keyMapping);
+  public static Builder builder() {
+    var tracker = new KeyStateTracker();
     return tracker.new Builder();
   }
 
-  private final KeyMapping keyMapping;
   private int holdTicks = 4;
 
   private boolean wasDown;
@@ -25,13 +23,11 @@ public final class KeyStateTracker {
 
   private @Nullable Runnable onHoldStopHandler;
 
-  private KeyStateTracker(KeyMapping keyMapping) {
-    this.keyMapping = keyMapping;
-  }
+  private KeyStateTracker() {}
 
   /// Call this every tick.
-  public KeyStateTracker tick() {
-    if (keyMapping.isDown()) {
+  public KeyStateTracker tick(boolean isDown) {
+    if (isDown) {
       if (!wasDown) {
         wasDown = true;
         heldTicks = 0;
@@ -60,22 +56,21 @@ public final class KeyStateTracker {
     return this;
   }
 
+  /// Cancels the current key gesture without invoking any callbacks.
+  public void reset() {
+    wasDown = false;
+    heldTicks = 0;
+    holdTriggered = false;
+    pressTriggered = false;
+  }
+
   public int getHoldTicks() {
     return holdTicks;
   }
 
   public KeyStateTracker setHoldTicks(int ticks) {
-    this.holdTicks = ticks;
+    this.holdTicks = validateHoldTicks(ticks);
     return this;
-  }
-
-  public void drain() {
-    while (keyMapping.consumeClick()) {}
-  }
-
-  /// Returns the tracked key.
-  public KeyMapping key() {
-    return keyMapping;
   }
 
   /// Returns true if the key is currently held down.
@@ -94,13 +89,18 @@ public final class KeyStateTracker {
     }
   }
 
+  private static int validateHoldTicks(int ticks) {
+    if (ticks <= 0) throw new IllegalArgumentException("holdTicks must be positive");
+    return ticks;
+  }
+
   /// Builder for configuring a KeyStateTracker.
   public final class Builder {
     private Builder() {}
 
     /// Sets the number of ticks the key must be held to trigger the hold callback.
     public Builder setHoldTicks(int ticks) {
-      KeyStateTracker.this.holdTicks = ticks;
+      KeyStateTracker.this.holdTicks = validateHoldTicks(ticks);
       return this;
     }
 

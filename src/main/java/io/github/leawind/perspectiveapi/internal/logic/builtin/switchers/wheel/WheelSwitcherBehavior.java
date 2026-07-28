@@ -38,10 +38,10 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
     this.registry = registry;
   }
 
-  public @NonNull KeyStateTracker getKeyStateTracker(Minecraft minecraft) {
+  public @NonNull KeyStateTracker getKeyStateTracker() {
     if (keyStateTracker == null) {
       keyStateTracker =
-          KeyStateTracker.builder(minecraft.options.keyTogglePerspective)
+          KeyStateTracker.builder()
               .setHoldTicks(3)
               .onPress(this::cycleForward)
               .onHoldStart(this::openWheel)
@@ -56,8 +56,11 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         minecraft -> {
           if (!PerspectiveAPI.isEnabled()) return;
+          if (PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() != this) return;
 
-          getKeyStateTracker(minecraft).tick().drain();
+          var key = minecraft.options.keyTogglePerspective;
+          getKeyStateTracker().tick(key.isDown());
+          while (key.consumeClick()) {}
         });
     GameClientEvents.RENDER_GUI_OVERLAY.on(
         ctx -> {
@@ -126,6 +129,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
 
   @Override
   public void onDeactivated() {
+    getKeyStateTracker().reset();
     if (wheelMenu.isOpened()) {
       String finalId = wheelMenu.close();
       if (finalId != null) this.selected = finalId;

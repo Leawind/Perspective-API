@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -18,7 +19,6 @@ class KeyStateTrackerTest {
 
   private static class StubKey extends KeyMapping {
     private boolean down;
-    private int clickCount;
 
     StubKey() {
       /*? if >=1.21.11 {*/
@@ -33,21 +33,9 @@ class KeyStateTrackerTest {
       this.down = down;
     }
 
-    /// Simulates a GLFW key press event, incrementing click count.
-    public void simulateClick() {
-      clickCount++;
-    }
-
     @Override
     public boolean isDown() {
       return down;
-    }
-
-    @Override
-    public boolean consumeClick() {
-      if (clickCount == 0) return false;
-      clickCount--;
-      return true;
     }
   }
 
@@ -58,13 +46,13 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var downFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onDown(() -> downFired.set(true))
             .build();
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertTrue(downFired.get());
   }
@@ -74,14 +62,14 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var count = new AtomicInteger();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onDown(() -> count.incrementAndGet())
             .build();
 
     key.setDown(true);
     for (int i = 0; i < 5; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
 
     assertEquals(1, count.get());
@@ -92,50 +80,20 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var count = new AtomicInteger();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onDown(() -> count.incrementAndGet())
             .build();
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertEquals(2, count.get());
-  }
-
-  // ========== drain ==========
-
-  @Test
-  void tickDoesNotDrainClicks() {
-    var key = new StubKey();
-    var tracker = KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).build();
-
-    key.setDown(true);
-    key.simulateClick();
-    key.simulateClick();
-    tracker.tick();
-
-    assertTrue(key.consumeClick(), "tick no longer drains clicks");
-    assertTrue(key.consumeClick());
-    assertFalse(key.consumeClick());
-  }
-
-  @Test
-  void drainRemovesClickCount() {
-    var key = new StubKey();
-    var tracker = KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).build();
-
-    key.setDown(true);
-    key.simulateClick();
-    key.simulateClick();
-    tracker.drain();
-
-    assertFalse(key.consumeClick(), "drain should remove all clicks");
   }
 
   // ========== onPress ==========
@@ -145,15 +103,15 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var pressFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onPress(() -> pressFired.set(true))
             .build();
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertTrue(pressFired.get());
   }
@@ -164,7 +122,7 @@ class KeyStateTrackerTest {
     var pressFired = new AtomicBoolean();
     var holdFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onPress(() -> pressFired.set(true))
             .onHoldStart(() -> holdFired.set(true))
@@ -172,10 +130,10 @@ class KeyStateTrackerTest {
 
     key.setDown(true);
     for (int i = 0; i <= HOLD_TICKS; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertTrue(holdFired.get());
     assertFalse(pressFired.get());
@@ -186,16 +144,16 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var count = new AtomicInteger();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onPress(() -> count.incrementAndGet())
             .build();
 
     for (int i = 0; i < 3; i++) {
       key.setDown(true);
-      tracker.tick();
+      tracker.tick(key.isDown());
       key.setDown(false);
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
 
     assertEquals(3, count.get());
@@ -208,14 +166,14 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var holdFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onHoldStart(() -> holdFired.set(true))
             .build();
 
     key.setDown(true);
     for (int i = 0; i <= HOLD_TICKS; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
 
     assertTrue(holdFired.get());
@@ -226,18 +184,18 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var holdFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onHoldStart(() -> holdFired.set(true))
             .build();
 
     key.setDown(true);
     for (int i = 0; i < HOLD_TICKS - 1; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
     assertFalse(holdFired.get());
 
-    tracker.tick();
+    tracker.tick(key.isDown());
     assertTrue(holdFired.get());
   }
 
@@ -246,14 +204,14 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var count = new AtomicInteger();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onHoldStart(() -> count.incrementAndGet())
             .build();
 
     key.setDown(true);
     for (int i = 0; i < HOLD_TICKS + 5; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
 
     assertEquals(1, count.get());
@@ -264,17 +222,17 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var holdFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onHoldStart(() -> holdFired.set(true))
             .build();
 
     key.setDown(true);
     for (int i = 0; i < HOLD_TICKS - 1; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertFalse(holdFired.get());
   }
@@ -286,12 +244,12 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var upFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).onUp(() -> upFired.set(true)).build();
+        KeyStateTracker.builder().setHoldTicks(HOLD_TICKS).onUp(() -> upFired.set(true)).build();
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertTrue(upFired.get());
   }
@@ -302,7 +260,7 @@ class KeyStateTrackerTest {
     var upFired = new AtomicBoolean();
     var holdFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onHoldStart(() -> holdFired.set(true))
             .onUp(() -> upFired.set(true))
@@ -310,10 +268,10 @@ class KeyStateTrackerTest {
 
     key.setDown(true);
     for (int i = 0; i <= HOLD_TICKS; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertTrue(holdFired.get());
     assertTrue(upFired.get());
@@ -324,16 +282,16 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var count = new AtomicInteger();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onUp(() -> count.incrementAndGet())
             .build();
 
     for (int i = 0; i < 3; i++) {
       key.setDown(true);
-      tracker.tick();
+      tracker.tick(key.isDown());
       key.setDown(false);
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
 
     assertEquals(3, count.get());
@@ -344,9 +302,9 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var upFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).onUp(() -> upFired.set(true)).build();
+        KeyStateTracker.builder().setHoldTicks(HOLD_TICKS).onUp(() -> upFired.set(true)).build();
 
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertFalse(upFired.get());
   }
@@ -358,17 +316,17 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var holdStopFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onHoldStop(() -> holdStopFired.set(true))
             .build();
 
     key.setDown(true);
     for (int i = 0; i <= HOLD_TICKS; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertTrue(holdStopFired.get());
   }
@@ -378,15 +336,15 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var holdStopFired = new AtomicBoolean();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onHoldStop(() -> holdStopFired.set(true))
             .build();
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertFalse(holdStopFired.get());
   }
@@ -396,7 +354,7 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     var count = new AtomicInteger();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onHoldStop(() -> count.incrementAndGet())
             .build();
@@ -404,10 +362,10 @@ class KeyStateTrackerTest {
     for (int i = 0; i < 3; i++) {
       key.setDown(true);
       for (int j = 0; j <= HOLD_TICKS; j++) {
-        tracker.tick();
+        tracker.tick(key.isDown());
       }
       key.setDown(false);
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
 
     assertEquals(3, count.get());
@@ -418,16 +376,16 @@ class KeyStateTrackerTest {
   @Test
   void isDownTracksKeyPressState() {
     var key = new StubKey();
-    var tracker = KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).build();
+    var tracker = KeyStateTracker.builder().setHoldTicks(HOLD_TICKS).build();
 
     assertFalse(tracker.isDown());
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     assertTrue(tracker.isDown());
 
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
     assertFalse(tracker.isDown());
   }
 
@@ -435,20 +393,20 @@ class KeyStateTrackerTest {
   void isHoldTriggeredResetsOnNextPress() {
     var key = new StubKey();
     var tracker =
-        KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).onHoldStart(() -> {}).build();
+        KeyStateTracker.builder().setHoldTicks(HOLD_TICKS).onHoldStart(() -> {}).build();
 
     key.setDown(true);
     for (int i = 0; i <= HOLD_TICKS; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
     assertTrue(tracker.isHoldTriggered());
 
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
     assertTrue(tracker.isHoldTriggered(), "still set after release");
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     assertFalse(tracker.isHoldTriggered(), "reset on new press");
   }
 
@@ -463,7 +421,7 @@ class KeyStateTrackerTest {
     var upCount = new AtomicInteger();
     var holdStopCount = new AtomicInteger();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(HOLD_TICKS)
             .onDown(downCount::incrementAndGet)
             .onPress(pressCount::incrementAndGet)
@@ -475,16 +433,16 @@ class KeyStateTrackerTest {
     // first press: hold
     key.setDown(true);
     for (int i = 0; i <= HOLD_TICKS; i++) {
-      tracker.tick();
+      tracker.tick(key.isDown());
     }
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     // second press: short
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertEquals(1, holdCount.get());
     assertEquals(1, pressCount.get());
@@ -498,7 +456,7 @@ class KeyStateTrackerTest {
     var key = new StubKey();
     List<String> calls = new ArrayList<>();
     var tracker =
-        KeyStateTracker.builder(key)
+        KeyStateTracker.builder()
             .setHoldTicks(1)
             .onDown(() -> calls.add("down"))
             .onHoldStart(() -> calls.add("hold-start"))
@@ -507,9 +465,9 @@ class KeyStateTrackerTest {
             .build();
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
 
     assertEquals(List.of("down", "hold-start", "hold-stop", "up"), calls);
   }
@@ -519,31 +477,48 @@ class KeyStateTrackerTest {
   @Test
   void tickWithoutCallbacksDoesNotThrow() {
     var key = new StubKey();
-    var tracker = KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).build();
+    var tracker = KeyStateTracker.builder().setHoldTicks(HOLD_TICKS).build();
 
     key.setDown(true);
-    tracker.tick();
+    tracker.tick(key.isDown());
     key.setDown(false);
-    tracker.tick();
+    tracker.tick(key.isDown());
   }
 
-  // ========== key accessor ==========
-
   @Test
-  void keyReturnsTrackedKey() {
-    var key = new StubKey();
-    var tracker = KeyStateTracker.builder(key).setHoldTicks(HOLD_TICKS).build();
+  void resetCancelsCurrentGestureWithoutCallbacks() {
+    var pressCount = new AtomicInteger();
+    var holdStopCount = new AtomicInteger();
+    var tracker =
+        KeyStateTracker.builder()
+            .setHoldTicks(1)
+            .onPress(pressCount::incrementAndGet)
+            .onHoldStop(holdStopCount::incrementAndGet)
+            .build();
 
-    assertSame(key, tracker.key());
+    tracker.tick(true);
+    tracker.reset();
+    tracker.tick(false);
+
+    assertFalse(tracker.isDown());
+    assertFalse(tracker.isHoldTriggered());
+    assertEquals(0, pressCount.get());
+    assertEquals(0, holdStopCount.get());
   }
 
   @Test
   void holdTickSettingCanBeReadAndChangedAfterBuild() {
-    var key = new StubKey();
-    var tracker = KeyStateTracker.builder(key).build();
+    var tracker = KeyStateTracker.builder().build();
 
     assertEquals(4, tracker.getHoldTicks());
     assertSame(tracker, tracker.setHoldTicks(9));
     assertEquals(9, tracker.getHoldTicks());
+  }
+
+  @Test
+  void holdTicksMustBePositive() {
+    assertThrows(IllegalArgumentException.class, () -> KeyStateTracker.builder().setHoldTicks(0));
+    var tracker = KeyStateTracker.builder().build();
+    assertThrows(IllegalArgumentException.class, () -> tracker.setHoldTicks(-1));
   }
 }

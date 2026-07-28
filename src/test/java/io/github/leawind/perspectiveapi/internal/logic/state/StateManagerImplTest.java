@@ -41,6 +41,7 @@ class StateManagerImplTest {
   @AfterEach
   void afterEach() throws IOException {
     PerspectiveAPI.setEnabled(true);
+    PerspectiveAPI.setLogicTickInterval(PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL);
     PerspectiveAPI.getTransition().setDurationMs(260.0);
     PerspectiveAPI.getTransition().setBlendPower(0.6);
     fs.close();
@@ -118,6 +119,40 @@ class StateManagerImplTest {
 
     assertEquals(450.0, PerspectiveAPI.getTransition().getDurationMs());
     assertEquals(1.25, PerspectiveAPI.getTransition().getBlendPower());
+  }
+
+  @Test
+  void roundTripPreservesLogicTickInterval() {
+    Path filePath = tempDir.resolve("logic.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    PerspectiveAPI.setLogicTickInterval(4);
+
+    manager.tryExtractAndSave();
+    PerspectiveAPI.setLogicTickInterval(1);
+    manager.tryLoadAndApply();
+
+    assertEquals(4, PerspectiveAPI.getLogicTickInterval());
+  }
+
+  @Test
+  void invalidLogicTickIntervalIsNotPartiallyApplied() throws IOException {
+    Path filePath = tempDir.resolve("invalid-logic.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    Files.createDirectories(filePath.getParent());
+    Files.writeString(
+        filePath,
+        """
+        {
+          "enabled": false,
+          "logic_tick_interval": 0
+        }
+        """);
+    PerspectiveAPI.setEnabled(true);
+
+    manager.tryLoadAndApply();
+
+    assertTrue(PerspectiveAPI.isEnabled());
+    assertEquals(PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL, PerspectiveAPI.getLogicTickInterval());
   }
 
   @Test

@@ -50,6 +50,7 @@ public final class PerspectiveManager {
 
   private final ThrottledPerspectiveSanitizer sanitizer =
       new ThrottledPerspectiveSanitizer(throttledAction);
+  private final LogicUpdateScheduler logicUpdateScheduler = new LogicUpdateScheduler();
 
   // region components
 
@@ -124,6 +125,24 @@ public final class PerspectiveManager {
     // tick switchers
     switchers.clientTick(minecraft);
 
+    if (logicUpdateScheduler.tick(PerspectiveAPI.getLogicTickInterval())) {
+      updateCurrentPerspective();
+    }
+
+    Perspective current = this.current;
+    PerspectiveBehavior currentBehavior = this.currentBehavior;
+    if (current == null || currentBehavior == null) return;
+
+    // Run perspective client tick
+    extensions.run(
+        current.id(), "clientTick", () -> currentBehavior.clientTickWhenActive(minecraft));
+  }
+
+  void resetLogicUpdateScheduler() {
+    logicUpdateScheduler.reset();
+  }
+
+  private void updateCurrentPerspective() {
     // Resolve current id from override chain
     Perspective resolved = PerspectiveRegistryImpl.INSTANCE.getOrDefault(overrides.get());
     current = resolved;
@@ -154,10 +173,6 @@ public final class PerspectiveManager {
 
       startTransition();
     }
-
-    // Run perspective client tick
-    extensions.run(
-        resolved.id(), "clientTick", () -> resolvedBehavior.clientTickWhenActive(minecraft));
   }
 
   // endregion

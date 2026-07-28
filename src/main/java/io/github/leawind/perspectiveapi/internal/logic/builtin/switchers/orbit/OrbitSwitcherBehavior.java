@@ -1,8 +1,11 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
+import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.List;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -12,17 +15,30 @@ import org.jspecify.annotations.Nullable;
 
 public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior {
   private final OrbitSwitcherModel model = new OrbitSwitcherModel();
-  private final ToggleKeyGesture keyGesture = new ToggleKeyGesture(3);
+  private final KeyStateTracker keyStateTracker;
   private final OrbitMenu menu = new OrbitMenu(this, model);
 
   public OrbitSwitcherBehavior() {
-    keyGesture.onShortPress(model::cycleForward);
-    keyGesture.onHoldStart(menu::open);
-    keyGesture.onHoldStop(menu::closeFromKey);
+    keyStateTracker =
+        KeyStateTracker.builder()
+            .setHoldTicks(3)
+            .onPress(model::cycleForward)
+            .onHoldStart(menu::open)
+            .onHoldStop(menu::closeFromKey)
+            .build();
   }
 
   @Override
   public void init() {
+    GameClientEvents.HANDLE_KEYBINDS_START.on(
+        minecraft -> {
+          if (!PerspectiveAPI.isEnabled()) return;
+          if (PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() != this) return;
+
+          KeyMapping key = minecraft.options.keyTogglePerspective;
+          keyStateTracker.tick(key.isDown());
+          while (key.consumeClick()) {}
+        });
     menu.init();
   }
 
@@ -52,14 +68,11 @@ public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior 
   public void clientTickWhenActive(@NonNull Minecraft minecraft) {
     model.ensureActive();
     if (menu.isOpened() && Bridge.getScreen(minecraft) != null) menu.close();
-    KeyMapping key = minecraft.options.keyTogglePerspective;
-    keyGesture.tick(key.isDown());
-    while (key.consumeClick()) {}
   }
 
   @Override
   public void onDeactivated() {
-    keyGesture.reset();
+    keyStateTracker.reset();
     menu.close();
     model.clearPreview();
   }
@@ -74,8 +87,8 @@ public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior 
     return model;
   }
 
-  ToggleKeyGesture keyGesture() {
-    return keyGesture;
+  KeyStateTracker keyStateTracker() {
+    return keyStateTracker;
   }
 
   OrbitMenu menu() {
