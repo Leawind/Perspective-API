@@ -38,8 +38,9 @@ final class OrbitMenu {
   static final double RING_RADIUS = 0.25;
   private static final double GROUP_INNER_BOUNDARY = 0.22;
   private static final double GROUP_OUTER_BOUNDARY = 0.32;
-  private static final PairForce DISABLED_REPULSION =
-      InverseSquareForces.coulomb(0.025, 0.035, 10);
+  private static final double LINEAR_DRAG_FACTOR = 12;
+  private static final double LAYOUT_SPRING_MAX_FORCE = 160;
+  private static final PairForce DISABLED_REPULSION = InverseSquareForces.coulomb(0.025, 0.035, 10);
 
   private final OrbitSwitcherBehavior owner;
   private final OrbitSwitcherModel model;
@@ -73,7 +74,7 @@ final class OrbitMenu {
     world.addPairForce(InverseSquareForces.coulomb(0.0005, 0.025, 1));
     world.addPairForce(this::applyDisabledRepulsion);
     world.addBodyForce(this::applyLayoutForces);
-    world.addBodyForce(new DragForce(16, 1.5));
+    world.addBodyForce(new DragForce(LINEAR_DRAG_FACTOR, 1.5));
     world.addBodyForce(OrbitMenu::applyFriction);
   }
 
@@ -402,7 +403,12 @@ final class OrbitMenu {
     int index = selected.indexOf(id);
     if (index < 0 || selected.isEmpty()) return;
     double angle = Math.PI * 2 * index / selected.size() - Math.PI / 2;
-    addSpring(body, RING_RADIUS * Math.cos(angle), RING_RADIUS * Math.sin(angle), 360, 80);
+    addSpring(
+        body,
+        RING_RADIUS * Math.cos(angle),
+        RING_RADIUS * Math.sin(angle),
+        360,
+        LAYOUT_SPRING_MAX_FORCE);
   }
 
   private void applyCandidateForce(PhysicsBody body, String id) {
@@ -415,7 +421,7 @@ final class OrbitMenu {
         candidates.size() < 2 ? 0 : Math.min(0.1, availableHeight / (candidates.size() - 1));
     double y = (index - (candidates.size() - 1) * 0.5) * spacing;
     y = Math.max(-verticalLimit() + 0.08, Math.min(verticalLimit() - 0.08, y));
-    addSpring(body, x, y, 360, 80);
+    addSpring(body, x, y, 360, LAYOUT_SPRING_MAX_FORCE);
   }
 
   private void applyDisabledBoundary(PhysicsBody body) {
@@ -454,8 +460,10 @@ final class OrbitMenu {
 
   private static void addSpring(
       PhysicsBody body, double targetX, double targetY, double spring, double maxForce) {
-    double fx = (targetX - body.position().x) * spring;
-    double fy = (targetY - body.position().y) * spring;
+    double criticalDamping = 2 * Math.sqrt(spring * body.mass());
+    double springDamping = Math.max(criticalDamping - LINEAR_DRAG_FACTOR, 0);
+    double fx = (targetX - body.position().x) * spring - body.velocity().x * springDamping;
+    double fy = (targetY - body.position().y) * spring - body.velocity().y * springDamping;
     double lengthSquared = fx * fx + fy * fy;
     if (lengthSquared > maxForce * maxForce) {
       double scale = maxForce / Math.sqrt(lengthSquared);

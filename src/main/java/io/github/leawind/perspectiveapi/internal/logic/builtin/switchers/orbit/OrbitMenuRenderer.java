@@ -18,9 +18,9 @@ final class OrbitMenuRenderer {
 
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
   private static final int COLOR_UNAVAILABLE = 0xFF_EA_B3_08;
-  private static final int COLOR_SELECTED_AREA = 0x33_FF_FF_FF;
-  private static final int COLOR_CANDIDATE_AREA = 0x22_3B_82_F6;
-  private static final int COLOR_DISABLED_AREA = 0x22_EF_44_44;
+  private static final int COLOR_ORBIT = 0x99_FF_FF_FF;
+  private static final double ORBIT_DASH_PERIOD_PX = 14;
+  private static final double ORBIT_DASH_RATIO = 0.57;
 
   void render(GuiRenderContext context, OrbitMenu menu) {
     DrawContext canvas = context.drawContext;
@@ -47,12 +47,9 @@ final class OrbitMenuRenderer {
 
   private void drawEditingAreas(DrawContext canvas, GuiRenderContext context, OrbitMenu menu) {
     int width = context.screenWidth;
-    int height = context.screenHeight;
     int leftEnd = (int) menu.worldToScreenX(-0.27);
     int rightStart = (int) menu.worldToScreenX(0.27);
-    canvas.fill(0, 0, leftEnd, height, COLOR_CANDIDATE_AREA);
-    canvas.fill(leftEnd, 0, rightStart, height, COLOR_SELECTED_AREA);
-    canvas.fill(rightStart, 0, width, height, COLOR_DISABLED_AREA);
+    drawDashedOrbit(canvas, menu);
 
     drawCenteredText(
         canvas,
@@ -69,6 +66,29 @@ final class OrbitMenuRenderer {
         Component.translatable("perspective_api.switcher.orbit_switcher.disabled"),
         (rightStart + width) / 2,
         12);
+  }
+
+  private void drawDashedOrbit(DrawContext canvas, OrbitMenu menu) {
+    double centerX = menu.worldToScreenX(0);
+    double centerY = menu.worldToScreenY(0);
+    double radius = Math.abs(menu.worldToScreenX(OrbitMenu.RING_RADIUS) - centerX);
+    if (radius < 1) return;
+
+    double circumference = Math.PI * 2 * radius;
+    int dashCount = Math.max((int) Math.round(circumference / ORBIT_DASH_PERIOD_PX), 12);
+    double periodRad = Math.PI * 2 / dashCount;
+    double dashRad = periodRad * ORBIT_DASH_RATIO;
+    int samplesPerDash = Math.max((int) Math.ceil(radius * dashRad / 2), 2);
+
+    for (int dash = 0; dash < dashCount; dash++) {
+      double startRad = dash * periodRad;
+      for (int sample = 0; sample <= samplesPerDash; sample++) {
+        double angleRad = startRad + dashRad * sample / samplesPerDash;
+        int x = (int) Math.round(centerX + radius * Math.cos(angleRad));
+        int y = (int) Math.round(centerY + radius * Math.sin(angleRad));
+        canvas.fill(x - 1, y - 1, x + 1, y + 1, COLOR_ORBIT);
+      }
+    }
   }
 
   private void drawActor(
