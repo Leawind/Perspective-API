@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
+import com.google.auto.service.AutoService;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
@@ -17,6 +18,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@AutoService(PerspectiveSwitcherBehavior.class)
 public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   private static final Logger LOGGER = LoggerFactory.getLogger(WheelSwitcherBehavior.class);
 
@@ -27,6 +29,10 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   private @Nullable String selected = null;
 
   private final WheelMenu wheelMenu = new WheelMenu();
+
+  public WheelSwitcherBehavior() {
+    this(PerspectiveAPI.getRegistry());
+  }
 
   public WheelSwitcherBehavior(PerspectiveRegistry registry) {
     this.registry = registry;

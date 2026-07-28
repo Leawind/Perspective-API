@@ -22,5 +22,10 @@
   "perspective_api.config_screen.fallback.title": "無置設之幕可用",
   "perspective_api.config_screen.fallback.message": "措置 YACL 以見置設之幕",
   "perspective_api.switcher.wheel_switcher.name": "輪盤切換器",
-  "perspective_api.switcher.wheel_switcher.description": "以視角切換鍵循換諸可用視角，長按則開輪盤"
+  "perspective_api.switcher.wheel_switcher.description": "以視角切換鍵循換諸可用視角，長按則開輪盤",
+  "perspective_api.switcher.orbit_switcher.name": "軌道切換器",
+  "perspective_api.switcher.orbit_switcher.description": "短按視角鍵循換諸啓用視角，長按則開可輯之空間輪盤",
+  "perspective_api.switcher.orbit_switcher.selected": "已選",
+  "perspective_api.switcher.orbit_switcher.candidate": "候選",
+  "perspective_api.switcher.orbit_switcher.disabled": "已禁"
 }

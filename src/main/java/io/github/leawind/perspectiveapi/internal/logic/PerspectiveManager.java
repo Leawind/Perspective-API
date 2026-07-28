@@ -16,7 +16,7 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateImpl;
 import io.github.leawind.perspectiveapi.internal.impl.ThrottledPerspectiveSanitizer;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel.WheelSwitcherBehavior;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import net.minecraft.client.Camera;
@@ -38,7 +38,7 @@ public final class PerspectiveManager {
     PerspectiveAPI.installRuntime(PerspectiveAPIRuntimeImpl.INSTANCE);
     try {
       INSTANCE =
-          new PerspectiveManager(new WheelSwitcherBehavior(PerspectiveRegistryImpl.INSTANCE));
+          new PerspectiveManager(new OrbitSwitcherBehavior());
     } catch (Throwable e) {
       LOGGER.error("Failed to initialize PerspectiveManager", e);
       throw e;

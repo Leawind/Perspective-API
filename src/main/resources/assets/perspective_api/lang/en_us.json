@@ -22,5 +22,10 @@
   "perspective_api.config_screen.fallback.title": "No Config Screen Available",
   "perspective_api.config_screen.fallback.message": "Please install YACL to display the config screen",
   "perspective_api.switcher.wheel_switcher.name": "Wheel Switcher",
-  "perspective_api.switcher.wheel_switcher.description": "Cycles through available perspectives using the perspective toggle keybind, or opens a radial menu when held"
+  "perspective_api.switcher.wheel_switcher.description": "Cycles through available perspectives using the perspective toggle keybind, or opens a radial menu when held",
+  "perspective_api.switcher.orbit_switcher.name": "Orbit Switcher",
+  "perspective_api.switcher.orbit_switcher.description": "Cycles through enabled perspectives, or opens an editable spatial wheel when the perspective key is held",
+  "perspective_api.switcher.orbit_switcher.selected": "Selected",
+  "perspective_api.switcher.orbit_switcher.candidate": "Candidates",
+  "perspective_api.switcher.orbit_switcher.disabled": "Disabled"
 }

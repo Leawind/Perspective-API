@@ -22,5 +22,10 @@
   "perspective_api.config_screen.fallback.title": "無可用的配置畫面",
   "perspective_api.config_screen.fallback.message": "請安裝 YACL 以顯示配置畫面",
   "perspective_api.switcher.wheel_switcher.name": "輪盤切換器",
-  "perspective_api.switcher.wheel_switcher.description": "使用視角切換快捷鍵在可用視角間循環切換，長按開啟輪盤選單"
+  "perspective_api.switcher.wheel_switcher.description": "使用視角切換快捷鍵在可用視角間循環切換，長按開啟輪盤選單",
+  "perspective_api.switcher.orbit_switcher.name": "軌道切換器",
+  "perspective_api.switcher.orbit_switcher.description": "短按視角鍵循環切換啟用的視角，長按開啟可編輯的空間輪盤",
+  "perspective_api.switcher.orbit_switcher.selected": "已選擇",
+  "perspective_api.switcher.orbit_switcher.candidate": "候選",
+  "perspective_api.switcher.orbit_switcher.disabled": "已停用"
 }
