@@ -20,15 +20,18 @@ public interface PerspectiveState {
   /// Returns the camera rotation (API convention, +Z forward).
   @NonNull Quaternionfc rotation();
 
+  /// Returns the projection mode used to render the world.
+  ///
+  /// @see #getFovDeg()
+  /// @see #getOrthographicHeight()
+  @ApiStatus.Experimental
+  @NonNull ProjectionMode projectionMode();
+
   /// Returns the field of view in degrees.
   ///
   /// This value is effective only when {@link #projectionMode()} is
   /// {@link ProjectionMode#PERSPECTIVE}.
   float getFovDeg();
-
-  /// Returns the projection mode used to render the world.
-  @ApiStatus.Experimental
-  @NonNull ProjectionMode projectionMode();
 
   /// Returns the vertical span of the orthographic view in world units.
   ///
@@ -51,14 +54,16 @@ public interface PerspectiveState {
     @Override
     @NonNull Quaternionf rotation();
 
-    /// Sets the field of view in degrees.
-    void setFovDeg(float fovDeg);
-
     /// Sets the projection mode used to render the world.
     ///
     /// @throws NullPointerException if `projectionMode` is `null`
+    /// @see #setFovDeg(float)
+    /// @see #setOrthographicHeight(float)
     @ApiStatus.Experimental
     void setProjectionMode(@NonNull ProjectionMode projectionMode);
+
+    /// Sets the field of view in degrees.
+    void setFovDeg(float fovDeg);
 
     /// Sets the vertical span of the orthographic view in world units.
     @ApiStatus.Experimental

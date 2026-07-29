@@ -28,6 +28,11 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
   }
 
   @Override
+  public @NonNull ProjectionMode projectionMode() {
+    return projectionMode;
+  }
+
+  @Override
   public void setFovDeg(float fovDeg) {
     this.fovDeg = fovDeg;
   }
@@ -35,11 +40,6 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
   @Override
   public float getFovDeg() {
     return fovDeg;
-  }
-
-  @Override
-  public @NonNull ProjectionMode projectionMode() {
-    return projectionMode;
   }
 
   @Override
