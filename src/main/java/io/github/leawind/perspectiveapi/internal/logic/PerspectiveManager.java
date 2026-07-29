@@ -227,10 +227,6 @@ public final class PerspectiveManager {
       renderTickContext.setup(partialTicks, entity, isTransitioning);
     }
 
-    // Pre-apply callback
-    extensions.run(
-        current.id(), "preApply", () -> currentBehavior.beforeApplyCameraState(renderTickContext));
-
     // Backup vanilla state for fallback
     {
       Bridge.getCameraPosition(camera, targetState.position());

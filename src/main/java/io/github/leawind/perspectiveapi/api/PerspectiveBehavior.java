@@ -147,18 +147,11 @@ public interface PerspectiveBehavior {
   /// Called every client tick when this perspective is active.
   ///
   /// @see #isAvailable()
-  /// @see #beforeApplyCameraState
   default void clientTickWhenActive(@NonNull Minecraft minecraft) {}
 
   // endregion
 
   // region camera state pipeline
-
-  /// Called on every render frame when this perspective is active,
-  /// **before** {@link #applyCameraState}.
-  ///
-  /// @see #afterApplyCameraState
-  default void beforeApplyCameraState(@NonNull PerspectiveContext context) {}
 
   /// Modifies the camera's target state in-place.
   ///
@@ -185,7 +178,6 @@ public interface PerspectiveBehavior {
   /// @param state The final camera state that has been applied.
   /// @param context   The context containing frame-specific data.
   /// @apiNote Neither argument may be stored or referenced after this method returns.
-  /// @see #beforeApplyCameraState
   default void afterApplyCameraState(
       @NonNull PerspectiveState state, @NonNull PerspectiveContext context) {}
 
