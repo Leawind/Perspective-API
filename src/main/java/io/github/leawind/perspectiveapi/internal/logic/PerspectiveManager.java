@@ -229,7 +229,7 @@ public final class PerspectiveManager {
 
     // Pre-apply callback
     extensions.run(
-        current.id(), "preApply", () -> currentBehavior.preApplyWhenActive(renderTickContext));
+        current.id(), "preApply", () -> currentBehavior.beforeApplyCameraState(renderTickContext));
 
     // Backup vanilla state for fallback
     {
@@ -275,7 +275,7 @@ public final class PerspectiveManager {
     extensions.run(
         current.id(),
         "postApply",
-        () -> currentBehavior.postApplyWhenActive(targetState, renderTickContext));
+        () -> currentBehavior.afterApplyCameraState(targetState, renderTickContext));
   }
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.

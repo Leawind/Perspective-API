@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -137,7 +138,8 @@ class PerspectiveModifierChainImplTest {
   private static PerspectiveModifier modifier(Consumer<PerspectiveState.Mutable> action) {
     return new PerspectiveModifier() {
       @Override
-      public void apply(PerspectiveState.Mutable state, PerspectiveContext ctx) {
+      public void apply(
+          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {
         action.accept(state);
       }
     };
@@ -152,7 +154,8 @@ class PerspectiveModifierChainImplTest {
       }
 
       @Override
-      public void apply(PerspectiveState.Mutable state, PerspectiveContext ctx) {
+      public void apply(
+          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {
         applications.incrementAndGet();
       }
     };
@@ -166,7 +169,8 @@ class PerspectiveModifierChainImplTest {
       }
 
       @Override
-      public void apply(PerspectiveState.Mutable state, PerspectiveContext ctx) {
+      public void apply(
+          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {
         applications.incrementAndGet();
       }
     };

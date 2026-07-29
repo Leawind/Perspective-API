@@ -26,8 +26,8 @@ public interface PerspectiveModifier {
   ///
   /// @param state The target camera state, potentially modified by the base
   ///   perspective and previous modifiers. Can be mutated.
-  /// @param ctx   The context containing frame-specific data.
+  /// @param context   The context containing frame-specific data.
   /// @apiNote Both arguments are temporary and must not be retained after this method returns.
   default void apply(
-      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {}
+      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {}
 }

@@ -147,7 +147,7 @@ public interface PerspectiveBehavior {
   /// Called every client tick when this perspective is active.
   ///
   /// @see #isAvailable()
-  /// @see #preApplyWhenActive
+  /// @see #beforeApplyCameraState
   default void clientTickWhenActive(@NonNull Minecraft minecraft) {}
 
   // endregion
@@ -157,11 +157,8 @@ public interface PerspectiveBehavior {
   /// Called on every render frame when this perspective is active,
   /// **before** {@link #applyCameraState}.
   ///
-  /// Use this to prepare per-frame data (e.g. reading input, updating
-  /// internal state).
-  ///
-  /// @see #postApplyWhenActive
-  default void preApplyWhenActive(@NonNull PerspectiveContext context) {}
+  /// @see #afterApplyCameraState
+  default void beforeApplyCameraState(@NonNull PerspectiveContext context) {}
 
   /// Modifies the camera's target state in-place.
   ///
@@ -171,11 +168,11 @@ public interface PerspectiveBehavior {
   /// interpolation.
   ///
   /// @param state The vanilla camera state. Can be mutated.
-  /// @param ctx   The context containing frame-specific data.
+  /// @param context   The context containing frame-specific data.
   /// @apiNote `state` must not be stored or referenced outside this method
-  ///   call. `ctx` is also valid only for this call.
+  ///   call. `context` is also valid only for this call.
   default void applyCameraState(
-      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {}
+      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {}
 
   /// Called on every render frame when this perspective is active,
   /// **after** the final camera state has been fully computed and applied,
@@ -186,11 +183,11 @@ public interface PerspectiveBehavior {
   /// actual rendered viewpoint.
   ///
   /// @param state The final camera state that has been applied.
-  /// @param ctx   The context containing frame-specific data.
+  /// @param context   The context containing frame-specific data.
   /// @apiNote Neither argument may be stored or referenced after this method returns.
-  /// @see #preApplyWhenActive
-  default void postApplyWhenActive(
-      @NonNull PerspectiveState state, @NonNull PerspectiveContext ctx) {}
+  /// @see #beforeApplyCameraState
+  default void afterApplyCameraState(
+      @NonNull PerspectiveState state, @NonNull PerspectiveContext context) {}
 
   // endregion
 }
