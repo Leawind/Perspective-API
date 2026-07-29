@@ -29,7 +29,7 @@ public interface Perspective {
   @Nullable Component description();
 
   /// Returns the vanilla camera type used as a fallback when this perspective
-  /// does not explicitly modify the camera transform or FOV.
+  /// does not explicitly modify the camera transform or projection settings.
   @NonNull BaseType baseType();
 
   /// Whether this perspective is allowed to be manually selected by the player

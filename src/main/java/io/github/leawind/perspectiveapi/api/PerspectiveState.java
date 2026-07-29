@@ -10,7 +10,7 @@ import org.jspecify.annotations.NonNull;
 /// A read-only, temporary view of the camera state managed by Perspective API.
 ///
 /// Comprises position (world space), rotation (API convention, +Z forward),
-/// and field of view in degrees.
+/// and projection settings.
 @ApiStatus.NonExtendable
 public interface PerspectiveState {
 
@@ -21,7 +21,21 @@ public interface PerspectiveState {
   @NonNull Quaternionfc rotation();
 
   /// Returns the field of view in degrees.
+  ///
+  /// This value is effective only when {@link #projectionMode()} is
+  /// {@link ProjectionMode#PERSPECTIVE}.
   float getFovDeg();
+
+  /// Returns the projection mode used to render the world.
+  @ApiStatus.Experimental
+  @NonNull ProjectionMode projectionMode();
+
+  /// Returns the vertical span of the orthographic view in world units.
+  ///
+  /// The horizontal span is this value multiplied by the viewport aspect ratio. This value is
+  /// effective only when {@link #projectionMode()} is {@link ProjectionMode#ORTHOGRAPHIC}.
+  @ApiStatus.Experimental
+  float getOrthographicHeight();
 
   /// A mutable view of {@link PerspectiveState} whose spatial fields can be
   /// modified in-place.
@@ -39,5 +53,15 @@ public interface PerspectiveState {
 
     /// Sets the field of view in degrees.
     void setFovDeg(float fovDeg);
+
+    /// Sets the projection mode used to render the world.
+    ///
+    /// @throws NullPointerException if `projectionMode` is `null`
+    @ApiStatus.Experimental
+    void setProjectionMode(@NonNull ProjectionMode projectionMode);
+
+    /// Sets the vertical span of the orthographic view in world units.
+    @ApiStatus.Experimental
+    void setOrthographicHeight(float orthographicHeight);
   }
 }

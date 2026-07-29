@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
+import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
@@ -85,6 +86,8 @@ class PerspectiveModifierChainImplTest {
     state.position().set(1.0, 2.0, 3.0);
     state.rotation().rotationY(0.25f);
     state.setFovDeg(70.0f);
+    state.setProjectionMode(ProjectionMode.ORTHOGRAPHIC);
+    state.setOrthographicHeight(16.0f);
     chain.register(
         "failure",
         0,
@@ -93,6 +96,8 @@ class PerspectiveModifierChainImplTest {
               s.position().set(9.0, 9.0, 9.0);
               s.rotation().identity();
               s.setFovDeg(120.0f);
+              s.setProjectionMode(ProjectionMode.PERSPECTIVE);
+              s.setOrthographicHeight(40.0f);
               throw new IllegalStateException("failure");
             }));
     chain.register("after", 1, modifier(s -> s.position().add(1.0, 0.0, 0.0)));
@@ -102,6 +107,8 @@ class PerspectiveModifierChainImplTest {
     TestUtils.assertVectorEquals(new Vector3d(2.0, 2.0, 3.0), state.position());
     TestUtils.assertQuatEquals(new Quaternionf().rotationY(0.25f), state.rotation());
     assertEquals(70.0f, state.getFovDeg());
+    assertEquals(ProjectionMode.ORTHOGRAPHIC, state.projectionMode());
+    assertEquals(16.0f, state.getOrthographicHeight());
   }
 
   @Test
@@ -109,6 +116,7 @@ class PerspectiveModifierChainImplTest {
     state.position().set(1.0, 2.0, 3.0);
     state.rotation().rotationY(0.25f);
     state.setFovDeg(70.0f);
+    state.setOrthographicHeight(16.0f);
     chain.register(
         "invalid",
         0,
@@ -117,6 +125,7 @@ class PerspectiveModifierChainImplTest {
               s.position().x = Double.NaN;
               s.rotation().rotationX(0.5f);
               s.setFovDeg(100.0f);
+              s.setOrthographicHeight(Float.NaN);
             }));
 
     chain.applyCameraState(state, context);
@@ -124,6 +133,7 @@ class PerspectiveModifierChainImplTest {
     TestUtils.assertVectorEquals(new Vector3d(1.0, 2.0, 3.0), state.position());
     TestUtils.assertQuatEquals(new Quaternionf().rotationX(0.5f), state.rotation());
     assertEquals(100.0f, state.getFovDeg());
+    assertEquals(16.0f, state.getOrthographicHeight());
   }
 
   @Test

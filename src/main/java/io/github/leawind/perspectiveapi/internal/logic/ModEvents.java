@@ -16,9 +16,7 @@ public final class ModEvents {
 
     GameClientEvents.CLIENT_TICK_START.on(
         minecraft -> {
-          if (!PerspectiveAPI.isEnabled()
-              || minecraft.level == null
-              || minecraft.player == null) {
+          if (!PerspectiveAPI.isEnabled() || minecraft.level == null || minecraft.player == null) {
             manager.resetLogicUpdateScheduler();
             return;
           }
@@ -42,6 +40,12 @@ public final class ModEvents {
         (ctx) -> {
           if (!PerspectiveAPI.isEnabled()) return;
           ctx.fieldOfViewDeg = manager.modifyFov(ctx.fieldOfViewDeg);
+        });
+
+    GameClientEvents.MODIFY_PROJECTION.on(
+        (ctx) -> {
+          if (!PerspectiveAPI.isEnabled()) return;
+          manager.modifyProjection(ctx);
         });
 
     GameClientEvents.AFTER_MINECRAFT_INIT.on(

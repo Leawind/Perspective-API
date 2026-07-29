@@ -21,6 +21,10 @@ public class ThrottledPerspectiveSanitizer {
     return Sanitizer.isFinite(fovDeg) && fovDeg >= 0.0f && fovDeg <= 180.0f;
   }
 
+  public static boolean isValidOrthographicHeight(float orthographicHeight) {
+    return Sanitizer.isFinite(orthographicHeight) && orthographicHeight > 0.0f;
+  }
+
   /// @return if `target` is valid
   public boolean sanitizePosition(
       String id, Vector3d target, Vector3dc fallback, Supplier<String> message) {
@@ -75,6 +79,22 @@ public class ThrottledPerspectiveSanitizer {
     return fallbackFovDeg;
   }
 
+  /// @return `target` if valid, or `fallback` if invalid
+  public float sanitizeOrthographicHeight(
+      String id, float target, float fallback, Supplier<String> message) {
+    if (isValidOrthographicHeight(target)) return target;
+
+    throttledAction.run(
+        id,
+        () ->
+            LOGGER.warn(
+                "Invalid orthographic height {}, falling back to {}. Message: {}",
+                target,
+                fallback,
+                message.get()));
+    return fallback;
+  }
+
   public void sanitize(
       String idPrefix,
       PerspectiveStateImpl.Mutable target,
@@ -86,6 +106,15 @@ public class ThrottledPerspectiveSanitizer {
       float fovDeg =
           sanitizeFovDeg(idPrefix + ".fov", target.getFovDeg(), fallback.getFovDeg(), message);
       target.setFovDeg(fovDeg);
+    }
+    {
+      float orthographicHeight =
+          sanitizeOrthographicHeight(
+              idPrefix + ".orthographic_height",
+              target.getOrthographicHeight(),
+              fallback.getOrthographicHeight(),
+              message);
+      target.setOrthographicHeight(orthographicHeight);
     }
   }
 }

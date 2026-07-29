@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
+import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.utils.Utils;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.Blender;
@@ -15,8 +16,9 @@ import org.lwjgl.glfw.GLFW;
 
 /// Controls smooth camera transitions between perspectives.
 ///
-/// Position and FOV interpolate from the fixed transition start toward the current target. Rotation
-/// uses chase interpolation so a moving target remains smooth between rendered frames.
+/// Position, FOV, and orthographic height interpolate from the fixed transition start toward the
+/// current target. Rotation uses chase interpolation so a moving target remains smooth between
+/// rendered frames. Projection mode changes are discrete.
 public final class TransitionImpl implements Transition {
 
   private static final double MIN_DELTA_MS = 0.1;
@@ -36,6 +38,8 @@ public final class TransitionImpl implements Transition {
   private final Vector3d startPosition = new Vector3d();
   private final Quaternionf startRotation = new Quaternionf();
   private float startFovDeg = DEFAULT_FOV_DEG;
+  private ProjectionMode startProjectionMode = ProjectionMode.PERSPECTIVE;
+  private float startOrthographicHeight = PerspectiveStateImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT;
 
   // endregion
 
@@ -112,12 +116,14 @@ public final class TransitionImpl implements Transition {
     this.startPosition.set(startState.position());
     this.startRotation.set(startState.rotation());
     this.startFovDeg = startState.getFovDeg();
+    this.startProjectionMode = startState.projectionMode();
+    this.startOrthographicHeight = startState.getOrthographicHeight();
     this.prevRotation.set(startState.rotation());
     this.prevEasedProgress = 0;
   }
 
-  /// Interpolates position, rotation, and FOV from the start state toward
-  /// the target state, writing the result into `dest`.
+  /// Interpolates continuous camera state from the start state toward the target state and writes
+  /// the result into `dest`. Projection mode changes are applied immediately.
   ///
   /// `target` and `dest` may be the same instance.
   public void update(
@@ -127,6 +133,12 @@ public final class TransitionImpl implements Transition {
     updateTransform(
         currentTimeMs, target.position(), target.rotation(), dest.position(), dest.rotation());
     dest.setFovDeg(updateFovDeg(currentTimeMs, target.getFovDeg()));
+    ProjectionMode targetProjectionMode = target.projectionMode();
+    dest.setProjectionMode(targetProjectionMode);
+    dest.setOrthographicHeight(
+        startProjectionMode == targetProjectionMode
+            ? updateOrthographicHeight(currentTimeMs, target.getOrthographicHeight())
+            : target.getOrthographicHeight());
   }
 
   private void updateTransform(
@@ -152,5 +164,12 @@ public final class TransitionImpl implements Transition {
   private float updateFovDeg(double currentTimeMs, float targetFovDeg) {
     float easedProgress = computeEasedProgress(currentTimeMs);
     return startFovDeg + (targetFovDeg - startFovDeg) * easedProgress;
+  }
+
+  private float updateOrthographicHeight(
+      double currentTimeMs, float targetOrthographicHeight) {
+    float easedProgress = computeEasedProgress(currentTimeMs);
+    return startOrthographicHeight
+        + (targetOrthographicHeight - startOrthographicHeight) * easedProgress;
   }
 }

@@ -4,8 +4,8 @@ import org.jetbrains.annotations.ApiStatus;
 
 /// Controls smooth camera transitions between perspectives.
 ///
-/// When a perspective switch occurs, the camera interpolates from its previous position/rotation
-/// to the new perspective's values
+/// When a perspective switch occurs, the camera interpolates its position, rotation, FOV, and
+/// orthographic height toward the new perspective's values. Projection mode changes are discrete.
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 public interface Transition {

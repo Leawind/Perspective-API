@@ -53,7 +53,7 @@ public interface PerspectiveBehavior {
     @NonNull String id();
 
     /// The vanilla camera type used as a fallback when this perspective
-    /// does not explicitly modify the camera transform or FOV.
+    /// does not explicitly modify the camera transform or projection settings.
     @NonNull BaseType baseType() default BaseType.THIRD_PERSON_BACK;
 
     /// The translation key for the perspective's display name.

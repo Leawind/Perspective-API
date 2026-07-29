@@ -60,7 +60,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
   /// Called after the base perspective establishes the target state,
   /// but before transition interpolation.
   ///
-  /// Position, rotation, and FOV are validated after each modifier;
+  /// Position, rotation, FOV, and orthographic height are validated after each modifier;
   /// invalid fields are individually reverted.
   public void applyCameraState(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {
@@ -87,5 +87,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     target.position().set(source.position());
     target.rotation().set(source.rotation());
     target.setFovDeg(source.getFovDeg());
+    target.setProjectionMode(source.projectionMode());
+    target.setOrthographicHeight(source.getOrthographicHeight());
   }
 }

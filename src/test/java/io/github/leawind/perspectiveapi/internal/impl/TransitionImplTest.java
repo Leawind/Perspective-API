@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.Blender;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.Blenders;
 import io.github.leawind.perspectiveapi.testutils.TestUtils;
@@ -101,6 +102,36 @@ class TransitionImplTest {
     TestUtils.assertVectorEquals(target.position(), dest.position());
     TestUtils.assertQuatEquals(target.rotation(), dest.rotation());
     assertEquals(target.getFovDeg(), dest.getFovDeg());
+  }
+
+  @Test
+  void interpolatesOrthographicHeightWhenProjectionModeMatches() {
+    start.setProjectionMode(ProjectionMode.ORTHOGRAPHIC);
+    start.setOrthographicHeight(10.0f);
+    target.setProjectionMode(ProjectionMode.ORTHOGRAPHIC);
+    target.setOrthographicHeight(30.0f);
+    transition.setStartState(1_000.0, start);
+    PerspectiveStateImpl dest = new PerspectiveStateImpl();
+
+    transition.update(1_050.0, target, dest);
+
+    assertEquals(ProjectionMode.ORTHOGRAPHIC, dest.projectionMode());
+    assertEquals(20.0f, dest.getOrthographicHeight(), 1.0e-4f);
+  }
+
+  @Test
+  void switchesProjectionModeAndScaleDiscretelyWhenModesDiffer() {
+    start.setProjectionMode(ProjectionMode.PERSPECTIVE);
+    start.setOrthographicHeight(10.0f);
+    target.setProjectionMode(ProjectionMode.ORTHOGRAPHIC);
+    target.setOrthographicHeight(30.0f);
+    transition.setStartState(1_000.0, start);
+    PerspectiveStateImpl dest = new PerspectiveStateImpl();
+
+    transition.update(1_001.0, target, dest);
+
+    assertEquals(ProjectionMode.ORTHOGRAPHIC, dest.projectionMode());
+    assertEquals(30.0f, dest.getOrthographicHeight());
   }
 
   private void assertHalfway(PerspectiveStateImpl actual) {

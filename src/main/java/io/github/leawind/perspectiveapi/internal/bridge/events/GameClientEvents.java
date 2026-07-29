@@ -29,6 +29,9 @@ public final class GameClientEvents {
   public static final SingleEventEmitter<ModifyFieldOfViewContext> MODIFY_FIELD_OF_VIEW =
       new SingleEventEmitter<>();
 
+  public static final SingleEventEmitter<ModifyProjectionContext> MODIFY_PROJECTION =
+      new SingleEventEmitter<>();
+
   public static final SimpleEventEmitter.Owned<GuiRenderContext> RENDER_GUI_OVERLAY =
       SimpleEventEmitter.create();
   public static final SimpleEventEmitter.Owned<MouseInputContext> MOUSE_INPUT =

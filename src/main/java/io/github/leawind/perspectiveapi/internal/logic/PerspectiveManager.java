@@ -5,10 +5,12 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
+import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
+import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyProjectionContext;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
@@ -180,7 +182,7 @@ public final class PerspectiveManager {
 
   private final PerspectiveContextImpl renderTickContext = new PerspectiveContextImpl();
 
-  /// Updates camera position, rotation, and FOV based on the current perspective.
+  /// Updates camera transform and projection settings based on the current perspective.
   ///
   /// ### Steps
   ///
@@ -233,6 +235,8 @@ public final class PerspectiveManager {
       Bridge.getCameraRotation(camera, tempMcQuat);
       CameraSpace.mcToApi(tempMcQuat, targetState.rotation());
       targetState.setFovDeg(cachedVanillaFovDeg);
+      targetState.setProjectionMode(ProjectionMode.PERSPECTIVE);
+      targetState.setOrthographicHeight(PerspectiveStateImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT);
       backupState.set(targetState);
     }
 
@@ -281,6 +285,12 @@ public final class PerspectiveManager {
   public float modifyFov(float vanillaFovDeg) {
     cachedVanillaFovDeg = vanillaFovDeg;
     return targetState.getFovDeg();
+  }
+
+  /// Writes the already-computed projection settings into a bridge context.
+  public void modifyProjection(@NonNull ModifyProjectionContext context) {
+    context.orthographic = targetState.projectionMode() == ProjectionMode.ORTHOGRAPHIC;
+    context.orthographicHeight = targetState.getOrthographicHeight();
   }
 
   // endregion

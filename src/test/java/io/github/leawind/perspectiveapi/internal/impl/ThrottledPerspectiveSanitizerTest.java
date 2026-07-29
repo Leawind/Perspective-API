@@ -32,6 +32,10 @@ class ThrottledPerspectiveSanitizerTest {
         sanitizer.sanitizeRotation(
             "rotation", rotation, new Quaternionf(), () -> message(messages)));
     assertEquals(90.0f, sanitizer.sanitizeFovDeg("fov", 90.0f, 70.0f, () -> message(messages)));
+    assertEquals(
+        16.0f,
+        sanitizer.sanitizeOrthographicHeight(
+            "orthographic_height", 16.0f, 8.0f, () -> message(messages)));
     assertEquals(0, messages.get());
   }
 
@@ -45,6 +49,10 @@ class ThrottledPerspectiveSanitizerTest {
     assertFalse(sanitizer.sanitizePosition("position", position, fallbackPosition, () -> "test"));
     assertFalse(sanitizer.sanitizeRotation("rotation", rotation, fallbackRotation, () -> "test"));
     assertEquals(70.0f, sanitizer.sanitizeFovDeg("fov", Float.NaN, 70.0f, () -> "test"));
+    assertEquals(
+        16.0f,
+        sanitizer.sanitizeOrthographicHeight(
+            "orthographic_height", 0.0f, 16.0f, () -> "test"));
 
     TestUtils.assertVectorEquals(fallbackPosition, position);
     TestUtils.assertQuatEquals(fallbackRotation, rotation);
@@ -60,6 +68,15 @@ class ThrottledPerspectiveSanitizerTest {
   }
 
   @Test
+  void orthographicHeightMustBeFiniteAndPositive() {
+    assertTrue(ThrottledPerspectiveSanitizer.isValidOrthographicHeight(Float.MIN_VALUE));
+    assertFalse(ThrottledPerspectiveSanitizer.isValidOrthographicHeight(0.0f));
+    assertFalse(ThrottledPerspectiveSanitizer.isValidOrthographicHeight(-1.0f));
+    assertFalse(
+        ThrottledPerspectiveSanitizer.isValidOrthographicHeight(Float.POSITIVE_INFINITY));
+  }
+
+  @Test
   void sanitizeRestoresOnlyInvalidFields() {
     PerspectiveStateImpl fallback = new PerspectiveStateImpl();
     fallback.position().set(1.0, 2.0, 3.0);
@@ -69,12 +86,14 @@ class ThrottledPerspectiveSanitizerTest {
     target.position().x = Double.POSITIVE_INFINITY;
     target.rotation().rotationX(0.5f);
     target.setFovDeg(100.0f);
+    target.setOrthographicHeight(Float.NaN);
 
     sanitizer.sanitize("test", target, fallback, () -> "test");
 
     TestUtils.assertVectorEquals(fallback.position(), target.position());
     TestUtils.assertQuatEquals(new Quaternionf().rotationX(0.5f), target.rotation());
     assertEquals(100.0f, target.getFovDeg());
+    assertEquals(fallback.getOrthographicHeight(), target.getOrthographicHeight());
   }
 
   private static String message(AtomicInteger count) {
