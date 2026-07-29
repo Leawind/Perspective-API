@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 class OrbitSwitcherModelTest {
   @Test
@@ -55,10 +55,7 @@ class OrbitSwitcherModelTest {
   void cycleUsesSelectedThenPriorityOrderedCandidatesAndSkipsUnavailable() {
     OrbitSwitcherModel model = new OrbitSwitcherModel();
     model.updateSwitchables(
-        List.of(
-            perspective("a", 0, true),
-            perspective("b", 1, false),
-            perspective("c", 2, true)));
+        List.of(perspective("a", 0, true), perspective("b", 1, false), perspective("c", 2, true)));
     model.applyLayout(List.of("c"), Set.of());
     model.activate("c");
 
@@ -95,11 +92,11 @@ class OrbitSwitcherModelTest {
   void actorIdentitySurvivesSwitchableUpdates() {
     OrbitSwitcherBehavior switcher = new OrbitSwitcherBehavior();
     Perspective perspective = perspective("stable", 0, true);
-    switcher.onUpdateSwitchables(List.of(perspective));
+    switcher.onSwitchablePerspectivesUpdated(List.of(perspective));
     PerspectiveActor actor = switcher.menu().actor("stable");
     assertNotNull(actor);
 
-    switcher.onUpdateSwitchables(List.of(perspective));
+    switcher.onSwitchablePerspectivesUpdated(List.of(perspective));
 
     assertSame(actor, switcher.menu().actor("stable"));
     assertSame(actor.body(), switcher.menu().actor("stable").body());

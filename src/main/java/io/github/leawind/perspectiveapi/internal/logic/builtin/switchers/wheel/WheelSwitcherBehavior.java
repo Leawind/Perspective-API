@@ -86,9 +86,12 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   @Override
-  public void onUpdateSwitchables(@NonNull List<@NonNull Perspective> switchables) {
+  public void onSwitchablePerspectivesUpdated(
+      @NonNull List<@NonNull Perspective> switchablePerspectives) {
     list =
-        switchables.stream().map(Perspective::id).collect(Collectors.toCollection(ArrayList::new));
+        switchablePerspectives.stream()
+            .map(Perspective::id)
+            .collect(Collectors.toCollection(ArrayList::new));
     LOGGER.info("Switchable perspective list updated: {}", list);
     wheelMenu.updateItems(list);
   }
@@ -137,7 +140,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   @Override
-  public @Nullable String getSelected() {
+  public @Nullable String getSelectedPerspectiveId() {
     var selected = this.selected;
     if (selected == null) {
       String current = PerspectiveAPI.getCurrent().id();
@@ -155,7 +158,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
     if (minecraft.level == null || minecraft.player == null) return;
 
     wheelMenu.setOnHover(id -> this.selected = id);
-    wheelMenu.open(getSelected());
+    wheelMenu.open(getSelectedPerspectiveId());
   }
 
   private void closeWheel() {

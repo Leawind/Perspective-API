@@ -54,8 +54,8 @@ public class PerspectiveSwitcherManagerImpl
       @NonNull List<@NonNull Perspective> switchables) {
     EXTENSIONS.run(
         switcher.getClass().getName(),
-        "onUpdateSwitchables",
-        () -> switcher.onUpdateSwitchables(switchables));
+        "onSwitchablePerspectivesUpdated",
+        () -> switcher.onSwitchablePerspectivesUpdated(switchables));
   }
 
   public void register(@NonNull PerspectiveSwitcherBehavior switcher) {
@@ -98,8 +98,7 @@ public class PerspectiveSwitcherManagerImpl
   public void setSelectedSwitcher(@NonNull PerspectiveSwitcher switcher) {
     Objects.requireNonNull(switcher);
     if (!(switcher instanceof PerspectiveSwitcherBehavior behavior)) {
-      throw new IllegalArgumentException(
-          "Switcher is not registered: " + switcher);
+      throw new IllegalArgumentException("Switcher is not registered: " + switcher);
     }
 
     if (!switchers.contains(behavior)) {
@@ -122,7 +121,10 @@ public class PerspectiveSwitcherManagerImpl
   public @Nullable String get() {
     PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
     return EXTENSIONS.callOrElse(
-        switcher.getClass().getName(), "getSelected", switcher::getSelected, null);
+        switcher.getClass().getName(),
+        "getSelectedPerspectiveId",
+        switcher::getSelectedPerspectiveId,
+        null);
   }
 
   void clientTick(@NonNull Minecraft minecraft) {

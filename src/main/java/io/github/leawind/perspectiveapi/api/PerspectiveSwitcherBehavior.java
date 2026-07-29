@@ -24,8 +24,8 @@ public interface PerspectiveSwitcherBehavior extends PerspectiveSwitcher {
   /// {@link Perspective#isAvailable()} when it needs to decide whether a perspective can be
   /// selected.
   ///
-  /// @param switchables the updated list of switchable perspectives
-  void onUpdateSwitchables(@NonNull List<@NonNull Perspective> switchables);
+  /// @param switchablePerspectives the updated list of switchable perspectives
+  void onSwitchablePerspectivesUpdated(@NonNull List<@NonNull Perspective> switchablePerspectives);
 
   /// Called when this switcher becomes the active switcher.
   ///
@@ -39,5 +39,5 @@ public interface PerspectiveSwitcherBehavior extends PerspectiveSwitcher {
   void onDeactivated();
 
   /// Returns the ID of the currently selected perspective, or `null` if none.
-  @Nullable String getSelected();
+  @Nullable String getSelectedPerspectiveId();
 }

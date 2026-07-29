@@ -53,8 +53,8 @@ public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior 
   }
 
   @Override
-  public void onUpdateSwitchables(@NonNull List<@NonNull Perspective> switchables) {
-    model.updateSwitchables(switchables);
+  public void onSwitchablePerspectivesUpdated(@NonNull List<@NonNull Perspective> switchablePerspectives) {
+    model.updateSwitchables(switchablePerspectives);
     menu.syncActors();
   }
 
@@ -78,7 +78,7 @@ public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior 
   }
 
   @Override
-  public @Nullable String getSelected() {
+  public @Nullable String getSelectedPerspectiveId() {
     model.ensureActive();
     return model.resolvedId();
   }
