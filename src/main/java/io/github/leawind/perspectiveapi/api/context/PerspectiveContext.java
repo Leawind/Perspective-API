@@ -16,7 +16,7 @@ public interface PerspectiveContext {
 
   /// Returns the camera entity, or `null` if unavailable.
   @ApiStatus.Experimental
-  @Nullable Entity entity();
+  @Nullable Entity cameraEntity();
 
   /// Returns `true` if it is currently transitioning to this perspective.
   @ApiStatus.Experimental

@@ -17,7 +17,7 @@ public class PerspectiveContextImpl implements PerspectiveContext {
   }
 
   @Override
-  public Entity entity() {
+  public Entity cameraEntity() {
     return cameraEntity;
   }
 
