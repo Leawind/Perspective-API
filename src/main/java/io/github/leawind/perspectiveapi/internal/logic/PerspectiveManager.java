@@ -37,8 +37,7 @@ public final class PerspectiveManager {
   static {
     PerspectiveAPI.installRuntime(PerspectiveAPIRuntimeImpl.INSTANCE);
     try {
-      INSTANCE =
-          new PerspectiveManager(new OrbitSwitcherBehavior());
+      INSTANCE = new PerspectiveManager(new OrbitSwitcherBehavior());
     } catch (Throwable e) {
       LOGGER.error("Failed to initialize PerspectiveManager", e);
       throw e;
@@ -99,7 +98,7 @@ public final class PerspectiveManager {
     switchers = new PerspectiveSwitcherManagerImpl(defaultSwitcher);
 
     overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
-    overrides.push(PerspectiveSwitcherManagerImpl.KEY, Integer.MIN_VALUE, switchers);
+    overrides.register(PerspectiveSwitcherManagerImpl.KEY, Integer.MIN_VALUE, switchers);
 
     modifiers = new PerspectiveModifierChainImpl(sanitizer);
 

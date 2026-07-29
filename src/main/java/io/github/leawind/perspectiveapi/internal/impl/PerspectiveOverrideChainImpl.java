@@ -56,7 +56,7 @@ public final class PerspectiveOverrideChainImpl
   }
 
   @Override
-  public void push(
+  public void register(
       @NonNull String key, int priority, @NonNull Supplier<@Nullable String> supplier) {
     Objects.requireNonNull(key);
     Objects.requireNonNull(supplier);
@@ -70,7 +70,7 @@ public final class PerspectiveOverrideChainImpl
   }
 
   @Override
-  public void pop(@NonNull String key) {
+  public void unregister(@NonNull String key) {
     Objects.requireNonNull(key);
     synchronized (this) {
       List<Entry> newList = new ArrayList<>(entries);
@@ -81,7 +81,7 @@ public final class PerspectiveOverrideChainImpl
   }
 
   @Override
-  public boolean has(@NonNull String key) {
+  public boolean contains(@NonNull String key) {
     Objects.requireNonNull(key);
     for (Entry entry : entries) {
       if (entry.key().equals(key)) return true;

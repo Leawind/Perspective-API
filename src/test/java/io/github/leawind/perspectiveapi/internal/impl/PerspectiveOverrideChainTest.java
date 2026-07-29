@@ -95,16 +95,16 @@ class PerspectiveOverrideChainTest {
   @Test
   void pushAndHas() {
     String key = id("a");
-    assertFalse(chain.has(key));
-    chain.push(key, 10, () -> "test.a");
-    assertTrue(chain.has(key));
+    assertFalse(chain.contains(key));
+    chain.register(key, 10, () -> "test.a");
+    assertTrue(chain.contains(key));
   }
 
   @Test
   void pushReplacesSameKey() {
     String key = id("a");
-    chain.push(key, 10, () -> "test.a");
-    chain.push(key, 20, () -> "test.b");
+    chain.register(key, 10, () -> "test.a");
+    chain.register(key, 20, () -> "test.b");
 
     String resolved = chain.get();
     assertEquals("test.b", resolved);
@@ -115,15 +115,15 @@ class PerspectiveOverrideChainTest {
   @Test
   void popRemovesEntry() {
     String key = id("a");
-    chain.push(key, 10, () -> "test.a");
-    assertTrue(chain.has(key));
-    chain.pop(key);
-    assertFalse(chain.has(key));
+    chain.register(key, 10, () -> "test.a");
+    assertTrue(chain.contains(key));
+    chain.unregister(key);
+    assertFalse(chain.contains(key));
   }
 
   @Test
   void popNonExistentKeyDoesNothing() {
-    chain.pop(id("nope"));
+    chain.unregister(id("nope"));
     // should not throw
   }
 
@@ -131,11 +131,11 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void clearRemovesAllEntries() {
-    chain.push(id("a"), 10, () -> "test.a");
-    chain.push(id("b"), 5, () -> "test.b");
+    chain.register(id("a"), 10, () -> "test.a");
+    chain.register(id("b"), 5, () -> "test.b");
     chain.clear();
-    assertFalse(chain.has(id("a")));
-    assertFalse(chain.has(id("b")));
+    assertFalse(chain.contains(id("a")));
+    assertFalse(chain.contains(id("b")));
   }
 
   // ========== clearExcept ==========
@@ -145,15 +145,15 @@ class PerspectiveOverrideChainTest {
     String a = id("a");
     String b = id("b");
     String c = id("c");
-    chain.push(a, 10, () -> "test.a");
-    chain.push(b, 5, () -> "test.b");
-    chain.push(c, 1, () -> "test.c");
+    chain.register(a, 10, () -> "test.a");
+    chain.register(b, 5, () -> "test.b");
+    chain.register(c, 1, () -> "test.c");
 
     chain.clearExcept(a, c);
 
-    assertTrue(chain.has(a));
-    assertFalse(chain.has(b));
-    assertTrue(chain.has(c));
+    assertTrue(chain.contains(a));
+    assertFalse(chain.contains(b));
+    assertTrue(chain.contains(c));
   }
 
   // ========== computeId ==========
@@ -166,7 +166,7 @@ class PerspectiveOverrideChainTest {
   @Test
   void computeIdSingleEntry() {
     String key = id("a");
-    chain.push(key, 10, () -> "test.a");
+    chain.register(key, 10, () -> "test.a");
     assertEquals("test.a", chain.get());
   }
 
@@ -174,8 +174,8 @@ class PerspectiveOverrideChainTest {
   void computeIdReturnsHighestPriorityFirst() {
     String low = id("low");
     String high = id("high");
-    chain.push(low, 1, () -> "test.low");
-    chain.push(high, 100, () -> "test.high");
+    chain.register(low, 1, () -> "test.low");
+    chain.register(high, 100, () -> "test.high");
 
     assertEquals("test.high", chain.get());
   }
@@ -183,16 +183,16 @@ class PerspectiveOverrideChainTest {
   @Test
   void computeIdSkipsNullSupplier() {
     String fallback = id("fallback");
-    chain.push(id("null_supplier"), 100, () -> null);
-    chain.push(fallback, 1, () -> "test.fallback");
+    chain.register(id("null_supplier"), 100, () -> null);
+    chain.register(fallback, 1, () -> "test.fallback");
 
     assertEquals("test.fallback", chain.get());
   }
 
   @Test
   void computeIdAllFailReturnsNull() {
-    chain.push(id("a"), 10, () -> null);
-    chain.push(id("b"), 5, () -> null);
+    chain.register(id("a"), 10, () -> null);
+    chain.register(id("b"), 5, () -> null);
     assertNull(chain.get());
   }
 
@@ -201,16 +201,16 @@ class PerspectiveOverrideChainTest {
     String first = id("first");
     String second = id("second");
     String third = id("third");
-    chain.push(third, 1, () -> "test.third");
-    chain.push(first, 100, () -> "test.first");
-    chain.push(second, 50, () -> "test.second");
+    chain.register(third, 1, () -> "test.third");
+    chain.register(first, 100, () -> "test.first");
+    chain.register(second, 50, () -> "test.second");
 
     assertEquals("test.first", chain.get());
 
-    chain.pop(first);
+    chain.unregister(first);
     assertEquals("test.second", chain.get());
 
-    chain.pop(second);
+    chain.unregister(second);
     assertEquals("test.third", chain.get());
   }
 
@@ -218,16 +218,16 @@ class PerspectiveOverrideChainTest {
   void computeIdAfterPop() {
     String a = id("a");
     String b = id("b");
-    chain.push(a, 10, () -> "test.a");
-    chain.push(b, 5, () -> "test.b");
+    chain.register(a, 10, () -> "test.a");
+    chain.register(b, 5, () -> "test.b");
 
-    chain.pop(a);
+    chain.unregister(a);
     assertEquals("test.b", chain.get());
   }
 
   @Test
   void computeIdAfterClear() {
-    chain.push(id("a"), 10, () -> "test.a");
+    chain.register(id("a"), 10, () -> "test.a");
     chain.clear();
     assertNull(chain.get());
   }
@@ -236,8 +236,8 @@ class PerspectiveOverrideChainTest {
   void pushSamePriorityMaintainsInsertionOrder() {
     String first = id("first");
     String second = id("second");
-    chain.push(first, 10, () -> "test.first");
-    chain.push(second, 10, () -> "test.second");
+    chain.register(first, 10, () -> "test.first");
+    chain.register(second, 10, () -> "test.second");
 
     // Both have same priority; first pushed should be evaluated first
     assertEquals("test.first", chain.get());
@@ -247,31 +247,31 @@ class PerspectiveOverrideChainTest {
   void replacingSamePriorityEntryMovesItToEnd() {
     String first = id("first");
     String second = id("second");
-    chain.push(first, 10, () -> "test.first");
-    chain.push(second, 10, () -> "test.second");
-    chain.push(first, 10, () -> null);
+    chain.register(first, 10, () -> "test.first");
+    chain.register(second, 10, () -> "test.second");
+    chain.register(first, 10, () -> null);
 
     assertEquals("test.second", chain.get());
   }
 
   @Test
   void skipsUnregisteredAndUnavailableCandidates() {
-    chain.push(id("missing"), 30, () -> "missing.id");
-    chain.push(id("unavailable"), 20, () -> "test.unavailable");
-    chain.push(id("available"), 10, () -> "test.available");
+    chain.register(id("missing"), 30, () -> "missing.id");
+    chain.register(id("unavailable"), 20, () -> "test.unavailable");
+    chain.register(id("available"), 10, () -> "test.available");
 
     assertEquals("test.available", chain.get());
   }
 
   @Test
   void supplierFailureDoesNotStopFallbackResolution() {
-    chain.push(
+    chain.register(
         id("failure"),
         20,
         () -> {
           throw new IllegalStateException("failure");
         });
-    chain.push(id("fallback"), 10, () -> "test.fallback");
+    chain.register(id("fallback"), 10, () -> "test.fallback");
 
     assertEquals("test.fallback", chain.get());
   }
@@ -280,22 +280,22 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void pushNullKeyThrows() {
-    assertThrows(NullPointerException.class, () -> chain.push(null, 10, () -> null));
+    assertThrows(NullPointerException.class, () -> chain.register(null, 10, () -> null));
   }
 
   @Test
   void pushNullSupplierThrows() {
-    assertThrows(NullPointerException.class, () -> chain.push(id("a"), 10, null));
+    assertThrows(NullPointerException.class, () -> chain.register(id("a"), 10, null));
   }
 
   @Test
   void popNullKeyThrows() {
-    assertThrows(NullPointerException.class, () -> chain.pop(null));
+    assertThrows(NullPointerException.class, () -> chain.unregister(null));
   }
 
   @Test
   void hasNullKeyThrows() {
-    assertThrows(NullPointerException.class, () -> chain.has(null));
+    assertThrows(NullPointerException.class, () -> chain.contains(null));
   }
 
   @Test

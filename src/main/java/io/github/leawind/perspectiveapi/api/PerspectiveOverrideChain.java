@@ -23,11 +23,11 @@ public interface PerspectiveOverrideChain {
   /// @param key the unique identifier for this override entry
   /// @param priority the evaluation priority
   /// @param supplier a supplier that returns the perspective ID, or `null` to skip
-  void push(@NonNull String key, int priority, @NonNull Supplier<@Nullable String> supplier);
+  void register(@NonNull String key, int priority, @NonNull Supplier<@Nullable String> supplier);
 
   /// Removes the override entry with the given key.
-  void pop(@NonNull String key);
+  void unregister(@NonNull String key);
 
   /// Returns `true` if an override entry with the given key exists.
-  boolean has(@NonNull String key);
+  boolean contains(@NonNull String key);
 }
