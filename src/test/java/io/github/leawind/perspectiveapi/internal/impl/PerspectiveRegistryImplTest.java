@@ -159,7 +159,7 @@ class PerspectiveRegistryImplTest {
 
     assertEquals(
         List.of("test.registry_default_a", "test.registry_default_b", "test.registry_default_low"),
-        registry.getAll().stream().map(Perspective::id).toList());
+        registry.getAllPerspectives().stream().map(Perspective::id).toList());
     assertFalse(registry.contains(null));
     assertTrue(registry.contains("test.registry_default_a"));
   }

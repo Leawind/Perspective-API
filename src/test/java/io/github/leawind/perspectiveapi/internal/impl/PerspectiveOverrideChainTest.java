@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -72,11 +71,6 @@ class PerspectiveOverrideChainTest {
             return !id.endsWith("unavailable");
           }
         };
-      }
-
-      @Override
-      public @NonNull List<@NonNull Perspective> getAll() {
-        return List.of();
       }
     };
   }

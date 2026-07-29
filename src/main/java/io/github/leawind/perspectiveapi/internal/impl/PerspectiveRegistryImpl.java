@@ -221,8 +221,11 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return entries.containsKey(id);
   }
 
-  @Override
-  public @NonNull List<@NonNull Perspective> getAll() {
+  /// Returns an unmodifiable snapshot of all registered perspectives.
+  ///
+  /// The list is sorted by ascending priority and then by ID. It includes perspectives that are
+  /// currently unavailable.
+  public @NonNull List<@NonNull Perspective> getAllPerspectives() {
     return entries.values().stream()
         .sorted(Comparator.comparingInt(Entry::priority).thenComparing(Entry::id))
         .map(entry -> (Perspective) entry)

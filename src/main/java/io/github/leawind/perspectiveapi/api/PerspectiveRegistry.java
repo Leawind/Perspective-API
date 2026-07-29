@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import java.util.List;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -19,11 +18,4 @@ public interface PerspectiveRegistry {
   /// @param id the perspective ID
   /// @return the perspective, or `null` if not found
   @Nullable Perspective get(@NonNull String id);
-
-  /// Returns an unmodifiable snapshot of all registered perspectives.
-  ///
-  /// The list is sorted by ascending priority and then by ID. It includes perspectives that are
-  /// currently unavailable.
-  @ApiStatus.Experimental
-  @NonNull List<@NonNull Perspective> getAll();
 }
