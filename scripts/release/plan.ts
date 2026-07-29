@@ -32,7 +32,7 @@ if (branch === 'main') {
 }
 
 if (version !== null) {
-  console.log(`Bump version to${version}`)
+  console.log(`Bump version to ${version}`)
 
   ci.writePlan({
     version,
