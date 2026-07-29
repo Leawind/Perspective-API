@@ -222,8 +222,9 @@ rootProject.tasks.named<Sync>("buildAndCollect") {
     from(sourcesJar.flatMap { it.archiveFile })
 }
 
-// read changelog
-val changelogFile = rootProject.file("CHANGELOG.md")
+// Read the notes for this release when available, otherwise fall back to the changelog.
+val releaseNotesPath = System.getenv("RELEASE_NOTES_FILE") ?: "CHANGELOG.md"
+val changelogFile = rootProject.file(releaseNotesPath)
 val changelogText = if (changelogFile.exists()) changelogFile.readText() else ""
 
 afterEvaluate {

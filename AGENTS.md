@@ -159,7 +159,7 @@ return currentVersion().dataVersion().version();
 
 ### Git 提交信息规范
 
-本项目使用 [semantic-release](https://github.com/semantic-release/semantic-release)，提交信息必须严格遵守以下规范。
+本项目使用自定义 Deno 发布脚本，根据 Conventional Commits 分析版本变化，提交信息必须严格遵守以下规范。
 
 每条提交信息由 header、body 和 footer 组成，全部使用英语编写，结构如下：
 
@@ -179,7 +179,7 @@ type 必填，scope 可选。
 
 #### type
 
-type 必须从以下列表中选择，semantic-release 会根据 type 决定版本号变更：
+type 必须从以下列表中选择，发布脚本会根据 type 决定是否发布新版本：
 
 - feat：新功能
 - i18n：语言文件更新
@@ -192,6 +192,22 @@ type 必须从以下列表中选择，semantic-release 会根据 type 决定版�
 - docs：仅文档变更
 
 包含破坏性变更时，必须在 footer 中添加 `BREAKING CHANGE`，详见下方"破坏性变更检查"。
+
+Beta 阶段的版本格式为 `1.<minor>.<patch>-beta`：
+
+- major 始终为 `1`
+- 破坏性变更使 minor 加一，并将 patch 重置为零
+- `feat`、`i18n`、`fix`、`perf` 和 `revert` 使 patch 加一
+- 其他类型默认不触发发布，但包含破坏性变更时仍会触发发布
+
+正式版本从 `main` 分支发布，使用常规语义化版本规则：
+
+- 破坏性变更使 major 加一，并将 minor、patch 重置为零
+- `feat` 使 minor 加一，并将 patch 重置为零
+- `i18n`、`fix`、`perf` 和 `revert` 使 patch 加一
+- `docs`、`ci`、`refactor` 等其他类型不触发发布
+- 第一次正式发布直接将最新可达 Beta 版本的核心版本晋升为正式版，例如
+  `1.3.7-beta` 晋升为 `1.3.7`
 
 #### scope
 

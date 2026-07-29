@@ -3,11 +3,15 @@
   "specifiers": {
     "jsr:@leawind/delegate@0.6": "0.6.0",
     "jsr:@leawind/inventory@~0.19.5": "0.19.5",
+    "jsr:@std/assert@1": "1.0.19",
+    "jsr:@std/assert@1.0.19": "1.0.19",
     "jsr:@std/dotenv@~0.225.7": "0.225.7",
     "jsr:@std/fs@^1.0.22": "1.0.23",
     "jsr:@std/internal@^1.0.12": "1.0.13",
     "jsr:@std/path@^1.1.4": "1.1.4",
     "npm:commander@*": "14.0.3",
+    "npm:commander@14.0.3": "14.0.3",
+    "npm:conventional-commits-parser@6.4.0": "6.4.0",
     "npm:java-parser@*": "3.0.1",
     "npm:lay-sing@~0.4.2": "0.4.2",
     "npm:minimatch@*": "10.2.5",
@@ -25,6 +29,12 @@
         "jsr:@std/path",
         "npm:lay-sing",
         "npm:minimatch@^10.2.5"
+      ]
+    },
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
+      "dependencies": [
+        "jsr:@std/internal"
       ]
     },
     "@std/dotenv@0.225.7": {
@@ -72,6 +82,9 @@
     "@chevrotain/utils@11.0.3": {
       "integrity": "sha512-YslZMgtJUyuMbZ+aKvfF3x1f5liK4mWNxghFRv7jqRR9C3R3fAOGTTKvxXDa2Y1s9zSbcpuO0cAxDYsc9SrXoQ=="
     },
+    "@simple-libs/stream-utils@1.2.0": {
+      "integrity": "sha512-KxXvfapcixpz6rVEB6HPjOUZT22yN6v0vI0urQSk1L8MlEWPDFCZkhw2xmkyoTGYeFw7tWTZd7e3lVzRZRN/EA=="
+    },
     "balanced-match@4.0.4": {
       "integrity": "sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA=="
     },
@@ -102,6 +115,14 @@
     "commander@14.0.3": {
       "integrity": "sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw=="
     },
+    "conventional-commits-parser@6.4.0": {
+      "integrity": "sha512-tvRg7FIBNlyPzjdG8wWRlPHQJJHI7DylhtRGeU9Lq+JuoPh5BKpPRX83ZdLrvXuOSu5Eo/e7SzOQhU4Hd2Miuw==",
+      "dependencies": [
+        "@simple-libs/stream-utils",
+        "meow"
+      ],
+      "bin": true
+    },
     "java-parser@3.0.1": {
       "integrity": "sha512-sDIR7u9b7O2JViNUxiZRhnRz7URII/eE7g2B+BmGxDeS6Ex3OYAcCyz5oh0H4LQ+hL/BS8OJTz8apMy9xtGmrQ==",
       "dependencies": [
@@ -119,6 +140,9 @@
     "lodash@4.17.21": {
       "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
     },
+    "meow@13.2.0": {
+      "integrity": "sha512-pxQJQzB6djGPXh08dacEloMFopsOqGVRKFPYvPOt9XDZ1HasbgDZA74CJGreSU4G3Ak7EFJGoiH2auq+yXISgA=="
+    },
     "minimatch@10.2.5": {
       "integrity": "sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==",
       "dependencies": [
@@ -129,6 +153,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@leawind/inventory@~0.19.5",
+      "jsr:@std/assert@1.0.19",
       "jsr:@std/dotenv@~0.225.7"
     ]
   }
