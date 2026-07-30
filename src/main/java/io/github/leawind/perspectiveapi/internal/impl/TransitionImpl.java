@@ -166,8 +166,7 @@ public final class TransitionImpl implements Transition {
     return startFovDeg + (targetFovDeg - startFovDeg) * easedProgress;
   }
 
-  private float updateOrthographicHeight(
-      double currentTimeMs, float targetOrthographicHeight) {
+  private float updateOrthographicHeight(double currentTimeMs, float targetOrthographicHeight) {
     float easedProgress = computeEasedProgress(currentTimeMs);
     return startOrthographicHeight
         + (targetOrthographicHeight - startOrthographicHeight) * easedProgress;

@@ -131,10 +131,7 @@ final class OrbitMenuRenderer {
     Perspective perspective = menu.model().perspective(actor.perspectiveId());
     if (perspective == null) return;
     drawCenteredText(
-        canvas,
-        perspective.info().name(),
-        context.screenWidth / 2,
-        context.screenHeight / 2 + 54);
+        canvas, perspective.info().name(), context.screenWidth / 2, context.screenHeight / 2 + 54);
   }
 
   private void drawCenteredText(DrawContext canvas, Component text, int centerX, int y) {

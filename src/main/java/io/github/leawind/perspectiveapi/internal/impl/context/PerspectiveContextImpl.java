@@ -2,6 +2,8 @@ package io.github.leawind.perspectiveapi.internal.impl.context;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import net.minecraft.world.entity.Entity;
+import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 public class PerspectiveContextImpl implements PerspectiveContext {
 
@@ -17,7 +19,7 @@ public class PerspectiveContextImpl implements PerspectiveContext {
   }
 
   @Override
-  public Entity cameraEntity() {
+  public @Nullable Entity cameraEntity() {
     return cameraEntity;
   }
 
@@ -26,7 +28,7 @@ public class PerspectiveContextImpl implements PerspectiveContext {
     return isTransitioning;
   }
 
-  public void setup(float partialTicks, Entity cameraEntity, boolean isTransitioning) {
+  public void setup(float partialTicks, @NonNull Entity cameraEntity, boolean isTransitioning) {
     this.partialTicks = partialTicks;
     this.cameraEntity = cameraEntity;
     this.isTransitioning = isTransitioning;

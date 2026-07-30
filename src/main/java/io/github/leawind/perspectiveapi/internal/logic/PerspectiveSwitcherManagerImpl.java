@@ -90,8 +90,7 @@ public class PerspectiveSwitcherManagerImpl
       currentSwitcher = this.currentSwitcher = defaultSwitcher;
       Perspective current = PerspectiveManager.INSTANCE.getCurrent();
       PerspectiveSwitcherBehavior activated = currentSwitcher;
-      EXTENSIONS.run(
-          activated.id(), "onActivated", () -> activated.onActivated(current));
+      EXTENSIONS.run(activated.id(), "onActivated", () -> activated.onActivated(current));
     }
 
     return currentSwitcher;
@@ -119,8 +118,7 @@ public class PerspectiveSwitcherManagerImpl
       }
       this.currentSwitcher = behavior;
       Perspective current = PerspectiveManager.INSTANCE.getCurrent();
-      EXTENSIONS.run(
-          behavior.id(), "onActivated", () -> behavior.onActivated(current));
+      EXTENSIONS.run(behavior.id(), "onActivated", () -> behavior.onActivated(current));
     }
   }
 
@@ -132,17 +130,12 @@ public class PerspectiveSwitcherManagerImpl
   public @Nullable String get() {
     PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
     return EXTENSIONS.callOrElse(
-        switcher.id(),
-        "getSelectedPerspectiveId",
-        switcher::getSelectedPerspectiveId,
-        null);
+        switcher.id(), "getSelectedPerspectiveId", switcher::getSelectedPerspectiveId, null);
   }
 
   void clientTick(@NonNull Minecraft minecraft) {
     PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
     EXTENSIONS.run(
-        switcher.id(),
-        "clientTickWhenActive",
-        () -> switcher.clientTickWhenActive(minecraft));
+        switcher.id(), "clientTickWhenActive", () -> switcher.clientTickWhenActive(minecraft));
   }
 }

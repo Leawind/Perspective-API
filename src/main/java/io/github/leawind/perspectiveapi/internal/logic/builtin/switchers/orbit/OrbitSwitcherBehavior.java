@@ -60,7 +60,8 @@ public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior 
   }
 
   @Override
-  public void onSwitchablePerspectivesUpdated(@NonNull List<@NonNull Perspective> switchablePerspectives) {
+  public void onSwitchablePerspectivesUpdated(
+      @NonNull List<@NonNull Perspective> switchablePerspectives) {
     model.updateSwitchables(switchablePerspectives);
     menu.syncActors();
   }

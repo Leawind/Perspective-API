@@ -76,8 +76,7 @@ public final class PerspectiveOverrideChainImpl
     synchronized (this) {
       List<Registration> newList = new ArrayList<>(entries);
       newList.add(registration);
-      newList.sort(
-          Comparator.comparingInt((Registration entry) -> entry.priority).reversed());
+      newList.sort(Comparator.comparingInt((Registration entry) -> entry.priority).reversed());
       this.entries = List.copyOf(newList);
     }
     return registration;

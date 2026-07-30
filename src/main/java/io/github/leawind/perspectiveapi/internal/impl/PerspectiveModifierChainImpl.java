@@ -90,8 +90,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     PerspectiveStateImpl backup = new PerspectiveStateImpl();
     for (Registration entry : entries) {
       String id = entry.modifier.getClass().getName();
-      if (!EXTENSIONS.testOrElse(id, "isAvailable", entry.modifier::isAvailable, false))
-        continue;
+      if (!EXTENSIONS.testOrElse(id, "isAvailable", entry.modifier::isAvailable, false)) continue;
 
       backup.set(state);
       if (!EXTENSIONS.run(id, "apply", () -> entry.modifier.apply(state, ctx))) {

@@ -47,7 +47,7 @@ public final class YaclConfigScreenBuilder {
                         .controller(
                             opt ->
                                 IntegerSliderControllerBuilder.create(opt)
-                                    .range(1, 3 )
+                                    .range(1, 3)
                                     .step(1)
                                     .formatValue(
                                         v ->
