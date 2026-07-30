@@ -3,23 +3,66 @@ package io.github.leawind.perspectiveapi.internal.logic.state;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.jimfs.Jimfs;
+import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class StateManagerImplTest {
+  private static final TestSwitcher TEST_SWITCHER = new TestSwitcher();
+
+  private static final class TestSwitcher implements PerspectiveSwitcherBehavior {
+    private static final String ID = "test.persisted_switcher";
+
+    @Override
+    public @NonNull String id() {
+      return ID;
+    }
+
+    @Override
+    public @NonNull Component name() {
+      return Component.literal(ID);
+    }
+
+    @Override
+    public void onSwitchablePerspectivesUpdated(
+        @NonNull List<@NonNull Perspective> switchablePerspectives) {}
+
+    @Override
+    public void onActivated(@NonNull Perspective currentPerspective) {}
+
+    @Override
+    public void clientTickWhenActive(@NonNull Minecraft minecraft) {}
+
+    @Override
+    public void onDeactivated() {}
+
+    @Override
+    public @Nullable String getSelectedPerspectiveId() {
+      return null;
+    }
+  }
+
   private FileSystem fs;
   private Path tempDir;
 
@@ -39,6 +82,9 @@ class StateManagerImplTest {
     if (!PerspectiveRegistryImpl.INSTANCE.contains("perspective_api.first_person")) {
       PerspectiveRegistryImpl.INSTANCE.registerSilent(TestPerspective.INSTANCE);
     }
+    if (PerspectiveManager.INSTANCE.switchers().getById(TestSwitcher.ID) == null) {
+      PerspectiveManager.INSTANCE.switchers().register(TEST_SWITCHER);
+    }
   }
 
   @AfterEach
@@ -47,6 +93,9 @@ class StateManagerImplTest {
     PerspectiveAPI.setLogicTickInterval(PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL);
     PerspectiveAPI.getTransition().setDurationMs(260.0);
     PerspectiveAPI.getTransition().setBlendPower(0.6);
+    PerspectiveManager.INSTANCE
+        .switchers()
+        .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
     fs.close();
   }
 
@@ -135,6 +184,21 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertEquals(4, PerspectiveAPI.getLogicTickInterval());
+  }
+
+  @Test
+  void roundTripPreservesSelectedSwitcherById() {
+    Path filePath = tempDir.resolve("switcher.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    PerspectiveManager.INSTANCE.switchers().setSelectedSwitcher(TEST_SWITCHER);
+
+    manager.tryExtractAndSave();
+    PerspectiveManager.INSTANCE
+        .switchers()
+        .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
+    manager.tryLoadAndApply();
+
+    assertSame(TEST_SWITCHER, PerspectiveAPI.getSwitcherManager().getSelectedSwitcher());
   }
 
   @Test

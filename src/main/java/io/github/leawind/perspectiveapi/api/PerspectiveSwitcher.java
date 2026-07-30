@@ -19,6 +19,10 @@ import org.jspecify.annotations.Nullable;
 @ApiStatus.NonExtendable
 public interface PerspectiveSwitcher {
 
+  /// Returns the non-empty stable ID used to identify this switcher in configuration and persisted
+  /// state.
+  @NonNull String id();
+
   /// Returns the display name of this switcher.
   @ApiStatus.Experimental
   @NonNull Component name();

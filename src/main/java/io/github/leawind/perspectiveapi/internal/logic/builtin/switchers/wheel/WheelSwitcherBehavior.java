@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 @AutoService(PerspectiveSwitcherBehavior.class)
 public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   private static final Logger LOGGER = LoggerFactory.getLogger(WheelSwitcherBehavior.class);
+  public static final String ID = PerspectiveAPI.MOD_ID + ".wheel_switcher";
 
   private @Nullable KeyStateTracker keyStateTracker;
   private final PerspectiveRegistry registry;
@@ -83,6 +84,11 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
           // Always consume input when the wheel menu is open
           ctx.consumed = true;
         });
+  }
+
+  @Override
+  public @NonNull String id() {
+    return ID;
   }
 
   @Override

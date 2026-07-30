@@ -11,7 +11,7 @@ import org.jspecify.annotations.NonNull;
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 public interface PerspectiveSwitcherManager {
-  /// Returns an unmodifiable snapshot of switchers available to the player.
+  /// Returns an unmodifiable snapshot of switchers available to the player, sorted by stable ID.
   @NonNull List<@NonNull PerspectiveSwitcher> getAvailableSwitchers();
 
   /// Returns the switcher selected by the player.

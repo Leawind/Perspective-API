@@ -10,6 +10,8 @@ import org.jspecify.annotations.Nullable;
 ///
 /// Implementations are discovered via {@link java.util.ServiceLoader} and managed
 /// by the {@link io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager}.
+/// Each implementation must provide a non-empty, globally unique {@link #id()}.
+/// A provider whose ID is already registered is rejected without replacing the existing switcher.
 @ApiStatus.Experimental
 @ApiStatus.OverrideOnly
 public interface PerspectiveSwitcherBehavior extends PerspectiveSwitcher {

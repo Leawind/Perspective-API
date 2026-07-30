@@ -14,6 +14,8 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior {
+  public static final String ID = PerspectiveAPI.MOD_ID + ".orbit_switcher";
+
   private final OrbitSwitcherModel model = new OrbitSwitcherModel();
   private final KeyStateTracker keyStateTracker;
   private final OrbitMenu menu = new OrbitMenu(this, model);
@@ -40,6 +42,11 @@ public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior 
           while (key.consumeClick()) {}
         });
     menu.init();
+  }
+
+  @Override
+  public @NonNull String id() {
+    return ID;
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import java.io.IOException;
@@ -31,6 +32,9 @@ public final class PerspectiveAPIState {
                       Codec.STRING
                           .optionalFieldOf("manager.current")
                           .forGetter(s -> Optional.ofNullable(s.managerCurrent)),
+                      Codec.STRING
+                          .optionalFieldOf("manager.switcher")
+                          .forGetter(s -> Optional.ofNullable(s.managerSwitcher)),
                       Codec.DOUBLE
                           .optionalFieldOf("transition.duration_ms", 300.0)
                           .forGetter(s -> s.transitionDurationMs),
@@ -42,6 +46,7 @@ public final class PerspectiveAPIState {
   private final boolean enabled;
   private final int logicTickInterval;
   private final @Nullable String managerCurrent;
+  private final @Nullable String managerSwitcher;
   private final double transitionDurationMs;
   private final double transitionBlendPower;
 
@@ -50,11 +55,13 @@ public final class PerspectiveAPIState {
       boolean enabled,
       int logicTickInterval,
       Optional<String> managerCurrent,
+      Optional<String> managerSwitcher,
       double transitionDurationMs,
       double transitionBlendPower) {
     this.enabled = enabled;
     this.logicTickInterval = logicTickInterval;
     this.managerCurrent = managerCurrent.orElse(null);
+    this.managerSwitcher = managerSwitcher.orElse(null);
     this.transitionDurationMs = transitionDurationMs;
     this.transitionBlendPower = transitionBlendPower;
   }
@@ -67,13 +74,19 @@ public final class PerspectiveAPIState {
         && logicTickInterval == that.logicTickInterval
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
         && Double.compare(that.transitionBlendPower, transitionBlendPower) == 0
-        && Objects.equals(managerCurrent, that.managerCurrent);
+        && Objects.equals(managerCurrent, that.managerCurrent)
+        && Objects.equals(managerSwitcher, that.managerSwitcher);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        enabled, logicTickInterval, managerCurrent, transitionDurationMs, transitionBlendPower);
+        enabled,
+        logicTickInterval,
+        managerCurrent,
+        managerSwitcher,
+        transitionDurationMs,
+        transitionBlendPower);
   }
 
   public void apply() {
@@ -95,6 +108,14 @@ public final class PerspectiveAPIState {
       PerspectiveManager.INSTANCE.setCurrent(perspective);
     }
 
+    if (managerSwitcher != null) {
+      PerspectiveSwitcherBehavior switcher =
+          PerspectiveManager.INSTANCE.switchers().getById(managerSwitcher);
+      if (switcher != null) {
+        PerspectiveManager.INSTANCE.switchers().setSelectedSwitcher(switcher);
+      }
+    }
+
     PerspectiveAPI.getTransition().setDurationMs(transitionDurationMs);
     PerspectiveAPI.getTransition().setBlendPower(transitionBlendPower);
   }
@@ -104,6 +125,7 @@ public final class PerspectiveAPIState {
         PerspectiveAPI.isEnabled(),
         PerspectiveAPI.getLogicTickInterval(),
         Optional.of(PerspectiveManager.INSTANCE.getCurrent().info().id()),
+        Optional.of(PerspectiveAPI.getSwitcherManager().getSelectedSwitcher().id()),
         PerspectiveAPI.getTransition().getDurationMs(),
         PerspectiveAPI.getTransition().getBlendPower());
   }

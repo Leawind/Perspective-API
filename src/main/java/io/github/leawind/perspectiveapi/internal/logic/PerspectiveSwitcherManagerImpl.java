@@ -7,10 +7,10 @@ import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
@@ -24,7 +24,7 @@ public class PerspectiveSwitcherManagerImpl
       new ExtensionInvoker(
           LoggerFactory.getLogger(PerspectiveSwitcherManagerImpl.class), "Switcher");
 
-  private final Collection<PerspectiveSwitcherBehavior> switchers = new HashSet<>();
+  private final Map<String, PerspectiveSwitcherBehavior> switchers = new HashMap<>();
 
   private final PerspectiveSwitcherBehavior defaultSwitcher;
   private @Nullable PerspectiveSwitcherBehavior currentSwitcher = null;
@@ -46,26 +46,30 @@ public class PerspectiveSwitcherManagerImpl
 
   private void notifySwitchables() {
     var switchables = getSwitchables();
-    this.switchers.forEach(switcher -> notifySwitchables(switcher, switchables));
+    this.switchers.values().forEach(switcher -> notifySwitchables(switcher, switchables));
   }
 
   private void notifySwitchables(
       @NonNull PerspectiveSwitcherBehavior switcher,
       @NonNull List<@NonNull Perspective> switchables) {
     EXTENSIONS.run(
-        switcher.getClass().getName(),
+        switcher.id(),
         "onSwitchablePerspectivesUpdated",
         () -> switcher.onSwitchablePerspectivesUpdated(switchables));
   }
 
   public void register(@NonNull PerspectiveSwitcherBehavior switcher) {
     Objects.requireNonNull(switcher);
-    if (!switchers.add(switcher)) return;
+    String id = Objects.requireNonNull(switcher.id());
+    if (id.isEmpty()) throw new IllegalArgumentException("Switcher id must not be empty");
+    if (switchers.putIfAbsent(id, switcher) != null) {
+      throw new IllegalArgumentException("Switcher id is already registered: '" + id + "'");
+    }
     try {
       switcher.init();
     } catch (Throwable throwable) {
       Exceptions.rethrowIfFatal(throwable);
-      switchers.remove(switcher);
+      switchers.remove(id, switcher);
       throw Exceptions.propagate(throwable);
     }
     notifySwitchables(switcher, getSwitchables());
@@ -73,7 +77,10 @@ public class PerspectiveSwitcherManagerImpl
 
   @Override
   public @NonNull List<@NonNull PerspectiveSwitcher> getAvailableSwitchers() {
-    return switchers.stream().map(switcher -> (PerspectiveSwitcher) switcher).toList();
+    return switchers.values().stream()
+        .sorted(Comparator.comparing(PerspectiveSwitcherBehavior::id))
+        .map(switcher -> (PerspectiveSwitcher) switcher)
+        .toList();
   }
 
   @Override
@@ -84,7 +91,7 @@ public class PerspectiveSwitcherManagerImpl
       Perspective current = PerspectiveManager.INSTANCE.getCurrent();
       PerspectiveSwitcherBehavior activated = currentSwitcher;
       EXTENSIONS.run(
-          activated.getClass().getName(), "onActivated", () -> activated.onActivated(current));
+          activated.id(), "onActivated", () -> activated.onActivated(current));
     }
 
     return currentSwitcher;
@@ -101,27 +108,31 @@ public class PerspectiveSwitcherManagerImpl
       throw new IllegalArgumentException("Switcher is not registered: " + switcher);
     }
 
-    if (!switchers.contains(behavior)) {
+    if (switchers.get(behavior.id()) != behavior) {
       throw new IllegalArgumentException("Unregistered switcher: " + behavior);
     }
 
     var old = this.currentSwitcher;
     if (old != behavior) {
       if (old != null) {
-        EXTENSIONS.run(old.getClass().getName(), "onDeactivated", old::onDeactivated);
+        EXTENSIONS.run(old.id(), "onDeactivated", old::onDeactivated);
       }
       this.currentSwitcher = behavior;
       Perspective current = PerspectiveManager.INSTANCE.getCurrent();
       EXTENSIONS.run(
-          behavior.getClass().getName(), "onActivated", () -> behavior.onActivated(current));
+          behavior.id(), "onActivated", () -> behavior.onActivated(current));
     }
+  }
+
+  public @Nullable PerspectiveSwitcherBehavior getById(@NonNull String id) {
+    return switchers.get(Objects.requireNonNull(id));
   }
 
   @Override
   public @Nullable String get() {
     PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
     return EXTENSIONS.callOrElse(
-        switcher.getClass().getName(),
+        switcher.id(),
         "getSelectedPerspectiveId",
         switcher::getSelectedPerspectiveId,
         null);
@@ -130,7 +141,7 @@ public class PerspectiveSwitcherManagerImpl
   void clientTick(@NonNull Minecraft minecraft) {
     PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
     EXTENSIONS.run(
-        switcher.getClass().getName(),
+        switcher.id(),
         "clientTickWhenActive",
         () -> switcher.clientTickWhenActive(minecraft));
   }
