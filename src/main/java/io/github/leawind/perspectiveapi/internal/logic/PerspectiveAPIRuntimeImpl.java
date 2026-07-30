@@ -50,6 +50,6 @@ final class PerspectiveAPIRuntimeImpl implements PerspectiveAPI.Runtime {
   public boolean isCurrent(@NonNull String id) {
     Objects.requireNonNull(id);
     return PerspectiveRegistryImpl.INSTANCE.isDefaultFound()
-        && PerspectiveManager.INSTANCE.getCurrent().id().equals(id);
+        && PerspectiveManager.INSTANCE.getCurrent().info().id().equals(id);
   }
 }

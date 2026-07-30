@@ -7,10 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
+import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
+import io.github.leawind.perspectiveapi.api.PerspectiveRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,20 @@ class PerspectiveOverrideChainTest {
   private static PerspectiveRegistry testRegistry() {
     return new PerspectiveRegistry() {
       @Override
+      public @NonNull PerspectiveRegistration register(
+          @NonNull PerspectiveInfo info, @NonNull PerspectiveBehavior behavior) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public @NonNull PerspectiveRegistration registerDefault(
+          @NonNull PerspectiveInfo info,
+          int defaultPriority,
+          @NonNull PerspectiveBehavior behavior) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
       public boolean contains(@Nullable String id) {
         return id != null && id.startsWith("test.");
       }
@@ -31,39 +47,14 @@ class PerspectiveOverrideChainTest {
       public @Nullable Perspective get(@NonNull String id) {
         if (!contains(id)) return null;
         return new Perspective() {
-          @Override
-          public @NonNull String id() {
-            return id;
-          }
+          private final PerspectiveInfo info =
+              PerspectiveInfo.builder(id, Component.literal(id))
+                  .baseType(BaseType.FIRST_PERSON)
+                  .build();
 
           @Override
-          public @NonNull Component name() {
-            return Component.literal(id);
-          }
-
-          @Override
-          public @Nullable Component description() {
-            return null;
-          }
-
-          @Override
-          public @NonNull BaseType baseType() {
-            return BaseType.FIRST_PERSON;
-          }
-
-          @Override
-          public boolean switchable() {
-            return true;
-          }
-
-          @Override
-          public int priority() {
-            return 0;
-          }
-
-          @Override
-          public @Nullable Identifier icon() {
-            return null;
+          public @NonNull PerspectiveInfo info() {
+            return info;
           }
 
           @Override

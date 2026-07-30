@@ -60,7 +60,7 @@ public final class OrbitSwitcherBehavior implements PerspectiveSwitcherBehavior 
 
   @Override
   public void onActivated(@NonNull Perspective currentPerspective) {
-    model.activate(currentPerspective.id());
+    model.activate(currentPerspective.info().id());
     model.ensureActive();
   }
 

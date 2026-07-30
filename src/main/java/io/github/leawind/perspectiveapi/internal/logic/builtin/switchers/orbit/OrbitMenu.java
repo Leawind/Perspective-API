@@ -88,7 +88,7 @@ final class OrbitMenu {
   void syncActors() {
     Set<String> desired = new HashSet<>();
     for (Perspective perspective : model.switchables()) {
-      String id = perspective.id();
+      String id = perspective.info().id();
       desired.add(id);
       if (!actors.containsKey(id)) {
         PerspectiveActor actor = new PerspectiveActor(id);

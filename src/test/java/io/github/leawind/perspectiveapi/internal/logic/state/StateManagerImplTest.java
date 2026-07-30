@@ -9,6 +9,7 @@ import com.google.common.jimfs.Jimfs;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
+import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -22,8 +23,8 @@ class StateManagerImplTest {
   private FileSystem fs;
   private Path tempDir;
 
-  @PerspectiveBehavior.Default
-  @PerspectiveBehavior.Info(
+  @PerspectiveInfo.Default
+  @PerspectiveInfo.Declaration(
       id = "perspective_api.first_person",
       baseType = BaseType.FIRST_PERSON,
       priority = 0)
@@ -35,7 +36,9 @@ class StateManagerImplTest {
   void beforeEach() {
     fs = Jimfs.newFileSystem();
     tempDir = fs.getPath("/tmp");
-    PerspectiveRegistryImpl.INSTANCE.registerSilent(TestPerspective.INSTANCE);
+    if (!PerspectiveRegistryImpl.INSTANCE.contains("perspective_api.first_person")) {
+      PerspectiveRegistryImpl.INSTANCE.registerSilent(TestPerspective.INSTANCE);
+    }
   }
 
   @AfterEach

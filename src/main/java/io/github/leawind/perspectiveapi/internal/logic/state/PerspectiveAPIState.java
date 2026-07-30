@@ -26,8 +26,7 @@ public final class PerspectiveAPIState {
                       Codec.BOOL.optionalFieldOf("enabled", true).forGetter((s) -> s.enabled),
                       Codec.INT
                           .optionalFieldOf(
-                              "logic_tick_interval",
-                              PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL)
+                              "logic_tick_interval", PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL)
                           .forGetter(s -> s.logicTickInterval),
                       Codec.STRING
                           .optionalFieldOf("manager.current")
@@ -74,11 +73,7 @@ public final class PerspectiveAPIState {
   @Override
   public int hashCode() {
     return Objects.hash(
-        enabled,
-        logicTickInterval,
-        managerCurrent,
-        transitionDurationMs,
-        transitionBlendPower);
+        enabled, logicTickInterval, managerCurrent, transitionDurationMs, transitionBlendPower);
   }
 
   public void apply() {
@@ -108,7 +103,7 @@ public final class PerspectiveAPIState {
     return new PerspectiveAPIState(
         PerspectiveAPI.isEnabled(),
         PerspectiveAPI.getLogicTickInterval(),
-        Optional.of(PerspectiveManager.INSTANCE.getCurrent().id()),
+        Optional.of(PerspectiveManager.INSTANCE.getCurrent().info().id()),
         PerspectiveAPI.getTransition().getDurationMs(),
         PerspectiveAPI.getTransition().getBlendPower());
   }

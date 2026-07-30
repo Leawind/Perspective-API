@@ -90,7 +90,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
       @NonNull List<@NonNull Perspective> switchablePerspectives) {
     list =
         switchablePerspectives.stream()
-            .map(Perspective::id)
+            .map(perspective -> perspective.info().id())
             .collect(Collectors.toCollection(ArrayList::new));
     LOGGER.info("Switchable perspective list updated: {}", list);
     wheelMenu.updateItems(list);
@@ -108,8 +108,8 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
 
   @Override
   public void onActivated(@NonNull Perspective currentPerspective) {
-    if (list.contains(currentPerspective.id())) {
-      this.selected = currentPerspective.id();
+    if (list.contains(currentPerspective.info().id())) {
+      this.selected = currentPerspective.info().id();
     }
   }
 
@@ -143,7 +143,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   public @Nullable String getSelectedPerspectiveId() {
     var selected = this.selected;
     if (selected == null) {
-      String current = PerspectiveAPI.getCurrent().id();
+      String current = PerspectiveAPI.getCurrent().info().id();
       if (list.contains(current)) {
         this.selected = current;
       }

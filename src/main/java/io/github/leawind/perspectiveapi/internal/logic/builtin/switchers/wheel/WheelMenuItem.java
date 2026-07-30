@@ -43,13 +43,13 @@ public final class WheelMenuItem {
 
   public @NonNull Component displayName() {
     if (perspective != null) {
-      return perspective.name();
+      return perspective.info().name();
     }
     return Component.literal(id);
   }
 
   public @Nullable Identifier icon() {
-    if (perspective != null) return perspective.icon();
+    if (perspective != null) return perspective.info().icon();
     return null;
   }
 

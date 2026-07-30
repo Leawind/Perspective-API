@@ -1,11 +1,6 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
@@ -15,12 +10,17 @@ import org.jspecify.annotations.NonNull;
 /// A Perspective acts as the foundational {@link PerspectiveModifier} that establishes
 /// the base camera state.
 ///
-/// PerspectiveBehavior implementations are discovered via {@link java.util.ServiceLoader} and
-/// registered by the {@link PerspectiveRegistry}.
+/// PerspectiveBehavior implementations can be discovered via {@link java.util.ServiceLoader} or
+/// registered at runtime through the {@link PerspectiveRegistry}.
 ///
-/// Implementations must be annotated with {@link Info}.
+/// Service-loaded implementations must be annotated with {@link PerspectiveInfo.Declaration}.
+/// Runtime registrations provide equivalent metadata through {@link PerspectiveInfo} and do not
+/// require an annotation.
 ///
 /// @see Perspective
+/// @see PerspectiveInfo
+/// @see PerspectiveRegistry#register
+/// @see PerspectiveRegistry#registerDefault
 @ApiStatus.OverrideOnly
 public interface PerspectiveBehavior {
   /// Logical base types for camera perspectives, decoupled from Minecraft's internal
@@ -32,76 +32,6 @@ public interface PerspectiveBehavior {
     FIRST_PERSON,
     THIRD_PERSON_BACK,
     THIRD_PERSON_FRONT;
-  }
-
-  /// Annotation that provides metadata for a {@link PerspectiveBehavior}.
-  ///
-  /// Every implementation must carry this annotation so the registry can
-  /// derive a {@link Perspective} from it.
-  ///
-  /// @see Perspective
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.TYPE)
-  @Documented
-  @interface Info {
-    /// The non-empty identifier for this perspective.
-    ///
-    /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`).
-    /// If multiple behaviors use the same ID, the behavior with the lower {@link #priority()}
-    /// value is registered. Ties are resolved by the lexicographically earlier fully qualified
-    /// behavior class name.
-    @NonNull String id();
-
-    /// The vanilla camera type used as a fallback when this perspective
-    /// does not explicitly modify the camera transform or projection settings.
-    @NonNull BaseType baseType() default BaseType.THIRD_PERSON_BACK;
-
-    /// The translation key for the perspective's display name.
-    ///
-    /// If left empty, it defaults to `perspective.<id>.name`.
-    ///
-    /// @see Perspective#name()
-    @NonNull String nameKey() default "";
-
-    /// The translation key for the perspective's description.
-    ///
-    /// If left empty, it defaults to `null`.
-    ///
-    /// @see Perspective#description()
-    @NonNull String descriptionKey() default "";
-
-    /// The string representation of the `Identifier` or `ResourceLocation` for the
-    /// perspective's icon texture.
-    ///
-    /// If left empty, it defaults to `null`.
-    ///
-    /// @see Perspective#icon()
-    @NonNull String icon() default "";
-
-    /// Whether this perspective is allowed to be manually selected by the player
-    /// via a {@link PerspectiveSwitcherBehavior}
-    ///
-    /// If set to `false`, the perspective can only be activated programmatically
-    /// through the {@link PerspectiveOverrideChain}.
-    @ApiStatus.Experimental
-    boolean switchable() default true;
-
-    /// The sorting priority within the switcher and duplicate-ID resolution.
-    ///
-    /// Lower values appear earlier in the cycle and take precedence over a duplicate ID.
-    /// Switcher ordering is effective only when `switchable` is `true`, but duplicate-ID
-    /// resolution always uses this value.
-    int priority() default 0;
-  }
-
-  /// Marks a perspective behavior as the default one to be activated on startup.
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.TYPE)
-  @Documented
-  @interface Default {
-    /// The priority of this default perspective. Higher values take precedence
-    /// if multiple defaults are registered.
-    int priority() default 0;
   }
 
   /// Whether smooth transitions are allowed when switching TO this perspective.

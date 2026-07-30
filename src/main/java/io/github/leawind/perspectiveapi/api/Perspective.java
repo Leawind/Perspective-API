@@ -1,46 +1,27 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 /// A read-only view of a registered perspective.
 ///
-/// Each instance is backed by a {@link PerspectiveBehavior} and carries metadata
-/// derived from its {@link PerspectiveBehavior.Info} annotation. Perspectives are
-/// created by the {@link PerspectiveRegistry} and should not be implemented directly.
+/// Each instance is backed by a {@link PerspectiveBehavior} and carries metadata from either a
+/// {@link PerspectiveInfo.Declaration} annotation or a runtime {@link PerspectiveInfo}.
+///
+/// Perspectives are created by the {@link PerspectiveRegistry} and should not be implemented
+/// directly.
 ///
 /// @see PerspectiveBehavior
-/// @see PerspectiveBehavior.Info
+/// @see PerspectiveInfo.Declaration
+/// @see PerspectiveInfo
 @ApiStatus.NonExtendable
 public interface Perspective {
-  /// Returns the unique identifier of this perspective.
-  @NonNull String id();
-
-  /// Returns the display name of this perspective.
-  @ApiStatus.Experimental
-  @NonNull Component name();
-
-  /// Returns the description of this perspective, or `null` if none.
-  @ApiStatus.Experimental
-  @Nullable Component description();
-
-  /// Returns the vanilla camera type used as a fallback when this perspective
-  /// does not explicitly modify the camera transform or projection settings.
-  @NonNull BaseType baseType();
-
-  /// Whether this perspective is allowed to be manually selected by the player
-  /// via a {@link PerspectiveSwitcherBehavior}.
-  boolean switchable();
-
-  /// The sorting priority within the switcher.
-  int priority();
-
-  /// Returns the identifier of the icon texture for this perspective, or `null` if none.
-  @Nullable Identifier icon();
+  /// Returns the current metadata for this registered perspective.
+  ///
+  /// The returned value may change after {@link
+  /// PerspectiveRegistration#updateInfo(PerspectiveInfo)}, while this registered perspective
+  /// retains its identity.
+  @NonNull PerspectiveInfo info();
 
   /// Returns whether this perspective is currently eligible to be resolved as active.
   ///

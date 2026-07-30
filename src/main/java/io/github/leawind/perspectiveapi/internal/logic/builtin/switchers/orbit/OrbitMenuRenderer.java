@@ -109,7 +109,7 @@ final class OrbitMenuRenderer {
       canvas.drawGamemodeSwitcherSelection(x, y, size, size, COLOR_TEXT);
     }
 
-    Identifier icon = perspective.icon();
+    Identifier icon = perspective.info().icon();
     if (icon == null) icon = DEFAULT_ICON;
     int padding = Math.max((int) (size * 0.19), 1);
     int iconSize = size - padding * 2;
@@ -131,7 +131,10 @@ final class OrbitMenuRenderer {
     Perspective perspective = menu.model().perspective(actor.perspectiveId());
     if (perspective == null) return;
     drawCenteredText(
-        canvas, perspective.name(), context.screenWidth / 2, context.screenHeight / 2 + 54);
+        canvas,
+        perspective.info().name(),
+        context.screenWidth / 2,
+        context.screenHeight / 2 + 54);
   }
 
   private void drawCenteredText(DrawContext canvas, Component text, int centerX, int y) {

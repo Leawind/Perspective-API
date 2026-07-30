@@ -3,13 +3,12 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.perspectives;
 import com.google.auto.service.AutoService;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
-import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.Default;
-import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.Info;
+import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 
 @SuppressWarnings("unused")
 @AutoService(PerspectiveBehavior.class)
-@Default
-@Info(
+@PerspectiveInfo.Default
+@PerspectiveInfo.Declaration(
     id = FirstPersonPerspective.ID,
     baseType = BaseType.FIRST_PERSON,
     priority = 0,

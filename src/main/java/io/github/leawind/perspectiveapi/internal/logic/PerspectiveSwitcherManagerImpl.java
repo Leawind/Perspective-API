@@ -39,9 +39,11 @@ public class PerspectiveSwitcherManagerImpl
 
   private @NonNull List<@NonNull Perspective> getSwitchables() {
     return PerspectiveRegistryImpl.INSTANCE.getAllPerspectives().stream()
-                                           .filter(Perspective::switchable)
-                                           .sorted(Comparator.comparingInt(Perspective::priority).thenComparing(Perspective::id))
-                                           .toList();
+        .filter(perspective -> perspective.info().switchable())
+        .sorted(
+            Comparator.comparingInt((Perspective perspective) -> perspective.info().priority())
+                .thenComparing(perspective -> perspective.info().id()))
+        .toList();
   }
 
   private void notifySwitchables() {

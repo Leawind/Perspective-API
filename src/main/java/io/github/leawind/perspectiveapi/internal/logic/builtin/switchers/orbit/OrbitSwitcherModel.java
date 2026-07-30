@@ -21,7 +21,8 @@ final class OrbitSwitcherModel {
   }
 
   private static final Comparator<Perspective> PRIORITY_ORDER =
-      Comparator.comparingInt(Perspective::priority).thenComparing(Perspective::id);
+      Comparator.comparingInt((Perspective perspective) -> perspective.info().priority())
+          .thenComparing(perspective -> perspective.info().id());
 
   private final Map<String, Perspective> switchables = new LinkedHashMap<>();
   private final List<String> selected = new ArrayList<>();
@@ -35,9 +36,9 @@ final class OrbitSwitcherModel {
     Set<String> incomingIds = new HashSet<>();
     for (Perspective perspective : perspectives) {
       Objects.requireNonNull(perspective);
-      if (!perspective.switchable()) continue;
-      incomingIds.add(perspective.id());
-      switchables.put(perspective.id(), perspective);
+      if (!perspective.info().switchable()) continue;
+      incomingIds.add(perspective.info().id());
+      switchables.put(perspective.info().id(), perspective);
     }
 
     switchables.keySet().removeIf(id -> !incomingIds.contains(id));
@@ -51,7 +52,7 @@ final class OrbitSwitcherModel {
       selected.clear();
       switchables.values().stream()
           .sorted(PRIORITY_ORDER)
-          .map(Perspective::id)
+          .map(perspective -> perspective.info().id())
           .forEach(selected::add);
     }
 
@@ -68,9 +69,9 @@ final class OrbitSwitcherModel {
 
   @NonNull List<@NonNull String> candidates() {
     return switchables.values().stream()
-        .filter(perspective -> groupOf(perspective.id()) == Group.CANDIDATE)
+        .filter(perspective -> groupOf(perspective.info().id()) == Group.CANDIDATE)
         .sorted(PRIORITY_ORDER)
-        .map(Perspective::id)
+        .map(perspective -> perspective.info().id())
         .toList();
   }
 

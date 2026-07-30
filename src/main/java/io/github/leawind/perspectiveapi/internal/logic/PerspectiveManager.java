@@ -52,6 +52,7 @@ public final class PerspectiveManager {
   private final ThrottledPerspectiveSanitizer sanitizer =
       new ThrottledPerspectiveSanitizer(throttledAction);
   private final LogicUpdateScheduler logicUpdateScheduler = new LogicUpdateScheduler();
+  private volatile boolean registryDirty;
 
   // region components
 
@@ -98,6 +99,7 @@ public final class PerspectiveManager {
 
   private PerspectiveManager(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
     switchers = new PerspectiveSwitcherManagerImpl(defaultSwitcher);
+    PerspectiveRegistryImpl.INSTANCE.onUpdate().on(() -> registryDirty = true);
 
     overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
     overrides.register(PerspectiveSwitcherManagerImpl.KEY, Integer.MIN_VALUE, switchers);
@@ -126,8 +128,12 @@ public final class PerspectiveManager {
     // tick switchers
     switchers.clientTick(minecraft);
 
-    if (logicUpdateScheduler.tick(PerspectiveAPI.getLogicTickInterval())) {
-      updateCurrentPerspective();
+    if (registryDirty) {
+      registryDirty = false;
+      logicUpdateScheduler.reset();
+      updateCurrentPerspective(true);
+    } else if (logicUpdateScheduler.tick(PerspectiveAPI.getLogicTickInterval())) {
+      updateCurrentPerspective(false);
     }
 
     Perspective current = this.current;
@@ -136,44 +142,46 @@ public final class PerspectiveManager {
 
     // Run perspective client tick
     extensions.run(
-        current.id(), "clientTick", () -> currentBehavior.clientTickWhenActive(minecraft));
+        current.info().id(), "clientTick", () -> currentBehavior.clientTickWhenActive(minecraft));
   }
 
   void resetLogicUpdateScheduler() {
     logicUpdateScheduler.reset();
   }
 
-  private void updateCurrentPerspective() {
+  private void updateCurrentPerspective(boolean registryChanged) {
     // Resolve current id from override chain
+    Perspective previous = current;
     Perspective resolved = PerspectiveRegistryImpl.INSTANCE.getOrDefault(overrides.get());
-    current = resolved;
-
     PerspectiveBehavior resolvedBehavior =
-        PerspectiveRegistryImpl.INSTANCE.getBehaviorOrDefault(resolved.id());
+        PerspectiveRegistryImpl.INSTANCE.getBehaviorOrDefault(resolved.info().id());
 
     // If the current perspective changed
-    var currentPerspective = this.currentBehavior;
-    if (resolvedBehavior != currentPerspective) {
-      if (currentPerspective != null) {
+    PerspectiveBehavior previousBehavior = currentBehavior;
+    if (resolved != previous || previousBehavior == null) {
+      if (previousBehavior != null) {
         extensions.run(
-            currentPerspective.getClass().getName(),
-            "onDeactivate",
-            currentPerspective::onDeactivate);
+            previousBehavior.getClass().getName(), "onDeactivate", previousBehavior::onDeactivate);
       }
-      previousBehavior = currentPerspective;
+      this.previousBehavior = previousBehavior;
+      current = resolved;
       this.currentBehavior = resolvedBehavior;
 
-      extensions.run(resolved.id(), "onActivate", resolvedBehavior::onActivate);
-
-      Bridge.updateCameraType(
-          switch (resolved.baseType()) {
-            case FIRST_PERSON -> CameraType.FIRST_PERSON;
-            case THIRD_PERSON_BACK -> CameraType.THIRD_PERSON_BACK;
-            case THIRD_PERSON_FRONT -> CameraType.THIRD_PERSON_FRONT;
-          });
-
+      extensions.run(resolved.info().id(), "onActivate", resolvedBehavior::onActivate);
+      updateCameraType(resolved.info().baseType());
       startTransition();
+    } else if (registryChanged) {
+      updateCameraType(resolved.info().baseType());
     }
+  }
+
+  private static void updateCameraType(PerspectiveBehavior.@NonNull BaseType baseType) {
+    Bridge.updateCameraType(
+        switch (baseType) {
+          case FIRST_PERSON -> CameraType.FIRST_PERSON;
+          case THIRD_PERSON_BACK -> CameraType.THIRD_PERSON_BACK;
+          case THIRD_PERSON_FRONT -> CameraType.THIRD_PERSON_FRONT;
+        });
   }
 
   // endregion
@@ -221,7 +229,7 @@ public final class PerspectiveManager {
       now = TransitionImpl.getTimeMs();
       isTransitioning =
           transition.isInTransition(now)
-              && allowsTransition(current.id(), currentBehavior, true)
+              && allowsTransition(current.info().id(), currentBehavior, true)
               && (previousBehavior == null
                   || allowsTransition(
                       previousBehavior.getClass().getName(), previousBehavior, false));
@@ -242,7 +250,7 @@ public final class PerspectiveManager {
 
     // Apply perspective
     if (!extensions.run(
-        current.id(),
+        current.info().id(),
         "apply",
         () -> currentBehavior.applyCameraState(targetState, renderTickContext))) {
       targetState.set(backupState);
@@ -250,10 +258,10 @@ public final class PerspectiveManager {
 
     // Sanitize
     sanitizer.sanitize(
-        current.id(),
+        current.info().id(),
         targetState,
         backupState,
-        () -> "Perspective '" + current.id() + "' provided invalid state");
+        () -> "Perspective '" + current.info().id() + "' provided invalid state");
 
     // Apply modifiers
     modifiers.applyCameraState(targetState, renderTickContext);
@@ -273,7 +281,7 @@ public final class PerspectiveManager {
 
     // Post-apply callback
     extensions.run(
-        current.id(),
+        current.info().id(),
         "postApply",
         () -> currentBehavior.afterApplyCameraState(targetState, renderTickContext));
   }

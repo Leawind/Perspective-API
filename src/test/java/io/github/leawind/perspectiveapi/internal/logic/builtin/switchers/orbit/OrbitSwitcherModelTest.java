@@ -8,13 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
+import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 class OrbitSwitcherModelTest {
@@ -119,31 +118,15 @@ class OrbitSwitcherModelTest {
     return new TestPerspective(id, priority, available);
   }
 
-  private record TestPerspective(@NonNull String id, int priority, boolean available)
+  private record TestPerspective(@NonNull PerspectiveInfo info, boolean available)
       implements Perspective {
-    @Override
-    public @NonNull Component name() {
-      return Component.literal(id);
-    }
-
-    @Override
-    public @Nullable Component description() {
-      return null;
-    }
-
-    @Override
-    public @NonNull BaseType baseType() {
-      return BaseType.FIRST_PERSON;
-    }
-
-    @Override
-    public boolean switchable() {
-      return true;
-    }
-
-    @Override
-    public @Nullable Identifier icon() {
-      return null;
+    private TestPerspective(@NonNull String id, int priority, boolean available) {
+      this(
+          PerspectiveInfo.builder(id, Component.literal(id))
+              .baseType(BaseType.FIRST_PERSON)
+              .priority(priority)
+              .build(),
+          available);
     }
 
     @Override

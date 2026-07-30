@@ -40,6 +40,34 @@ dependencies {
 
 This makes it easier to implement SPI without manually editing service files.
 
+## Runtime Perspective Registration
+
+`PerspectiveInfo.Declaration` is the declarative metadata form used by SPI. For
+perspectives created from runtime data, build the corresponding `PerspectiveInfo`
+object and retain the returned registration handle:
+
+```java
+PerspectiveInfo info =
+    PerspectiveInfo.builder(
+            "examplemod.preset.550e8400-e29b-41d4-a716-446655440000",
+            Component.literal("Combat"))
+        .baseType(PerspectiveBehavior.BaseType.THIRD_PERSON_BACK)
+        .priority(100)
+        .build();
+
+PerspectiveRegistration registration =
+    PerspectiveAPI.getRegistry().register(info, new PresetPerspectiveBehavior(preset));
+```
+
+Each registered ID and `PerspectiveBehavior` instance must be unique. Use
+`registration.updateInfo(newInfo)` to rename or reorder a runtime perspective without
+changing its identity. The ID cannot be changed.
+
+Call `registration.unregister()` to remove only the registration owned by that handle.
+An old handle cannot remove a newer registration that reuses the same ID. A default
+perspective can be registered with `PerspectiveRegistry.registerDefault`; removing the
+last registered default perspective is rejected.
+
 ## References
 
 - Mod source code: https://github.com/Leawind/Perspective-API

@@ -3,20 +3,20 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
-import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
+import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
+import io.github.leawind.perspectiveapi.api.PerspectiveRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -28,55 +28,59 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   public static final PerspectiveRegistryImpl INSTANCE = new PerspectiveRegistryImpl();
 
-  private record Entry(
-      @NonNull PerspectiveRegistryImpl owner,
-      @NonNull PerspectiveBehavior behavior,
-      @NonNull String id,
-      @NonNull Component name,
-      @Nullable Component description,
-      @NonNull BaseType baseType,
-      boolean switchable,
-      int priority,
-      @Nullable Identifier icon)
-      implements Perspective {
+  private static final class RegisteredPerspective implements Perspective {
+    private final PerspectiveRegistryImpl owner;
+    private final PerspectiveBehavior behavior;
+    private final @Nullable Integer defaultPriority;
+    private volatile PerspectiveInfo info;
+    private volatile boolean initialized;
 
-    private static Entry from(
+    private RegisteredPerspective(
+        @NonNull PerspectiveRegistryImpl owner,
+        @NonNull PerspectiveInfo info,
+        @Nullable Integer defaultPriority,
+        @NonNull PerspectiveBehavior behavior) {
+      this.owner = owner;
+      this.behavior = behavior;
+      this.defaultPriority = defaultPriority;
+      this.info = info;
+    }
+
+    private static @NonNull RegisteredPerspective fromDeclaration(
         @NonNull PerspectiveRegistryImpl owner, @NonNull PerspectiveBehavior behavior) {
-      PerspectiveBehavior.Info info =
-          behavior.getClass().getAnnotation(PerspectiveBehavior.Info.class);
-      if (info == null) {
+      PerspectiveInfo.Declaration declaration = getDeclaration(behavior);
+
+      PerspectiveInfo.Default defaultAnnotation =
+          behavior.getClass().getAnnotation(PerspectiveInfo.Default.class);
+      Integer defaultPriority = defaultAnnotation == null ? null : defaultAnnotation.priority();
+      return new RegisteredPerspective(
+          owner, PerspectiveInfo.fromDeclaration(declaration), defaultPriority, behavior);
+    }
+
+    private static PerspectiveInfo.@NonNull Declaration getDeclaration(
+        @NonNull PerspectiveBehavior behavior) {
+      PerspectiveInfo.Declaration declaration =
+          behavior.getClass().getAnnotation(PerspectiveInfo.Declaration.class);
+      if (declaration == null) {
         throw new ServiceConfigurationError(
             behavior.getClass().getName()
                 + " must be annotated with "
-                + PerspectiveBehavior.Info.class.getName());
+                + PerspectiveInfo.Declaration.class.getName());
       }
-      if (info.id().isEmpty()) {
+      if (declaration.id().isEmpty()) {
         throw new ServiceConfigurationError(
             behavior.getClass().getName() + " must declare a non-empty perspective ID");
       }
-      Identifier icon = info.icon().isEmpty() ? null : Bridge.parseIdentifier(info.icon());
-
-      Component name =
-          Component.translatable(
-              info.nameKey().isEmpty() ? "perspective." + info.id() + ".name" : info.nameKey());
-
-      Component description =
-          info.descriptionKey().isEmpty() ? null : Component.translatable(info.descriptionKey());
-
-      return new Entry(
-          owner,
-          behavior,
-          info.id(),
-          name,
-          description,
-          info.baseType(),
-          info.switchable(),
-          info.priority(),
-          icon);
+      return declaration;
     }
 
     private boolean evaluateAvailability() {
-      return EXTENSIONS.testOrElse(id, "isAvailable", behavior::isAvailable, false);
+      return EXTENSIONS.testOrElse(info.id(), "isAvailable", behavior::isAvailable, false);
+    }
+
+    @Override
+    public @NonNull PerspectiveInfo info() {
+      return info;
     }
 
     @Override
@@ -85,17 +89,50 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     }
   }
 
-  private static final class AvailabilitySnapshot {
-    private final Map<Entry, Boolean> values = new ConcurrentHashMap<>();
+  private static final class Registration implements PerspectiveRegistration {
+    private final PerspectiveRegistryImpl owner;
+    private final RegisteredPerspective entry;
 
-    private boolean isAvailable(@NonNull Entry entry) {
-      return values.computeIfAbsent(entry, Entry::evaluateAvailability);
+    private Registration(
+        @NonNull PerspectiveRegistryImpl owner, @NonNull RegisteredPerspective entry) {
+      this.owner = owner;
+      this.entry = entry;
+    }
+
+    @Override
+    public @NonNull Perspective perspective() {
+      return entry;
+    }
+
+    @Override
+    public boolean isRegistered() {
+      return owner.isRegistered(entry);
+    }
+
+    @Override
+    public void updateInfo(@NonNull PerspectiveInfo info) {
+      owner.updateInfo(entry, info);
+    }
+
+    @Override
+    public boolean unregister() {
+      return owner.unregister(entry);
     }
   }
 
-  private final Map<String, Entry> entries = new ConcurrentHashMap<>();
+  private static final class AvailabilitySnapshot {
+    private final Map<RegisteredPerspective, Boolean> values = new ConcurrentHashMap<>();
 
-  private volatile @Nullable Entry defaultEntry = null;
+    private boolean isAvailable(@NonNull RegisteredPerspective entry) {
+      return values.computeIfAbsent(entry, RegisteredPerspective::evaluateAvailability);
+    }
+  }
+
+  private final Map<String, RegisteredPerspective> entries = new ConcurrentHashMap<>();
+  private final IdentityHashMap<PerspectiveBehavior, RegisteredPerspective> entriesByBehavior =
+      new IdentityHashMap<>();
+
+  private volatile @Nullable RegisteredPerspective defaultEntry;
   private volatile AvailabilitySnapshot availabilitySnapshot = new AvailabilitySnapshot();
   private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
 
@@ -138,48 +175,100 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     availabilitySnapshot = new AvailabilitySnapshot();
   }
 
+  /// Registers a service-discovered behavior without emitting an update event.
   public void registerSilent(@NonNull PerspectiveBehavior behavior) {
-    Entry entry = Entry.from(this, behavior);
-    String id = entry.id();
-    LOGGER.info("Registering perspective with id '{}': {}", id, behavior);
-    Entry existing;
+    Objects.requireNonNull(behavior);
+    RegisteredPerspective entry = RegisteredPerspective.fromDeclaration(this, behavior);
+    String id = entry.info.id();
+    RegisteredPerspective displaced;
     synchronized (this) {
-      existing = entries.get(id);
+      rejectDuplicateBehavior(behavior);
+      displaced = entries.get(id);
+      if (displaced != null && compareRegistration(entry, displaced) >= 0) {
+        LOGGER.warn(
+            "Perspective with id '{}' is already registered by {}. Ignoring lower-precedence "
+                + "candidate {}",
+            id,
+            displaced.behavior.getClass().getName(),
+            behavior.getClass().getName());
+        return;
+      }
 
-      if (existing != null) {
-        if (existing.behavior() == behavior) {
-          LOGGER.warn(
-              "Perspective with id '{}' already registered and it has same behavior, ignoring", id);
-          return;
-        }
-        if (compareRegistration(entry, existing) >= 0) {
-          LOGGER.warn(
-              "Perspective with id '{}' is already registered by {}. Ignoring lower-precedence "
-                  + "candidate {}",
-              id,
-              existing.behavior().getClass().getName(),
-              behavior.getClass().getName());
-          return;
-        }
+      if (displaced == null) {
+        LOGGER.info("Registering perspective with id '{}': {}", id, behavior);
+      } else {
         LOGGER.warn(
             "Perspective with id '{}' is already registered by {}. Replacing it with {}",
             id,
-            existing.behavior().getClass().getName(),
+            displaced.behavior.getClass().getName(),
             behavior.getClass().getName());
+        entriesByBehavior.remove(displaced.behavior);
       }
       entries.put(id, entry);
-      recomputeDefault();
+      entriesByBehavior.put(behavior, entry);
     }
 
+    initializeOrRollback(entry, displaced);
+  }
+
+  @Override
+  public @NonNull PerspectiveRegistration register(
+      @NonNull PerspectiveInfo info, @NonNull PerspectiveBehavior behavior) {
+    return registerRuntime(info, null, behavior);
+  }
+
+  @Override
+  public @NonNull PerspectiveRegistration registerDefault(
+      @NonNull PerspectiveInfo info, int defaultPriority, @NonNull PerspectiveBehavior behavior) {
+    return registerRuntime(info, defaultPriority, behavior);
+  }
+
+  private @NonNull PerspectiveRegistration registerRuntime(
+      @NonNull PerspectiveInfo info,
+      @Nullable Integer defaultPriority,
+      @NonNull PerspectiveBehavior behavior) {
+    Objects.requireNonNull(info);
+    Objects.requireNonNull(behavior);
+    RegisteredPerspective entry = new RegisteredPerspective(this, info, defaultPriority, behavior);
+    String id = info.id();
+    synchronized (this) {
+      rejectDuplicateBehavior(behavior);
+      if (entries.containsKey(id)) {
+        throw new IllegalArgumentException("Perspective id is already registered: '" + id + "'");
+      }
+      entries.put(id, entry);
+      entriesByBehavior.put(behavior, entry);
+    }
+
+    initializeOrRollback(entry, null);
+    onUpdate.emit();
+    return new Registration(this, entry);
+  }
+
+  private void rejectDuplicateBehavior(@NonNull PerspectiveBehavior behavior) {
+    RegisteredPerspective existing = entriesByBehavior.get(behavior);
+    if (existing != null) {
+      throw new IllegalArgumentException(
+          "Perspective behavior instance is already registered as '" + existing.info.id() + "'");
+    }
+  }
+
+  private void initializeOrRollback(
+      @NonNull RegisteredPerspective entry, @Nullable RegisteredPerspective displaced) {
     try {
-      behavior.init();
+      entry.behavior.init();
+      synchronized (this) {
+        entry.initialized = true;
+        recomputeDefault();
+      }
     } catch (Throwable throwable) {
       Exceptions.rethrowIfFatal(throwable);
       synchronized (this) {
-        if (existing == null) {
-          entries.remove(id, entry);
-        } else {
-          entries.replace(id, entry, existing);
+        entries.remove(entry.info.id(), entry);
+        entriesByBehavior.remove(entry.behavior);
+        if (displaced != null) {
+          entries.put(displaced.info.id(), displaced);
+          entriesByBehavior.put(displaced.behavior, displaced);
         }
         recomputeDefault();
       }
@@ -187,27 +276,24 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     }
   }
 
-  /// Orders duplicate perspective registrations by their documented precedence.
-  ///
-  /// Lower priorities win. Equal priorities are resolved by the fully qualified behavior class
-  /// name, so registration order cannot affect the winner for distinct classes.
-  private static int compareRegistration(@NonNull Entry left, @NonNull Entry right) {
-    int priority = Integer.compare(left.priority(), right.priority());
+  /// Orders duplicate service registrations by their documented precedence.
+  private static int compareRegistration(
+      @NonNull RegisteredPerspective left, @NonNull RegisteredPerspective right) {
+    int priority = Integer.compare(left.info.priority(), right.info.priority());
     if (priority != 0) return priority;
-    return left.behavior().getClass().getName().compareTo(right.behavior().getClass().getName());
+    return left.behavior.getClass().getName().compareTo(right.behavior.getClass().getName());
   }
 
   private void recomputeDefault() {
     int bestPriority = Integer.MIN_VALUE;
-    @Nullable Entry bestEntry = null;
-    for (Entry candidate : entries.values()) {
-      PerspectiveBehavior.Default annotation =
-          candidate.behavior().getClass().getAnnotation(PerspectiveBehavior.Default.class);
-      if (annotation == null) continue;
-      int priority = annotation.priority();
+    @Nullable RegisteredPerspective bestEntry = null;
+    for (RegisteredPerspective candidate : entries.values()) {
+      if (!candidate.initialized) continue;
+      Integer priority = candidate.defaultPriority;
+      if (priority == null) continue;
       if (bestEntry == null
           || priority > bestPriority
-          || (priority == bestPriority && candidate.id().compareTo(bestEntry.id()) < 0)) {
+          || (priority == bestPriority && candidate.info.id().compareTo(bestEntry.info.id()) < 0)) {
         bestPriority = priority;
         bestEntry = candidate;
       }
@@ -215,10 +301,54 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     defaultEntry = bestEntry;
   }
 
+  private boolean isRegistered(@NonNull RegisteredPerspective entry) {
+    return entries.get(entry.info.id()) == entry;
+  }
+
+  private void updateInfo(@NonNull RegisteredPerspective entry, @NonNull PerspectiveInfo info) {
+    Objects.requireNonNull(info);
+    synchronized (this) {
+      String id = entry.info.id();
+      if (!id.equals(info.id())) {
+        throw new IllegalArgumentException("A perspective registration cannot change its ID");
+      }
+      if (!isRegistered(entry)) {
+        throw new IllegalStateException(
+            "Perspective registration is no longer present: '" + id + "'");
+      }
+      if (entry.info.equals(info)) return;
+      entry.info = info;
+    }
+    onUpdate.emit();
+  }
+
+  private boolean unregister(@NonNull RegisteredPerspective entry) {
+    synchronized (this) {
+      if (!isRegistered(entry)) return false;
+      if (entry.defaultPriority != null && hasNoOtherDefault(entry)) {
+        throw new IllegalStateException(
+            "Cannot unregister the last default perspective: '" + entry.info.id() + "'");
+      }
+      entries.remove(entry.info.id(), entry);
+      entriesByBehavior.remove(entry.behavior);
+      recomputeDefault();
+    }
+    onUpdate.emit();
+    return true;
+  }
+
+  private boolean hasNoOtherDefault(@NonNull RegisteredPerspective removed) {
+    for (RegisteredPerspective candidate : entries.values()) {
+      if (candidate != removed && candidate.initialized && candidate.defaultPriority != null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   public boolean contains(@Nullable String id) {
-    if (id == null) return false;
-    return entries.containsKey(id);
+    return id != null && entries.containsKey(id);
   }
 
   /// Returns an unmodifiable snapshot of all registered perspectives.
@@ -227,7 +357,10 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   /// currently unavailable.
   public @NonNull List<@NonNull Perspective> getAllPerspectives() {
     return entries.values().stream()
-        .sorted(Comparator.comparingInt(Entry::priority).thenComparing(Entry::id))
+        .sorted(
+            Comparator.comparingInt(
+                    (RegisteredPerspective perspective) -> perspective.info.priority())
+                .thenComparing(perspective -> perspective.info.id()))
         .map(entry -> (Perspective) entry)
         .toList();
   }
@@ -236,45 +369,35 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return onUpdate;
   }
 
-  // region entry
-
-  private @NonNull Entry getEntryOrThrow(@NonNull String id) {
-    Entry entry = entries.get(id);
+  private @NonNull RegisteredPerspective getEntryOrThrow(@NonNull String id) {
+    RegisteredPerspective entry = entries.get(id);
     if (entry == null) {
       throw new IllegalArgumentException("Unregistered perspective id '" + id + "'");
     }
     return entry;
   }
 
-  /// @throws IllegalStateException if default one is not discovered yet
-  private @NonNull Entry getDefaultEntry() throws IllegalStateException {
-    Entry entry = defaultEntry;
+  private @NonNull RegisteredPerspective getDefaultEntry() throws IllegalStateException {
+    RegisteredPerspective entry = defaultEntry;
     if (entry == null) {
       throw new IllegalStateException("Default entry is not registered yet");
     }
     return entry;
   }
 
-  private @NonNull Entry getEntryOrDefault(@Nullable String id) {
+  private @NonNull RegisteredPerspective getEntryOrDefault(@Nullable String id) {
     if (id != null) {
-      Entry entry = entries.get(id);
-      if (entry != null) {
-        return entry;
-      }
+      RegisteredPerspective entry = entries.get(id);
+      if (entry != null) return entry;
     }
     return getDefaultEntry();
   }
 
-  // endregion
-
-  // region perspective
-
   @Override
   public @Nullable Perspective get(@NonNull String id) {
-    return entries.get(id);
+    return entries.get(Objects.requireNonNull(id));
   }
 
-  /// @throws IllegalStateException if called before SPI discovery completes during mod loading
   public @NonNull Perspective getDefault() throws IllegalStateException {
     return getDefaultEntry();
   }
@@ -287,22 +410,15 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return getEntryOrDefault(id);
   }
 
-  // endregion
-
-  // region behavior
-
   public @NonNull PerspectiveBehavior getDefaultBehavior() {
-    return getDefaultEntry().behavior();
+    return getDefaultEntry().behavior;
   }
 
   public @NonNull PerspectiveBehavior getBehaviorOrThrow(@NonNull String id) {
-    return getEntryOrThrow(id).behavior();
+    return getEntryOrThrow(id).behavior;
   }
 
   public @NonNull PerspectiveBehavior getBehaviorOrDefault(@Nullable String id) {
-    return getEntryOrDefault(id).behavior();
+    return getEntryOrDefault(id).behavior;
   }
-
-  // endregion
-
 }
