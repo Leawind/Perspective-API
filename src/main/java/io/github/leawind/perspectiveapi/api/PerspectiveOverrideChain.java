@@ -18,7 +18,28 @@ public interface PerspectiveOverrideChain {
   /// Pushes a new override entry to the chain.
   ///
   /// If an entry with the same key already exists, it is replaced.
+  ///
+  /// ## Priority
+  ///
   /// Higher priority values are evaluated first.
+  /// Do not rely on registration order to coordinate equal-priority entries across mods.
+  ///
+  /// Choose a priority by comparing overrides that may be active at the same time.
+  ///
+  /// Search existing
+  /// [usages](https://github.com/search?type=code&q="priority:perspective_api.override")
+  /// first
+  ///
+  /// Leave gaps between priority values, such as increments of `1000`, so compatible overrides can
+  /// be inserted later.
+  ///
+  /// Mark each registration with its purpose so others can find it:
+  ///
+  /// ```java
+  /// // priority:perspective_api.override
+  /// // Shows aerial view while teleporting, ahead of ordinary player overrides.
+  /// overrides.register("examplemod:teleporting_view", 300000, ()->ID);
+  /// ```
   ///
   /// @param key the unique identifier for this override entry
   /// @param priority the evaluation priority
