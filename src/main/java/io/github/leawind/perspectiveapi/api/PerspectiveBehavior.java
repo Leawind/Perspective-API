@@ -35,11 +35,13 @@ public interface PerspectiveBehavior {
   }
 
   /// Whether smooth transitions are allowed when switching TO this perspective.
+  /// A failure is logged and treated as `false`.
   default boolean allowTransitionIn() {
     return true;
   }
 
   /// Whether smooth transitions are allowed when switching FROM this perspective.
+  /// A failure is logged and treated as `false`.
   default boolean allowTransitionOut() {
     return true;
   }
@@ -53,6 +55,7 @@ public interface PerspectiveBehavior {
   /// The registry evaluates this method lazily at most once per active client tick and shares the
   /// result with every {@link Perspective#isAvailable()} call during that tick. Implementations
   /// should not rely on invocation count or side effects.
+  /// A failure is logged and treated as `false` for the current availability snapshot.
   ///
   /// @return `true` if this perspective is eligible for resolution
   default boolean isAvailable() {
@@ -60,21 +63,27 @@ public interface PerspectiveBehavior {
   }
 
   /// Called once when the behavior is registered and initialized.
+  ///
+  /// If this method fails during runtime registration, the registration is rolled back and the
+  /// failure is propagated. A failed service-loaded provider is skipped and its failure is logged.
   default void init() {}
 
   // region events
 
-  /// Called when this perspective becomes the current perspective
+  /// Called when this perspective becomes the current perspective.
+  /// A failure is logged and otherwise ignored.
   ///
   /// @see #onDeactivate()
   default void onActivate() {}
 
-  /// Called when this perspective is no longer the current perspective
+  /// Called when this perspective is no longer the current perspective.
+  /// A failure is logged and otherwise ignored.
   ///
   /// @see #onActivate()
   default void onDeactivate() {}
 
   /// Called every client tick when this perspective is active.
+  /// A failure is logged and otherwise ignored for that tick.
   ///
   /// @see #isAvailable()
   default void clientTickWhenActive(@NonNull Minecraft minecraft) {}
@@ -89,6 +98,8 @@ public interface PerspectiveBehavior {
   /// foundational target state.
   /// Subsequent {@link PerspectiveModifier}s will further mutate this state before transition
   /// interpolation.
+  /// If this method fails, the failure is logged and the complete target state is restored to the
+  /// vanilla state received before this method was called.
   ///
   /// @param state The vanilla camera state. Can be mutated.
   /// @param context   The context containing frame-specific data.
@@ -104,6 +115,7 @@ public interface PerspectiveBehavior {
   /// Provides the exact state written to the Minecraft camera, suitable for
   /// raycasts, hit-testing, or other spatial queries that depend on the
   /// actual rendered viewpoint.
+  /// A failure is logged and otherwise ignored for that frame.
   ///
   /// @param state The final camera state that has been applied.
   /// @param context   The context containing frame-specific data.

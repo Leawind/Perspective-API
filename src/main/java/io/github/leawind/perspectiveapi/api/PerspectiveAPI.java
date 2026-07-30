@@ -11,6 +11,16 @@ import org.jspecify.annotations.Nullable;
 /// documentation says otherwise, callers must also interact with mutable API services on that
 /// thread. Actions passed to {@link #runWhenReady(String, Runnable)} follow that method's threading
 /// contract instead.
+///
+/// ## Extension callback failures
+///
+/// Perspective API isolates non-fatal failures thrown by extension behavior callbacks so one
+/// extension cannot interrupt the camera pipeline or other extensions. Failures are logged with
+/// throttling, and the affected callback uses the fallback documented by its interface. Fatal JVM
+/// errors are rethrown.
+///
+/// Initialization is different: a failed runtime registration is rolled back and the failure is
+/// propagated to its caller. A failed service-loaded provider is skipped and its failure is logged.
 public final class PerspectiveAPI {
   private PerspectiveAPI() {}
 

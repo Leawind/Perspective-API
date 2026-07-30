@@ -32,6 +32,7 @@ public interface PerspectiveOverrideChain {
   ///
   /// @param priority the evaluation priority
   /// @param supplier a supplier that returns the perspective ID, or `null` to skip
+  ///   A failure is logged and treated as `null` for that update.
   @NonNull PerspectiveOverrideRegistration register(
       int priority, @NonNull Supplier<@Nullable String> supplier);
 }

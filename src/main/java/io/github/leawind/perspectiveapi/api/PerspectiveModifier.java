@@ -16,6 +16,7 @@ public interface PerspectiveModifier {
   ///
   /// If `false`, this modifier is skipped during the current frame's camera transformations
   /// but remains registered in the chain for future frames.
+  /// A failure is logged and treated as `false` for that frame.
   ///
   /// @return `true` to apply, `false` to skip.
   default boolean isAvailable() {
@@ -23,6 +24,9 @@ public interface PerspectiveModifier {
   }
 
   /// Mutates the camera target state in-place.
+  ///
+  /// If this method fails, the failure is logged, all changes made by this modifier are reverted,
+  /// and later modifiers continue to run.
   ///
   /// @param state The target camera state, potentially modified by the base
   ///   perspective and previous modifiers. Can be mutated.

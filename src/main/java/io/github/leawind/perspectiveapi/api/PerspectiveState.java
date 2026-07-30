@@ -31,6 +31,7 @@ public interface PerspectiveState {
   ///
   /// This value is effective only when {@link #projectionMode()} is
   /// {@link ProjectionMode#PERSPECTIVE}.
+  /// It is always finite and in the closed range `[0, 180]`.
   float getFovDeg();
 
   /// Returns the vertical span of the orthographic view in world units.
@@ -63,6 +64,10 @@ public interface PerspectiveState {
     void setProjectionMode(@NonNull ProjectionMode projectionMode);
 
     /// Sets the field of view in degrees.
+    ///
+    /// The value must be finite and in the closed range `[0, 180]`. An invalid value is rejected by
+    /// the camera pipeline and replaced with the state from before the current perspective or
+    /// modifier callback.
     void setFovDeg(float fovDeg);
 
     /// Sets the vertical span of the orthographic view in world units.
