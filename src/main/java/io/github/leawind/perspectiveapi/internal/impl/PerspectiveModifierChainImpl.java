@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveModifierRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
@@ -16,43 +17,65 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
   private static final ExtensionInvoker EXTENSIONS =
       new ExtensionInvoker(LoggerFactory.getLogger(PerspectiveModifierChainImpl.class), "Modifier");
 
-  /// Represents a registered modifier with its priority and key.
-  private record ModifierEntry(
-      @NonNull String key, int priority, @NonNull PerspectiveModifier modifier) {
-    static final Comparator<ModifierEntry> COMPARATOR =
-        Comparator.comparingInt(ModifierEntry::priority);
+  private final class Registration implements PerspectiveModifierRegistration {
+    private final int priority;
+    private final PerspectiveModifier modifier;
+
+    private Registration(int priority, @NonNull PerspectiveModifier modifier) {
+      this.priority = priority;
+      this.modifier = modifier;
+    }
+
+    @Override
+    public boolean isRegistered() {
+      return containsIdentity(entries, this);
+    }
+
+    @Override
+    public boolean unregister() {
+      return PerspectiveModifierChainImpl.this.unregister(this);
+    }
   }
 
   private final ThrottledPerspectiveSanitizer sanitizer;
 
-  private volatile List<ModifierEntry> entries = List.of();
+  private volatile List<Registration> entries = List.of();
 
   public PerspectiveModifierChainImpl(@NonNull ThrottledPerspectiveSanitizer sanitizer) {
     this.sanitizer = Objects.requireNonNull(sanitizer);
   }
 
   @Override
-  public void register(@NonNull String key, int priority, @NonNull PerspectiveModifier modifier) {
-    Objects.requireNonNull(key);
+  public @NonNull PerspectiveModifierRegistration register(
+      int priority, @NonNull PerspectiveModifier modifier) {
     Objects.requireNonNull(modifier);
+    Registration registration = new Registration(priority, modifier);
     synchronized (this) {
-      List<ModifierEntry> newList = new ArrayList<>(entries);
-      newList.removeIf(e -> e.key().equals(key));
-      newList.add(new ModifierEntry(key, priority, modifier));
-      newList.sort(ModifierEntry.COMPARATOR);
+      List<Registration> newList = new ArrayList<>(entries);
+      newList.add(registration);
+      newList.sort(Comparator.comparingInt(entry -> entry.priority));
       this.entries = List.copyOf(newList);
+    }
+    return registration;
+  }
+
+  private boolean unregister(@NonNull Registration registration) {
+    synchronized (this) {
+      List<Registration> newList = new ArrayList<>(entries);
+      if (newList.removeIf(entry -> entry == registration)) {
+        this.entries = List.copyOf(newList);
+        return true;
+      }
+      return false;
     }
   }
 
-  @Override
-  public void unregister(@NonNull String key) {
-    Objects.requireNonNull(key);
-    synchronized (this) {
-      List<ModifierEntry> newList = new ArrayList<>(entries);
-      if (newList.removeIf(e -> e.key().equals(key))) {
-        this.entries = List.copyOf(newList);
-      }
+  private static boolean containsIdentity(
+      @NonNull List<Registration> entries, @NonNull Registration registration) {
+    for (Registration entry : entries) {
+      if (entry == registration) return true;
     }
+    return false;
   }
 
   /// Applies all active modifiers' camera state transformations sequentially.
@@ -65,20 +88,21 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
   public void applyCameraState(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {
     PerspectiveStateImpl backup = new PerspectiveStateImpl();
-    for (ModifierEntry entry : entries) {
-      if (!EXTENSIONS.testOrElse(entry.key(), "isAvailable", entry.modifier()::isAvailable, false))
+    for (Registration entry : entries) {
+      String id = entry.modifier.getClass().getName();
+      if (!EXTENSIONS.testOrElse(id, "isAvailable", entry.modifier::isAvailable, false))
         continue;
 
       backup.set(state);
-      if (!EXTENSIONS.run(entry.key(), "apply", () -> entry.modifier().apply(state, ctx))) {
+      if (!EXTENSIONS.run(id, "apply", () -> entry.modifier.apply(state, ctx))) {
         restore(state, backup);
         continue;
       }
       sanitizer.sanitize(
-          "modifier." + entry.key(),
+          "modifier." + id,
           state,
           backup,
-          () -> "Modifier '" + entry.key() + "' produced invalid state. Reverting.");
+          () -> "Modifier '" + id + "' produced invalid state. Reverting.");
     }
   }
 

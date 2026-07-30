@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveOverrideRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
@@ -59,6 +60,7 @@ public final class PerspectiveManager {
   private final TransitionImpl transition;
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
+  private final PerspectiveOverrideRegistration switcherOverride;
   private final PerspectiveSwitcherManagerImpl switchers;
 
   public @NonNull Transition transition() {
@@ -102,7 +104,7 @@ public final class PerspectiveManager {
     PerspectiveRegistryImpl.INSTANCE.onUpdate().on(() -> registryDirty = true);
 
     overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
-    overrides.register(PerspectiveSwitcherManagerImpl.KEY, Integer.MIN_VALUE, switchers);
+    switcherOverride = overrides.register(Integer.MIN_VALUE, switchers);
 
     modifiers = new PerspectiveModifierChainImpl(sanitizer);
 
@@ -147,6 +149,10 @@ public final class PerspectiveManager {
 
   void resetLogicUpdateScheduler() {
     logicUpdateScheduler.reset();
+  }
+
+  void clearTransientOverrides() {
+    overrides.clearExcept(switcherOverride);
   }
 
   private void updateCurrentPerspective(boolean registryChanged) {

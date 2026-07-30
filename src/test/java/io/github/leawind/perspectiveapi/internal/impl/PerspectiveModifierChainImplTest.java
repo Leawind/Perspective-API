@@ -1,9 +1,12 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
+import io.github.leawind.perspectiveapi.api.PerspectiveModifierRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
@@ -34,9 +37,9 @@ class PerspectiveModifierChainImplTest {
 
   @Test
   void appliesModifiersByAscendingPriority() {
-    chain.register("last", 20, modifier(s -> appendDigit(s, 3)));
-    chain.register("first", -10, modifier(s -> appendDigit(s, 1)));
-    chain.register("middle", 0, modifier(s -> appendDigit(s, 2)));
+    chain.register(20, modifier(s -> appendDigit(s, 3)));
+    chain.register(-10, modifier(s -> appendDigit(s, 1)));
+    chain.register(0, modifier(s -> appendDigit(s, 2)));
 
     chain.applyCameraState(state, context);
 
@@ -44,26 +47,26 @@ class PerspectiveModifierChainImplTest {
   }
 
   @Test
-  void equalPriorityUsesRegistrationOrderAndReplacementMovesToEnd() {
-    chain.register("first", 0, modifier(s -> appendDigit(s, 1)));
-    chain.register("second", 0, modifier(s -> appendDigit(s, 2)));
+  void equalPriorityUsesRegistrationOrder() {
+    chain.register(0, modifier(s -> appendDigit(s, 1)));
+    chain.register(0, modifier(s -> appendDigit(s, 2)));
 
     chain.applyCameraState(state, context);
     assertEquals(12.0, state.position().x);
-
-    state.position().zero();
-    chain.register("first", 0, modifier(s -> appendDigit(s, 1)));
-    chain.applyCameraState(state, context);
-    assertEquals(21.0, state.position().x);
   }
 
   @Test
   void unregisterRemovesOnlyMatchingEntry() {
-    chain.register("first", 0, modifier(s -> appendDigit(s, 1)));
-    chain.register("second", 0, modifier(s -> appendDigit(s, 2)));
+    PerspectiveModifierRegistration first =
+        chain.register(0, modifier(s -> appendDigit(s, 1)));
+    PerspectiveModifierRegistration second =
+        chain.register(0, modifier(s -> appendDigit(s, 2)));
 
-    chain.unregister("first");
-    chain.unregister("missing");
+    assertTrue(first.isRegistered());
+    assertTrue(first.unregister());
+    assertFalse(first.isRegistered());
+    assertFalse(first.unregister());
+    assertTrue(second.isRegistered());
     chain.applyCameraState(state, context);
 
     assertEquals(2.0, state.position().x);
@@ -72,9 +75,9 @@ class PerspectiveModifierChainImplTest {
   @Test
   void unavailableAndFailingAvailabilityChecksAreSkipped() {
     AtomicInteger applications = new AtomicInteger();
-    chain.register("unavailable", 0, conditionalModifier(false, applications));
-    chain.register("failure", 1, throwingAvailabilityModifier(applications));
-    chain.register("available", 2, conditionalModifier(true, applications));
+    chain.register(0, conditionalModifier(false, applications));
+    chain.register(1, throwingAvailabilityModifier(applications));
+    chain.register(2, conditionalModifier(true, applications));
 
     chain.applyCameraState(state, context);
 
@@ -89,7 +92,6 @@ class PerspectiveModifierChainImplTest {
     state.setProjectionMode(ProjectionMode.ORTHOGRAPHIC);
     state.setOrthographicHeight(16.0f);
     chain.register(
-        "failure",
         0,
         modifier(
             s -> {
@@ -100,7 +102,7 @@ class PerspectiveModifierChainImplTest {
               s.setOrthographicHeight(40.0f);
               throw new IllegalStateException("failure");
             }));
-    chain.register("after", 1, modifier(s -> s.position().add(1.0, 0.0, 0.0)));
+    chain.register(1, modifier(s -> s.position().add(1.0, 0.0, 0.0)));
 
     chain.applyCameraState(state, context);
 
@@ -118,7 +120,6 @@ class PerspectiveModifierChainImplTest {
     state.setFovDeg(70.0f);
     state.setOrthographicHeight(16.0f);
     chain.register(
-        "invalid",
         0,
         modifier(
             s -> {
@@ -140,9 +141,7 @@ class PerspectiveModifierChainImplTest {
   void rejectsNullRegistrationArguments() {
     PerspectiveModifier modifier = modifier(s -> {});
 
-    assertThrows(NullPointerException.class, () -> chain.register(null, 0, modifier));
-    assertThrows(NullPointerException.class, () -> chain.register("test", 0, null));
-    assertThrows(NullPointerException.class, () -> chain.unregister(null));
+    assertThrows(NullPointerException.class, () -> chain.register(0, null));
   }
 
   private static PerspectiveModifier modifier(Consumer<PerspectiveState.Mutable> action) {
