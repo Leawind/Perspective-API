@@ -3,8 +3,10 @@ package io.github.leawind.perspectiveapi.api;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 
+@ApiStatus.Internal
 final class InitializationCoordinator {
   private record ReadyAction(@NonNull String key, @NonNull Runnable action) {}
 

@@ -24,11 +24,9 @@ public interface PerspectiveSwitcher {
   @NonNull String id();
 
   /// Returns the display name of this switcher.
-  @ApiStatus.Experimental
   @NonNull Component name();
 
   /// Returns the description of this switcher, or `null` if none.
-  @ApiStatus.Experimental
   default @Nullable Component description() {
     return null;
   }

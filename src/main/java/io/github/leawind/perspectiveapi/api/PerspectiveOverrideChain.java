@@ -11,7 +11,6 @@ import org.jspecify.annotations.Nullable;
 /// non-null identifier whose perspective is registered and available. Invalid or unavailable
 /// candidates are skipped. Entries with the same priority are evaluated in registration order.
 /// Each supplier is evaluated once per current-perspective update while Perspective API is enabled.
-@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 public interface PerspectiveOverrideChain {
   /// Registers an override and returns a handle that owns the registration.
