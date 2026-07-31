@@ -161,10 +161,6 @@ public final class PerspectiveAPIState {
     applySections(sections);
   }
 
-  public static PerspectiveAPIState extract() {
-    return extract(null);
-  }
-
   static PerspectiveAPIState extract(@Nullable PerspectiveAPIState existing) {
     Map<String, Dynamic<?>> existingSections = existing == null ? Map.of() : existing.sections;
     return new PerspectiveAPIState(

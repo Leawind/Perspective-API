@@ -371,7 +371,7 @@ final class OrbitMenu {
     }
     screenWidth = Math.max(context.screenWidth, 1);
     screenHeight = Math.max(context.screenHeight, 1);
-    minEdge = Math.max(Math.min(screenWidth, screenHeight), 1);
+    minEdge = Math.min(screenWidth, screenHeight);
     updateMouseWorld();
 
     long now = System.nanoTime();

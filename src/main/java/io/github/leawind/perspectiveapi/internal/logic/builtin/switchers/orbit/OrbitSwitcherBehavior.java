@@ -40,6 +40,7 @@ public final class OrbitSwitcherBehavior
             .build();
   }
 
+  @SuppressWarnings("StatementWithEmptyBody")
   @Override
   public void init() {
     GameClientEvents.HANDLE_KEYBINDS_START.on(
