@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - release
       - beta
       - dev
   pull_request:
@@ -44,7 +44,7 @@ jobs:
       - name: '🛂 Setup Gradle'
         uses: gradle/actions/setup-gradle@v5
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/beta' && github.ref != 'refs/heads/dev' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/release' && github.ref != 'refs/heads/beta' && github.ref != 'refs/heads/dev' }}
           validate-wrappers: true
 
       - name: '🏗️ Build and test'

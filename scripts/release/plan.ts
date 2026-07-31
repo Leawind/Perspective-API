@@ -11,7 +11,7 @@ const change: ci.ReleaseChange = ci.extractChange({
 let version: string | null = null
 const branch = ci.currentBranch()
 
-if (branch === 'main') {
+if (branch === 'release') {
   version = ci.bumpVersion(change, {
     none: 'none',
     breaking: 'major',
