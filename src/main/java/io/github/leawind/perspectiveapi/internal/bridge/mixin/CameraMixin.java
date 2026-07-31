@@ -25,21 +25,6 @@ public abstract class CameraMixin implements CameraAccessor {
   @Shadow private float xRot;
   @Shadow private float yRot;
 
-  @Override
-  public Vector3f perspective_api$forwards() {
-    return forwards;
-  }
-
-  @Override
-  public Vector3f perspective_api$up() {
-    return up;
-  }
-
-  @Override
-  public Vector3f perspective_api$left() {
-    return left;
-  }
-
   /*? if >=26.1 {*/
   @Shadow private int matrixPropertiesDirty;
   /*? }*/
