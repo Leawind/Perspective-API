@@ -258,7 +258,7 @@ class StateManagerImplTest {
     var root = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
     assertTrue(
         root.getAsJsonObject("sections").has(OrbitSwitcherBehavior.ID),
-        "Orbit switcher state should be registered automatically");
+        "Orbit switcher should register its state section during initialization");
   }
 
   @Test

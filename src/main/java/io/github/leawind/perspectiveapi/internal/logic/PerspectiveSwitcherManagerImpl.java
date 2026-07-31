@@ -5,7 +5,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
-import io.github.leawind.perspectiveapi.internal.logic.state.PerspectiveAPIState;
 import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import java.util.Comparator;
@@ -68,9 +67,6 @@ public class PerspectiveSwitcherManagerImpl
     }
     try {
       switcher.init();
-      if (switcher instanceof PerspectiveAPIState.Section<?> section) {
-        PerspectiveAPIState.registerSection(section);
-      }
     } catch (Throwable throwable) {
       Exceptions.rethrowIfFatal(throwable);
       switchers.remove(id, switcher);

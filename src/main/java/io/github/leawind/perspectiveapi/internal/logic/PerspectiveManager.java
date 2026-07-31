@@ -40,7 +40,7 @@ public final class PerspectiveManager {
   static {
     PerspectiveAPI.installRuntime(PerspectiveAPIRuntimeImpl.INSTANCE);
     try {
-      INSTANCE = new PerspectiveManager(new OrbitSwitcherBehavior());
+      INSTANCE = new PerspectiveManager(OrbitSwitcherBehavior.INSTANCE);
     } catch (Throwable e) {
       LOGGER.error("Failed to initialize PerspectiveManager", e);
       throw e;

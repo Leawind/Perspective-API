@@ -19,12 +19,18 @@ import org.jspecify.annotations.Nullable;
 public final class OrbitSwitcherBehavior
     implements PerspectiveSwitcherBehavior, PerspectiveAPIState.Section<OrbitSwitcherState> {
   public static final String ID = PerspectiveAPI.MOD_ID + ".orbit_switcher";
+  public static final OrbitSwitcherBehavior INSTANCE;
+
+  static {
+    INSTANCE = new OrbitSwitcherBehavior();
+    PerspectiveAPIState.registerSection(INSTANCE);
+  }
 
   private final OrbitSwitcherModel model = new OrbitSwitcherModel();
   private final KeyStateTracker keyStateTracker;
   private final OrbitMenu menu = new OrbitMenu(this, model);
 
-  public OrbitSwitcherBehavior() {
+  private OrbitSwitcherBehavior() {
     keyStateTracker =
         KeyStateTracker.builder()
             .setHoldTicks(3)

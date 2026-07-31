@@ -89,7 +89,7 @@ class OrbitSwitcherModelTest {
 
   @Test
   void actorIdentitySurvivesSwitchableUpdates() {
-    OrbitSwitcherBehavior switcher = new OrbitSwitcherBehavior();
+    OrbitSwitcherBehavior switcher = OrbitSwitcherBehavior.INSTANCE;
     Perspective perspective = perspective("stable", 0, true);
     switcher.onSwitchablePerspectivesUpdated(List.of(perspective));
     PerspectiveActor actor = switcher.menu().actor("stable");
@@ -116,7 +116,7 @@ class OrbitSwitcherModelTest {
 
   @Test
   void behaviorExtractsAndAppliesPersistedLayout() {
-    OrbitSwitcherBehavior switcher = new OrbitSwitcherBehavior();
+    OrbitSwitcherBehavior switcher = OrbitSwitcherBehavior.INSTANCE;
     switcher.onSwitchablePerspectivesUpdated(
         List.of(perspective("a", 0, true), perspective("b", 1, true), perspective("c", 2, true)));
 
@@ -124,8 +124,7 @@ class OrbitSwitcherModelTest {
 
     assertEquals(List.of("c", "b"), switcher.model().selected());
     assertEquals(Set.of("a"), switcher.model().disabled());
-    assertEquals(
-        new OrbitSwitcherState(List.of("c", "b"), Set.of("a")), switcher.extractState());
+    assertEquals(new OrbitSwitcherState(List.of("c", "b"), Set.of("a")), switcher.extractState());
   }
 
   private static Perspective perspective(String id, int priority, boolean available) {
