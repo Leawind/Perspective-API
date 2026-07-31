@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.api.context;
+package io.github.leawind.perspectiveapi.api;
 
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.ApiStatus;

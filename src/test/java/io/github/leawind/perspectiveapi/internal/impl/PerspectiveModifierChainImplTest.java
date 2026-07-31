@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.leawind.perspectiveapi.api.PerspectiveContext;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
-import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import io.github.leawind.perspectiveapi.testutils.TestUtils;
@@ -57,10 +57,8 @@ class PerspectiveModifierChainImplTest {
 
   @Test
   void unregisterRemovesOnlyMatchingEntry() {
-    PerspectiveModifierRegistration first =
-        chain.register(0, modifier(s -> appendDigit(s, 1)));
-    PerspectiveModifierRegistration second =
-        chain.register(0, modifier(s -> appendDigit(s, 2)));
+    PerspectiveModifierRegistration first = chain.register(0, modifier(s -> appendDigit(s, 1)));
+    PerspectiveModifierRegistration second = chain.register(0, modifier(s -> appendDigit(s, 2)));
 
     assertTrue(first.isRegistered());
     assertTrue(first.unregister());

@@ -1,6 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.impl.context;
 
-import io.github.leawind.perspectiveapi.api.context.PerspectiveContext;
+import io.github.leawind.perspectiveapi.api.PerspectiveContext;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
