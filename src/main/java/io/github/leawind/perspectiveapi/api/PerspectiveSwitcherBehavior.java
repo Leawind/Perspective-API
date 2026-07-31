@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 ///
 /// Implementations are discovered via {@link java.util.ServiceLoader} and managed
 /// by the {@link io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager}.
-/// Each implementation must provide a non-empty, globally unique {@link #id()}.
+///
 /// A provider whose ID is already registered is rejected without replacing the existing switcher.
 @ApiStatus.Experimental
 @ApiStatus.OverrideOnly
@@ -22,9 +22,9 @@ public interface PerspectiveSwitcherBehavior extends PerspectiveSwitcher {
 
   /// Called when the registered list of switchable perspectives changes.
   ///
-  /// The list contains every registered perspective whose {@link Perspective#switchable()} value
-  /// is `true`, including perspectives that are currently unavailable. A switcher should consult
-  /// {@link Perspective#isAvailable()} when it needs to decide whether a perspective can be
+  /// The list contains every registered perspective whose {@link PerspectiveInfo#switchable()}
+  /// value is `true`, including perspectives that are currently unavailable. A switcher should
+  /// consult {@link Perspective#isAvailable()} when it needs to decide whether a perspective can be
   /// selected.
   /// A failure is logged and otherwise ignored for that notification.
   ///

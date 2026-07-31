@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.jimfs.Jimfs;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.Codec;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
@@ -15,6 +17,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -30,6 +33,36 @@ import org.junit.jupiter.api.Test;
 
 class StateManagerImplTest {
   private static final TestSwitcher TEST_SWITCHER = new TestSwitcher();
+  private static final TestStateSection TEST_STATE_SECTION = new TestStateSection();
+
+  static {
+    PerspectiveAPIState.registerSection(TEST_STATE_SECTION);
+  }
+
+  private static final class TestStateSection implements PerspectiveAPIState.Section<String> {
+    private static final String ID = "test.state_section";
+    private String value = "default";
+
+    @Override
+    public @NonNull String stateId() {
+      return ID;
+    }
+
+    @Override
+    public @NonNull Codec<String> stateCodec() {
+      return Codec.STRING;
+    }
+
+    @Override
+    public @NonNull String extractState() {
+      return value;
+    }
+
+    @Override
+    public void applyState(@NonNull String state) {
+      value = state;
+    }
+  }
 
   private static final class TestSwitcher implements PerspectiveSwitcherBehavior {
     private static final String ID = "test.persisted_switcher";
@@ -96,6 +129,7 @@ class StateManagerImplTest {
     PerspectiveManager.INSTANCE
         .switchers()
         .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
+    TEST_STATE_SECTION.value = "default";
     fs.close();
   }
 
@@ -199,6 +233,84 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertSame(TEST_SWITCHER, PerspectiveAPI.getSwitcherManager().getSelectedSwitcher());
+  }
+
+  @Test
+  void roundTripPreservesRegisteredStateSection() {
+    Path filePath = tempDir.resolve("section.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    TEST_STATE_SECTION.value = "saved";
+
+    manager.tryExtractAndSave();
+    TEST_STATE_SECTION.value = "changed";
+    manager.tryLoadAndApply();
+
+    assertEquals("saved", TEST_STATE_SECTION.value);
+  }
+
+  @Test
+  void saveIncludesOrbitSwitcherStateByStableId() throws IOException {
+    Path filePath = tempDir.resolve("orbit-section.json");
+    StateManager manager = new StateManagerImpl(filePath);
+
+    manager.tryExtractAndSave();
+
+    var root = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
+    assertTrue(
+        root.getAsJsonObject("sections").has(OrbitSwitcherBehavior.ID),
+        "Orbit switcher state should be registered automatically");
+  }
+
+  @Test
+  void invalidStateSectionDoesNotPreventCoreStateFromLoading() throws IOException {
+    Path filePath = tempDir.resolve("invalid-section.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    Files.createDirectories(filePath.getParent());
+    Files.writeString(
+        filePath,
+        """
+        {
+          "enabled": false,
+          "sections": {
+            "test.state_section": 42
+          }
+        }
+        """);
+    PerspectiveAPI.setEnabled(true);
+    TEST_STATE_SECTION.value = "unchanged";
+
+    manager.tryLoadAndApply();
+
+    assertFalse(PerspectiveAPI.isEnabled());
+    assertEquals("unchanged", TEST_STATE_SECTION.value);
+  }
+
+  @Test
+  void savePreservesUnknownStateSections() throws IOException {
+    Path filePath = tempDir.resolve("unknown-section.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    Files.createDirectories(filePath.getParent());
+    Files.writeString(
+        filePath,
+        """
+        {
+          "sections": {
+            "unknown.section": {
+              "answer": 42
+            }
+          }
+        }
+        """);
+
+    manager.tryExtractAndSave();
+
+    var root = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
+    assertEquals(
+        42,
+        root.getAsJsonObject("sections")
+            .getAsJsonObject("unknown.section")
+            .get("answer")
+            .getAsInt());
   }
 
   @Test

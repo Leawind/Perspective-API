@@ -43,17 +43,17 @@ public record StateManagerImpl(@NonNull Path filePath) implements StateManager {
   public void tryExtractAndSave() {
     try {
       Files.createDirectories(filePath.getParent());
-      var newState = PerspectiveAPIState.extract();
+      PerspectiveAPIState existingState = null;
       try {
         if (Files.exists(filePath)) {
-          var existingState = PerspectiveAPIState.load(filePath);
-          if (existingState.equals(newState)) {
-            return;
-          }
+          existingState = PerspectiveAPIState.load(filePath);
         }
       } catch (Exception e) {
         LOGGER.debug("Failed to read existing state from {}, proceeding to overwrite", filePath, e);
       }
+
+      PerspectiveAPIState newState = PerspectiveAPIState.extract(existingState);
+      if (newState.equals(existingState)) return;
       LOGGER.info("Saving perspective state to {}", filePath);
       newState.save(filePath);
     } catch (Exception e) {

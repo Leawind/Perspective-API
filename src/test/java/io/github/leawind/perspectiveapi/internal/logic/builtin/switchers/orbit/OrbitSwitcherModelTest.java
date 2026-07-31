@@ -114,6 +114,20 @@ class OrbitSwitcherModelTest {
     assertEquals("active", model.resolvedId());
   }
 
+  @Test
+  void behaviorExtractsAndAppliesPersistedLayout() {
+    OrbitSwitcherBehavior switcher = new OrbitSwitcherBehavior();
+    switcher.onSwitchablePerspectivesUpdated(
+        List.of(perspective("a", 0, true), perspective("b", 1, true), perspective("c", 2, true)));
+
+    switcher.applyState(new OrbitSwitcherState(List.of("c", "b"), Set.of("a")));
+
+    assertEquals(List.of("c", "b"), switcher.model().selected());
+    assertEquals(Set.of("a"), switcher.model().disabled());
+    assertEquals(
+        new OrbitSwitcherState(List.of("c", "b"), Set.of("a")), switcher.extractState());
+  }
+
   private static Perspective perspective(String id, int priority, boolean available) {
     return new TestPerspective(id, priority, available);
   }
