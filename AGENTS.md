@@ -200,7 +200,7 @@ Beta 阶段的版本格式为 `1.<minor>.<patch>-beta`：
 - `feat`、`i18n`、`fix`、`perf` 和 `revert` 使 patch 加一
 - 其他类型默认不触发发布，但包含破坏性变更时仍会触发发布
 
-正式版本从 `main` 分支发布，使用常规语义化版本规则：
+正式版本从 `release` 分支发布，使用常规语义化版本规则：
 
 - 破坏性变更使 major 加一，并将 minor、patch 重置为零
 - `feat` 使 minor 加一，并将 patch 重置为零
@@ -273,9 +273,9 @@ Body 需包含：`This reverts commit <SHA>`，并说明回退原因。
 
 ### 分支
 
-- `main`：主分支，正式版本发布分支
+- `dev`：默认分支和日常开发分支
 - `beta`：Beta 测试版本发布分支
-- `dev`：开发分支
+- `release`：正式版本发布分支
 - `feat/`：新功能
 - `fix/`：Bug 修复
 - `chore/`：构建过程或辅助工具的变动
