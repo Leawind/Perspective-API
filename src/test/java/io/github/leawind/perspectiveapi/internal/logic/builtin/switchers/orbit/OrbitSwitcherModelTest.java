@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
@@ -117,14 +118,29 @@ class OrbitSwitcherModelTest {
   @Test
   void behaviorExtractsAndAppliesPersistedLayout() {
     OrbitSwitcherBehavior switcher = OrbitSwitcherBehavior.INSTANCE;
+    int previousHoldTicks = switcher.getHoldTicks();
     switcher.onSwitchablePerspectivesUpdated(
         List.of(perspective("a", 0, true), perspective("b", 1, true), perspective("c", 2, true)));
 
-    switcher.applyState(new OrbitSwitcherState(List.of("c", "b"), Set.of("a")));
+    try {
+      switcher.applyState(new OrbitSwitcherState(List.of("c", "b"), Set.of("a"), 12));
 
-    assertEquals(List.of("c", "b"), switcher.model().selected());
-    assertEquals(Set.of("a"), switcher.model().disabled());
-    assertEquals(new OrbitSwitcherState(List.of("c", "b"), Set.of("a")), switcher.extractState());
+      assertEquals(List.of("c", "b"), switcher.model().selected());
+      assertEquals(Set.of("a"), switcher.model().disabled());
+      assertEquals(12, switcher.getHoldTicks());
+      assertEquals(
+          new OrbitSwitcherState(List.of("c", "b"), Set.of("a"), 12), switcher.extractState());
+    } finally {
+      switcher.setHoldTicks(previousHoldTicks);
+    }
+  }
+
+  @Test
+  void holdTicksMustStayWithinConfigRange() {
+    assertThrows(
+        IllegalArgumentException.class, () -> new OrbitSwitcherState(List.of(), Set.of(), -1));
+    assertThrows(
+        IllegalArgumentException.class, () -> new OrbitSwitcherState(List.of(), Set.of(), 21));
   }
 
   private static Perspective perspective(String id, int priority, boolean available) {

@@ -11,6 +11,7 @@ import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -116,6 +117,35 @@ public final class YaclConfigScreenBuilder {
                                     .values(
                                         PerspectiveAPI.getSwitcherManager().getAvailableSwitchers())
                                     .formatValue(PerspectiveSwitcher::name))
+                        .build())
+                .group(
+                    OptionGroup.createBuilder()
+                        .name(text("config_screen.group.orbit_switcher"))
+                        .option(
+                            Option.<Integer>createBuilder()
+                                .name(text("config_screen.option.orbit_switcher_hold_ticks"))
+                                .description(
+                                    OptionDescription.of(
+                                        text(
+                                            "config_screen.option.orbit_switcher_hold_ticks.desc")))
+                                .binding(
+                                    OrbitSwitcherBehavior.DEFAULT_HOLD_TICKS,
+                                    OrbitSwitcherBehavior.INSTANCE::getHoldTicks,
+                                    OrbitSwitcherBehavior.INSTANCE::setHoldTicks)
+                                .controller(
+                                    opt ->
+                                        IntegerSliderControllerBuilder.create(opt)
+                                            .range(
+                                                OrbitSwitcherBehavior.MIN_HOLD_TICKS,
+                                                OrbitSwitcherBehavior.MAX_HOLD_TICKS)
+                                            .step(1)
+                                            .formatValue(
+                                                v ->
+                                                    Component.translatable(
+                                                        PerspectiveAPI.MOD_ID
+                                                            + ".config_screen.option.orbit_switcher_hold_ticks.value",
+                                                        v)))
+                                .build())
                         .build())
                 .build())
         .build()

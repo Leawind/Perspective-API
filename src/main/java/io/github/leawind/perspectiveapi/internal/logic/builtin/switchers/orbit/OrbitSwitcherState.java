@@ -9,11 +9,11 @@ import org.jspecify.annotations.NonNull;
 
 /// Persisted player configuration for the orbit switcher.
 public record OrbitSwitcherState(
-    @NonNull List<@NonNull String> selected, @NonNull Set<@NonNull String> disabled) {
+    @NonNull List<@NonNull String> selected,
+    @NonNull Set<@NonNull String> disabled,
+    int holdTicks) {
   private static final Codec<Set<String>> STRING_SET_CODEC =
-      Codec.STRING
-          .listOf()
-          .xmap(Set::copyOf, values -> values.stream().sorted().toList());
+      Codec.STRING.listOf().xmap(Set::copyOf, values -> values.stream().sorted().toList());
 
   static final Codec<OrbitSwitcherState> CODEC =
       RecordCodecBuilder.create(
@@ -26,7 +26,12 @@ public record OrbitSwitcherState(
                           .forGetter(OrbitSwitcherState::selected),
                       STRING_SET_CODEC
                           .optionalFieldOf("disabled", Set.of())
-                          .forGetter(OrbitSwitcherState::disabled))
+                          .forGetter(OrbitSwitcherState::disabled),
+                      Codec.intRange(
+                              OrbitSwitcherBehavior.MIN_HOLD_TICKS,
+                              OrbitSwitcherBehavior.MAX_HOLD_TICKS)
+                          .optionalFieldOf("hold_ticks", OrbitSwitcherBehavior.DEFAULT_HOLD_TICKS)
+                          .forGetter(OrbitSwitcherState::holdTicks))
                   .apply(instance, OrbitSwitcherState::new));
 
   public OrbitSwitcherState {
@@ -34,6 +39,7 @@ public record OrbitSwitcherState(
     Objects.requireNonNull(disabled);
     selected.forEach(Objects::requireNonNull);
     disabled.forEach(Objects::requireNonNull);
+    OrbitSwitcherBehavior.validateHoldTicks(holdTicks);
     selected = List.copyOf(selected);
     disabled = Set.copyOf(disabled);
   }

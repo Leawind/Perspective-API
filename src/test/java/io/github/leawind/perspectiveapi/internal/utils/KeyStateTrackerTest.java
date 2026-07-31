@@ -516,8 +516,21 @@ class KeyStateTrackerTest {
   }
 
   @Test
-  void holdTicksMustBePositive() {
-    assertThrows(IllegalArgumentException.class, () -> KeyStateTracker.builder().setHoldTicks(0));
+  void zeroHoldTicksTriggersHoldOnFirstDownTick() {
+    var holdFired = new AtomicBoolean();
+    var tracker =
+        KeyStateTracker.builder()
+            .setHoldTicks(0)
+            .onHoldStart(() -> holdFired.set(true))
+            .build();
+
+    tracker.tick(true);
+
+    assertTrue(holdFired.get());
+  }
+
+  @Test
+  void holdTicksMustBeNonNegative() {
     var tracker = KeyStateTracker.builder().build();
     assertThrows(IllegalArgumentException.class, () -> tracker.setHoldTicks(-1));
   }

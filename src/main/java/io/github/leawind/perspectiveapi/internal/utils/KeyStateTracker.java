@@ -90,7 +90,7 @@ public final class KeyStateTracker {
   }
 
   private static int validateHoldTicks(int ticks) {
-    if (ticks <= 0) throw new IllegalArgumentException("holdTicks must be positive");
+    if (ticks < 0) throw new IllegalArgumentException("holdTicks must be non-negative");
     return ticks;
   }
 

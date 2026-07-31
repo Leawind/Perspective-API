@@ -19,6 +19,9 @@ import org.jspecify.annotations.Nullable;
 public final class OrbitSwitcherBehavior
     implements PerspectiveSwitcherBehavior, PerspectiveAPIState.Section<OrbitSwitcherState> {
   public static final String ID = PerspectiveAPI.MOD_ID + ".orbit_switcher";
+  public static final int DEFAULT_HOLD_TICKS = 3;
+  public static final int MIN_HOLD_TICKS = 0;
+  public static final int MAX_HOLD_TICKS = 20;
   public static final OrbitSwitcherBehavior INSTANCE;
 
   static {
@@ -33,7 +36,7 @@ public final class OrbitSwitcherBehavior
   private OrbitSwitcherBehavior() {
     keyStateTracker =
         KeyStateTracker.builder()
-            .setHoldTicks(3)
+            .setHoldTicks(DEFAULT_HOLD_TICKS)
             .onPress(model::cycleForward)
             .onHoldStart(menu::open)
             .onHoldStop(menu::closeFromKey)
@@ -114,15 +117,32 @@ public final class OrbitSwitcherBehavior
 
   @Override
   public @NonNull OrbitSwitcherState extractState() {
-    return new OrbitSwitcherState(model.selected(), model.disabled());
+    return new OrbitSwitcherState(model.selected(), model.disabled(), getHoldTicks());
   }
 
   @Override
   public void applyState(@NonNull OrbitSwitcherState state) {
     Objects.requireNonNull(state);
+    setHoldTicks(state.holdTicks());
     model.applyLayout(state.selected(), state.disabled());
     model.ensureActive();
     menu.syncActors();
+  }
+
+  public int getHoldTicks() {
+    return keyStateTracker.getHoldTicks();
+  }
+
+  public void setHoldTicks(int holdTicks) {
+    keyStateTracker.setHoldTicks(validateHoldTicks(holdTicks));
+  }
+
+  static int validateHoldTicks(int holdTicks) {
+    if (holdTicks < MIN_HOLD_TICKS || holdTicks > MAX_HOLD_TICKS) {
+      throw new IllegalArgumentException(
+          "holdTicks must be between " + MIN_HOLD_TICKS + " and " + MAX_HOLD_TICKS);
+    }
+    return holdTicks;
   }
 
   OrbitSwitcherModel model() {
