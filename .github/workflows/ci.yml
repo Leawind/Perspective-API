@@ -48,7 +48,7 @@ jobs:
           validate-wrappers: true
 
       - name: '🏗️ Build and test'
-        run: ./gradlew clean build
+        run: ./gradlew buildAndCollect
 
       - name: '📦 Publish Modrinth and CurseForge'
         if: ${{ steps.release.outputs.release == 'true' }}
@@ -68,9 +68,6 @@ jobs:
           DRY_RUN: ${{ vars.DRY_RUN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: deno -A scripts/release/publish-github.ts
-
-      - name: '🕵️‍♂️ Collect jars'
-        run: ./gradlew buildAndCollect
 
       - name: '📤 Upload artifacts'
         uses: actions/upload-artifact@v5
