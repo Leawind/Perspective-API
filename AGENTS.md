@@ -54,7 +54,7 @@
 
 ## Minecraft 版本兼容性
 
-当一个构建产物兼容连续的多个 Minecraft 版本时，应以其中最低版本作为开发和构建目标。模组元数据中的 Minecraft 版本要求应声明为 `>=` 该最低版本；发布平台上的额外版本标签则在对应变体的 `gradle.properties` 中通过 `publish.additionalMcVersions` 声明。
+当一个构建产物兼容连续的多个 Minecraft 版本时，应以其中最低版本作为开发和构建目标。模组元数据中的 Minecraft 版本要求只声明为 `>=` 该最低版本，不声明上界；这是项目有意采用的兼容性策略，不应为不同变体补充 `<` 上界。发布平台上的额外版本标签则在对应变体的 `gradle.properties` 中通过 `publish.additionalMcVersions` 声明。
 
 ## Stonecutter 条件编译
 
