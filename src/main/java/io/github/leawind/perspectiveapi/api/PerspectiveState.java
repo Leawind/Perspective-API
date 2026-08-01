@@ -31,6 +31,9 @@ public interface PerspectiveState {
   ///
   /// This value is effective only when {@link #projectionMode()} is
   /// {@link ProjectionMode#PERSPECTIVE}.
+  /// During camera-state calculation, its initial value is the vanilla FOV captured on the
+  /// previous render frame. This intentional one-frame delay keeps the state pipeline consistent
+  /// across supported Minecraft versions.
   /// It is always finite and in the closed range `[0, 180]`.
   float getFovDeg();
 
