@@ -52,6 +52,8 @@
 2. 事件驱动解耦：`bridge` 层的 Mixin 仅负责拦截原版调用，并发射通用事件（Event）；`logic` 层负责监听这些事件并执行具体业务
 3. `logic` 层无宏化：`logic` 包和 `api` 包应尽可能保持 100% 无 Stonecutter 条件编译宏，所有 Minecraft 版本差异必须下沉并封装在 `bridge` 层
 
+这些约束由根项目的 `checkArchitecture` 任务自动检查。所有变体的 `check` 任务和 `buildAndCollect` 都会运行该检查。
+
 ## Minecraft 版本兼容性
 
 当一个构建产物兼容连续的多个 Minecraft 版本时，应以其中最低版本作为开发和构建目标。模组元数据中的 Minecraft 版本要求只声明为 `>=` 该最低版本，不声明上界；这是项目有意采用的兼容性策略，不应为不同变体补充 `<` 上界。发布平台上的额外版本标签则在对应变体的 `gradle.properties` 中通过 `publish.additionalMcVersions` 声明。

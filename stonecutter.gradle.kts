@@ -10,9 +10,87 @@ plugins {
 
 stonecutter active "26.2-fabric"
 
+val checkArchitecture by tasks.registering {
+    group = "verification"
+    description = "Checks source package dependencies and Stonecutter macro boundaries."
+
+    val sourceRoot = layout.projectDirectory.dir("src/main/java")
+    val javaSources = fileTree(sourceRoot) { include("**/*.java") }
+    inputs.files(javaSources)
+
+    doLast {
+        val basePackage = "io.github.leawind.perspectiveapi"
+        val apiPackage = "$basePackage.api"
+        val bridgePackage = "$basePackage.internal.bridge"
+        val implPackage = "$basePackage.internal.impl"
+        val logicPackage = "$basePackage.internal.logic"
+        val platformPackage = "$basePackage.platform"
+
+        val allowedApiInternalImports = setOf("$bridgePackage.Bridge")
+        val forbiddenBridgeImports = listOf(apiPackage, implPackage, logicPackage)
+        val forbiddenUtilsImports =
+            listOf(apiPackage, bridgePackage, implPackage, logicPackage, platformPackage)
+        val violations = mutableListOf<String>()
+
+        fun importedType(line: String): String? {
+            val declaration = line.trim().removePrefix("/*").trim()
+            if (!declaration.startsWith("import ")) return null
+            return declaration
+                .removePrefix("import ")
+                .removePrefix("static ")
+                .substringBefore(';')
+                .trim()
+        }
+
+        javaSources.files.sortedBy { it.path }.forEach { sourceFile ->
+            val relativePath = sourceFile.relativeTo(sourceRoot.asFile).invariantSeparatorsPath
+            val isApi = relativePath.startsWith("io/github/leawind/perspectiveapi/api/")
+            val isBridge =
+                relativePath.startsWith("io/github/leawind/perspectiveapi/internal/bridge/")
+            val isLogic = relativePath.startsWith("io/github/leawind/perspectiveapi/internal/logic/")
+            val isUtils = relativePath.startsWith("io/github/leawind/perspectiveapi/internal/utils/")
+            val isMixin = relativePath.contains("/mixin/") || relativePath.endsWith("Mixin.java")
+
+            sourceFile.readLines().forEachIndexed { index, line ->
+                val location = "$relativePath:${index + 1}"
+                if ((isApi || isLogic) && (line.contains("/*?") || line.contains("/^?"))) {
+                    violations += "$location: Stonecutter macro is forbidden in api and logic"
+                }
+
+                val importedName = importedType(line) ?: return@forEachIndexed
+                if (
+                    isApi &&
+                    importedName.startsWith("$basePackage.internal.") &&
+                    allowedApiInternalImports.none {
+                        importedName == it || importedName.startsWith("$it.")
+                    }
+                ) {
+                    violations += "$location: api cannot import $importedName"
+                }
+                if (
+                    (isBridge || isMixin) &&
+                    forbiddenBridgeImports.any { importedName.startsWith("$it.") }
+                ) {
+                    violations += "$location: bridge and Mixins cannot import $importedName"
+                }
+                if (isUtils && forbiddenUtilsImports.any { importedName.startsWith("$it.") }) {
+                    violations += "$location: utils cannot import $importedName"
+                }
+            }
+        }
+
+        if (violations.isNotEmpty()) {
+            throw GradleException(
+                "Architecture violations:\n" + violations.joinToString("\n") { "- $it" },
+            )
+        }
+    }
+}
+
 val buildAndCollect by tasks.registering(Sync::class) {
     group = "build"
     description = "Builds and collects all distributable jars."
+    dependsOn(checkArchitecture)
     into(layout.buildDirectory.dir("libs"))
 }
 

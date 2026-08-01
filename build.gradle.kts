@@ -185,6 +185,10 @@ tasks.test {
     }
 }
 
+tasks.named("check") {
+    dependsOn(rootProject.tasks.named("checkArchitecture"))
+}
+
 tasks.withType<JavaExec>().configureEach {
     if (name == "runClient") {
         workingDir(rootProject.layout.projectDirectory.dir("run"))
