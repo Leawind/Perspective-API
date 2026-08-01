@@ -84,8 +84,6 @@ Shared traits use lowercase `snake_case` without a namespace. Recommended traits
 
 - `first_person`: primarily observes from the camera entity's eyes
 - `third_person`: primarily observes the camera entity from outside
-- `free_camera`: allows the camera to move independently of the camera entity
-- `orthographic`: uses orthographic projection
 
 Trait names form an open vocabulary; perspectives may declare other traits without
 registering them first. A mod-specific trait may use the form
@@ -98,26 +96,10 @@ the current camera-to-entity distance from the actual camera state. Do not infer
 from `baseType`: it is only the vanilla fallback camera type, and a free camera may also
 use `THIRD_PERSON_BACK` as its fallback.
 
-The traits in `perspective.info().traits()` are only those declared by the perspective
-provider. Use `perspective.traits()` or `perspective.hasTrait(...)` when making behavior
-decisions; these include external compatibility contributions.
-
-An integration may contribute traits to a specific stable perspective ID even before
-that perspective is registered:
-
-```java
-PerspectiveTraitRegistration contribution =
-    PerspectiveAPI.getRegistry().contributeTraits(
-        "example_compat",
-        "targetmod.special_camera",
-        Set.of("third_person"));
-```
-
-Contributions are additive. They never remove declared traits or traits from another
-contributor, and the API does not infer or check conflicts between trait names. Retain
-the returned handle and call `contribution.unregister()` when the integration is
-unloaded. A contribution remains associated with its exact perspective ID if the target
-is removed and registered again.
+Traits are specified by the perspective provider when the perspective is registered and
+cannot be changed afterward. Other mods cannot add traits to or remove traits from a
+perspective. Use `perspective.info().traits()` to inspect all declared traits, or
+`perspective.info().hasTrait(...)` for a single behavior check.
 
 ## References
 

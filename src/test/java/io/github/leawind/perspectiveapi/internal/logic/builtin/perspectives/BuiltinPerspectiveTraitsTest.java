@@ -13,8 +13,8 @@ class BuiltinPerspectiveTraitsTest {
   void declareFirstPersonTraitOnlyForFirstPerson() {
     PerspectiveInfo info = infoOf(FirstPersonPerspective.class);
 
-    assertTrue(info.declaresTrait("first_person"));
-    assertFalse(info.declaresTrait("third_person"));
+    assertTrue(info.hasTrait("first_person"));
+    assertFalse(info.hasTrait("third_person"));
   }
 
   @Test
@@ -22,10 +22,10 @@ class BuiltinPerspectiveTraitsTest {
     PerspectiveInfo backInfo = infoOf(ThirdPersonBackPerspective.class);
     PerspectiveInfo frontInfo = infoOf(ThirdPersonFrontPerspective.class);
 
-    assertTrue(backInfo.declaresTrait("third_person"));
-    assertTrue(frontInfo.declaresTrait("third_person"));
-    assertFalse(backInfo.declaresTrait("first_person"));
-    assertFalse(frontInfo.declaresTrait("first_person"));
+    assertTrue(backInfo.hasTrait("third_person"));
+    assertTrue(frontInfo.hasTrait("third_person"));
+    assertFalse(backInfo.hasTrait("first_person"));
+    assertFalse(frontInfo.hasTrait("first_person"));
   }
 
   private static PerspectiveInfo infoOf(

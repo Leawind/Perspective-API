@@ -17,9 +17,10 @@ public interface PerspectiveRegistration {
 
   /// Updates runtime information without changing the identity of the registered perspective.
   ///
-  /// The new information must retain the original perspective ID.
+  /// The new information must retain the original perspective ID and semantic traits. Traits are
+  /// stable properties chosen when the perspective is registered.
   ///
-  /// @throws IllegalArgumentException if the perspective ID changes
+  /// @throws IllegalArgumentException if the perspective ID or traits change
   /// @throws IllegalStateException if this registration has already been removed
   @ApiStatus.Experimental
   void updateInfo(@NonNull PerspectiveInfo info);

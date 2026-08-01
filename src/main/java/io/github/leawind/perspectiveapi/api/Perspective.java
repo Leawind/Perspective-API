@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import java.util.Set;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 
@@ -23,23 +22,6 @@ public interface Perspective {
   /// PerspectiveRegistration#updateInfo(PerspectiveInfo)}, while this registered perspective
   /// retains its identity.
   @NonNull PerspectiveInfo info();
-
-  /// Returns the effective semantic traits of this perspective.
-  ///
-  /// The returned immutable snapshot is the union of traits declared by {@link #info()} and traits
-  /// contributed through {@link PerspectiveRegistry#contributeTraits}. Removing one contribution
-  /// does not remove the same trait when another source still provides it.
-  @ApiStatus.Experimental
-  default @NonNull Set<@NonNull String> traits() {
-    return info().traits();
-  }
-
-  /// Returns whether this perspective has the given effective semantic trait.
-  @ApiStatus.Experimental
-  default boolean hasTrait(@NonNull String trait) {
-    PerspectiveInfo.validateTrait(trait);
-    return traits().contains(trait);
-  }
 
   /// Returns whether this perspective is currently eligible to be resolved as active.
   ///

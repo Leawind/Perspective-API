@@ -13,8 +13,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
-import io.github.leawind.perspectiveapi.api.PerspectiveTraitRegistration;
-import java.util.Collection;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -37,14 +35,6 @@ class PerspectiveOverrideChainTest {
           @NonNull PerspectiveInfo info,
           int defaultPriority,
           @NonNull PerspectiveBehavior behavior) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public @NonNull PerspectiveTraitRegistration contributeTraits(
-          @NonNull String contributorId,
-          @NonNull String perspectiveId,
-          @NonNull Collection<@NonNull String> traits) {
         throw new UnsupportedOperationException();
       }
 

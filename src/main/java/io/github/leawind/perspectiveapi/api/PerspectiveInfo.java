@@ -32,8 +32,8 @@ import org.jspecify.annotations.Nullable;
 /// @param switchable whether player-facing switchers may select the perspective
 /// @param priority the sorting priority within switchers, where lower values appear first
 /// @param icon the optional icon texture
-/// @param traits the semantic traits declared by the perspective; see {@link Declaration#traits()}
-///     for recommended shared traits
+/// @param traits the stable semantic traits declared when the perspective is registered; see
+///     {@link Declaration#traits()} for recommended shared traits
 public record PerspectiveInfo(
     @NonNull String id,
     @NonNull Component name,
@@ -75,7 +75,7 @@ public record PerspectiveInfo(
   /// unqualified so independent mods can agree on the same meaning. A mod-specific trait may use
   /// the form `<namespace>:<trait>` until a shared meaning is established.
   @ApiStatus.Experimental
-  public boolean declaresTrait(@NonNull String trait) {
+  public boolean hasTrait(@NonNull String trait) {
     validateTrait(trait);
     return traits.contains(trait);
   }
@@ -86,7 +86,7 @@ public record PerspectiveInfo(
   /// @throws IllegalArgumentException if `trait` is not lowercase `snake_case` with an optional
   ///     namespace
   @ApiStatus.Experimental
-  public static void validateTrait(@NonNull String trait) {
+  private static void validateTrait(@NonNull String trait) {
     Objects.requireNonNull(trait);
     if (!TRAIT_PATTERN.matcher(trait).matches()) {
       throw new IllegalArgumentException("Invalid perspective trait: '" + trait + "'");
@@ -94,6 +94,7 @@ public record PerspectiveInfo(
   }
 
   /// Creates runtime information from a declarative perspective annotation.
+  @ApiStatus.Internal
   public static @NonNull PerspectiveInfo fromDeclaration(@NonNull Declaration declaration) {
     Objects.requireNonNull(declaration);
     String id = declaration.id();
@@ -253,12 +254,10 @@ public record PerspectiveInfo(
     ///
     /// - `first_person`: the perspective primarily observes from the camera entity's eyes
     /// - `third_person`: the perspective primarily observes the camera entity from outside
-    /// - `free_camera`: the camera can move independently of the camera entity
-    /// - `orthographic`: the perspective uses orthographic projection
     ///
-    /// Traits describe stable perspective semantics, not transient per-frame state. Shared traits
-    /// should use lowercase `snake_case` without a namespace. Mod-specific traits may use
-    /// `<namespace>:<trait>`.
+    /// Traits describe stable perspective semantics, not transient per-frame state. They cannot be
+    /// changed after the perspective is registered. Shared traits should use lowercase `snake_case`
+    /// without a namespace. Mod-specific traits may use `<namespace>:<trait>`.
     @ApiStatus.Experimental
     @NonNull String[] traits() default {};
   }
