@@ -198,15 +198,6 @@ class PerspectiveRegistryImplTest {
   }
 
   @Test
-  void keepLegacyConstructorWithoutTraits() {
-    PerspectiveInfo info =
-        new PerspectiveInfo(
-            "test.legacy", Component.literal("Legacy"), null, BaseType.FIRST_PERSON, true, 0, null);
-
-    assertEquals(Set.of(), info.traits());
-  }
-
-  @Test
   void getAllSortsByPriorityThenId() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
     registry.registerSilent(new LowDefaultPerspective());
@@ -264,7 +255,7 @@ class PerspectiveRegistryImplTest {
   }
 
   @Test
-  void registerRuntimePerspectiveAndUpdateMutableInfo() {
+  void registerRuntimePerspective() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
     PerspectiveBehavior behavior = new MissingInfoPerspective();
     AtomicInteger updates = new AtomicInteger();
@@ -279,7 +270,6 @@ class PerspectiveRegistryImplTest {
     PerspectiveRegistration registration = registry.register(initial, behavior);
     Perspective perspective = registration.perspective();
 
-    assertTrue(registration.isRegistered());
     assertSame(perspective, registry.get("test.runtime"));
     assertSame(initial, perspective.info());
     assertEquals("Runtime", perspective.info().name().getString());
@@ -287,36 +277,9 @@ class PerspectiveRegistryImplTest {
     assertTrue(perspective.info().hasTrait("first_person"));
     assertEquals(1, updates.get());
 
-    PerspectiveInfo changedTraits =
-        PerspectiveInfo.builder("test.runtime", Component.literal("Invalid"))
-            .trait("third_person")
-            .build();
-    assertThrows(IllegalArgumentException.class, () -> registration.updateInfo(changedTraits));
-    assertSame(initial, perspective.info());
-    assertEquals(1, updates.get());
-
-    PerspectiveInfo updated =
-        PerspectiveInfo.builder("test.runtime", Component.literal("Renamed"))
-            .baseType(BaseType.THIRD_PERSON_FRONT)
-            .switchable(false)
-            .priority(9)
-            .trait("first_person")
-            .build();
-    registration.updateInfo(updated);
-
-    assertSame(perspective, registry.get("test.runtime"));
-    assertSame(updated, registration.perspective().info());
-    assertSame(updated, perspective.info());
-    assertEquals("Renamed", perspective.info().name().getString());
-    assertEquals(BaseType.THIRD_PERSON_FRONT, perspective.info().baseType());
-    assertTrue(perspective.info().hasTrait("first_person"));
-    assertFalse(perspective.info().switchable());
-    assertEquals(2, updates.get());
-
     assertTrue(registration.unregister());
-    assertFalse(registration.isRegistered());
     assertFalse(registration.unregister());
-    assertEquals(3, updates.get());
+    assertEquals(2, updates.get());
   }
 
   @Test
@@ -341,13 +304,9 @@ class PerspectiveRegistryImplTest {
     PerspectiveRegistration first =
         registry.register(runtimeInfo("test.identity_first"), firstBehavior);
 
-    assertTrue(
-        registry
-            .register(runtimeInfo("test.identity_second"), equalButDistinctBehavior)
-            .isRegistered());
+    registry.register(runtimeInfo("test.identity_second"), equalButDistinctBehavior);
     assertTrue(first.unregister());
-    assertTrue(
-        registry.register(runtimeInfo("test.identity_reused"), firstBehavior).isRegistered());
+    registry.register(runtimeInfo("test.identity_reused"), firstBehavior);
   }
 
   @Test
@@ -361,7 +320,6 @@ class PerspectiveRegistryImplTest {
         registry.register(runtimeInfo("test.reused"), new MissingInfoPerspective());
 
     assertFalse(oldRegistration.unregister());
-    assertTrue(newRegistration.isRegistered());
     assertSame(newRegistration.perspective(), registry.get("test.reused"));
   }
 
@@ -373,7 +331,6 @@ class PerspectiveRegistryImplTest {
             runtimeInfo("test.default_first"), 10, new MissingInfoPerspective());
 
     assertThrows(IllegalStateException.class, first::unregister);
-    assertTrue(first.isRegistered());
     assertSame(first.perspective(), registry.getDefault());
 
     PerspectiveRegistration second =
@@ -405,24 +362,8 @@ class PerspectiveRegistryImplTest {
         IllegalStateException.class,
         () -> registry.registerDefault(runtimeInfo("test.default_initializing"), 20, failing));
 
-    assertTrue(established.isRegistered());
     assertSame(established.perspective(), registry.getDefault());
     assertFalse(registry.contains("test.default_initializing"));
-  }
-
-  @Test
-  void rejectChangingRegistrationIdOrUpdatingRemovedRegistration() {
-    PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
-    PerspectiveRegistration registration =
-        registry.register(runtimeInfo("test.original_id"), new MissingInfoPerspective());
-
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> registration.updateInfo(runtimeInfo("test.changed_id")));
-    assertTrue(registration.unregister());
-    assertThrows(
-        IllegalStateException.class,
-        () -> registration.updateInfo(runtimeInfo("test.original_id")));
   }
 
   @Test

@@ -60,9 +60,8 @@ PerspectiveRegistration registration =
     PerspectiveAPI.getRegistry().register(info, new PresetPerspectiveBehavior(preset));
 ```
 
-Each registered ID and `PerspectiveBehavior` instance must be unique. Use
-`registration.updateInfo(newInfo)` to rename or reorder a runtime perspective without
-changing its identity. The ID cannot be changed.
+Each registered ID and `PerspectiveBehavior` instance must be unique. Metadata is fixed when the
+perspective is registered.
 
 Call `registration.unregister()` to remove only the registration owned by that handle.
 An old handle cannot remove a newer registration that reuses the same ID. A default
@@ -77,7 +76,7 @@ perspective:
 
 ```java
 boolean isThirdPerson =
-    PerspectiveAPI.getCurrent().hasTrait("third_person");
+    PerspectiveAPI.getCurrent().info().hasTrait("third_person");
 ```
 
 Shared traits use lowercase `snake_case` without a namespace. Recommended traits are:

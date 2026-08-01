@@ -27,11 +27,6 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     }
 
     @Override
-    public boolean isRegistered() {
-      return containsIdentity(entries, this);
-    }
-
-    @Override
     public boolean unregister() {
       return PerspectiveModifierChainImpl.this.unregister(this);
     }
@@ -68,14 +63,6 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
       }
       return false;
     }
-  }
-
-  private static boolean containsIdentity(
-      @NonNull List<Registration> entries, @NonNull Registration registration) {
-    for (Registration entry : entries) {
-      if (entry == registration) return true;
-    }
-    return false;
   }
 
   /// Applies all active modifiers' camera state transformations sequentially.

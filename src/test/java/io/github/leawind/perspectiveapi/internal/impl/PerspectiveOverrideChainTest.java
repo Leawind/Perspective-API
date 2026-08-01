@@ -109,13 +109,10 @@ class PerspectiveOverrideChainTest {
   @Test
   void registrationHandleRemovesOnlyItsOwnEntry() {
     PerspectiveOverrideRegistration first = chain.register(10, () -> "test.first");
-    PerspectiveOverrideRegistration second = chain.register(10, () -> "test.second");
+    chain.register(10, () -> "test.second");
 
-    assertTrue(first.isRegistered());
     assertTrue(first.unregister());
-    assertFalse(first.isRegistered());
     assertFalse(first.unregister());
-    assertTrue(second.isRegistered());
     assertEquals("test.second", chain.get());
   }
 
@@ -125,10 +122,7 @@ class PerspectiveOverrideChainTest {
     PerspectiveOverrideRegistration first = chain.register(10, supplier);
     PerspectiveOverrideRegistration second = chain.register(20, supplier);
 
-    assertTrue(first.isRegistered());
-    assertTrue(second.isRegistered());
     assertTrue(second.unregister());
-    assertTrue(first.isRegistered());
     assertEquals("test.same", chain.get());
   }
 

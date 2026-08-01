@@ -30,11 +30,6 @@ public final class PerspectiveOverrideChainImpl
     }
 
     @Override
-    public boolean isRegistered() {
-      return containsIdentity(entries, this);
-    }
-
-    @Override
     public boolean unregister() {
       return PerspectiveOverrideChainImpl.this.unregister(this);
     }
@@ -91,14 +86,6 @@ public final class PerspectiveOverrideChainImpl
       }
       return false;
     }
-  }
-
-  private static boolean containsIdentity(
-      @NonNull List<Registration> entries, @NonNull Registration registration) {
-    for (Registration entry : entries) {
-      if (entry == registration) return true;
-    }
-    return false;
   }
 
   /// Clears all entries except the registration identified by the given handle.

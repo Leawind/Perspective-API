@@ -5,33 +5,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class BuiltinPerspectiveTraitsTest {
 
   @Test
   void declareFirstPersonTraitOnlyForFirstPerson() {
-    PerspectiveInfo info = infoOf(FirstPersonPerspective.class);
+    List<String> traits = traitsOf(FirstPersonPerspective.class);
 
-    assertTrue(info.hasTrait("first_person"));
-    assertFalse(info.hasTrait("third_person"));
+    assertTrue(traits.contains("first_person"));
+    assertFalse(traits.contains("third_person"));
   }
 
   @Test
   void declareThirdPersonTraitForBothThirdPersonPerspectives() {
-    PerspectiveInfo backInfo = infoOf(ThirdPersonBackPerspective.class);
-    PerspectiveInfo frontInfo = infoOf(ThirdPersonFrontPerspective.class);
+    List<String> backTraits = traitsOf(ThirdPersonBackPerspective.class);
+    List<String> frontTraits = traitsOf(ThirdPersonFrontPerspective.class);
 
-    assertTrue(backInfo.hasTrait("third_person"));
-    assertTrue(frontInfo.hasTrait("third_person"));
-    assertFalse(backInfo.hasTrait("first_person"));
-    assertFalse(frontInfo.hasTrait("first_person"));
+    assertTrue(backTraits.contains("third_person"));
+    assertTrue(frontTraits.contains("third_person"));
+    assertFalse(backTraits.contains("first_person"));
+    assertFalse(frontTraits.contains("first_person"));
   }
 
-  private static PerspectiveInfo infoOf(
+  private static List<String> traitsOf(
       Class<? extends PerspectiveBehavior> perspectiveBehaviorClass) {
     PerspectiveInfo.Declaration declaration =
         perspectiveBehaviorClass.getAnnotation(PerspectiveInfo.Declaration.class);
-    return PerspectiveInfo.fromDeclaration(declaration);
+    return List.of(declaration.traits());
   }
 }

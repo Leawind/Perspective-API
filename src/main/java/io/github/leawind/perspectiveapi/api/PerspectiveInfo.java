@@ -1,13 +1,11 @@
 package io.github.leawind.perspectiveapi.api;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
-import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Objects;
@@ -57,18 +55,6 @@ public record PerspectiveInfo(
     traits = Set.copyOf(traits);
   }
 
-  /// Creates perspective information without semantic traits.
-  public PerspectiveInfo(
-      @NonNull String id,
-      @NonNull Component name,
-      @Nullable Component description,
-      @NonNull BaseType baseType,
-      boolean switchable,
-      int priority,
-      @Nullable Identifier icon) {
-    this(id, name, description, baseType, switchable, priority, icon, Set.of());
-  }
-
   /// Returns whether this metadata declares the given semantic trait.
   ///
   /// Trait names use lowercase `snake_case`, such as `third_person`. Shared traits should remain
@@ -91,33 +77,6 @@ public record PerspectiveInfo(
     if (!TRAIT_PATTERN.matcher(trait).matches()) {
       throw new IllegalArgumentException("Invalid perspective trait: '" + trait + "'");
     }
-  }
-
-  /// Creates runtime information from a declarative perspective annotation.
-  @ApiStatus.Internal
-  public static @NonNull PerspectiveInfo fromDeclaration(@NonNull Declaration declaration) {
-    Objects.requireNonNull(declaration);
-    String id = declaration.id();
-    Component name =
-        Component.translatable(
-            declaration.nameKey().isEmpty()
-                ? "perspective." + id + ".name"
-                : declaration.nameKey());
-    Component description =
-        declaration.descriptionKey().isEmpty()
-            ? null
-            : Component.translatable(declaration.descriptionKey());
-    Identifier icon =
-        declaration.icon().isEmpty() ? null : Bridge.parseIdentifier(declaration.icon());
-    return new PerspectiveInfo(
-        id,
-        name,
-        description,
-        declaration.baseType(),
-        declaration.switchable(),
-        declaration.priority(),
-        icon,
-        Set.copyOf(Arrays.asList(declaration.traits())));
   }
 
   /// Creates a builder with the defaults used by {@link Declaration}.
@@ -214,14 +173,14 @@ public record PerspectiveInfo(
     ///
     /// If left empty, it defaults to `perspective.<id>.name`.
     ///
-    /// @see Perspective#name()
+    /// @see PerspectiveInfo#name()
     @NonNull String nameKey() default "";
 
     /// The translation key for the perspective's description.
     ///
     /// If left empty, it defaults to `null`.
     ///
-    /// @see Perspective#description()
+    /// @see PerspectiveInfo#description()
     @NonNull String descriptionKey() default "";
 
     /// The string representation of the `Identifier` or `ResourceLocation` for the perspective's
@@ -229,7 +188,7 @@ public record PerspectiveInfo(
     ///
     /// If left empty, it defaults to `null`.
     ///
-    /// @see Perspective#icon()
+    /// @see PerspectiveInfo#icon()
     @NonNull String icon() default "";
 
     /// Whether this perspective is allowed to be manually selected by the player via a {@link

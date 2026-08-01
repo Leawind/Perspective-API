@@ -58,13 +58,10 @@ class PerspectiveModifierChainImplTest {
   @Test
   void unregisterRemovesOnlyMatchingEntry() {
     PerspectiveModifierRegistration first = chain.register(0, modifier(s -> appendDigit(s, 1)));
-    PerspectiveModifierRegistration second = chain.register(0, modifier(s -> appendDigit(s, 2)));
+    chain.register(0, modifier(s -> appendDigit(s, 2)));
 
-    assertTrue(first.isRegistered());
     assertTrue(first.unregister());
-    assertFalse(first.isRegistered());
     assertFalse(first.unregister());
-    assertTrue(second.isRegistered());
     chain.applyCameraState(state, context);
 
     assertEquals(2.0, state.position().x);

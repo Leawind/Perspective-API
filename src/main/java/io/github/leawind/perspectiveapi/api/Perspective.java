@@ -16,11 +16,7 @@ import org.jspecify.annotations.NonNull;
 /// @see PerspectiveInfo
 @ApiStatus.NonExtendable
 public interface Perspective {
-  /// Returns the current metadata for this registered perspective.
-  ///
-  /// The returned value may change after {@link
-  /// PerspectiveRegistration#updateInfo(PerspectiveInfo)}, while this registered perspective
-  /// retains its identity.
+  /// Returns the metadata specified when this perspective was registered.
   @NonNull PerspectiveInfo info();
 
   /// Returns whether this perspective is currently eligible to be resolved as active.

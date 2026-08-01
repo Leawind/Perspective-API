@@ -5,25 +5,12 @@ import org.jspecify.annotations.NonNull;
 
 /// Owns one runtime perspective registration.
 ///
-/// A handle can only update or remove the exact registration that created it. Reusing a
-/// perspective ID later does not allow an old handle to affect the new registration.
+/// A handle can only remove the exact registration that created it. Reusing a perspective ID later
+/// does not allow an old handle to affect the new registration.
 @ApiStatus.NonExtendable
 public interface PerspectiveRegistration {
   /// Returns the registered perspective.
   @NonNull Perspective perspective();
-
-  /// Returns whether this registration is still present in its registry.
-  boolean isRegistered();
-
-  /// Updates runtime information without changing the identity of the registered perspective.
-  ///
-  /// The new information must retain the original perspective ID and semantic traits. Traits are
-  /// stable properties chosen when the perspective is registered.
-  ///
-  /// @throws IllegalArgumentException if the perspective ID or traits change
-  /// @throws IllegalStateException if this registration has already been removed
-  @ApiStatus.Experimental
-  void updateInfo(@NonNull PerspectiveInfo info);
 
   /// Removes this exact registration.
   ///

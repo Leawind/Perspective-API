@@ -6,9 +6,11 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -16,7 +18,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -32,7 +37,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     private final PerspectiveRegistryImpl owner;
     private final PerspectiveBehavior behavior;
     private final @Nullable Integer defaultPriority;
-    private volatile PerspectiveInfo info;
+    private final PerspectiveInfo info;
     private volatile boolean initialized;
 
     private RegisteredPerspective(
@@ -54,7 +59,32 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
           behavior.getClass().getAnnotation(PerspectiveInfo.Default.class);
       Integer defaultPriority = defaultAnnotation == null ? null : defaultAnnotation.priority();
       return new RegisteredPerspective(
-          owner, PerspectiveInfo.fromDeclaration(declaration), defaultPriority, behavior);
+          owner, createInfo(declaration), defaultPriority, behavior);
+    }
+
+    private static @NonNull PerspectiveInfo createInfo(
+        PerspectiveInfo.@NonNull Declaration declaration) {
+      String id = declaration.id();
+      Component name =
+          Component.translatable(
+              declaration.nameKey().isEmpty()
+                  ? "perspective." + id + ".name"
+                  : declaration.nameKey());
+      Component description =
+          declaration.descriptionKey().isEmpty()
+              ? null
+              : Component.translatable(declaration.descriptionKey());
+      Identifier icon =
+          declaration.icon().isEmpty() ? null : Bridge.parseIdentifier(declaration.icon());
+      return new PerspectiveInfo(
+          id,
+          name,
+          description,
+          declaration.baseType(),
+          declaration.switchable(),
+          declaration.priority(),
+          icon,
+          Set.copyOf(Arrays.asList(declaration.traits())));
     }
 
     private static PerspectiveInfo.@NonNull Declaration getDeclaration(
@@ -102,16 +132,6 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     @Override
     public @NonNull Perspective perspective() {
       return entry;
-    }
-
-    @Override
-    public boolean isRegistered() {
-      return owner.isRegistered(entry);
-    }
-
-    @Override
-    public void updateInfo(@NonNull PerspectiveInfo info) {
-      owner.updateInfo(entry, info);
     }
 
     @Override
@@ -303,26 +323,6 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
   private boolean isRegistered(@NonNull RegisteredPerspective entry) {
     return entries.get(entry.info.id()) == entry;
-  }
-
-  private void updateInfo(@NonNull RegisteredPerspective entry, @NonNull PerspectiveInfo info) {
-    Objects.requireNonNull(info);
-    synchronized (this) {
-      String id = entry.info.id();
-      if (!id.equals(info.id())) {
-        throw new IllegalArgumentException("A perspective registration cannot change its ID");
-      }
-      if (!isRegistered(entry)) {
-        throw new IllegalStateException(
-            "Perspective registration is no longer present: '" + id + "'");
-      }
-      if (!entry.info.traits().equals(info.traits())) {
-        throw new IllegalArgumentException("A perspective registration cannot change its traits");
-      }
-      if (entry.info.equals(info)) return;
-      entry.info = info;
-    }
-    onUpdate.emit();
   }
 
   private boolean unregister(@NonNull RegisteredPerspective entry) {
