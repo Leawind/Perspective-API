@@ -51,29 +51,47 @@ class ThrottledPerspectiveSanitizerTest {
     assertEquals(70.0f, sanitizer.sanitizeFovDeg("fov", Float.NaN, 70.0f, () -> "test"));
     assertEquals(
         16.0f,
-        sanitizer.sanitizeOrthographicHeight(
-            "orthographic_height", 0.0f, 16.0f, () -> "test"));
+        sanitizer.sanitizeOrthographicHeight("orthographic_height", 0.0f, 16.0f, () -> "test"));
 
     TestUtils.assertVectorEquals(fallbackPosition, position);
     TestUtils.assertQuatEquals(fallbackRotation, rotation);
   }
 
   @Test
-  void fovValidationIncludesEndpointsAndRejectsOutOfRangeValues() {
-    assertTrue(ThrottledPerspectiveSanitizer.isValidFovDeg(0.0f));
-    assertTrue(ThrottledPerspectiveSanitizer.isValidFovDeg(180.0f));
+  void fovValidationExcludesEndpointsAndOutOfRangeValues() {
+    assertTrue(ThrottledPerspectiveSanitizer.isValidFovDeg(0.01f));
+    assertTrue(ThrottledPerspectiveSanitizer.isValidFovDeg(179.99f));
+    assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(0.0f));
+    assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(180.0f));
     assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(-0.01f));
     assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(180.01f));
     assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(Float.POSITIVE_INFINITY));
   }
 
   @Test
-  void orthographicHeightMustBeFiniteAndPositive() {
-    assertTrue(ThrottledPerspectiveSanitizer.isValidOrthographicHeight(Float.MIN_VALUE));
+  void orthographicHeightHasLowerBoundButNoUpperBound() {
+    assertTrue(
+        ThrottledPerspectiveSanitizer.isValidOrthographicHeight(
+            ThrottledPerspectiveSanitizer.MIN_ORTHOGRAPHIC_HEIGHT));
+    assertTrue(ThrottledPerspectiveSanitizer.isValidOrthographicHeight(Float.MAX_VALUE));
+    assertFalse(
+        ThrottledPerspectiveSanitizer.isValidOrthographicHeight(
+            Math.nextDown(ThrottledPerspectiveSanitizer.MIN_ORTHOGRAPHIC_HEIGHT)));
     assertFalse(ThrottledPerspectiveSanitizer.isValidOrthographicHeight(0.0f));
     assertFalse(ThrottledPerspectiveSanitizer.isValidOrthographicHeight(-1.0f));
-    assertFalse(
-        ThrottledPerspectiveSanitizer.isValidOrthographicHeight(Float.POSITIVE_INFINITY));
+    assertFalse(ThrottledPerspectiveSanitizer.isValidOrthographicHeight(Float.POSITIVE_INFINITY));
+  }
+
+  @Test
+  void rotationMustBeFiniteAndUnitLength() {
+    Quaternionf fallback = new Quaternionf().rotationY(0.5f);
+    Quaternionf zero = new Quaternionf(0.0f, 0.0f, 0.0f, 0.0f);
+    Quaternionf scaled = new Quaternionf(0.0f, 0.0f, 0.0f, 2.0f);
+
+    assertFalse(sanitizer.sanitizeRotation("zero", zero, fallback, () -> "test"));
+    assertFalse(sanitizer.sanitizeRotation("scaled", scaled, fallback, () -> "test"));
+    TestUtils.assertQuatEquals(fallback, zero);
+    TestUtils.assertQuatEquals(fallback, scaled);
   }
 
   @Test

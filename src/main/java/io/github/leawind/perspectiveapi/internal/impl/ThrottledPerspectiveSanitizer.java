@@ -10,6 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ThrottledPerspectiveSanitizer {
+  static final float MIN_ORTHOGRAPHIC_HEIGHT = 1.0e-4f;
+  static final float UNIT_QUATERNION_LENGTH_SQUARED_TOLERANCE = 1.0e-4f;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ThrottledPerspectiveSanitizer.class);
   private final Sanitizer.ThrottledAction throttledAction;
 
@@ -18,11 +21,16 @@ public class ThrottledPerspectiveSanitizer {
   }
 
   public static boolean isValidFovDeg(float fovDeg) {
-    return Sanitizer.isFinite(fovDeg) && fovDeg >= 0.0f && fovDeg <= 180.0f;
+    return Sanitizer.isFinite(fovDeg) && fovDeg > 0.0f && fovDeg < 180.0f;
   }
 
   public static boolean isValidOrthographicHeight(float orthographicHeight) {
-    return Sanitizer.isFinite(orthographicHeight) && orthographicHeight > 0.0f;
+    return Sanitizer.isFinite(orthographicHeight) && orthographicHeight >= MIN_ORTHOGRAPHIC_HEIGHT;
+  }
+
+  public static boolean isValidRotation(Quaternionfc rotation) {
+    return Sanitizer.isFinite(rotation)
+        && Math.abs(rotation.lengthSquared() - 1.0f) <= UNIT_QUATERNION_LENGTH_SQUARED_TOLERANCE;
   }
 
   /// @return if `target` is valid
@@ -46,7 +54,7 @@ public class ThrottledPerspectiveSanitizer {
   /// @return if `target` is valid
   public boolean sanitizeRotation(
       String id, Quaternionf target, Quaternionfc fallback, Supplier<String> message) {
-    if (Sanitizer.isFinite(target)) {
+    if (isValidRotation(target)) {
       return true;
     }
     throttledAction.run(

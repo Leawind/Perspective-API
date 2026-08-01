@@ -18,6 +18,8 @@ public interface PerspectiveState {
   @NonNull Vector3dc position();
 
   /// Returns the camera rotation (API convention, +Z forward).
+  ///
+  /// The quaternion is always finite and has unit length.
   @NonNull Quaternionfc rotation();
 
   /// Returns the projection mode used to render the world.
@@ -34,13 +36,14 @@ public interface PerspectiveState {
   /// During camera-state calculation, its initial value is the vanilla FOV captured on the
   /// previous render frame. This intentional one-frame delay keeps the state pipeline consistent
   /// across supported Minecraft versions.
-  /// It is always finite and in the closed range `[0, 180]`.
+  /// It is always finite and in the open range `(0, 180)`.
   float getFovDeg();
 
   /// Returns the vertical span of the orthographic view in world units.
   ///
   /// The horizontal span is this value multiplied by the viewport aspect ratio. This value is
   /// effective only when {@link #projectionMode()} is {@link ProjectionMode#ORTHOGRAPHIC}.
+  /// It is always finite and at least `0.0001`. There is no project-defined upper bound.
   @ApiStatus.Experimental
   float getOrthographicHeight();
 
@@ -55,6 +58,11 @@ public interface PerspectiveState {
     @Override
     @NonNull Vector3d position();
 
+    /// Returns the mutable camera rotation.
+    ///
+    /// The value must remain finite and have unit length. An invalid value is rejected by the
+    /// camera pipeline and replaced with the state from before the current perspective or modifier
+    /// callback.
     @Override
     @NonNull Quaternionf rotation();
 
@@ -68,12 +76,16 @@ public interface PerspectiveState {
 
     /// Sets the field of view in degrees.
     ///
-    /// The value must be finite and in the closed range `[0, 180]`. An invalid value is rejected by
+    /// The value must be finite and in the open range `(0, 180)`. An invalid value is rejected by
     /// the camera pipeline and replaced with the state from before the current perspective or
     /// modifier callback.
     void setFovDeg(float fovDeg);
 
     /// Sets the vertical span of the orthographic view in world units.
+    ///
+    /// The value must be finite and at least `0.0001`; it has no project-defined upper bound. An
+    /// invalid value is rejected by the camera pipeline and replaced with the state from before the
+    /// current perspective or modifier callback.
     @ApiStatus.Experimental
     void setOrthographicHeight(float orthographicHeight);
   }
