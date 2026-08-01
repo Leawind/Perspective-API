@@ -12,8 +12,11 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistration;
+import io.github.leawind.perspectiveapi.api.PerspectiveTraitRegistration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceConfigurationError;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.network.chat.Component;
 import org.junit.jupiter.api.Test;
@@ -77,7 +80,8 @@ class PerspectiveRegistryImplTest {
       nameKey = "test.registry.name",
       descriptionKey = "test.registry.description",
       switchable = false,
-      priority = 7)
+      priority = 7,
+      traits = {"third_person", "test:custom_trait"})
   private static final class MetadataPerspective implements PerspectiveBehavior {}
 
   @PerspectiveInfo.Declaration(id = "test.registry_default_low", priority = 20)
@@ -166,7 +170,162 @@ class PerspectiveRegistryImplTest {
     assertEquals("test.registry.name", info.name().getString());
     assertEquals("test.registry.description", info.description().getString());
     assertNull(info.icon());
+    assertEquals(Set.of("third_person", "test:custom_trait"), info.traits());
+    assertTrue(info.declaresTrait("third_person"));
+    assertFalse(info.declaresTrait("orthographic"));
     assertSame(behavior, registry.getBehaviorOrThrow(info.id()));
+  }
+
+  @Test
+  void validateAndCopyTraits() {
+    List<String> source = new ArrayList<>(List.of("third_person"));
+    PerspectiveInfo info =
+        PerspectiveInfo.builder("test.traits", Component.literal("Traits"))
+            .traits(source)
+            .trait("third_person")
+            .trait("test:custom_trait")
+            .build();
+
+    source.clear();
+
+    assertEquals(Set.of("third_person", "test:custom_trait"), info.traits());
+    assertThrows(UnsupportedOperationException.class, () -> info.traits().add("orthographic"));
+    assertThrows(NullPointerException.class, () -> info.declaresTrait(null));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            PerspectiveInfo.builder("test.invalid", Component.literal("Invalid"))
+                .trait("Third Person"));
+  }
+
+  @Test
+  void keepLegacyConstructorWithoutTraits() {
+    PerspectiveInfo info =
+        new PerspectiveInfo(
+            "test.legacy",
+            Component.literal("Legacy"),
+            null,
+            BaseType.FIRST_PERSON,
+            true,
+            0,
+            null);
+
+    assertEquals(Set.of(), info.traits());
+  }
+
+  @Test
+  void mergeAndIndependentlyRemoveTraitContributions() {
+    PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+    Perspective perspective =
+        registry
+            .register(
+                PerspectiveInfo.builder("test.contributions", Component.literal("Contributions"))
+                    .trait("third_person")
+                    .build(),
+                new MissingInfoPerspective())
+            .perspective();
+
+    PerspectiveTraitRegistration first =
+        registry.contributeTraits(
+            "first_compat", "test.contributions", List.of("third_person", "orthographic"));
+    PerspectiveTraitRegistration second =
+        registry.contributeTraits(
+            "second_compat", "test.contributions", List.of("orthographic", "free_camera"));
+
+    assertTrue(first.isRegistered());
+    assertTrue(second.isRegistered());
+    assertEquals(Set.of("third_person"), perspective.info().traits());
+    assertEquals(Set.of("third_person", "orthographic", "free_camera"), perspective.traits());
+    assertTrue(perspective.hasTrait("orthographic"));
+
+    assertTrue(first.unregister());
+    assertTrue(perspective.hasTrait("third_person"));
+    assertTrue(perspective.hasTrait("orthographic"));
+    assertTrue(perspective.hasTrait("free_camera"));
+
+    assertTrue(second.unregister());
+    assertEquals(Set.of("third_person"), perspective.traits());
+    assertFalse(perspective.hasTrait("orthographic"));
+    assertFalse(first.unregister());
+    assertFalse(second.unregister());
+  }
+
+  @Test
+  void retainContributedTraitsWhenDeclaredInfoChanges() {
+    PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+    PerspectiveRegistration registration =
+        registry.register(
+            PerspectiveInfo.builder("test.updated_traits", Component.literal("Before"))
+                .trait("first_person")
+                .build(),
+            new MissingInfoPerspective());
+    registry.contributeTraits(
+        "test_compat", "test.updated_traits", List.of("orthographic"));
+
+    registration.updateInfo(
+        PerspectiveInfo.builder("test.updated_traits", Component.literal("After"))
+            .trait("third_person")
+            .build());
+
+    assertEquals(Set.of("third_person"), registration.perspective().info().traits());
+    assertEquals(
+        Set.of("third_person", "orthographic"), registration.perspective().traits());
+  }
+
+  @Test
+  void retainContributionWhenTargetIsMissingOrReused() {
+    PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+    PerspectiveTraitRegistration contribution =
+        registry.contributeTraits(
+            "test_compat", "test.late_target", List.of("third_person"));
+
+    PerspectiveRegistration first =
+        registry.register(runtimeInfo("test.late_target"), new MissingInfoPerspective());
+    assertTrue(first.perspective().hasTrait("third_person"));
+    assertTrue(first.unregister());
+
+    PerspectiveRegistration replacement =
+        registry.register(runtimeInfo("test.late_target"), new MissingInfoPerspective());
+    assertTrue(replacement.perspective().hasTrait("third_person"));
+
+    assertTrue(contribution.unregister());
+    assertFalse(replacement.perspective().hasTrait("third_person"));
+  }
+
+  @Test
+  void allowAnyCombinationOfValidTraits() {
+    PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+    Perspective perspective =
+        registry
+            .register(runtimeInfo("test.unchecked_traits"), new MissingInfoPerspective())
+            .perspective();
+
+    registry.contributeTraits(
+        "test_compat", "test.unchecked_traits", List.of("first_person", "third_person"));
+
+    assertTrue(perspective.hasTrait("first_person"));
+    assertTrue(perspective.hasTrait("third_person"));
+  }
+
+  @Test
+  void rejectInvalidTraitContributions() {
+    PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+
+    assertThrows(
+        NullPointerException.class,
+        () -> registry.contributeTraits(null, "test.target", List.of("third_person")));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> registry.contributeTraits("", "test.target", List.of("third_person")));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> registry.contributeTraits("test_compat", "", List.of("third_person")));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> registry.contributeTraits("test_compat", "test.target", List.of()));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> registry.contributeTraits("test_compat", "test.target", List.of("Third Person")));
   }
 
   @Test
@@ -236,6 +395,7 @@ class PerspectiveRegistryImplTest {
         PerspectiveInfo.builder("test.runtime", Component.literal("Runtime"))
             .baseType(BaseType.FIRST_PERSON)
             .priority(3)
+            .trait("first_person")
             .build();
 
     PerspectiveRegistration registration = registry.register(initial, behavior);
@@ -246,6 +406,8 @@ class PerspectiveRegistryImplTest {
     assertSame(initial, perspective.info());
     assertEquals("Runtime", perspective.info().name().getString());
     assertEquals(BaseType.FIRST_PERSON, perspective.info().baseType());
+    assertTrue(perspective.info().declaresTrait("first_person"));
+    assertTrue(perspective.hasTrait("first_person"));
     assertEquals(1, updates.get());
 
     PerspectiveInfo updated =
@@ -253,6 +415,7 @@ class PerspectiveRegistryImplTest {
             .baseType(BaseType.THIRD_PERSON_FRONT)
             .switchable(false)
             .priority(9)
+            .trait("third_person")
             .build();
     registration.updateInfo(updated);
 
@@ -261,6 +424,10 @@ class PerspectiveRegistryImplTest {
     assertSame(updated, perspective.info());
     assertEquals("Renamed", perspective.info().name().getString());
     assertEquals(BaseType.THIRD_PERSON_FRONT, perspective.info().baseType());
+    assertTrue(perspective.info().declaresTrait("third_person"));
+    assertFalse(perspective.info().declaresTrait("first_person"));
+    assertTrue(perspective.hasTrait("third_person"));
+    assertFalse(perspective.hasTrait("first_person"));
     assertFalse(perspective.info().switchable());
     assertEquals(2, updates.get());
 

@@ -53,6 +53,7 @@ PerspectiveInfo info =
             Component.literal("Combat"))
         .baseType(PerspectiveBehavior.BaseType.THIRD_PERSON_BACK)
         .priority(100)
+        .trait("third_person")
         .build();
 
 PerspectiveRegistration registration =
@@ -67,6 +68,56 @@ Call `registration.unregister()` to remove only the registration owned by that h
 An old handle cannot remove a newer registration that reuses the same ID. A default
 perspective can be registered with `PerspectiveRegistry.registerDefault`; removing the
 last registered default perspective is rejected.
+
+## Perspective Traits
+
+Traits are open, semantic labels that let integrations recognize related perspectives
+without hard-coding perspective IDs. Query effective traits through the current
+perspective:
+
+```java
+boolean isThirdPerson =
+    PerspectiveAPI.getCurrent().hasTrait("third_person");
+```
+
+Shared traits use lowercase `snake_case` without a namespace. Recommended traits are:
+
+- `first_person`: primarily observes from the camera entity's eyes
+- `third_person`: primarily observes the camera entity from outside
+- `free_camera`: allows the camera to move independently of the camera entity
+- `orthographic`: uses orthographic projection
+
+Trait names form an open vocabulary; perspectives may declare other traits without
+registering them first. A mod-specific trait may use the form
+`<namespace>:<trait>`, such as `examplemod:cinematic_tracking`, until a shared
+meaning is established.
+
+Traits describe stable properties of a perspective, not transient per-frame state. For
+example, use `third_person` to decide whether entity fading is applicable, but calculate
+the current camera-to-entity distance from the actual camera state. Do not infer traits
+from `baseType`: it is only the vanilla fallback camera type, and a free camera may also
+use `THIRD_PERSON_BACK` as its fallback.
+
+The traits in `perspective.info().traits()` are only those declared by the perspective
+provider. Use `perspective.traits()` or `perspective.hasTrait(...)` when making behavior
+decisions; these include external compatibility contributions.
+
+An integration may contribute traits to a specific stable perspective ID even before
+that perspective is registered:
+
+```java
+PerspectiveTraitRegistration contribution =
+    PerspectiveAPI.getRegistry().contributeTraits(
+        "example_compat",
+        "targetmod.special_camera",
+        Set.of("third_person"));
+```
+
+Contributions are additive. They never remove declared traits or traits from another
+contributor, and the API does not infer or check conflicts between trait names. Retain
+the returned handle and call `contribution.unregister()` when the integration is
+unloaded. A contribution remains associated with its exact perspective ID if the target
+is removed and registered again.
 
 ## References
 

@@ -6,16 +6,22 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.api.PerspectiveTraitRegistration;
 import io.github.leawind.perspectiveapi.internal.utils.Exceptions;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.event.SimpleEventEmitter;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -33,6 +39,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     private final PerspectiveBehavior behavior;
     private final @Nullable Integer defaultPriority;
     private volatile PerspectiveInfo info;
+    private volatile Set<String> effectiveTraits;
     private volatile boolean initialized;
 
     private RegisteredPerspective(
@@ -44,6 +51,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       this.behavior = behavior;
       this.defaultPriority = defaultPriority;
       this.info = info;
+      effectiveTraits = info.traits();
     }
 
     private static @NonNull RegisteredPerspective fromDeclaration(
@@ -84,6 +92,11 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     }
 
     @Override
+    public @NonNull Set<@NonNull String> traits() {
+      return effectiveTraits;
+    }
+
+    @Override
     public boolean isAvailable() {
       return owner.availabilitySnapshot.isAvailable(this);
     }
@@ -120,6 +133,34 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     }
   }
 
+  private static final class TraitContribution implements PerspectiveTraitRegistration {
+    private final PerspectiveRegistryImpl owner;
+    private final String contributorId;
+    private final String perspectiveId;
+    private final Set<String> traits;
+
+    private TraitContribution(
+        @NonNull PerspectiveRegistryImpl owner,
+        @NonNull String contributorId,
+        @NonNull String perspectiveId,
+        @NonNull Set<String> traits) {
+      this.owner = owner;
+      this.contributorId = contributorId;
+      this.perspectiveId = perspectiveId;
+      this.traits = traits;
+    }
+
+    @Override
+    public boolean isRegistered() {
+      return owner.isRegistered(this);
+    }
+
+    @Override
+    public boolean unregister() {
+      return owner.unregister(this);
+    }
+  }
+
   private static final class AvailabilitySnapshot {
     private final Map<RegisteredPerspective, Boolean> values = new ConcurrentHashMap<>();
 
@@ -131,6 +172,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private final Map<String, RegisteredPerspective> entries = new ConcurrentHashMap<>();
   private final IdentityHashMap<PerspectiveBehavior, RegisteredPerspective> entriesByBehavior =
       new IdentityHashMap<>();
+  private final Map<String, List<TraitContribution>> traitContributions = new HashMap<>();
 
   private volatile @Nullable RegisteredPerspective defaultEntry;
   private volatile AvailabilitySnapshot availabilitySnapshot = new AvailabilitySnapshot();
@@ -206,6 +248,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       }
       entries.put(id, entry);
       entriesByBehavior.put(behavior, entry);
+      refreshEffectiveTraits(entry);
     }
 
     initializeOrRollback(entry, displaced);
@@ -238,6 +281,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       }
       entries.put(id, entry);
       entriesByBehavior.put(behavior, entry);
+      refreshEffectiveTraits(entry);
     }
 
     initializeOrRollback(entry, null);
@@ -305,6 +349,11 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return entries.get(entry.info.id()) == entry;
   }
 
+  private synchronized boolean isRegistered(@NonNull TraitContribution contribution) {
+    List<TraitContribution> contributions = traitContributions.get(contribution.perspectiveId);
+    return contributions != null && contributions.contains(contribution);
+  }
+
   private void updateInfo(@NonNull RegisteredPerspective entry, @NonNull PerspectiveInfo info) {
     Objects.requireNonNull(info);
     synchronized (this) {
@@ -318,8 +367,79 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       }
       if (entry.info.equals(info)) return;
       entry.info = info;
+      refreshEffectiveTraits(entry);
     }
     onUpdate.emit();
+  }
+
+  @Override
+  public @NonNull PerspectiveTraitRegistration contributeTraits(
+      @NonNull String contributorId,
+      @NonNull String perspectiveId,
+      @NonNull Collection<@NonNull String> traits) {
+    Objects.requireNonNull(contributorId);
+    Objects.requireNonNull(perspectiveId);
+    Objects.requireNonNull(traits);
+    if (contributorId.isEmpty()) {
+      throw new IllegalArgumentException("Contributor id must not be empty");
+    }
+    if (perspectiveId.isEmpty()) {
+      throw new IllegalArgumentException("Perspective id must not be empty");
+    }
+
+    Set<String> copiedTraits = new HashSet<>();
+    for (String trait : traits) {
+      PerspectiveInfo.validateTrait(trait);
+      copiedTraits.add(trait);
+    }
+    if (copiedTraits.isEmpty()) {
+      throw new IllegalArgumentException("Trait contribution must not be empty");
+    }
+
+    TraitContribution contribution =
+        new TraitContribution(this, contributorId, perspectiveId, Set.copyOf(copiedTraits));
+    synchronized (this) {
+      traitContributions
+          .computeIfAbsent(perspectiveId, ignored -> new ArrayList<>())
+          .add(contribution);
+      RegisteredPerspective entry = entries.get(perspectiveId);
+      if (entry != null) refreshEffectiveTraits(entry);
+    }
+    LOGGER.info(
+        "Registering trait contribution from '{}' for '{}': {}",
+        contributorId,
+        perspectiveId,
+        contribution.traits);
+    onUpdate.emit();
+    return contribution;
+  }
+
+  private boolean unregister(@NonNull TraitContribution contribution) {
+    synchronized (this) {
+      List<TraitContribution> contributions = traitContributions.get(contribution.perspectiveId);
+      if (contributions == null || !contributions.remove(contribution)) return false;
+      if (contributions.isEmpty()) traitContributions.remove(contribution.perspectiveId);
+      RegisteredPerspective entry = entries.get(contribution.perspectiveId);
+      if (entry != null) refreshEffectiveTraits(entry);
+    }
+    LOGGER.info(
+        "Removing trait contribution from '{}' for '{}': {}",
+        contribution.contributorId,
+        contribution.perspectiveId,
+        contribution.traits);
+    onUpdate.emit();
+    return true;
+  }
+
+  private void refreshEffectiveTraits(@NonNull RegisteredPerspective entry) {
+    Set<String> effectiveTraits = new HashSet<>(entry.info.traits());
+    List<TraitContribution> contributions = traitContributions.get(entry.info.id());
+    if (contributions != null) {
+      for (TraitContribution contribution : contributions) {
+        effectiveTraits.addAll(contribution.traits);
+      }
+    }
+    entry.effectiveTraits = Set.copyOf(effectiveTraits);
   }
 
   private boolean unregister(@NonNull RegisteredPerspective entry) {
