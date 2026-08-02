@@ -34,5 +34,9 @@
   "perspective_api.switcher.orbit_switcher.description": "短按视角键循环切换启用的视角，长按打开可编辑的空间轮盘",
   "perspective_api.switcher.orbit_switcher.selected": "轮盘中",
   "perspective_api.switcher.orbit_switcher.candidate": "其他已启用",
-  "perspective_api.switcher.orbit_switcher.disabled": "已禁用"
+  "perspective_api.switcher.orbit_switcher.disabled": "已禁用",
+  "perspective_api.switcher.orbit_switcher.tutorial.wheel.title": "轨道轮盘",
+  "perspective_api.switcher.orbit_switcher.tutorial.wheel.description": "按住 %s 打开视角轮盘",
+  "perspective_api.switcher.orbit_switcher.tutorial.editor.title": "编辑轨道轮盘",
+  "perspective_api.switcher.orbit_switcher.tutorial.editor.description": "轮盘打开时单击鼠标右键"
 }

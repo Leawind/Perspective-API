@@ -34,5 +34,9 @@
   "perspective_api.switcher.orbit_switcher.description": "短按視角鍵循換諸啓用視角，長按則開可輯之空間輪盤",
   "perspective_api.switcher.orbit_switcher.selected": "輪中",
   "perspective_api.switcher.orbit_switcher.candidate": "餘啓",
-  "perspective_api.switcher.orbit_switcher.disabled": "已禁"
+  "perspective_api.switcher.orbit_switcher.disabled": "已禁",
+  "perspective_api.switcher.orbit_switcher.tutorial.wheel.title": "軌道輪盤",
+  "perspective_api.switcher.orbit_switcher.tutorial.wheel.description": "長按 %s 以開視角輪盤",
+  "perspective_api.switcher.orbit_switcher.tutorial.editor.title": "輯軌道輪盤",
+  "perspective_api.switcher.orbit_switcher.tutorial.editor.description": "輪盤既開，擊鼠右鍵"
 }

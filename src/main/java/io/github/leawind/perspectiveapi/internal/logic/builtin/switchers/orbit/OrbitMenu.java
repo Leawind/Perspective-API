@@ -117,6 +117,7 @@ final class OrbitMenu {
     resetWheelAnchor();
     lastRenderNanos = 0;
     world.resetClock();
+    owner.onMenuOpened();
   }
 
   void closeFromKey() {
@@ -135,6 +136,7 @@ final class OrbitMenu {
     opened = false;
     hoveredActor = null;
     wheelAnchor.reset();
+    owner.onMenuClosed();
   }
 
   boolean isOpened() {
@@ -240,6 +242,7 @@ final class OrbitMenu {
 
   private void enterEditing() {
     mode = Mode.EDITING;
+    owner.onEditingOpened();
     model.clearPreview();
     Minecraft minecraft = Minecraft.getInstance();
     restoreMouseGrab = minecraft.mouseHandler.isMouseGrabbed();
@@ -281,8 +284,7 @@ final class OrbitMenu {
   }
 
   static boolean isShortDrag(double deltaX, double deltaY) {
-    return deltaX * deltaX + deltaY * deltaY
-        <= CLICK_MAX_DISTANCE_PX * CLICK_MAX_DISTANCE_PX;
+    return deltaX * deltaX + deltaY * deltaY <= CLICK_MAX_DISTANCE_PX * CLICK_MAX_DISTANCE_PX;
   }
 
   private void closeCursorLease() {

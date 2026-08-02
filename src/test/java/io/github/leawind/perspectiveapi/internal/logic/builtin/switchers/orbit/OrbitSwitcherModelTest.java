@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
@@ -122,29 +124,48 @@ class OrbitSwitcherModelTest {
   @Test
   void behaviorExtractsAndAppliesPersistedLayout() {
     OrbitSwitcherBehavior switcher = OrbitSwitcherBehavior.INSTANCE;
-    int previousHoldTicks = switcher.getHoldTicks();
+    OrbitSwitcherState previousState = switcher.extractState();
     switcher.onSwitchablePerspectivesUpdated(
         List.of(perspective("a", 0, true), perspective("b", 1, true), perspective("c", 2, true)));
 
     try {
-      switcher.applyState(new OrbitSwitcherState(List.of("c", "b"), Set.of("a"), 12));
+      switcher.applyState(
+          new OrbitSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false));
 
       assertEquals(List.of("c", "b"), switcher.model().selected());
       assertEquals(Set.of("a"), switcher.model().disabled());
       assertEquals(12, switcher.getHoldTicks());
       assertEquals(
-          new OrbitSwitcherState(List.of("c", "b"), Set.of("a"), 12), switcher.extractState());
+          new OrbitSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false),
+          switcher.extractState());
     } finally {
-      switcher.setHoldTicks(previousHoldTicks);
+      switcher.applyState(previousState);
     }
   }
 
   @Test
   void holdTicksMustStayWithinConfigRange() {
     assertThrows(
-        IllegalArgumentException.class, () -> new OrbitSwitcherState(List.of(), Set.of(), -1));
+        IllegalArgumentException.class,
+        () -> new OrbitSwitcherState(List.of(), Set.of(), -1, false, false));
     assertThrows(
-        IllegalArgumentException.class, () -> new OrbitSwitcherState(List.of(), Set.of(), 21));
+        IllegalArgumentException.class,
+        () -> new OrbitSwitcherState(List.of(), Set.of(), 21, false, false));
+  }
+
+  @Test
+  void oldStateDefaultsTutorialHintsToIncomplete() {
+    OrbitSwitcherState state =
+        OrbitSwitcherState.CODEC.parse(JsonOps.INSTANCE, new JsonObject()).result().orElseThrow();
+
+    assertEquals(
+        new OrbitSwitcherState(
+            List.of(),
+            Set.of(),
+            OrbitSwitcherBehavior.DEFAULT_HOLD_TICKS,
+            false,
+            false),
+        state);
   }
 
   private static Perspective perspective(String id, int priority, boolean available) {

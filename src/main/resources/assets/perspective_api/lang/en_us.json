@@ -34,5 +34,9 @@
   "perspective_api.switcher.orbit_switcher.description": "Cycles through enabled perspectives, or opens an editable spatial wheel when the perspective key is held",
   "perspective_api.switcher.orbit_switcher.selected": "Wheel",
   "perspective_api.switcher.orbit_switcher.candidate": "Other Enabled",
-  "perspective_api.switcher.orbit_switcher.disabled": "Disabled"
+  "perspective_api.switcher.orbit_switcher.disabled": "Disabled",
+  "perspective_api.switcher.orbit_switcher.tutorial.wheel.title": "Orbit Wheel",
+  "perspective_api.switcher.orbit_switcher.tutorial.wheel.description": "Hold %s to open the perspective wheel",
+  "perspective_api.switcher.orbit_switcher.tutorial.editor.title": "Edit the Orbit Wheel",
+  "perspective_api.switcher.orbit_switcher.tutorial.editor.description": "Right-click while the wheel is open"
 }

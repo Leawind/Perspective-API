@@ -30,6 +30,7 @@ public final class OrbitSwitcherBehavior
   }
 
   private final OrbitSwitcherModel model = new OrbitSwitcherModel();
+  private final OrbitSwitcherTutorial tutorial = new OrbitSwitcherTutorial();
   private final KeyStateTracker keyStateTracker;
   private final OrbitMenu menu = new OrbitMenu(this, model);
 
@@ -37,7 +38,7 @@ public final class OrbitSwitcherBehavior
     keyStateTracker =
         KeyStateTracker.builder()
             .setHoldTicks(DEFAULT_HOLD_TICKS)
-            .onPress(model::cycleForward)
+            .onPress(this::onPress)
             .onHoldStart(menu::open)
             .onHoldStop(menu::closeFromKey)
             .build();
@@ -96,6 +97,7 @@ public final class OrbitSwitcherBehavior
   public void onDeactivated() {
     keyStateTracker.reset();
     menu.close();
+    tutorial.onWheelClosed();
     model.clearPreview();
   }
 
@@ -117,13 +119,19 @@ public final class OrbitSwitcherBehavior
 
   @Override
   public @NonNull OrbitSwitcherState extractState() {
-    return new OrbitSwitcherState(model.selected(), model.disabled(), getHoldTicks());
+    return new OrbitSwitcherState(
+        model.selected(),
+        model.disabled(),
+        getHoldTicks(),
+        tutorial.wheelHintCompleted(),
+        tutorial.editorHintCompleted());
   }
 
   @Override
   public void applyState(@NonNull OrbitSwitcherState state) {
     Objects.requireNonNull(state);
     setHoldTicks(state.holdTicks());
+    tutorial.applyState(state.wheelHintCompleted(), state.editorHintCompleted());
     model.applyLayout(state.selected(), state.disabled());
     model.ensureActive();
     menu.syncActors();
@@ -143,6 +151,23 @@ public final class OrbitSwitcherBehavior
           "holdTicks must be between " + MIN_HOLD_TICKS + " and " + MAX_HOLD_TICKS);
     }
     return holdTicks;
+  }
+
+  void onMenuOpened() {
+    tutorial.onWheelOpened();
+  }
+
+  void onEditingOpened() {
+    tutorial.onEditingOpened();
+  }
+
+  void onMenuClosed() {
+    tutorial.onWheelClosed();
+  }
+
+  private void onPress() {
+    model.cycleForward();
+    tutorial.onShortPress();
   }
 
   OrbitSwitcherModel model() {

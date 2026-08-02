@@ -11,7 +11,9 @@ import org.jspecify.annotations.NonNull;
 public record OrbitSwitcherState(
     @NonNull List<@NonNull String> selected,
     @NonNull Set<@NonNull String> disabled,
-    int holdTicks) {
+    int holdTicks,
+    boolean wheelHintCompleted,
+    boolean editorHintCompleted) {
   private static final Codec<Set<String>> STRING_SET_CODEC =
       Codec.STRING.listOf().xmap(Set::copyOf, values -> values.stream().sorted().toList());
 
@@ -31,7 +33,13 @@ public record OrbitSwitcherState(
                               OrbitSwitcherBehavior.MIN_HOLD_TICKS,
                               OrbitSwitcherBehavior.MAX_HOLD_TICKS)
                           .optionalFieldOf("hold_ticks", OrbitSwitcherBehavior.DEFAULT_HOLD_TICKS)
-                          .forGetter(OrbitSwitcherState::holdTicks))
+                          .forGetter(OrbitSwitcherState::holdTicks),
+                      Codec.BOOL
+                          .optionalFieldOf("wheel_hint_completed", false)
+                          .forGetter(OrbitSwitcherState::wheelHintCompleted),
+                      Codec.BOOL
+                          .optionalFieldOf("editor_hint_completed", false)
+                          .forGetter(OrbitSwitcherState::editorHintCompleted))
                   .apply(instance, OrbitSwitcherState::new));
 
   public OrbitSwitcherState {
