@@ -231,7 +231,7 @@ final class OrbitMenu {
       updateSelectingHover();
     } else {
       if (grabbedActor != null) {
-        grabbedActor.body().position().set(mouseWorld);
+        grabbedActor.dragTo(mouseWorld);
         grabbedActor.body().velocity().zero();
         updateDraggedLayout(grabbedActor);
       }
@@ -265,6 +265,7 @@ final class OrbitMenu {
     if (hoveredActor == null) return;
     grabbedActor = hoveredActor;
     grabStartMouseScreen.set(mouseScreen);
+    grabbedActor.beginDrag(mouseWorld);
     grabbedActor.body().setType(BodyType.KINEMATIC);
     grabbedActor.body().velocity().zero();
   }

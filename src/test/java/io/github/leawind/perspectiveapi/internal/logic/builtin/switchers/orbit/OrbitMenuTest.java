@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import org.joml.Vector2d;
 import org.junit.jupiter.api.Test;
 
 class OrbitMenuTest {
@@ -31,5 +32,16 @@ class OrbitMenuTest {
     assertTrue(OrbitMenu.isShortDrag(4, 0));
     assertTrue(OrbitMenu.isShortDrag(2.4, 3.2));
     assertFalse(OrbitMenu.isShortDrag(4.01, 0));
+  }
+
+  @Test
+  void draggingPreservesTheGrabOffset() {
+    PerspectiveActor actor = new PerspectiveActor("test");
+    actor.body().position().set(0.5, -0.25);
+
+    actor.beginDrag(new Vector2d(0.25, -0.5));
+    actor.dragTo(new Vector2d(-0.25, 0.5));
+
+    assertEquals(new Vector2d(0, 0.75), actor.body().position());
   }
 }
