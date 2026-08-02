@@ -14,12 +14,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 final class OrbitMenuRenderer {
+  static final String SPONSOR_TEXT_KEY = "perspective_api.switcher.orbit_switcher.sponsor";
+
   private static final Identifier DEFAULT_ICON =
       Bridge.parseIdentifier("perspective_api:textures/perspective/default.png");
 
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
   private static final int COLOR_ORBIT = 0x99_FF_FF_FF;
   private static final int COLOR_GHOST_SLOT = 0xCC_FF_FF_FF;
+  private static final int COLOR_SPONSOR_BORDER = 0xEE_FF_FF_FF;
+  private static final int COLOR_SPONSOR_BACKGROUND = 0xDD_20_20_20;
   private static final double ORBIT_DASH_PERIOD_PX = 14;
   private static final double ORBIT_DASH_RATIO = 0.57;
   private static final int GHOST_DASH_PERIOD_PX = 8;
@@ -47,6 +51,28 @@ final class OrbitMenuRenderer {
 
     PerspectiveActor labelActor = grabbed != null ? grabbed : hovered;
     if (labelActor != null) drawLabel(canvas, context, menu, labelActor);
+    if (menu.mode() == OrbitMenu.Mode.EDITING) drawSponsorButton(canvas, menu);
+  }
+
+  private void drawSponsorButton(DrawContext canvas, OrbitMenu menu) {
+    EvasiveSponsorButton button = menu.sponsorButton();
+    if (!button.isVisible()) return;
+
+    int x = button.x();
+    int y = button.y();
+    int width = button.width();
+    canvas.fill(x, y, x + width, y + EvasiveSponsorButton.HEIGHT, COLOR_SPONSOR_BORDER);
+    canvas.fill(
+        x + 1,
+        y + 1,
+        x + width - 1,
+        y + EvasiveSponsorButton.HEIGHT - 1,
+        COLOR_SPONSOR_BACKGROUND);
+    drawCenteredText(
+        canvas,
+        Component.translatable(SPONSOR_TEXT_KEY),
+        x + width / 2,
+        y + (EvasiveSponsorButton.HEIGHT - Minecraft.getInstance().font.lineHeight) / 2);
   }
 
   private void drawGrabbedWheelSlot(DrawContext canvas, OrbitMenu menu) {

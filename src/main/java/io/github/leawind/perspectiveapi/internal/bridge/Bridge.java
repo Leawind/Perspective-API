@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.bridge;
 
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
+import java.util.Objects;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
@@ -50,6 +51,15 @@ public final class Bridge {
     return Identifier.fromNamespaceAndPath(namespace, path);
     /*? } else {*/
     /*return new Identifier(namespace, path);
+    *//*? }*/
+  }
+
+  public static void openUri(@NonNull String uri) {
+    Objects.requireNonNull(uri);
+    /*? if >=1.21.11 {*/
+    net.minecraft.util.Util.getPlatform().openUri(uri);
+    /*? } else {*/
+    /*net.minecraft.Util.getPlatform().openUri(uri);
     *//*? }*/
   }
 

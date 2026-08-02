@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import org.joml.Vector2d;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -43,6 +44,9 @@ final class OrbitMenu {
   private static final double CANDIDATE_SPACING = 0.1;
   private static final double LINEAR_DRAG_FACTOR = 12;
   private static final double LAYOUT_SPRING_MAX_FORCE = 160;
+  private static final int SPONSOR_BUTTON_MIN_WIDTH = 43;
+  private static final int SPONSOR_BUTTON_HORIZONTAL_PADDING = 2;
+  private static final String SPONSOR_URL = "https://leawind.github.io/zh_cn/donate?autolang";
   private static final PairForce DISABLED_REPULSION = InverseSquareForces.coulomb(0.025, 0.035, 10);
 
   private final OrbitSwitcherBehavior owner;
@@ -50,6 +54,7 @@ final class OrbitMenu {
   private final PhysicsWorld world = new PhysicsWorld();
   private final Map<String, PerspectiveActor> actors = new HashMap<>();
   private final OrbitMenuRenderer renderer = new OrbitMenuRenderer();
+  private final EvasiveSponsorButton sponsorButton = new EvasiveSponsorButton();
 
   private boolean initialized;
   private boolean restoreMouseGrab;
@@ -170,6 +175,10 @@ final class OrbitMenu {
     return model;
   }
 
+  EvasiveSponsorButton sponsorButton() {
+    return sponsorButton;
+  }
+
   double worldToScreenX(double x) {
     return screenWidth * 0.5 + x * minEdge;
   }
@@ -206,8 +215,16 @@ final class OrbitMenu {
     }
 
     if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-      if (action == GLFW.GLFW_PRESS) grabHoveredActor();
-      else releaseActor(true);
+      if (action == GLFW.GLFW_PRESS) {
+        if (sponsorButton.contains(mouseX, mouseY)) {
+          String languageCode = Minecraft.getInstance().getLanguageManager().getSelected();
+          if (EvasiveSponsorButton.isClickEnabled(languageCode)) Bridge.openUri(SPONSOR_URL);
+          return;
+        }
+        grabHoveredActor();
+      } else {
+        releaseActor(true);
+      }
     } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
       exitEditing();
     }
@@ -252,6 +269,7 @@ final class OrbitMenu {
     if (restoreMouseGrab) minecraft.mouseHandler.releaseMouse();
     hasLastMouse = false;
     hoveredActor = null;
+    sponsorButton.reset();
   }
 
   private void exitEditing() {
@@ -378,10 +396,8 @@ final class OrbitMenu {
     double farX = -horizontalLimit + CANDIDATE_MARGIN;
     double availableWidth = Math.max(nearX - farX, 0);
     double availableHeight = Math.max(verticalLimit * 2 - CANDIDATE_MARGIN * 2, 0);
-    int maxColumns =
-        Math.max((int) Math.floor(availableWidth / CANDIDATE_SPACING + 1e-9) + 1, 1);
-    int maxRows =
-        Math.max((int) Math.floor(availableHeight / CANDIDATE_SPACING + 1e-9) + 1, 1);
+    int maxColumns = Math.max((int) Math.floor(availableWidth / CANDIDATE_SPACING + 1e-9) + 1, 1);
+    int maxRows = Math.max((int) Math.floor(availableHeight / CANDIDATE_SPACING + 1e-9) + 1, 1);
     int columns = Math.min((count + maxRows - 1) / maxRows, maxColumns);
 
     int baseRows = count / columns;
@@ -432,10 +448,27 @@ final class OrbitMenu {
     updateMouseWorld();
 
     long now = System.nanoTime();
-    if (lastRenderNanos != 0) world.advance((now - lastRenderNanos) * 1e-9);
+    double frameSeconds = lastRenderNanos == 0 ? 0 : (now - lastRenderNanos) * 1e-9;
+    if (frameSeconds > 0) world.advance(frameSeconds);
     lastRenderNanos = now;
     if (mode == Mode.SELECTING) updateSelectingHover();
-    else updateEditingHover();
+    else {
+      updateEditingHover();
+      int sponsorButtonWidth =
+          Math.max(
+              SPONSOR_BUTTON_MIN_WIDTH,
+              Minecraft.getInstance()
+                      .font
+                      .width(Component.translatable(OrbitMenuRenderer.SPONSOR_TEXT_KEY))
+                  + SPONSOR_BUTTON_HORIZONTAL_PADDING);
+      sponsorButton.update(
+          screenWidth,
+          screenHeight,
+          sponsorButtonWidth,
+          mouseScreen.x,
+          mouseScreen.y,
+          frameSeconds);
+    }
     renderer.render(context, this);
   }
 
