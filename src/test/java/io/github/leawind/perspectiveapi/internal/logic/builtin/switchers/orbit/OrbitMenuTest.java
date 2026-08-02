@@ -44,4 +44,42 @@ class OrbitMenuTest {
 
     assertEquals(new Vector2d(0, 0.75), actor.body().position());
   }
+
+  @Test
+  void candidateGridExpandsFromTheWheelTowardTheLeftEdge() {
+    double horizontalLimit = 8.0 / 9;
+    double verticalLimit = 0.5;
+    Vector2d target = new Vector2d();
+
+    OrbitMenu.candidateGridTarget(0, 45, horizontalLimit, verticalLimit, target);
+    assertTarget(target, -0.4, -0.4);
+
+    OrbitMenu.candidateGridTarget(8, 45, horizontalLimit, verticalLimit, target);
+    assertTarget(target, -0.4, 0.4);
+
+    OrbitMenu.candidateGridTarget(9, 45, horizontalLimit, verticalLimit, target);
+    assertTarget(target, -0.5, -0.4);
+
+    OrbitMenu.candidateGridTarget(44, 45, horizontalLimit, verticalLimit, target);
+    assertTarget(target, -0.8, 0.4);
+  }
+
+  @Test
+  void candidateGridBalancesPartiallyFilledColumns() {
+    Vector2d target = new Vector2d();
+
+    OrbitMenu.candidateGridTarget(0, 10, 8.0 / 9, 0.5, target);
+    assertTarget(target, -0.4, -0.2);
+
+    OrbitMenu.candidateGridTarget(5, 10, 8.0 / 9, 0.5, target);
+    assertTarget(target, -0.5, -0.2);
+
+    OrbitMenu.candidateGridTarget(9, 10, 8.0 / 9, 0.5, target);
+    assertTarget(target, -0.5, 0.2);
+  }
+
+  private static void assertTarget(Vector2d actual, double expectedX, double expectedY) {
+    assertEquals(expectedX, actual.x, 1e-9);
+    assertEquals(expectedY, actual.y, 1e-9);
+  }
 }

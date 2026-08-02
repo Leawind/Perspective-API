@@ -39,6 +39,8 @@ final class OrbitMenu {
   private static final double CLICK_MAX_DISTANCE_PX = 4;
   private static final double GROUP_INNER_BOUNDARY = 0.22;
   private static final double GROUP_OUTER_BOUNDARY = 0.32;
+  private static final double CANDIDATE_MARGIN = 0.08;
+  private static final double CANDIDATE_SPACING = 0.1;
   private static final double LINEAR_DRAG_FACTOR = 12;
   private static final double LAYOUT_SPRING_MAX_FORCE = 160;
   private static final PairForce DISABLED_REPULSION = InverseSquareForces.coulomb(0.025, 0.035, 10);
@@ -63,6 +65,7 @@ final class OrbitMenu {
   private final Vector2d mouseWorld = new Vector2d();
   private final Vector2d lastMouseScreen = new Vector2d();
   private final Vector2d grabStartMouseScreen = new Vector2d();
+  private final Vector2d candidateTarget = new Vector2d();
   private final WheelAnchor wheelAnchor = new WheelAnchor(24);
   private boolean hasLastMouse;
   private long lastRenderNanos;
@@ -367,6 +370,42 @@ final class OrbitMenu {
     return (int) Math.floor(normalized / fullTurn * slotCount + 0.5) % slotCount;
   }
 
+  static Vector2d candidateGridTarget(
+      int index, int count, double horizontalLimit, double verticalLimit, Vector2d dest) {
+    if (index < 0 || index >= count) throw new IllegalArgumentException("Invalid candidate index");
+
+    double nearX = -(GROUP_OUTER_BOUNDARY + CANDIDATE_MARGIN);
+    double farX = -horizontalLimit + CANDIDATE_MARGIN;
+    double availableWidth = Math.max(nearX - farX, 0);
+    double availableHeight = Math.max(verticalLimit * 2 - CANDIDATE_MARGIN * 2, 0);
+    int maxColumns =
+        Math.max((int) Math.floor(availableWidth / CANDIDATE_SPACING + 1e-9) + 1, 1);
+    int maxRows =
+        Math.max((int) Math.floor(availableHeight / CANDIDATE_SPACING + 1e-9) + 1, 1);
+    int columns = Math.min((count + maxRows - 1) / maxRows, maxColumns);
+
+    int baseRows = count / columns;
+    int longerColumns = count % columns;
+    int longerColumnEntries = (baseRows + 1) * longerColumns;
+    int column;
+    int row;
+    if (index < longerColumnEntries) {
+      column = index / (baseRows + 1);
+      row = index % (baseRows + 1);
+    } else {
+      int remainingIndex = index - longerColumnEntries;
+      column = longerColumns + remainingIndex / baseRows;
+      row = remainingIndex % baseRows;
+    }
+
+    int rows = baseRows + (longerColumns > 0 ? 1 : 0);
+    double verticalSpacing =
+        rows < 2 ? 0 : Math.min(CANDIDATE_SPACING, availableHeight / (rows - 1));
+    double topY = -(rows - 1) * verticalSpacing * 0.5;
+    double x = Math.max(nearX - column * CANDIDATE_SPACING, farX);
+    return dest.set(x, topY + row * verticalSpacing);
+  }
+
   private static Group classify(Group oldGroup, double x) {
     if (x < -GROUP_OUTER_BOUNDARY) return Group.CANDIDATE;
     if (x > GROUP_OUTER_BOUNDARY) return Group.DISABLED;
@@ -433,13 +472,9 @@ final class OrbitMenu {
     List<String> candidates = model.candidates();
     int index = candidates.indexOf(id);
     if (index < 0) return;
-    double x = -Math.min(horizontalLimit() - 0.08, 0.56);
-    double availableHeight = Math.max(verticalLimit() * 2 - 0.16, 0);
-    double spacing =
-        candidates.size() < 2 ? 0 : Math.min(0.1, availableHeight / (candidates.size() - 1));
-    double y = (index - (candidates.size() - 1) * 0.5) * spacing;
-    y = Math.max(-verticalLimit() + 0.08, Math.min(verticalLimit() - 0.08, y));
-    addSpring(body, x, y, 360, LAYOUT_SPRING_MAX_FORCE);
+    candidateGridTarget(
+        index, candidates.size(), horizontalLimit(), verticalLimit(), candidateTarget);
+    addSpring(body, candidateTarget.x, candidateTarget.y, 360, LAYOUT_SPRING_MAX_FORCE);
   }
 
   private void applyDisabledBoundary(PhysicsBody body) {
