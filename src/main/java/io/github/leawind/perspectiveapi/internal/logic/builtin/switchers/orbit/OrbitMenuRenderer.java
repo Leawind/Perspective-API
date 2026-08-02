@@ -19,9 +19,11 @@ final class OrbitMenuRenderer {
 
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
   private static final int COLOR_ORBIT = 0x99_FF_FF_FF;
-  private static final int COLOR_GHOST_SLOT = 0x66_FF_FF_FF;
+  private static final int COLOR_GHOST_SLOT = 0xCC_FF_FF_FF;
   private static final double ORBIT_DASH_PERIOD_PX = 14;
   private static final double ORBIT_DASH_RATIO = 0.57;
+  private static final int GHOST_DASH_PERIOD_PX = 8;
+  private static final int GHOST_DASH_LENGTH_PX = 4;
 
   void render(GuiRenderContext context, OrbitMenu menu) {
     DrawContext canvas = context.drawContext;
@@ -59,7 +61,57 @@ final class OrbitMenuRenderer {
     int size = actorSize(menu, 1);
     int x = (int) menu.worldToScreenX(OrbitMenu.RING_RADIUS * Math.cos(angleRad)) - size / 2;
     int y = (int) menu.worldToScreenY(OrbitMenu.RING_RADIUS * Math.sin(angleRad)) - size / 2;
-    canvas.drawGamemodeSwitcherSlot(x, y, size, size, COLOR_GHOST_SLOT);
+    drawDashedRoundedSquare(canvas, x, y, size);
+  }
+
+  private void drawDashedRoundedSquare(DrawContext canvas, int x, int y, int size) {
+    int right = x + size - 1;
+    int bottom = y + size - 1;
+    int radius = Math.max(Math.min(size / 5, (size - 1) / 2), 2);
+
+    drawDashedHorizontal(canvas, x + radius, right - radius, y);
+    drawDashedHorizontal(canvas, x + radius, right - radius, bottom);
+    drawDashedVertical(canvas, y + radius, bottom - radius, x);
+    drawDashedVertical(canvas, y + radius, bottom - radius, right);
+
+    drawDashedArc(canvas, x + radius, y + radius, radius, Math.PI, Math.PI * 1.5);
+    drawDashedArc(canvas, right - radius, y + radius, radius, Math.PI * 1.5, Math.PI * 2);
+    drawDashedArc(canvas, right - radius, bottom - radius, radius, 0, Math.PI * 0.5);
+    drawDashedArc(canvas, x + radius, bottom - radius, radius, Math.PI * 0.5, Math.PI);
+  }
+
+  private void drawDashedHorizontal(DrawContext canvas, int startX, int endX, int y) {
+    for (int x = startX; x <= endX; x += GHOST_DASH_PERIOD_PX) {
+      canvas.fill(
+          x,
+          y - 1,
+          Math.min(x + GHOST_DASH_LENGTH_PX, endX + 1),
+          y + 1,
+          COLOR_GHOST_SLOT);
+    }
+  }
+
+  private void drawDashedVertical(DrawContext canvas, int startY, int endY, int x) {
+    for (int y = startY; y <= endY; y += GHOST_DASH_PERIOD_PX) {
+      canvas.fill(
+          x - 1,
+          y,
+          x + 1,
+          Math.min(y + GHOST_DASH_LENGTH_PX, endY + 1),
+          COLOR_GHOST_SLOT);
+    }
+  }
+
+  private void drawDashedArc(
+      DrawContext canvas, int centerX, int centerY, int radius, double startRad, double endRad) {
+    int samples = Math.max((int) Math.ceil(radius * (endRad - startRad)), 1);
+    for (int sample = 0; sample <= samples; sample++) {
+      if (sample % GHOST_DASH_PERIOD_PX >= GHOST_DASH_LENGTH_PX) continue;
+      double angleRad = startRad + (endRad - startRad) * sample / samples;
+      int x = (int) Math.round(centerX + radius * Math.cos(angleRad));
+      int y = (int) Math.round(centerY + radius * Math.sin(angleRad));
+      canvas.fill(x - 1, y - 1, x + 1, y + 1, COLOR_GHOST_SLOT);
+    }
   }
 
   private void drawEditingAreas(DrawContext canvas, GuiRenderContext context, OrbitMenu menu) {
