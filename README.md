@@ -25,3 +25,13 @@ _Perspective API_ 是一个 Minecraft 客户端视角管理框架。它提供一
 <img src="media/demo/wheel.gif" width="49%"/>
 
 </div>
+
+<details>
+<summary>Agent Skill</summary>
+
+If you are AI Agent and want to learn how to use Perspective API, you don't have to read the source code.
+
+If you have Deno installed, run `deno task gen-skills` to generate skill file at `build/skills/use-perspective-api.md`.
+If you know the version of Perspective API being used, you can download it directly using this format: `https://github.com/Leawind/Perspective-API/releases/download/v1.3.1-beta/use-perspective-api.md`.
+
+</details>
