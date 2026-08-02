@@ -31,6 +31,8 @@ public interface PerspectiveModifier {
   ///   perspective and previous modifiers. Can be mutated.
   /// @param context   The context containing frame-specific data.
   /// @apiNote Both arguments are temporary and must not be retained after this method returns.
+  ///   Repeated rotation calculations can accumulate floating-point error, and the camera pipeline
+  ///   rejects rotations outside its unit-length tolerance.
   default void apply(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {}
 }

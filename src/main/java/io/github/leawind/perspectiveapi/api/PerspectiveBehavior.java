@@ -103,7 +103,9 @@ public interface PerspectiveBehavior {
   /// @param state The vanilla camera state. Can be mutated.
   /// @param context   The context containing frame-specific data.
   /// @apiNote `state` must not be stored or referenced outside this method
-  ///   call. `context` is also valid only for this call.
+  ///   call. `context` is also valid only for this call. Repeated rotation calculations can
+  ///   accumulate floating-point error, and the camera pipeline rejects rotations outside its
+  ///   unit-length tolerance.
   default void applyCameraState(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {}
 
