@@ -1,24 +1,28 @@
-/// Generates an AI Agent skill file from the public API source code.
-///
-/// Scans `src/main/java/io/github/leawind/perspectiveapi/api/` for public
-/// types and members, extracts signatures and `///` Javadoc comments via
-/// `npm:java-parser` CST analysis, and writes `build/perspective-api-usage.md`.
-import { parse } from 'npm:java-parser'
+/**
+ * Generates AI Agent skill from this project's public API Javadoc.
+ *
+ * The package Javadoc in `api/package-info.java` provides the dependency and integration
+ * workflow. Public API types and members under the `api` package contribute their Javadoc as
+ * reference material. Internal and package-private declarations are excluded.
+ *
+ * The generated Markdown file is written to `build/skills/use-perspective-api.md`, which is
+ * intentionally ignored by Git. The GitHub Release publishing script invokes this generator and
+ * uploads that uncompressed `.md` file as a release asset alongside the mod JARs.
+ * @module gen-skills
+ */
+import { parse } from 'npm:java-parser@3.0.1'
 
-const API_DIR = 'src/main/java/io/github/leawind/perspectiveapi/api'
-const OUTPUT_FILE = 'build/perspective-api-usage.md'
-const MANUAL_FILE = 'docs/usage-skill-manual.md'
+export const DEFAULT_API_DIR =
+  'src/main/java/io/github/leawind/perspectiveapi/api'
+export const DEFAULT_OUTPUT_FILE = 'build/skills/use-perspective-api.md'
 
 // deno-lint-ignore no-explicit-any
 type N = any
 
-// region types
-
-type TypeKind = 'class' | 'interface' | 'enum' | 'annotation'
+type TypeKind = 'class' | 'interface' | 'record' | 'enum' | 'annotation'
 
 interface TypeDoc {
   kind: TypeKind
-  name: string
   qualifiedName: string
   signature: string
   doc: string[]
@@ -28,118 +32,85 @@ interface TypeDoc {
 }
 
 interface MemberDoc {
-  kind: 'method' | 'field'
-  name: string
   signature: string
   doc: string[]
 }
 
-// endregion
-
-// region file system
+export interface GenerateSkillOptions {
+  apiDir?: string
+  outputFile?: string
+}
 
 async function walkJavaFiles(dir: string): Promise<string[]> {
   const out: string[] = []
-  for await (const e of Deno.readDir(dir)) {
-    const p = `${dir}/${e.name}`
-    if (e.isDirectory) {
-      out.push(...await walkJavaFiles(p))
-    } else if (e.isFile && p.endsWith('.java')) {
-      out.push(p)
+  for await (const entry of Deno.readDir(dir)) {
+    const path = `${dir}/${entry.name}`
+    if (entry.isDirectory) {
+      out.push(...await walkJavaFiles(path))
+    } else if (entry.isFile && path.endsWith('.java')) {
+      out.push(path)
     }
   }
   return out.sort()
 }
 
-// endregion
-
-// region source text helpers
-
-function lineOf(src: string, off: number): number {
-  let n = 0
-  for (let i = 0; i < off && i < src.length; i++) {
-    if (src[i] === '\n') { n++ }
+function lineOf(src: string, offset: number): number {
+  let line = 0
+  for (let i = 0; i < offset && i < src.length; i++) {
+    if (src[i] === '\n') { line++ }
   }
-  return n
+  return line
 }
 
-/// Collects consecutive `///` comment lines directly above `lineIdx`.
-function docAbove(src: string, lineIdx: number): string[] {
+function docAbove(src: string, lineIndex: number): string[] {
   const lines = src.split('\n')
   const out: string[] = []
-  let i = lineIdx - 1
-  while (i >= 0) {
-    const t = lines[i].trim()
-    if (t.startsWith('///')) {
-      out.unshift(t.replace(/^\/\/\/ ?/, ''))
-      i--
-    } else { break }
+  let index = lineIndex - 1
+  while (index >= 0) {
+    const line = lines[index].trim()
+    if (!line.startsWith('///')) { break }
+    out.unshift(line.replace(/^\/\/\/ ?/, ''))
+    index--
   }
   return out
 }
 
-/// Gets the type name from a declaration node via `typeIdentifier`.
-function typeName(decl: N): string | undefined {
-  const c = decl?.children
-  if (!c) { return undefined }
-  if (c.typeIdentifier) {
-    return c.typeIdentifier[0].children?.Identifier?.[0]?.image
+function typeName(node: N): string | undefined {
+  const children = node?.children
+  if (!children) { return undefined }
+  if (children.typeIdentifier) {
+    return children.typeIdentifier[0].children?.Identifier?.[0]?.image
   }
-  for (const v of Object.values(c)) {
-    if (!Array.isArray(v)) { continue }
-    for (const ch of v as N[]) {
-      if (ch?.name && ch.name !== 'annotation') {
-        const r = typeName(ch)
-        if (r) { return r }
-      }
+  for (const value of Object.values(children)) {
+    if (!Array.isArray(value)) { continue }
+    for (const child of value as N[]) {
+      if (child?.name === 'annotation') { continue }
+      const result = typeName(child)
+      if (result) { return result }
     }
   }
   return undefined
 }
 
-/// Gets the method name from a method declaration node.
-function methodName(node: N): string {
-  const md = node.children?.methodHeader?.[0]?.children
-    ?.methodDeclarator?.[0]
-  return md?.children?.Identifier?.[0]?.image ?? '?'
-}
-
-/// Gets the field name from a field/constant declaration node.
-function fieldName(node: N): string {
-  const vdl = node.children?.variableDeclaratorList?.[0]
-  const vd = vdl?.children?.variableDeclarator?.[0]
-  const vdi = vd?.children?.variableDeclaratorId?.[0]
-  return vdi?.children?.Identifier?.[0]?.image ?? '?'
-}
-
-function hasPrivate(node: N): boolean {
-  const c = node?.children
-  if (!c) { return false }
-  // Check direct modifier children
-  for (const [k, v] of Object.entries(c)) {
-    if (!k.endsWith('Modifier') || !Array.isArray(v)) { continue }
-    for (const m of v as N[]) {
-      if (m?.children?.Private) { return true }
-    }
-  }
-  // Check one level deep (e.g., fieldDeclaration inside classMemberDeclaration)
-  for (const v of Object.values(c)) {
-    if (!Array.isArray(v)) { continue }
-    for (const ch of v as N[]) {
-      if (!ch?.children) { continue }
-      for (const [k2, v2] of Object.entries(ch.children)) {
-        if (!k2.endsWith('Modifier') || !Array.isArray(v2)) { continue }
-        for (const m of v2 as N[]) {
-          if ((m as N)?.children?.Private) { return true }
-        }
-      }
+function hasToken(node: N, tokenName: string, depth = 0): boolean {
+  if (!node?.children || depth > 3) { return false }
+  if (node.children[tokenName]) { return true }
+  for (const value of Object.values(node.children)) {
+    if (!Array.isArray(value)) { continue }
+    for (const child of value as N[]) {
+      if (child?.name && hasToken(child, tokenName, depth + 1)) { return true }
     }
   }
   return false
 }
 
-function cleanSig(s: string): string {
-  return s.trim().replace(/\s+/g, ' ')
+function isExternallyAccessible(node: N, implicitPublic = false): boolean {
+  return implicitPublic || hasToken(node, 'Public')
+    || hasToken(node, 'Protected')
+}
+
+function cleanSignature(signature: string): string {
+  return signature.trim().replace(/\s+/g, ' ')
 }
 
 const BODY_KEYS = [
@@ -147,162 +118,182 @@ const BODY_KEYS = [
   'constructorBody',
   'classBody',
   'interfaceBody',
+  'recordBody',
   'enumBody',
   'annotationInterfaceBody',
 ]
 
-/// Finds the body node start offset, searching one level deep.
-function findBodyStart(c: Record<string, N[]>): number {
-  for (const k of BODY_KEYS) {
-    const b = c[k]?.[0]
-    if (b?.location?.startOffset != null) { return b.location.startOffset }
+function findBody(node: N, depth = 0): N | undefined {
+  if (!node?.children || depth > 3) { return undefined }
+  for (const key of BODY_KEYS) {
+    const body = node.children[key]?.[0]
+    if (body) { return body }
   }
-  for (const v of Object.values(c)) {
-    if (!Array.isArray(v)) { continue }
-    for (const ch of v as N[]) {
-      if (!ch?.children) { continue }
-      for (const k of BODY_KEYS) {
-        const b = ch.children[k]?.[0]
-        if (b?.location?.startOffset != null) {
-          return b.location.startOffset
-        }
-      }
+  for (const value of Object.values(node.children)) {
+    if (!Array.isArray(value)) { continue }
+    for (const child of value as N[]) {
+      if (!child?.name) { continue }
+      const body = findBody(child, depth + 1)
+      if (body) { return body }
     }
   }
-  return -1
+  return undefined
 }
 
-/// Extracts the declaration signature (without body) from source text.
-function sigOf(src: string, node: N): string {
-  const s: number = node.location.startOffset
-  const e: number = node.location.endOffset
-  const text = src.slice(s, e + 1)
+function signatureOf(src: string, node: N): string {
+  const start: number = node.location.startOffset
+  const end: number = node.location.endOffset
+  const body = findBody(node)
+  if (body?.location?.startOffset != null) {
+    return cleanSignature(src.slice(start, body.location.startOffset))
+  }
+  const text = src.slice(start, end + 1)
+  const semicolon = text.indexOf(';')
+  return cleanSignature(semicolon >= 0 ? text.slice(0, semicolon) : text)
+}
 
-  const bodyOff = findBodyStart(node.children ?? {})
-  if (bodyOff >= 0) {
-    const bodyText = src.slice(bodyOff, e + 1).trimStart()
-    if (bodyText.startsWith('{')) {
-      return cleanSig(src.slice(s, bodyOff))
+function isInternal(src: string, node: N): boolean {
+  return signatureOf(src, node).includes('@ApiStatus.Internal')
+}
+
+function extractPackage(compilationUnit: N): string {
+  const declaration = compilationUnit.children?.packageDeclaration?.[0]
+  if (!declaration) { return '' }
+  return (declaration.children?.Identifier ?? [])
+    .map((token: N) => token.image)
+    .join('.')
+}
+
+function extractPackageDoc(compilationUnit: N, src: string): string[] {
+  const declaration = compilationUnit.children?.packageDeclaration?.[0]
+  if (!declaration) { return [] }
+  return docAbove(src, lineOf(src, declaration.location.startOffset))
+}
+
+function declarationKind(node: N): { kind: TypeKind; declaration: N } | null {
+  const children = node?.children
+  if (!children) { return null }
+
+  if (children.classDeclaration) {
+    const declaration = children.classDeclaration[0]
+    if (declaration.children?.recordDeclaration) {
+      return { kind: 'record', declaration }
+    }
+    if (declaration.children?.enumDeclaration) {
+      return { kind: 'enum', declaration }
+    }
+    return { kind: 'class', declaration }
+  }
+  if (children.interfaceDeclaration) {
+    const declaration = children.interfaceDeclaration[0]
+    if (declaration.children?.annotationInterfaceDeclaration) {
+      return { kind: 'annotation', declaration }
+    }
+    return { kind: 'interface', declaration }
+  }
+  if (children.recordDeclaration) {
+    return {
+      kind: 'record',
+      declaration: node,
     }
   }
-
-  // No block body: end at first semicolon
-  const si = text.indexOf(';')
-  return cleanSig(si >= 0 ? text.slice(0, si) : text)
-}
-
-// endregion
-
-// region CST extraction
-
-function extractPackage(node: N): string {
-  const pd = node?.children?.packageDeclaration?.[0]
-  if (!pd) { return '' }
-  return (pd.children?.Identifier ?? []).map((t: N) => t.image).join('.')
-}
-
-function extractTypes(node: N, src: string): TypeDoc[] {
-  const c = node?.children
-  if (!c) { return [] }
-  const pkg = extractPackage(node)
-  const out: TypeDoc[] = []
-
-  for (const td of c.typeDeclaration ?? []) {
-    const t = extractType(td, src, pkg)
-    if (t) { out.push(t) }
+  if (children.enumDeclaration) { return { kind: 'enum', declaration: node } }
+  if (children.annotationInterfaceDeclaration) {
+    return { kind: 'annotation', declaration: node }
   }
-  return out
+  if (children.normalClassDeclaration) {
+    return { kind: 'class', declaration: node }
+  }
+  if (children.normalInterfaceDeclaration) {
+    return { kind: 'interface', declaration: node }
+  }
+  return null
 }
 
-function extractType(node: N, src: string, pkg = ''): TypeDoc | null {
-  const c = node.children
-  if (!c) { return null }
+function extractType(
+  node: N,
+  src: string,
+  packageName: string,
+  implicitPublic = false,
+): TypeDoc | null {
+  const resolved = declarationKind(node)
+  if (!resolved) { return null }
+  const { kind, declaration } = resolved
+  if (!isExternallyAccessible(declaration, implicitPublic)) { return null }
+  if (isInternal(src, declaration)) { return null }
 
-  let kind: TypeKind | null = null
-  let decl: N = null
-
-  // Wrapper format: typeDeclaration or interfaceMemberDeclaration
-  if (c.classDeclaration) {
-    decl = c.classDeclaration[0]
-    const dc = decl.children
-    if (dc?.enumDeclaration) { kind = 'enum' }
-    else { kind = 'class' }
-  } else if (c.interfaceDeclaration) {
-    decl = c.interfaceDeclaration[0]
-    const dc = decl.children
-    if (dc?.annotationInterfaceDeclaration) { kind = 'annotation' }
-    else { kind = 'interface' }
-  } else if (c.enumDeclaration) {
-    // Direct classDeclaration node containing enumDeclaration
-    kind = 'enum'
-    decl = node
-  } else if (c.annotationInterfaceDeclaration) {
-    kind = 'annotation'
-    decl = node
-  } else if (c.normalClassDeclaration) {
-    kind = 'class'
-    decl = node
-  } else if (c.normalInterfaceDeclaration) {
-    kind = 'interface'
-    decl = node
-  }
-
-  if (!kind || !decl) { return null }
-
-  const name = typeName(decl)
+  const name = typeName(declaration)
   if (!name) { return null }
-  if (hasPrivate(decl)) { return null }
-
-  const qualifiedName = pkg ? `${pkg}.${name}` : name
-
-  const signature = sigOf(src, decl)
-  const doc = docAbove(src, lineOf(src, decl.location.startOffset))
+  const qualifiedName = packageName ? `${packageName}.${name}` : name
   const members: MemberDoc[] = []
   const nested: TypeDoc[] = []
+  const body = findBody(declaration)
   let enumConstants: string | undefined
 
-  // Body is inside normalXDeclaration wrapper, search one level
-  let bodyNode: N | undefined
-  let bodyKind = ''
-  for (const v of Object.values(decl.children ?? {})) {
-    if (!Array.isArray(v)) { continue }
-    for (const ch of v as N[]) {
-      if (!ch?.children) { continue }
-      for (const bk of BODY_KEYS) {
-        if (ch.children[bk]) {
-          bodyNode = ch.children[bk][0]
-          bodyKind = bk
-          break
-        }
-      }
-      if (bodyNode) { break }
-    }
-    if (bodyNode) { break }
-  }
-
-  if (bodyNode) {
-    const nestedPkg = qualifiedName
-    if (bodyKind === 'classBody') {
-      extractClassBody(bodyNode, src, members, nested, nestedPkg)
-    } else if (bodyKind === 'interfaceBody') {
-      extractInterfaceBody(bodyNode, src, members, nested, nestedPkg)
-    } else if (bodyKind === 'enumBody') {
-      enumConstants = extractEnumConstants(bodyNode, src)
-      extractEnumBody(bodyNode, src, members, nested, nestedPkg)
-    } else if (bodyKind === 'annotationInterfaceBody') {
-      extractAnnotationBody(bodyNode, src, members, nested, nestedPkg)
-    }
+  if (body?.name === 'classBody') {
+    extractClassBody(body, src, members, nested, qualifiedName, false)
+  } else if (body?.name === 'recordBody') {
+    extractRecordBody(body, src, members, nested, qualifiedName)
+  } else if (body?.name === 'interfaceBody') {
+    extractInterfaceBody(body, src, members, nested, qualifiedName)
+  } else if (body?.name === 'enumBody') {
+    enumConstants = extractEnumConstants(body)
+    extractEnumBody(body, src, members, nested, qualifiedName)
+  } else if (body?.name === 'annotationInterfaceBody') {
+    extractAnnotationBody(body, src, members, nested, qualifiedName)
   }
 
   return {
     kind,
-    name,
     qualifiedName,
-    signature,
-    doc,
+    signature: signatureOf(src, declaration),
+    doc: docAbove(src, lineOf(src, declaration.location.startOffset)),
     members,
     nested,
     enumConstants,
+  }
+}
+
+function addClassBodyDeclaration(
+  declaration: N,
+  src: string,
+  members: MemberDoc[],
+  nested: TypeDoc[],
+  qualifiedName: string,
+  implicitPublic: boolean,
+): void {
+  const children = declaration.children
+  if (!children) { return }
+
+  const constructor = children.constructorDeclaration?.[0]
+  if (
+    constructor
+    && isExternallyAccessible(constructor, implicitPublic)
+    && !isInternal(src, constructor)
+  ) {
+    members.push(extractMember(constructor, src))
+  }
+
+  const member = children.classMemberDeclaration?.[0]
+  if (!member) { return }
+  const memberChildren = member.children ?? {}
+
+  for (const key of ['methodDeclaration', 'fieldDeclaration']) {
+    const candidate = memberChildren[key]?.[0]
+    if (
+      candidate
+      && isExternallyAccessible(candidate, implicitPublic)
+      && !isInternal(src, candidate)
+    ) {
+      members.push(extractMember(candidate, src))
+    }
+  }
+
+  for (const key of ['classDeclaration', 'interfaceDeclaration']) {
+    for (const candidate of memberChildren[key] ?? []) {
+      const type = extractType(candidate, src, qualifiedName, implicitPublic)
+      if (type) { nested.push(type) }
+    }
   }
 }
 
@@ -311,30 +302,41 @@ function extractClassBody(
   src: string,
   members: MemberDoc[],
   nested: TypeDoc[],
-  nestedPkg: string,
+  qualifiedName: string,
+  implicitPublic: boolean,
 ): void {
-  for (const bd of body.children?.classBodyDeclaration ?? []) {
-    const c = bd.children
-    if (!c) { continue }
-    if (c.constructorDeclaration) { continue }
-    const cmd = c.classMemberDeclaration?.[0]
-    if (!cmd) { continue }
-    if (hasPrivate(cmd)) { continue }
-    const mc = cmd.children
-    if (!mc) { continue }
+  for (const declaration of body.children?.classBodyDeclaration ?? []) {
+    addClassBodyDeclaration(
+      declaration,
+      src,
+      members,
+      nested,
+      qualifiedName,
+      implicitPublic,
+    )
+  }
+}
 
-    if (mc.methodDeclaration) {
-      members.push(extractMethod(mc.methodDeclaration[0], src))
-    } else if (mc.fieldDeclaration) {
-      members.push(extractField(mc.fieldDeclaration[0], src))
-    }
-    for (
-      const k of ['classDeclaration', 'interfaceDeclaration']
-    ) {
-      for (const n of mc[k] ?? []) {
-        const t = extractType(n, src, nestedPkg)
-        if (t) { nested.push(t) }
-      }
+function extractRecordBody(
+  body: N,
+  src: string,
+  members: MemberDoc[],
+  nested: TypeDoc[],
+  qualifiedName: string,
+): void {
+  for (const declaration of body.children?.recordBodyDeclaration ?? []) {
+    // The record declaration already exposes its canonical constructor through the components.
+    // A compact constructor has no standalone Java signature worth rendering.
+    const classDeclaration = declaration.children?.classBodyDeclaration?.[0]
+    if (classDeclaration) {
+      addClassBodyDeclaration(
+        classDeclaration,
+        src,
+        members,
+        nested,
+        qualifiedName,
+        false,
+      )
     }
   }
 }
@@ -344,26 +346,20 @@ function extractInterfaceBody(
   src: string,
   members: MemberDoc[],
   nested: TypeDoc[],
-  nestedPkg: string,
+  qualifiedName: string,
 ): void {
-  for (const md of body.children?.interfaceMemberDeclaration ?? []) {
-    const c = md.children
-    if (!c) { continue }
-    if (hasPrivate(md)) { continue }
-
-    if (c.interfaceMethodDeclaration) {
-      members.push(
-        extractMethod(c.interfaceMethodDeclaration[0], src),
-      )
-    } else if (c.constantDeclaration) {
-      members.push(extractField(c.constantDeclaration[0], src))
+  for (const declaration of body.children?.interfaceMemberDeclaration ?? []) {
+    const children = declaration.children ?? {}
+    for (const key of ['interfaceMethodDeclaration', 'constantDeclaration']) {
+      const candidate = children[key]?.[0]
+      if (candidate && !isInternal(src, candidate)) {
+        members.push(extractMember(candidate, src))
+      }
     }
-    for (
-      const k of ['classDeclaration', 'interfaceDeclaration']
-    ) {
-      for (const n of c[k] ?? []) {
-        const t = extractType(n, src, nestedPkg)
-        if (t) { nested.push(t) }
+    for (const key of ['classDeclaration', 'interfaceDeclaration']) {
+      for (const candidate of children[key] ?? []) {
+        const type = extractType(candidate, src, qualifiedName, true)
+        if (type) { nested.push(type) }
       }
     }
   }
@@ -374,34 +370,11 @@ function extractEnumBody(
   src: string,
   members: MemberDoc[],
   nested: TypeDoc[],
-  nestedPkg: string,
+  qualifiedName: string,
 ): void {
-  const ebd = body.children?.enumBodyDeclarations?.[0]
-  if (!ebd) { return }
-  for (const bd of ebd.children?.classBodyDeclaration ?? []) {
-    const c = bd.children
-    if (!c) { continue }
-    if (c.constructorDeclaration) { continue }
-    const cmd = c.classMemberDeclaration?.[0]
-    if (!cmd) { continue }
-    if (hasPrivate(cmd)) { continue }
-    const mc = cmd.children
-    if (!mc) { continue }
-
-    if (mc.methodDeclaration) {
-      members.push(extractMethod(mc.methodDeclaration[0], src))
-    } else if (mc.fieldDeclaration) {
-      members.push(extractField(mc.fieldDeclaration[0], src))
-    }
-    for (
-      const k of ['classDeclaration', 'interfaceDeclaration']
-    ) {
-      for (const n of mc[k] ?? []) {
-        const t = extractType(n, src, nestedPkg)
-        if (t) { nested.push(t) }
-      }
-    }
-  }
+  const declarations = body.children?.enumBodyDeclarations?.[0]
+  if (!declarations) { return }
+  extractClassBody(declarations, src, members, nested, qualifiedName, false)
 }
 
 function extractAnnotationBody(
@@ -409,163 +382,200 @@ function extractAnnotationBody(
   src: string,
   members: MemberDoc[],
   nested: TypeDoc[],
-  nestedPkg: string,
+  qualifiedName: string,
 ): void {
   for (
-    const md of body.children?.annotationInterfaceMemberDeclaration
+    const declaration of body.children?.annotationInterfaceMemberDeclaration
       ?? []
   ) {
-    const c = md.children
-    if (!c) { continue }
-    if (hasPrivate(md)) { continue }
-
-    if (c.annotationInterfaceElementDeclaration) {
-      members.push(
-        extractMethod(
-          c.annotationInterfaceElementDeclaration[0],
-          src,
-        ),
-      )
+    const children = declaration.children ?? {}
+    const element = children.annotationInterfaceElementDeclaration?.[0]
+    if (element && !isInternal(src, element)) {
+      members.push(extractMember(element, src))
     }
-    for (
-      const k of ['classDeclaration', 'interfaceDeclaration']
-    ) {
-      for (const n of c[k] ?? []) {
-        const t = extractType(n, src, nestedPkg)
-        if (t) { nested.push(t) }
+    for (const key of ['classDeclaration', 'interfaceDeclaration']) {
+      for (const candidate of children[key] ?? []) {
+        const type = extractType(candidate, src, qualifiedName, true)
+        if (type) { nested.push(type) }
       }
     }
   }
 }
 
-function extractMethod(node: N, src: string): MemberDoc {
+function extractMember(node: N, src: string): MemberDoc {
   return {
-    kind: 'method',
-    name: methodName(node),
-    signature: sigOf(src, node),
+    signature: signatureOf(src, node),
     doc: docAbove(src, lineOf(src, node.location.startOffset)),
   }
 }
 
-function extractField(node: N, src: string): MemberDoc {
-  return {
-    kind: 'field',
-    name: fieldName(node),
-    signature: sigOf(src, node),
-    doc: docAbove(src, lineOf(src, node.location.startOffset)),
-  }
+function extractEnumConstants(body: N): string {
+  const list = body.children?.enumConstantList?.[0]
+  if (!list) { return '' }
+  return (list.children?.enumConstant ?? [])
+    .map((constant: N) => constant.children?.Identifier?.[0]?.image)
+    .filter(Boolean)
+    .join(', ')
 }
 
-function extractEnumConstants(body: N, src: string): string {
-  const ecl = body.children?.enumConstantList?.[0]
-  if (!ecl) { return '' }
-  const names: string[] = []
-  for (const ec of ecl.children?.enumConstant ?? []) {
-    const n = ec.children?.Identifier?.[0]?.image
-    if (n) { names.push(n) }
-  }
-  return names.join(', ')
+function compilationUnit(src: string): N {
+  const parsed = parse(src)
+  const unit = parsed.children?.ordinaryCompilationUnit?.[0]
+    ?? parsed.children?.modularCompilationUnit?.[0]
+  if (!unit) { throw new Error('Java source has no compilation unit') }
+  return unit
 }
 
-// endregion
-
-// region markdown generation
-
-function renderType(t: TypeDoc, out: string[], depth: number): void {
-  const h = '#'.repeat(Math.min(depth + 2, 6))
-  const label = t.kind === 'annotation' ? '@interface' : t.kind
-  out.push(`${h} ${label} \`${t.qualifiedName}\``)
-  out.push('')
-
-  if (t.doc.length) {
-    out.push(...t.doc)
-    out.push('')
+function extractTypes(unit: N, src: string): TypeDoc[] {
+  const packageName = extractPackage(unit)
+  const out: TypeDoc[] = []
+  for (const declaration of unit.children?.typeDeclaration ?? []) {
+    const type = extractType(declaration, src, packageName)
+    if (type) { out.push(type) }
   }
+  return out
+}
 
-  // Collect type declaration + all members into one code block
-  const codeLines: string[] = []
-  if (t.kind === 'enum' && t.enumConstants) {
-    codeLines.push(`${t.signature} { ${t.enumConstants} }`)
-  } else {
-    codeLines.push(t.signature)
-  }
-  for (const m of t.members) {
-    // Include inline doc as /// comments
-    if (m.doc.length) {
-      codeLines.push(...m.doc.map((l) => (l ? `/// ${l}` : '///')))
+function joinInlineTags(lines: string[]): string[] {
+  const out: string[] = []
+  let pending = ''
+  for (const line of lines) {
+    if (pending) {
+      pending += ` ${line.trim()}`
+      if (pending.includes('}')) {
+        out.push(pending)
+        pending = ''
+      }
+    } else if (line.includes('{@') && !line.includes('}')) {
+      pending = line
+    } else {
+      out.push(line)
     }
-    codeLines.push(m.signature)
+  }
+  if (pending) { out.push(pending) }
+  return out
+}
+
+function renderLink(content: string): string {
+  const normalized = content.trim().replace(/,\s+/g, ',')
+  const [target, ...label] = normalized.split(/\s+/)
+  return `\`${label.length ? label.join(' ') : target}\``
+}
+
+function renderJavadoc(lines: string[], headingOffset = 0): string[] {
+  return joinInlineTags(lines).map((line) => {
+    let rendered = line
+      .replace(/\{@code\s+([^}]+)\}/g, '`$1`')
+      .replace(
+        /\{@(?:link|linkplain)\s+([^}]+)\}/g,
+        (_, content) => renderLink(content),
+      )
+    if (headingOffset > 0) {
+      rendered = rendered.replace(
+        /^(#{1,6})\s/,
+        (_match, hashes: string) =>
+          `${'#'.repeat(Math.min(6, hashes.length + headingOffset))} `,
+      )
+    }
+    return rendered
+  })
+}
+
+function renderType(type: TypeDoc, out: string[], depth: number): void {
+  const heading = '#'.repeat(Math.min(depth + 2, 6))
+  const label = type.kind === 'annotation' ? '@interface' : type.kind
+  out.push(`${heading} ${label} \`${type.qualifiedName}\``, '')
+
+  if (type.doc.length) { out.push(...renderJavadoc(type.doc, depth + 2), '') }
+
+  const code: string[] = []
+  if (type.kind === 'enum' && type.enumConstants) {
+    code.push(`${type.signature} { ${type.enumConstants} }`)
+  } else {
+    code.push(type.signature)
+  }
+  for (const member of type.members) {
+    if (member.doc.length) {
+      code.push(
+        ...renderJavadoc(member.doc).map((line) =>
+          line ? `/// ${line}` : '///'
+        ),
+      )
+    }
+    code.push(member.signature)
   }
 
-  const codeContent = codeLines.join('\n')
-  const fence = codeContent.includes('```') ? '````' : '```'
-  out.push(`${fence}java`)
-  out.push(codeContent)
-  out.push(fence)
-  out.push('')
-
-  for (const n of t.nested) { renderType(n, out, depth + 1) }
+  out.push('```java', ...code, '```', '')
+  for (const nested of type.nested) { renderType(nested, out, depth + 1) }
 }
 
-// endregion
+export async function generatePerspectiveApiSkill(
+  options: GenerateSkillOptions = {},
+): Promise<string> {
+  const apiDir = options.apiDir ?? DEFAULT_API_DIR
+  const outputFile = options.outputFile ?? DEFAULT_OUTPUT_FILE
+  const files = await walkJavaFiles(apiDir)
+  if (!files.length) { throw new Error(`No Java files found in ${apiDir}`) }
 
-// region main
-
-function processFile(path: string, src: string): TypeDoc[] {
-  const cst = parse(src)
-  const ocu = cst.children?.ordinaryCompilationUnit?.[0]
-    ?? cst.children?.modularCompilationUnit?.[0]
-  if (!ocu) { return [] }
-  return extractTypes(ocu, src)
-}
-
-const files = await walkJavaFiles(API_DIR)
-if (!files.length) {
-  console.error(`Error: no .java files found in ${API_DIR}`)
-  Deno.exit(1)
-}
-
-const allTypes: TypeDoc[] = []
-const errors: string[] = []
-
-for (const f of files) {
+  const packageInfo = `${apiDir}/package-info.java`
+  let packageDoc: string[]
   try {
-    allTypes.push(...processFile(f, await Deno.readTextFile(f)))
-  } catch (e) {
-    errors.push(`${f}: ${e instanceof Error ? e.message : e}`)
+    const source = await Deno.readTextFile(packageInfo)
+    packageDoc = extractPackageDoc(compilationUnit(source), source)
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      throw new Error(`Missing package Javadoc source: ${packageInfo}`)
+    }
+    throw error
   }
+  if (!packageDoc.length) {
+    throw new Error(`Package Javadoc is empty: ${packageInfo}`)
+  }
+
+  const types: TypeDoc[] = []
+  const errors: string[] = []
+  for (const file of files) {
+    if (file === packageInfo) { continue }
+    try {
+      const source = await Deno.readTextFile(file)
+      types.push(...extractTypes(compilationUnit(source), source))
+    } catch (error) {
+      errors.push(`${file}: ${error instanceof Error ? error.message : error}`)
+    }
+  }
+  if (errors.length) {
+    throw new Error(`Failed to parse public API:\n${errors.join('\n')}`)
+  }
+  if (!types.length) {
+    throw new Error(
+      `No public API types found in ${apiDir}`,
+    )
+  }
+
+  const out = [
+    '---',
+    'name: use-perspective-api',
+    'description: Add Perspective API as a dependency to a Minecraft client mod and use its perspectives, modifiers, overrides, switchers, transitions, SPI providers, and runtime registrations. Use when implementing or maintaining a mod that integrates with Perspective API.',
+    '---',
+    '',
+    '# Use Perspective API',
+    '',
+    ...renderJavadoc(packageDoc),
+    '',
+    '## Public API reference',
+    '',
+    '> Generated from public, non-internal API declarations and their Javadoc. Do not call APIs marked `@ApiStatus.Internal`.',
+    '',
+  ]
+  for (const type of types) { renderType(type, out, 0) }
+
+  const separator = outputFile.lastIndexOf('/')
+  if (separator >= 0) {
+    await Deno.mkdir(outputFile.slice(0, separator), { recursive: true })
+  }
+  await Deno.writeTextFile(outputFile, `${out.join('\n').trimEnd()}\n`)
+  console.log(`Generated ${outputFile} (${types.length} public types)`)
+  return outputFile
 }
 
-if (errors.length) {
-  console.error('Failed to parse:')
-  for (const e of errors) { console.error(`  ${e}`) }
-  Deno.exit(1)
-}
-
-const out: string[] = [
-  '# Perspective API Usage',
-  '',
-  '> Auto-generated from public API source. Do not edit manually.',
-  '',
-]
-
-// Merge manual doc at the beginning
-try {
-  const manual = await Deno.readTextFile(MANUAL_FILE)
-  out.push(manual.trim(), '')
-  console.log(`Merged manual doc: ${MANUAL_FILE}`)
-} catch {
-  // docs/llms-manual.md not found, skip merge
-}
-
-for (const t of allTypes) { renderType(t, out, 0) }
-
-const content = out.join('\n')
-
-await Deno.mkdir('build', { recursive: true })
-await Deno.writeTextFile(OUTPUT_FILE, content)
-console.log(
-  `Generated ${OUTPUT_FILE} (${allTypes.length} types from ${files.length} files)`,
-)
-
-// endregion
+if (import.meta.main) { await generatePerspectiveApiSkill() }

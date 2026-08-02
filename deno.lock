@@ -12,7 +12,7 @@
     "npm:commander@*": "14.0.3",
     "npm:commander@14.0.3": "14.0.3",
     "npm:conventional-commits-parser@6.4.0": "6.4.0",
-    "npm:java-parser@*": "3.0.1",
+    "npm:java-parser@3.0.1": "3.0.1",
     "npm:lay-sing@~0.4.2": "0.4.2",
     "npm:minimatch@*": "10.2.5",
     "npm:minimatch@^10.2.5": "10.2.5"

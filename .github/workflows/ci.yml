@@ -27,6 +27,12 @@ jobs:
       - name: '🦕 Setup Deno'
         uses: denoland/setup-deno@v2
 
+      - name: '🧪 Check Deno scripts'
+        run: |
+          deno fmt --check
+          deno lint
+          deno test -A --parallel
+
       - name: '🔎 Plan release'
         id: release
         run: deno -A scripts/release/plan.ts
