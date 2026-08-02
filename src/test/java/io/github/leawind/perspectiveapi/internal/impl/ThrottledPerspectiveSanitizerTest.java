@@ -65,6 +65,8 @@ class ThrottledPerspectiveSanitizerTest {
     assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(180.0f));
     assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(-0.01f));
     assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(180.01f));
+    assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(Float.NaN));
+    assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(Float.NEGATIVE_INFINITY));
     assertFalse(ThrottledPerspectiveSanitizer.isValidFovDeg(Float.POSITIVE_INFINITY));
   }
 

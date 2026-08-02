@@ -294,10 +294,13 @@ public final class PerspectiveManager {
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
   ///
-  /// Updates the cached vanilla FOV for the next frame and returns the
-  /// already-computed FOV from the current frame's camera state pipeline.
+  /// Captures a valid vanilla FOV for the next frame and returns the already-computed FOV from the
+  /// current frame's camera state pipeline. Invalid vanilla values are ignored so the next frame's
+  /// base state and fallback continue to satisfy the API contract.
   public float modifyFov(float vanillaFovDeg) {
-    cachedVanillaFovDeg = vanillaFovDeg;
+    if (ThrottledPerspectiveSanitizer.isValidFovDeg(vanillaFovDeg)) {
+      cachedVanillaFovDeg = vanillaFovDeg;
+    }
     return targetState.getFovDeg();
   }
 
