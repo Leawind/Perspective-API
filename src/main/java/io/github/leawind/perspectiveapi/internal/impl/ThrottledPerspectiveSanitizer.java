@@ -11,7 +11,10 @@ import org.slf4j.LoggerFactory;
 
 public class ThrottledPerspectiveSanitizer {
   static final float MIN_ORTHOGRAPHIC_HEIGHT = 1.0e-4f;
-  static final float UNIT_QUATERNION_LENGTH_SQUARED_TOLERANCE = 1.0e-4f;
+
+  /// Maximum tolerated squared-length error. In spectator testing near a wall, `2e-3` was where
+  /// near-plane movement became visibly pixel-sized.
+  static final float UNIT_QUATERNION_LENGTH_SQUARED_TOLERANCE = 2e-3f;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ThrottledPerspectiveSanitizer.class);
   private final Sanitizer.ThrottledAction throttledAction;
