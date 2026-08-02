@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 public class ThrottledPerspectiveSanitizer {
   static final float MIN_ORTHOGRAPHIC_HEIGHT = 1.0e-4f;
-  static final float UNIT_QUATERNION_LENGTH_SQUARED_TOLERANCE = 1.0e-4f;
+  static final float UNIT_QUATERNION_LENGTH_SQUARED_TOLERANCE = 1.0e-1f;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ThrottledPerspectiveSanitizer.class);
   private final Sanitizer.ThrottledAction throttledAction;
