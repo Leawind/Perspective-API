@@ -27,7 +27,7 @@ public abstract class MouseHandlerMixin {
       net.minecraft.client.input.MouseButtonInfo rawButtonInfo,
       int action,
       CallbackInfo ci) {
-    perspectiveApi$mouseContext.setupButton(rawButtonInfo.button(), action);
+    perspectiveApi$setupButtonContext(rawButtonInfo.button(), action);
     GameClientEvents.MOUSE_INPUT.emit(perspectiveApi$mouseContext);
     if (perspectiveApi$mouseContext.consumed) ci.cancel();
   }
@@ -35,11 +35,22 @@ public abstract class MouseHandlerMixin {
   /*@Inject(method = "onPress", at = @At("HEAD"), cancellable = true)
   private void perspectiveApi$onPress(
       long handle, int button, int action, int modifiers, CallbackInfo ci) {
-    perspectiveApi$mouseContext.setupButton(button, action);
+    perspectiveApi$setupButtonContext(button, action);
     GameClientEvents.MOUSE_INPUT.emit(perspectiveApi$mouseContext);
     if (perspectiveApi$mouseContext.consumed) ci.cancel();
   }
   *//*? }*/
+
+  @Unique
+  private void perspectiveApi$setupButtonContext(int button, int action) {
+    Minecraft minecraft = Minecraft.getInstance();
+    if (minecraft.getWindow() != null) {
+      double scale = minecraft.getWindow().getGuiScale();
+      perspectiveApi$mouseContext.setupButton(button, action, xpos / scale, ypos / scale);
+    } else {
+      perspectiveApi$mouseContext.setupButton(button, action, xpos, ypos);
+    }
+  }
 
   @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
   private void perspectiveApi$onScroll(

@@ -1,6 +1,8 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -21,5 +23,13 @@ class OrbitMenuTest {
   void selectsNearestWheelSlot() {
     assertEquals(1, OrbitMenu.nearestWheelSlot(Math.PI * 2 / 3, 3));
     assertEquals(2, OrbitMenu.nearestWheelSlot(Math.PI * 4 / 3, 3));
+  }
+
+  @Test
+  void distinguishesClicksFromDragsByDistanceOnly() {
+    assertTrue(OrbitMenu.isShortDrag(0, 0));
+    assertTrue(OrbitMenu.isShortDrag(4, 0));
+    assertTrue(OrbitMenu.isShortDrag(2.4, 3.2));
+    assertFalse(OrbitMenu.isShortDrag(4.01, 0));
   }
 }

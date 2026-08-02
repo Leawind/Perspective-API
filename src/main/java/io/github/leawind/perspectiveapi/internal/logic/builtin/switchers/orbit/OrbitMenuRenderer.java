@@ -19,12 +19,14 @@ final class OrbitMenuRenderer {
 
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
   private static final int COLOR_ORBIT = 0x99_FF_FF_FF;
+  private static final int COLOR_GHOST_SLOT = 0x66_FF_FF_FF;
   private static final double ORBIT_DASH_PERIOD_PX = 14;
   private static final double ORBIT_DASH_RATIO = 0.57;
 
   void render(GuiRenderContext context, OrbitMenu menu) {
     DrawContext canvas = context.drawContext;
     if (menu.mode() == OrbitMenu.Mode.EDITING) drawEditingAreas(canvas, context, menu);
+    drawGrabbedWheelSlot(canvas, menu);
 
     List<PerspectiveActor> actors = new ArrayList<>();
     for (PerspectiveActor actor : menu.actors()) {
@@ -43,6 +45,21 @@ final class OrbitMenuRenderer {
 
     PerspectiveActor labelActor = grabbed != null ? grabbed : hovered;
     if (labelActor != null) drawLabel(canvas, context, menu, labelActor);
+  }
+
+  private void drawGrabbedWheelSlot(DrawContext canvas, OrbitMenu menu) {
+    PerspectiveActor grabbed = menu.grabbedActor();
+    if (grabbed == null || menu.model().groupOf(grabbed.perspectiveId()) != Group.SELECTED) return;
+
+    List<String> selected = menu.model().selected();
+    int index = selected.indexOf(grabbed.perspectiveId());
+    if (index < 0 || selected.isEmpty()) return;
+
+    double angleRad = Math.PI * 2 * index / selected.size() - Math.PI / 2;
+    int size = actorSize(menu, 1);
+    int x = (int) menu.worldToScreenX(OrbitMenu.RING_RADIUS * Math.cos(angleRad)) - size / 2;
+    int y = (int) menu.worldToScreenY(OrbitMenu.RING_RADIUS * Math.sin(angleRad)) - size / 2;
+    canvas.drawGamemodeSwitcherSlot(x, y, size, size, COLOR_GHOST_SLOT);
   }
 
   private void drawEditingAreas(DrawContext canvas, GuiRenderContext context, OrbitMenu menu) {
@@ -96,11 +113,7 @@ final class OrbitMenuRenderer {
     Perspective perspective = menu.model().perspective(actor.perspectiveId());
     if (perspective == null) return;
 
-    double minEdge =
-        Math.min(
-            Math.abs(menu.worldToScreenX(1) - menu.worldToScreenX(0)),
-            Math.abs(menu.worldToScreenY(1) - menu.worldToScreenY(0)));
-    int size = Math.max((int) (minEdge * OrbitMenu.ICON_SIZE * renderScale), 8);
+    int size = actorSize(menu, renderScale);
     int x = (int) menu.worldToScreenX(actor.body().position().x) - size / 2;
     int y = (int) menu.worldToScreenY(actor.body().position().y) - size / 2;
 
@@ -116,9 +129,16 @@ final class OrbitMenuRenderer {
     canvas.blit(icon, 0, 0, x + padding, y + padding, iconSize, iconSize, iconSize, iconSize, 1);
 
     if (!perspective.isAvailable()) {
-      AvailabilityIndicatorRenderer.drawUnavailable(
-          canvas, x + size * 0.5f, y + size * 0.5f, size);
+      AvailabilityIndicatorRenderer.drawUnavailable(canvas, x + size * 0.5f, y + size * 0.5f, size);
     }
+  }
+
+  private int actorSize(OrbitMenu menu, double renderScale) {
+    double minEdge =
+        Math.min(
+            Math.abs(menu.worldToScreenX(1) - menu.worldToScreenX(0)),
+            Math.abs(menu.worldToScreenY(1) - menu.worldToScreenY(0)));
+    return Math.max((int) (minEdge * OrbitMenu.ICON_SIZE * renderScale), 8);
   }
 
   private void drawLabel(

@@ -103,7 +103,7 @@ class OrbitSwitcherModelTest {
   }
 
   @Test
-  void disablingHoveredPerspectiveClearsPreview() {
+  void disabledPerspectiveCanBePreviewedAndActivatedDirectly() {
     OrbitSwitcherModel model = new OrbitSwitcherModel();
     model.updateSwitchables(
         List.of(perspective("active", 0, true), perspective("hovered", 1, true)));
@@ -112,7 +112,11 @@ class OrbitSwitcherModelTest {
 
     model.applyLayout(List.of("active"), Set.of("hovered"));
 
-    assertEquals("active", model.resolvedId());
+    assertEquals("hovered", model.resolvedId());
+    model.clearPreview();
+    model.activate("hovered");
+    model.ensureActive();
+    assertEquals("hovered", model.resolvedId());
   }
 
   @Test

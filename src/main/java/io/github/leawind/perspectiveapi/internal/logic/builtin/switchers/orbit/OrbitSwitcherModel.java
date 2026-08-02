@@ -113,7 +113,6 @@ final class OrbitSwitcherModel {
     selected.addAll(newSelected);
     disabled.clear();
     disabled.addAll(newDisabled);
-    if (previewId != null && !isEnabled(previewId)) previewId = null;
     checkInvariants();
   }
 
@@ -127,12 +126,12 @@ final class OrbitSwitcherModel {
   }
 
   void activate(@Nullable String id) {
-    if (id == null || !isEnabled(id)) return;
+    if (id == null || !isAvailable(id)) return;
     activeId = id;
   }
 
   void preview(@Nullable String id) {
-    previewId = id != null && isEnabled(id) && isAvailable(id) ? id : null;
+    previewId = id != null && isAvailable(id) ? id : null;
   }
 
   void clearPreview() {
@@ -144,7 +143,7 @@ final class OrbitSwitcherModel {
   }
 
   void ensureActive() {
-    if (activeId != null && isEnabled(activeId) && isAvailable(activeId)) return;
+    if (activeId != null && isAvailable(activeId)) return;
     activeId = firstAvailable();
   }
 

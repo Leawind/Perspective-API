@@ -17,10 +17,12 @@ public class MouseInputContext {
   /// Whether the event was consumed by a listener.
   public boolean consumed;
 
-  public void setupButton(int button, int action) {
+  public void setupButton(int button, int action, double mouseX, double mouseY) {
     this.type = Type.BUTTON;
     this.button = button;
     this.action = action;
+    this.mouseX = mouseX;
+    this.mouseY = mouseY;
     this.consumed = false;
   }
 

@@ -36,6 +36,7 @@ final class OrbitMenu {
 
   static final double ICON_SIZE = 0.075;
   static final double RING_RADIUS = 0.25;
+  private static final double CLICK_MAX_DISTANCE_PX = 4;
   private static final double GROUP_INNER_BOUNDARY = 0.22;
   private static final double GROUP_OUTER_BOUNDARY = 0.32;
   private static final double LINEAR_DRAG_FACTOR = 12;
@@ -61,6 +62,7 @@ final class OrbitMenu {
   private final Vector2d mouseScreen = new Vector2d();
   private final Vector2d mouseWorld = new Vector2d();
   private final Vector2d lastMouseScreen = new Vector2d();
+  private final Vector2d grabStartMouseScreen = new Vector2d();
   private final WheelAnchor wheelAnchor = new WheelAnchor(24);
   private boolean hasLastMouse;
   private long lastRenderNanos;
@@ -127,7 +129,7 @@ final class OrbitMenu {
 
   void close() {
     if (!opened) return;
-    releaseActor();
+    releaseActor(false);
     closeCursorLease();
     model.clearPreview();
     opened = false;
@@ -179,15 +181,17 @@ final class OrbitMenu {
     }
 
     switch (context.type) {
-      case BUTTON -> onMouseButton(context.button, context.action);
+      case BUTTON -> onMouseButton(context.button, context.action, context.mouseX, context.mouseY);
       case SCROLL -> onMouseScroll(context.scrollDelta);
       case MOVE -> onMouseMove(context.mouseX, context.mouseY);
     }
     context.consumed = true;
   }
 
-  private void onMouseButton(int button, int action) {
+  private void onMouseButton(int button, int action, double mouseX, double mouseY) {
     if (action != GLFW.GLFW_PRESS && action != GLFW.GLFW_RELEASE) return;
+    mouseScreen.set(mouseX, mouseY);
+    updateMouseWorld();
 
     if (mode == Mode.SELECTING) {
       if (action == GLFW.GLFW_PRESS && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
@@ -198,7 +202,7 @@ final class OrbitMenu {
 
     if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
       if (action == GLFW.GLFW_PRESS) grabHoveredActor();
-      else releaseActor();
+      else releaseActor(true);
     } else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == GLFW.GLFW_PRESS) {
       exitEditing();
     }
@@ -245,7 +249,7 @@ final class OrbitMenu {
   }
 
   private void exitEditing() {
-    releaseActor();
+    releaseActor(false);
     closeCursorLease();
     model.clearPreview();
     mode = Mode.SELECTING;
@@ -256,18 +260,29 @@ final class OrbitMenu {
 
   private void grabHoveredActor() {
     if (hoveredActor == null) return;
-    model.activate(hoveredActor.perspectiveId());
     grabbedActor = hoveredActor;
+    grabStartMouseScreen.set(mouseScreen);
     grabbedActor.body().setType(BodyType.KINEMATIC);
     grabbedActor.body().velocity().zero();
   }
 
-  private void releaseActor() {
+  private void releaseActor(boolean allowClick) {
     if (grabbedActor == null) return;
-    updateDraggedLayout(grabbedActor);
-    grabbedActor.body().velocity().zero();
-    grabbedActor.body().setType(BodyType.DYNAMIC);
+    PerspectiveActor releasedActor = grabbedActor;
+    updateDraggedLayout(releasedActor);
+    releasedActor.body().velocity().zero();
+    releasedActor.body().setType(BodyType.DYNAMIC);
     grabbedActor = null;
+    if (allowClick
+        && isShortDrag(
+            mouseScreen.x - grabStartMouseScreen.x, mouseScreen.y - grabStartMouseScreen.y)) {
+      model.activate(releasedActor.perspectiveId());
+    }
+  }
+
+  static boolean isShortDrag(double deltaX, double deltaY) {
+    return deltaX * deltaX + deltaY * deltaY
+        <= CLICK_MAX_DISTANCE_PX * CLICK_MAX_DISTANCE_PX;
   }
 
   private void closeCursorLease() {
