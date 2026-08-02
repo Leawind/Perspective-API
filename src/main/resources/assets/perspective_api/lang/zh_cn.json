@@ -32,7 +32,7 @@
   "perspective_api.switcher.wheel_switcher.description": "使用视角切换快捷键在可用视角间循环切换，长按打开轮盘菜单",
   "perspective_api.switcher.orbit_switcher.name": "轨道切换器",
   "perspective_api.switcher.orbit_switcher.description": "短按视角键循环切换启用的视角，长按打开可编辑的空间轮盘",
-  "perspective_api.switcher.orbit_switcher.selected": "已选择",
-  "perspective_api.switcher.orbit_switcher.candidate": "候选",
+  "perspective_api.switcher.orbit_switcher.selected": "轮盘中",
+  "perspective_api.switcher.orbit_switcher.candidate": "其他已启用",
   "perspective_api.switcher.orbit_switcher.disabled": "已禁用"
 }

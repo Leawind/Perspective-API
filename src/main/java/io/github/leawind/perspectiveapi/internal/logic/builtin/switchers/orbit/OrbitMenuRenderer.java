@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GuiRenderContext;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.AvailabilityIndicatorRenderer;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherModel.Group;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ final class OrbitMenuRenderer {
       Bridge.parseIdentifier("perspective_api:textures/perspective/default.png");
 
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
-  private static final int COLOR_UNAVAILABLE = 0xFF_EA_B3_08;
   private static final int COLOR_ORBIT = 0x99_FF_FF_FF;
   private static final double ORBIT_DASH_PERIOD_PX = 14;
   private static final double ORBIT_DASH_RATIO = 0.57;
@@ -116,13 +116,8 @@ final class OrbitMenuRenderer {
     canvas.blit(icon, 0, 0, x + padding, y + padding, iconSize, iconSize, iconSize, iconSize, 1);
 
     if (!perspective.isAvailable()) {
-      int indicatorSize = Math.max(size / 5, 3);
-      canvas.fill(
-          x + size - indicatorSize,
-          y + size - indicatorSize,
-          x + size,
-          y + size,
-          COLOR_UNAVAILABLE);
+      AvailabilityIndicatorRenderer.drawUnavailable(
+          canvas, x + size * 0.5f, y + size * 0.5f, size);
     }
   }
 

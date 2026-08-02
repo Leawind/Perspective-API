@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.wheel;
 
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.AvailabilityIndicatorRenderer;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.ExpSmoothDouble;
@@ -51,17 +52,6 @@ public final class WheelMenuRenderer {
 
   /// Rotation offset: top of circle = -PI/2.
   public static final double ROTATE_OFFSET_RAD = -Math.PI / 2;
-
-  // availability indicator
-  private static final Identifier UNAVAILABLE_SPRITE =
-      Bridge.parseIdentifier("perspective_api:textures/gui/sprites/hud/unavailable.png");
-  private static final Identifier UNREGISTERED_SPRITE =
-      Bridge.parseIdentifier("perspective_api:textures/gui/sprites/hud/unregistered.png");
-
-  /// unit: ring icon size
-  private static final float AVAILABILITY_INDICATOR_SIZE = 0.75f;
-  /// unit: ring icon size
-  private static final Vector2fc AVAILABILITY_INDICATOR_OFFSET = new Vector2f(0.25f, 0.25f);
 
   // endregion
 
@@ -196,31 +186,12 @@ public final class WheelMenuRenderer {
 
   private void drawAvailabilityIndicator(
       DrawContext ctx, WheelMenuItem item, float iconX, float iconY, float iconSize) {
-    float x = iconX + iconSize * AVAILABILITY_INDICATOR_OFFSET.x();
-    float y = iconY + iconSize * AVAILABILITY_INDICATOR_OFFSET.y();
-
-    float size = iconSize * AVAILABILITY_INDICATOR_SIZE;
-    float halfSize = size / 2;
-    int sizeInt = (int) size;
-
-    Identifier sprite =
-        switch (item.availability()) {
-          case AVAILABLE -> null;
-          case UNAVAILABLE -> UNAVAILABLE_SPRITE;
-          case UNREGISTERED -> UNREGISTERED_SPRITE;
-        };
-    if (sprite != null) {
-      ctx.blit(
-          sprite,
-          0,
-          0,
-          (int) (x - halfSize),
-          (int) (y - halfSize),
-          sizeInt,
-          sizeInt,
-          sizeInt,
-          sizeInt,
-          1);
+    switch (item.availability()) {
+      case AVAILABLE -> {}
+      case UNAVAILABLE ->
+          AvailabilityIndicatorRenderer.drawUnavailable(ctx, iconX, iconY, iconSize);
+      case UNREGISTERED ->
+          AvailabilityIndicatorRenderer.drawUnregistered(ctx, iconX, iconY, iconSize);
     }
   }
 
