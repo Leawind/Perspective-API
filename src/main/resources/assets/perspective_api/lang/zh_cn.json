@@ -8,8 +8,6 @@
   "perspective.perspective_api.third_person_front.name": "第三人称正面",
   "perspective.perspective_api.third_person_front.description": "从角色正面观察",
   "perspective_api.config_screen.title": "视角 API 设置",
-  "perspective_api.config_screen.category.general": "通用",
-  "perspective_api.config_screen.category.general.desc": "视角 API 的通用设置",
   "perspective_api.config_screen.group.transition": "过渡",
   "perspective_api.config_screen.group.orbit_switcher": "轨道切换器",
   "perspective_api.config_screen.option.mod_enabled": "启用模组",

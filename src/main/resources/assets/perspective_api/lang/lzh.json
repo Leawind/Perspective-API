@@ -8,8 +8,6 @@
   "perspective.perspective_api.third_person_front.name": "面观",
   "perspective.perspective_api.third_person_front.description": "自人之前而觀",
   "perspective_api.config_screen.title": "視角卯口 設定",
-  "perspective_api.config_screen.category.general": "常",
-  "perspective_api.config_screen.category.general.desc": "視角卯口 通設定",
   "perspective_api.config_screen.group.transition": "過渡",
   "perspective_api.config_screen.group.orbit_switcher": "軌道切換器",
   "perspective_api.config_screen.option.mod_enabled": "啟用模組",

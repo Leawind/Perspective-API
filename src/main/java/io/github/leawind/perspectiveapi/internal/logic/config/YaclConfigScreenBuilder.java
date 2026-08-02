@@ -22,8 +22,7 @@ public final class YaclConfigScreenBuilder {
         .title(text("config_screen.title"))
         .category(
             ConfigCategory.createBuilder()
-                .name(text("config_screen.category.general"))
-                .tooltip(text("config_screen.category.general.desc"))
+                .name(text("config_screen.title"))
                 .option(
                     Option.<Boolean>createBuilder()
                         .name(text("config_screen.option.mod_enabled"))

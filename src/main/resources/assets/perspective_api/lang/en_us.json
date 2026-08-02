@@ -8,8 +8,6 @@
   "perspective.perspective_api.third_person_front.name": "Third Person Front",
   "perspective.perspective_api.third_person_front.description": "View your character from the front",
   "perspective_api.config_screen.title": "Perspective API Settings",
-  "perspective_api.config_screen.category.general": "General",
-  "perspective_api.config_screen.category.general.desc": "General settings for Perspective API",
   "perspective_api.config_screen.group.transition": "Transition",
   "perspective_api.config_screen.group.orbit_switcher": "Orbit Switcher",
   "perspective_api.config_screen.option.mod_enabled": "Enable Mod",
