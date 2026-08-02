@@ -60,6 +60,7 @@ jobs:
         if: ${{ steps.release.outputs.release == 'true' }}
         env:
           DRY_RUN: ${{ vars.DRY_RUN }}
+          RELEASE_NOTES_FILE: build/release/notes.md
           MODRINTH_ID: ${{ vars.MODRINTH_ID }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_ID: ${{ vars.CURSEFORGE_ID }}
