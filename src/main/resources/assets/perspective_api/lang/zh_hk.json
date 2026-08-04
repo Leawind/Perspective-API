@@ -42,6 +42,7 @@
   "perspective_api.switcher.orbit_switcher.selected": "輪盤內",
   "perspective_api.switcher.orbit_switcher.candidate": "其他已啟用",
   "perspective_api.switcher.orbit_switcher.disabled": "已停用",
+  "perspective_api.switcher.orbit_switcher.help": "拖曳視角可更改其分組：\n輪盤內：按住時顯示於輪盤中\n其他已啟用：短按時仍會循環到\n已停用：短按時會跳過",
   "perspective_api.switcher.orbit_switcher.sponsor": "贊助",
   "perspective_api.switcher.orbit_switcher.tutorial.wheel.title": "軌道輪盤",
   "perspective_api.switcher.orbit_switcher.tutorial.wheel.description": "按住 %s 開啟視角輪盤",

@@ -19,6 +19,7 @@ final class OrbitMenuRenderer {
   private static final Identifier DEFAULT_ICON =
       Bridge.parseIdentifier("perspective_api:textures/perspective/default.png");
 
+  private static final Component HELP_BUTTON_TEXT = Component.literal("?");
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
   private static final int COLOR_ORBIT = 0x99_FF_FF_FF;
   private static final int COLOR_GHOST_SLOT = 0xCC_FF_FF_FF;
@@ -28,6 +29,10 @@ final class OrbitMenuRenderer {
   private static final double ORBIT_DASH_RATIO = 0.57;
   private static final int GHOST_DASH_PERIOD_PX = 8;
   private static final int GHOST_DASH_LENGTH_PX = 4;
+  private static final int EDITING_TITLE_Y = 12;
+  private static final int HELP_BUTTON_SIZE = 11;
+  private static final int HELP_BUTTON_MARGIN = 3;
+  private static final String EDITING_HELP_KEY = "perspective_api.switcher.orbit_switcher.help";
 
   void render(GuiRenderContext context, OrbitMenu menu) {
     DrawContext canvas = context.drawContext;
@@ -51,7 +56,10 @@ final class OrbitMenuRenderer {
 
     PerspectiveActor labelActor = grabbed != null ? grabbed : hovered;
     if (labelActor != null) drawLabel(canvas, context, menu, labelActor);
-    if (menu.mode() == OrbitMenu.Mode.EDITING) drawSponsorButton(canvas, menu);
+    if (menu.mode() == OrbitMenu.Mode.EDITING) {
+      drawSponsorButton(canvas, menu);
+      drawEditingHelpTooltip(canvas, menu);
+    }
   }
 
   private void drawSponsorButton(DrawContext canvas, OrbitMenu menu) {
@@ -63,11 +71,7 @@ final class OrbitMenuRenderer {
     int width = button.width();
     canvas.fill(x, y, x + width, y + EvasiveSponsorButton.HEIGHT, COLOR_SPONSOR_BORDER);
     canvas.fill(
-        x + 1,
-        y + 1,
-        x + width - 1,
-        y + EvasiveSponsorButton.HEIGHT - 1,
-        COLOR_SPONSOR_BACKGROUND);
+        x + 1, y + 1, x + width - 1, y + EvasiveSponsorButton.HEIGHT - 1, COLOR_SPONSOR_BACKGROUND);
     drawCenteredText(
         canvas,
         Component.translatable(SPONSOR_TEXT_KEY),
@@ -108,23 +112,13 @@ final class OrbitMenuRenderer {
 
   private void drawDashedHorizontal(DrawContext canvas, int startX, int endX, int y) {
     for (int x = startX; x <= endX; x += GHOST_DASH_PERIOD_PX) {
-      canvas.fill(
-          x,
-          y - 1,
-          Math.min(x + GHOST_DASH_LENGTH_PX, endX + 1),
-          y + 1,
-          COLOR_GHOST_SLOT);
+      canvas.fill(x, y - 1, Math.min(x + GHOST_DASH_LENGTH_PX, endX + 1), y + 1, COLOR_GHOST_SLOT);
     }
   }
 
   private void drawDashedVertical(DrawContext canvas, int startY, int endY, int x) {
     for (int y = startY; y <= endY; y += GHOST_DASH_PERIOD_PX) {
-      canvas.fill(
-          x - 1,
-          y,
-          x + 1,
-          Math.min(y + GHOST_DASH_LENGTH_PX, endY + 1),
-          COLOR_GHOST_SLOT);
+      canvas.fill(x - 1, y, x + 1, Math.min(y + GHOST_DASH_LENGTH_PX, endY + 1), COLOR_GHOST_SLOT);
     }
   }
 
@@ -144,23 +138,72 @@ final class OrbitMenuRenderer {
     int width = context.screenWidth;
     int leftEnd = (int) menu.worldToScreenX(-0.27);
     int rightStart = (int) menu.worldToScreenX(0.27);
+    int selectedCenterX = (int) menu.worldToScreenX(0);
+    Component selectedTitle =
+        Component.translatable("perspective_api.switcher.orbit_switcher.selected");
     drawDashedOrbit(canvas, menu);
 
     drawCenteredText(
         canvas,
         Component.translatable("perspective_api.switcher.orbit_switcher.candidate"),
         leftEnd / 2,
-        12);
-    drawCenteredText(
-        canvas,
-        Component.translatable("perspective_api.switcher.orbit_switcher.selected"),
-        (leftEnd + rightStart) / 2,
-        12);
+        EDITING_TITLE_Y);
+    drawCenteredText(canvas, selectedTitle, selectedCenterX, EDITING_TITLE_Y);
+    drawEditingHelpButton(canvas, menu, selectedCenterX, selectedTitle);
     drawCenteredText(
         canvas,
         Component.translatable("perspective_api.switcher.orbit_switcher.disabled"),
         (rightStart + width) / 2,
-        12);
+        EDITING_TITLE_Y);
+  }
+
+  private void drawEditingHelpButton(
+      DrawContext canvas, OrbitMenu menu, int selectedCenterX, Component selectedTitle) {
+    Font font = Minecraft.getInstance().font;
+    int x = helpButtonX(font, selectedCenterX, selectedTitle);
+    int y = helpButtonY(font);
+
+    canvas.fill(x, y, x + HELP_BUTTON_SIZE, y + HELP_BUTTON_SIZE, COLOR_TEXT);
+    canvas.fill(
+        x + 1, y + 1, x + HELP_BUTTON_SIZE - 1, y + HELP_BUTTON_SIZE - 1, COLOR_SPONSOR_BACKGROUND);
+    canvas.text(
+        font,
+        HELP_BUTTON_TEXT,
+        x + (HELP_BUTTON_SIZE - font.width(HELP_BUTTON_TEXT)) / 2,
+        y + (HELP_BUTTON_SIZE - font.lineHeight) / 2,
+        COLOR_TEXT,
+        true);
+  }
+
+  private void drawEditingHelpTooltip(DrawContext canvas, OrbitMenu menu) {
+    Font font = Minecraft.getInstance().font;
+    if (!isEditingHelpButtonHovered(menu)) return;
+
+    String[] lineTexts = Component.translatable(EDITING_HELP_KEY).getString().split("\\n");
+    List<Component> lines = new ArrayList<>(lineTexts.length);
+    for (String lineText : lineTexts) {
+      lines.add(Component.literal(lineText));
+    }
+    canvas.tooltip(font, lines, menu.mouseScreenX(), menu.mouseScreenY());
+  }
+
+  private int helpButtonX(Font font, int selectedCenterX, Component selectedTitle) {
+    return selectedCenterX + font.width(selectedTitle) / 2 + HELP_BUTTON_MARGIN;
+  }
+
+  private int helpButtonY(Font font) {
+    return EDITING_TITLE_Y - (HELP_BUTTON_SIZE - font.lineHeight) / 2;
+  }
+
+  boolean isEditingHelpButtonHovered(OrbitMenu menu) {
+    Font font = Minecraft.getInstance().font;
+    Component selectedTitle =
+        Component.translatable("perspective_api.switcher.orbit_switcher.selected");
+    return menu.isMouseOver(
+        helpButtonX(font, (int) menu.worldToScreenX(0), selectedTitle),
+        helpButtonY(font),
+        HELP_BUTTON_SIZE,
+        HELP_BUTTON_SIZE);
   }
 
   private void drawDashedOrbit(DrawContext canvas, OrbitMenu menu) {

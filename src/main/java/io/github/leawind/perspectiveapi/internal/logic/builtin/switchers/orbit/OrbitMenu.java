@@ -187,6 +187,21 @@ final class OrbitMenu {
     return screenHeight * 0.5 + y * minEdge;
   }
 
+  int mouseScreenX() {
+    return (int) mouseScreen.x;
+  }
+
+  int mouseScreenY() {
+    return (int) mouseScreen.y;
+  }
+
+  boolean isMouseOver(int x, int y, int width, int height) {
+    return mouseScreen.x >= x
+        && mouseScreen.x < x + width
+        && mouseScreen.y >= y
+        && mouseScreen.y < y + height;
+  }
+
   private void onMouseInput(@NonNull MouseInputContext context) {
     if (!opened) return;
     if (!isOwnerActive()) {
@@ -221,6 +236,7 @@ final class OrbitMenu {
           if (EvasiveSponsorButton.isClickEnabled(languageCode)) Bridge.openUri(SPONSOR_URL);
           return;
         }
+        if (renderer.isEditingHelpButtonHovered(this)) return;
         grabHoveredActor();
       } else {
         releaseActor(true);

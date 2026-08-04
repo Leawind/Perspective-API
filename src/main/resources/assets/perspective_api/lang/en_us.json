@@ -42,6 +42,7 @@
   "perspective_api.switcher.orbit_switcher.selected": "Wheel",
   "perspective_api.switcher.orbit_switcher.candidate": "Other Enabled",
   "perspective_api.switcher.orbit_switcher.disabled": "Disabled",
+  "perspective_api.switcher.orbit_switcher.help": "Drag perspectives between groups:\nWheel: shown while holding the key\nOther Enabled: cycled by a short press\nDisabled: skipped by a short press",
   "perspective_api.switcher.orbit_switcher.sponsor": "Sponsor",
   "perspective_api.switcher.orbit_switcher.tutorial.wheel.title": "Orbit Wheel",
   "perspective_api.switcher.orbit_switcher.tutorial.wheel.description": "Hold %s to open the perspective wheel",

@@ -68,6 +68,23 @@ class OrbitSwitcherModelTest {
   }
 
   @Test
+  void cycleIncludesCandidatesButSkipsDisabledPerspectives() {
+    OrbitSwitcherModel model = new OrbitSwitcherModel();
+    model.updateSwitchables(
+        List.of(
+            perspective("wheel", 0, true),
+            perspective("other", 1, true),
+            perspective("disabled", 2, true)));
+    model.applyLayout(List.of("wheel"), Set.of("disabled"));
+    model.activate("wheel");
+
+    model.cycleForward();
+    assertEquals("other", model.resolvedId());
+    model.cycleForward();
+    assertEquals("wheel", model.resolvedId());
+  }
+
+  @Test
   void noAvailablePerspectiveProducesNoSelection() {
     OrbitSwitcherModel model = new OrbitSwitcherModel();
     model.updateSwitchables(List.of(perspective("a", 0, false)));
@@ -129,8 +146,7 @@ class OrbitSwitcherModelTest {
         List.of(perspective("a", 0, true), perspective("b", 1, true), perspective("c", 2, true)));
 
     try {
-      switcher.applyState(
-          new OrbitSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false));
+      switcher.applyState(new OrbitSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false));
 
       assertEquals(List.of("c", "b"), switcher.model().selected());
       assertEquals(Set.of("a"), switcher.model().disabled());
@@ -160,11 +176,7 @@ class OrbitSwitcherModelTest {
 
     assertEquals(
         new OrbitSwitcherState(
-            List.of(),
-            Set.of(),
-            OrbitSwitcherBehavior.DEFAULT_HOLD_TICKS,
-            false,
-            false),
+            List.of(), Set.of(), OrbitSwitcherBehavior.DEFAULT_HOLD_TICKS, false, false),
         state);
   }
 

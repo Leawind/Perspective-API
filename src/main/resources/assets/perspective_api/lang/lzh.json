@@ -42,6 +42,7 @@
   "perspective_api.switcher.orbit_switcher.selected": "輪中",
   "perspective_api.switcher.orbit_switcher.candidate": "餘啓",
   "perspective_api.switcher.orbit_switcher.disabled": "已禁",
+  "perspective_api.switcher.orbit_switcher.help": "移視角以易其類：\n輪中：長按則見於輪盤\n餘啓：短按亦循及\n已禁：短按則越",
   "perspective_api.switcher.orbit_switcher.sponsor": "助資",
   "perspective_api.switcher.orbit_switcher.tutorial.wheel.title": "軌道輪盤",
   "perspective_api.switcher.orbit_switcher.tutorial.wheel.description": "長按 %s 以開視角輪盤",

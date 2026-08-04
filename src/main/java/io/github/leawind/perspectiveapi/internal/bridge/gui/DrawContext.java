@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.bridge.gui;
 
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -31,6 +32,36 @@ public final class DrawContext {
     graphics.text(font, text, x, y, color, shadow);
     /*? } else {*/
     /*graphics.drawString(font, text, x, y, color, shadow);
+     *//*? }*/
+  }
+
+  /// Renders a tooltip using Minecraft's native tooltip renderer.
+  public void tooltip(Font font, List<Component> lines, int mouseX, int mouseY) {
+    /*? if >=26.1 {*/
+    graphics.nextStratum();
+    graphics.tooltip(
+        font,
+        lines.stream()
+            .map(Component::getVisualOrderText)
+            .map(net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent::create)
+            .toList(),
+        mouseX,
+        mouseY,
+        net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner.INSTANCE,
+        null);
+    /*? } else if >=1.21.11 {*/
+    /*graphics.renderTooltip(
+        font,
+        lines.stream()
+            .map(Component::getVisualOrderText)
+            .map(net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent::create)
+            .toList(),
+        mouseX,
+        mouseY,
+        net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner.INSTANCE,
+        null);
+    *//*? } else {*/
+    /*graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
      *//*? }*/
   }
 
