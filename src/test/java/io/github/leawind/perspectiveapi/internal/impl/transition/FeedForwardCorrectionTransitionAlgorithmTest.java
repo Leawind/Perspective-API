@@ -1,8 +1,12 @@
 package io.github.leawind.perspectiveapi.internal.impl.transition;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateImpl;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.Blender;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.Blenders;
 import io.github.leawind.perspectiveapi.testutils.TestUtils;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
@@ -19,9 +23,40 @@ class FeedForwardCorrectionTransitionAlgorithmTest {
   @BeforeEach
   void beforeEach() {
     algorithm = new FeedForwardCorrectionTransitionAlgorithm();
+    algorithm.setBlender(Blenders::linear);
     start = state(0.0, 0.0f, 60.0f);
     target = state(10.0, 90.0f, 100.0f);
     algorithm.start(start);
+  }
+
+  @Test
+  void exposesAlgorithmSpecificBlender() {
+    FeedForwardCorrectionTransitionAlgorithm defaults =
+        new FeedForwardCorrectionTransitionAlgorithm();
+    assertEquals(0.15625f, defaults.getBlender().blend(0.25f), 1.0e-6f);
+    Blender blender = x -> x * x;
+
+    defaults.setBlender(blender);
+
+    assertSame(blender, defaults.getBlender());
+    assertThrows(NullPointerException.class, () -> defaults.setBlender(null));
+  }
+
+  @Test
+  void appliesEasingToCorrectionAndProjectionFields() {
+    algorithm.setBlender(x -> x * x);
+    start.setOrthographicHeight(10.0f);
+    target.setOrthographicHeight(30.0f);
+    algorithm.start(start);
+    PerspectiveStateImpl dest = new PerspectiveStateImpl();
+
+    algorithm.update(25.0, DURATION_MS, target, dest);
+    algorithm.update(50.0, DURATION_MS, target, dest);
+
+    TestUtils.assertVectorEquals(new Vector3d(2.5, 0.0, 0.0), dest.position());
+    TestUtils.assertQuatEquals(rotation(22.5f), dest.rotation());
+    assertEquals(70.0f, dest.getFovDeg(), 1.0e-4f);
+    assertEquals(15.0f, dest.getOrthographicHeight(), 1.0e-4f);
   }
 
   @Test
@@ -51,6 +86,34 @@ class FeedForwardCorrectionTransitionAlgorithmTest {
 
     TestUtils.assertVectorEquals(new Vector3d(17.5, 0.0, 0.0), dest.position());
     TestUtils.assertQuatEquals(rotation(157.5f), dest.rotation());
+  }
+
+  @Test
+  void easingDoesNotAttenuateFeedForwardMotion() {
+    FeedForwardCorrectionTransitionAlgorithm stationaryAlgorithm =
+        new FeedForwardCorrectionTransitionAlgorithm();
+    FeedForwardCorrectionTransitionAlgorithm movingAlgorithm =
+        new FeedForwardCorrectionTransitionAlgorithm();
+    Blender quadratic = x -> x * x;
+    stationaryAlgorithm.setBlender(quadratic);
+    movingAlgorithm.setBlender(quadratic);
+    stationaryAlgorithm.start(start);
+    movingAlgorithm.start(start);
+    PerspectiveStateImpl stationaryTarget = state(10.0, 90.0f, 100.0f);
+    PerspectiveStateImpl movingTarget = state(10.0, 90.0f, 100.0f);
+    PerspectiveStateImpl stationaryDest = new PerspectiveStateImpl();
+    PerspectiveStateImpl movingDest = new PerspectiveStateImpl();
+    stationaryAlgorithm.update(50.0, DURATION_MS, stationaryTarget, stationaryDest);
+    movingAlgorithm.update(50.0, DURATION_MS, movingTarget, movingDest);
+    movingTarget.position().add(10.0, 0.0, 0.0);
+    movingTarget.rotation().set(rotation(180.0f));
+
+    stationaryAlgorithm.update(75.0, DURATION_MS, stationaryTarget, stationaryDest);
+    movingAlgorithm.update(75.0, DURATION_MS, movingTarget, movingDest);
+
+    assertEquals(stationaryDest.position().x() + 10.0, movingDest.position().x(), 1.0e-6);
+    Quaternionf expected = rotation(90.0f).mul(stationaryDest.rotation(), new Quaternionf());
+    TestUtils.assertQuatEquals(expected, movingDest.rotation());
   }
 
   @Test

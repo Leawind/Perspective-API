@@ -3,6 +3,8 @@ package io.github.leawind.perspectiveapi.internal.impl.transition;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateImpl;
 import io.github.leawind.perspectiveapi.internal.utils.Utils;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.Blender;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.Blenders;
 import java.util.Objects;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
@@ -11,12 +13,15 @@ import org.jspecify.annotations.NonNull;
 /// Feeds target translation and world-space rotation changes directly into the camera while
 /// correcting the remaining difference within the fixed transition duration.
 ///
-/// The correction fraction for each update is `deltaTime / previousRemainingTime`. Rotation uses
-/// slerp for the same fraction, which is the quaternion exponential map of the shortest-path error.
-/// FOV and orthographic height use fixed-start linear interpolation so valid endpoint values cannot
-/// produce an invalid intermediate projection value. The first update establishes the initial
+/// Each update derives its correction fraction from the change in eased progress divided by the
+/// previous remaining eased progress. Rotation uses slerp for that fraction, which is the
+/// quaternion exponential map of the shortest-path error. Target motion is fed forward before this
+/// correction and is therefore not attenuated by easing. FOV and orthographic height interpolate
+/// from their fixed starts using the same eased progress. The first update establishes the initial
 /// target sample; target motion is forwarded from the following update onward.
 public final class FeedForwardCorrectionTransitionAlgorithm implements TransitionAlgorithm {
+
+  private Blender blender = Blenders::easeInOut;
 
   private final Vector3d currentPosition = new Vector3d();
   private final Quaternionf currentRotation = new Quaternionf();
@@ -24,7 +29,7 @@ public final class FeedForwardCorrectionTransitionAlgorithm implements Transitio
   private float startOrthographicHeight = PerspectiveStateImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT;
 
   private boolean hasPreviousTarget;
-  private double previousElapsedTimeMs;
+  private float previousEasedProgress;
   private final Vector3d previousTargetPosition = new Vector3d();
   private final Quaternionf previousTargetRotation = new Quaternionf();
 
@@ -34,6 +39,14 @@ public final class FeedForwardCorrectionTransitionAlgorithm implements Transitio
   private final Quaternionf targetRotationDelta = new Quaternionf();
   private final Quaternionf feedForwardRotation = new Quaternionf();
 
+  public void setBlender(@NonNull Blender blender) {
+    this.blender = Objects.requireNonNull(blender);
+  }
+
+  public @NonNull Blender getBlender() {
+    return blender;
+  }
+
   @Override
   public void start(@NonNull PerspectiveState startState) {
     Objects.requireNonNull(startState);
@@ -42,7 +55,7 @@ public final class FeedForwardCorrectionTransitionAlgorithm implements Transitio
     startFovDeg = startState.getFovDeg();
     startOrthographicHeight = startState.getOrthographicHeight();
     hasPreviousTarget = false;
-    previousElapsedTimeMs = 0;
+    previousEasedProgress = 0;
   }
 
   @Override
@@ -59,13 +72,12 @@ public final class FeedForwardCorrectionTransitionAlgorithm implements Transitio
     float targetFovDeg = target.getFovDeg();
     float targetOrthographicHeight = target.getOrthographicHeight();
 
-    double currentElapsedTimeMs = Utils.clamp(elapsedTimeMs, previousElapsedTimeMs, durationMs);
-    double deltaTimeMs = currentElapsedTimeMs - previousElapsedTimeMs;
-    double previousRemainingTimeMs = durationMs - previousElapsedTimeMs;
+    float easedProgress = computeEasedProgress(elapsedTimeMs, durationMs);
     float correctionFraction =
-        previousRemainingTimeMs <= deltaTimeMs
+        previousEasedProgress >= 1
             ? 1
-            : (float) (deltaTimeMs / previousRemainingTimeMs);
+            : (easedProgress - previousEasedProgress) / (1 - previousEasedProgress);
+    correctionFraction = Utils.clamp(correctionFraction, 0, 1);
 
     alignTargetRotationSign();
     if (hasPreviousTarget) {
@@ -80,17 +92,22 @@ public final class FeedForwardCorrectionTransitionAlgorithm implements Transitio
     currentPosition.lerp(targetPosition, correctionFraction);
     currentRotation.slerp(targetRotation, correctionFraction).normalize();
 
-    float progress = (float) (currentElapsedTimeMs / durationMs);
     dest.position().set(currentPosition);
     dest.rotation().set(currentRotation);
-    dest.setFovDeg(lerp(startFovDeg, targetFovDeg, progress));
+    dest.setFovDeg(lerp(startFovDeg, targetFovDeg, easedProgress));
     dest.setOrthographicHeight(
-        lerp(startOrthographicHeight, targetOrthographicHeight, progress));
+        lerp(startOrthographicHeight, targetOrthographicHeight, easedProgress));
 
     previousTargetPosition.set(targetPosition);
     previousTargetRotation.set(targetRotation);
-    previousElapsedTimeMs = currentElapsedTimeMs;
+    previousEasedProgress = easedProgress;
     hasPreviousTarget = true;
+  }
+
+  private float computeEasedProgress(double elapsedTimeMs, double durationMs) {
+    float progress = (float) Utils.clamp(elapsedTimeMs / durationMs, 0, 1);
+    float easedProgress = Utils.clamp(blender.blend(progress), 0, 1);
+    return Math.max(previousEasedProgress, easedProgress);
   }
 
   private void alignTargetRotationSign() {
