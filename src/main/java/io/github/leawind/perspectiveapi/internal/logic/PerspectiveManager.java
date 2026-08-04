@@ -302,10 +302,11 @@ public final class PerspectiveManager {
     Bridge.setCameraRotation(camera, CameraSpace.apiToMc(targetState.rotation(), tempMcQuat));
 
     // Post-apply callback
+    backupState.set(targetState);
     extensions.run(
         current.info().id(),
         "postApply",
-        () -> currentBehavior.afterApplyCameraState(targetState, renderTickContext));
+        () -> currentBehavior.afterApplyCameraState(backupState, renderTickContext));
   }
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
