@@ -100,8 +100,8 @@ public interface PerspectiveBehavior {
   ///
   /// As the base perspective, this method receives the vanilla camera state and establishes the
   /// foundational target state.
-  /// Subsequent {@link PerspectiveModifier}s may mutate this state before or after transition
-  /// interpolation according to their registered phase.
+  /// Subsequent {@link PerspectiveModifier}s may mutate this state before perspective-switch
+  /// transition interpolation.
   /// If this method fails, the failure is logged and the complete target state is restored to the
   /// vanilla state received before this method was called.
   ///

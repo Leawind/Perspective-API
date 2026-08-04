@@ -4,7 +4,6 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
-import io.github.leawind.perspectiveapi.api.PerspectiveModifierPhase;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
@@ -89,12 +88,12 @@ public final class PerspectiveManager {
 
   // region camera state
 
-  private boolean isTransitionStateInitialized;
+  private boolean isLastAppliedStateInitialized;
   private final Quaternionf tempMcQuat = new Quaternionf();
 
   private final PerspectiveStateImpl targetState = new PerspectiveStateImpl();
   private final PerspectiveStateImpl backupState = new PerspectiveStateImpl();
-  private final PerspectiveStateImpl stateBeforeAfterModifiers = new PerspectiveStateImpl();
+  private final PerspectiveStateImpl lastAppliedState = new PerspectiveStateImpl();
   private float cachedVanillaFovDeg = PerspectiveStateImpl.DEFAULT_FOV_DEGREES;
 
   // endregion
@@ -164,7 +163,7 @@ public final class PerspectiveManager {
     PerspectiveBehavior deactivated = currentBehavior;
     currentBehavior = null;
     transitionAllowed = false;
-    isTransitionStateInitialized = false;
+    isLastAppliedStateInitialized = false;
     if (deactivated != null) {
       extensions.run(
           deactivated.getClass().getName(), "onDeactivate", deactivated::onDeactivate);
@@ -225,12 +224,11 @@ public final class PerspectiveManager {
   ///
   /// 1. Prepare the frame context and read the vanilla camera state
   /// 2. Apply the active perspective and sanitize its target state
-  /// 3. Apply and sanitize before-transition modifiers
+  /// 3. Apply and sanitize modifiers
   /// 4. Apply and sanitize perspective-switch transition interpolation
   /// 5. Capture the state used as the start of a future transition
-  /// 6. Apply and sanitize after-transition modifiers
-  /// 7. Write the final state to the camera
-  /// 8. Call {@link PerspectiveBehavior#afterApplyCameraState}
+  /// 6. Write the final state to the camera
+  /// 7. Call {@link PerspectiveBehavior#afterApplyCameraState}
   ///
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
@@ -279,8 +277,7 @@ public final class PerspectiveManager {
         () -> "Perspective '" + current.info().id() + "' provided invalid state");
 
     // Apply modifiers to the perspective target state
-    modifiers.applyCameraState(
-        PerspectiveModifierPhase.BEFORE_TRANSITION, targetState, renderTickContext);
+    modifiers.applyCameraState(targetState, renderTickContext);
 
     // Transition interpolation
     if (isTransitioning) {
@@ -289,12 +286,8 @@ public final class PerspectiveManager {
           "transition", targetState, backupState, () -> "Transition produced invalid state");
     }
 
-    stateBeforeAfterModifiers.set(targetState);
-    isTransitionStateInitialized = true;
-
-    // Apply modifiers to the final visual state
-    modifiers.applyCameraState(
-        PerspectiveModifierPhase.AFTER_TRANSITION, targetState, renderTickContext);
+    lastAppliedState.set(targetState);
+    isLastAppliedStateInitialized = true;
 
     // Write to camera
     Bridge.setCameraPosition(camera, targetState.position());
@@ -333,16 +326,16 @@ public final class PerspectiveManager {
   }
 
   private void startTransition() {
-    if (!isTransitionStateInitialized) {
+    if (!isLastAppliedStateInitialized) {
       Camera camera = Bridge.getMainCamera();
       if (camera != null) {
-        captureVanillaState(camera, stateBeforeAfterModifiers);
+        captureVanillaState(camera, lastAppliedState);
       } else {
-        stateBeforeAfterModifiers.set(targetState);
+        lastAppliedState.set(targetState);
       }
-      isTransitionStateInitialized = true;
+      isLastAppliedStateInitialized = true;
     }
-    transition.setStartState(TransitionImpl.getTimeMs(), stateBeforeAfterModifiers);
+    transition.setStartState(TransitionImpl.getTimeMs(), lastAppliedState);
   }
 
   private void captureVanillaState(

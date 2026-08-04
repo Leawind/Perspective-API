@@ -158,7 +158,7 @@ Grand Teleport 的完整高空转场决定了基础相机路径，应实现为�
 
 ### Do a Barrel Roll
 
-Do a Barrel Roll 适合把相机状态相关的部分实现为过渡后 Modifier，但它的输入控制和相机状态合成应当分开处理。
+Do a Barrel Roll 适合把相机状态相关的部分实现为 Modifier，但它的输入控制和相机状态合成应当分开处理。
 
 该模组当前会在鞘翅飞行期间接管原版的鼠标视角移动输入，按照三轴飞行规则计算新的朝向，然后通过原版的实体视角转动逻辑把 yaw 和 pitch 写回玩家实体。roll 则作为独立状态保存在玩家实体上。因此，基础 Perspective 不会因为 API Modifier 而再次消费同一份鼠标输入；跟随 camera entity 朝向的 Perspective 会自然取得已经更新的 yaw 和 pitch。
 
@@ -169,9 +169,9 @@ Do a Barrel Roll 应继续自行负责以下内容：
 - 更新玩家实体的 yaw、pitch 和独立 roll 状态
 - 同步实体 roll，并处理与飞行物理、玩家模型和 HUD 相关的行为
 
-过渡后 Modifier 只读取活动 camera entity 上插值后的 roll，并把相应的局部滚转合成到当前相机四元数中。它不应再次应用 yaw 或 pitch，也不应修改位置、FOV 或投影。退出滚转后的回正效果仍属于该 Modifier 负责的视觉 roll 状态。
+Modifier 只读取活动 camera entity 上插值后的 roll，并把相应的局部滚转合成到当前相机四元数中。它不应再次应用 yaw 或 pitch，也不应修改位置、FOV 或投影。退出滚转后的回正效果仍属于该 Modifier 负责的视觉 roll 状态。
 
-选择过渡后阶段可以避免 Perspective 切换过渡削弱正在进行的滚转，同时允许同一 roll 叠加在不同基础 Perspective 上。Modifier 应使用活动 camera entity，而不是硬编码本地玩家，并根据当前相机与实体的实际朝向关系组合旋转，不能根据 `BaseType` 推断前后视角的具体行为。
+Modifier 在 Perspective 切换过渡之前执行，因此包含 roll 的完整目标状态会参与基础视角切换，并从切换前最终实际采用的状态连续过渡。Modifier 应使用活动 camera entity，而不是硬编码本地玩家，并根据当前相机与实体的实际朝向关系组合旋转，不能根据 `BaseType` 推断前后视角的具体行为。
 
 迁移到 Perspective API 时，Do a Barrel Roll 现有的相机 roll 注入和 API Modifier 不能同时应用，否则原版初始相机状态中已经存在的 roll 会被重复叠加。它可以保留输入、实体状态和其他渲染逻辑，只用 Modifier 替代把 roll 写入主相机的部分。
 
@@ -183,11 +183,11 @@ Do a Barrel Roll 应继续自行负责以下内容：
 
 Camera Overhaul 可以把不同性质的效果拆成多个 Modifier：
 
-- yaw 和 pitch 平滑使用过渡前 Modifier，先产生稳定的目标朝向
-- 行走、疾跑、跳跃等运动产生的 pitch 或 roll 使用过渡后 Modifier
-- 空闲摇摆和世界位置相关的相机震动使用过渡后 Modifier
+- yaw 和 pitch 平滑 Modifier 将当前相机方向作为目标，并自行维护平滑后的方向
+- 行走、疾跑、跳跃等运动产生的 pitch 或 roll 使用独立 Modifier
+- 空闲摇摆和世界位置相关的相机震动使用独立 Modifier
 
-拆分后，每种效果可以拥有独立 ID、优先级和启用条件，其他相机模组也能在它们之间安排自己的修正。
+这些 Modifier 都在 Perspective 切换过渡前执行。拆分后，每种效果可以拥有独立 ID、优先级和启用条件，其他相机模组也能在它们之间安排自己的修正。
 
 玩家移动状态、震动事件和参数平滑由 Camera Overhaul 自行维护。空间震动可以使用 Modifier 收到的当前相机位置计算距离衰减。
 
@@ -195,7 +195,7 @@ Camera Overhaul 可以把不同性质的效果拆成多个 Modifier：
 
 ### Zoomify
 
-Zoomify 只改变当前视角的 FOV，适合作为过渡后 Modifier。这样玩家切换 Perspective 时，正在使用的缩放倍率仍然完整作用于切换后的画面。
+Zoomify 只改变当前视角的 FOV，适合作为 Modifier。玩家切换 Perspective 时，正在使用的缩放倍率仍然完整作用于切换后的画面。
 
 Modifier 只修改 FOV，不改变位置、旋转或投影模式。滚轮控制、缩放动画目标和鼠标灵敏度由 Zoomify 自行管理。
 
@@ -207,7 +207,7 @@ Modifier 只修改 FOV，不改变位置、旋转或投影模式。滚轮控制�
 
 由于取景器要求第一人称基础视角，它适合作为不可切换 Perspective，并在玩家使用相机物品时通过临时覆盖激活。Perspective 设置相应 `BaseType` 和取景 FOV，但不需要修改未涉及的位置或旋转。
 
-如果缩放效果还需要在其他 Perspective 中复用，可以把 FOV 缩放独立为过渡后 Modifier；否则也可以由取景器 Perspective 内部计算。
+如果缩放效果还需要在其他 Perspective 中复用，可以把 FOV 缩放独立为 Modifier；否则也可以由取景器 Perspective 内部计算。
 
 隐藏 HUD、调整鼠标灵敏度、读取主渲染目标和生成地图图像都不属于 Perspective API。
 
@@ -217,7 +217,7 @@ Exposure 中适合使用 Perspective API 的功能应分别处理：
 
 - 手持相机取景器：不可切换的第一人称 Perspective
 - 自拍模式：不可切换的正面第三人称 Perspective
-- 镜头焦距缩放：取景器内部状态，或仅在相应模式生效的过渡后 Modifier
+- 镜头焦距缩放：取景器内部状态，或仅在相应模式生效的 Modifier
 
 这些 Perspective 在对应拍摄模式中通过临时覆盖激活，退出模式后恢复玩家原来的选择。
 
@@ -231,7 +231,7 @@ Exposure 中适合使用 Perspective API 的功能应分别处理：
 
 Camera Utils 的不同功能适合使用不同机制：
 
-- 按键或滚轮缩放：过渡后 Modifier
+- 按键或滚轮缩放：Modifier
 - 固定当前位置和旋转：不可切换 Perspective，通过按键控制的临时覆盖激活
 - 长距离第三人称相机：可切换 Perspective
 - 两个第三人称预设：两个独立的可切换 Perspective
@@ -253,7 +253,7 @@ Freecam 可以注册为不可切换 Perspective，使其只能由自己的启用
 
 - Perspective 负责独占的基础相机状态
 - 临时覆盖负责在不丢失玩家选择的前提下临时切换 Perspective
-- 过渡前和过渡后 Modifier 负责可组合的相机效果
+- Modifier 负责在 Perspective 切换过渡前合成可组合的相机效果
 
 输入、HUD、camera entity、截图和额外渲染通道继续由各模组自行实现，不需要为了覆盖这些附属功能扩大相机状态 API。
 
@@ -261,6 +261,6 @@ Grand Teleport 所需的上一帧最终状态可以直接从原版 `Camera` 缓�
 
 锁定视角可以利用 `controllable` trait 判断当前 Perspective 是否适合通过鼠标事件进行闭环控制，但输入注入和运行时状态判断仍由锁定模组实现。
 
-Do a Barrel Roll 可以在 API 之外完成输入重映射和实体朝向更新，再通过过渡后 Modifier 只合成相机 roll。输入处理与 Modifier 不会因此重复消费鼠标输入，也不需要把完整飞行相机实现为临时 Perspective。对于完全不跟随 camera entity 朝向的 Perspective，其输入语义仍需要单独协调。
+Do a Barrel Roll 可以在 API 之外完成输入重映射和实体朝向更新，再通过 Modifier 只合成相机 roll。输入处理与 Modifier 不会因此重复消费鼠标输入，也不需要把完整飞行相机实现为临时 Perspective。对于完全不跟随 camera entity 朝向的 Perspective，其输入语义仍需要单独协调。
 
 按照当前宏观分析，设计草图能够覆盖本文列出的适用场景。具体公共接口、共享 trait、旋转组合约定和优先级约定仍需要在实现阶段验证。

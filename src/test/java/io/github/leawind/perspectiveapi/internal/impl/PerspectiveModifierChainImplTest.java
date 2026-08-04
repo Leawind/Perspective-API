@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveContext;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
-import io.github.leawind.perspectiveapi.api.PerspectiveModifierPhase;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
@@ -23,10 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class PerspectiveModifierChainImplTest {
-  private static final PerspectiveModifierPhase BEFORE =
-      PerspectiveModifierPhase.BEFORE_TRANSITION;
-  private static final PerspectiveModifierPhase AFTER = PerspectiveModifierPhase.AFTER_TRANSITION;
-
   private PerspectiveModifierChainImpl chain;
   private PerspectiveStateImpl state;
   private PerspectiveContext context;
@@ -42,33 +37,33 @@ class PerspectiveModifierChainImplTest {
 
   @Test
   void appliesModifiersByAscendingPriority() {
-    chain.register("test.third", BEFORE, 20, modifier(s -> appendDigit(s, 3)));
-    chain.register("test.first", BEFORE, -10, modifier(s -> appendDigit(s, 1)));
-    chain.register("test.second", BEFORE, 0, modifier(s -> appendDigit(s, 2)));
+    chain.register("test.third", 20, modifier(s -> appendDigit(s, 3)));
+    chain.register("test.first", -10, modifier(s -> appendDigit(s, 1)));
+    chain.register("test.second", 0, modifier(s -> appendDigit(s, 2)));
 
-    chain.applyCameraState(BEFORE, state, context);
+    chain.applyCameraState(state, context);
 
     assertEquals(123.0, state.position().x);
   }
 
   @Test
   void equalPriorityUsesRegistrationOrder() {
-    chain.register("test.first", BEFORE, 0, modifier(s -> appendDigit(s, 1)));
-    chain.register("test.second", BEFORE, 0, modifier(s -> appendDigit(s, 2)));
+    chain.register("test.first", 0, modifier(s -> appendDigit(s, 1)));
+    chain.register("test.second", 0, modifier(s -> appendDigit(s, 2)));
 
-    chain.applyCameraState(BEFORE, state, context);
+    chain.applyCameraState(state, context);
     assertEquals(12.0, state.position().x);
   }
 
   @Test
   void unregisterRemovesOnlyMatchingEntry() {
     PerspectiveModifierRegistration first =
-        chain.register("test.first", BEFORE, 0, modifier(s -> appendDigit(s, 1)));
-    chain.register("test.second", BEFORE, 0, modifier(s -> appendDigit(s, 2)));
+        chain.register("test.first", 0, modifier(s -> appendDigit(s, 1)));
+    chain.register("test.second", 0, modifier(s -> appendDigit(s, 2)));
 
     assertTrue(first.unregister());
     assertFalse(first.unregister());
-    chain.applyCameraState(BEFORE, state, context);
+    chain.applyCameraState(state, context);
 
     assertEquals(2.0, state.position().x);
   }
@@ -76,12 +71,11 @@ class PerspectiveModifierChainImplTest {
   @Test
   void unavailableAndFailingAvailabilityChecksAreSkipped() {
     AtomicInteger applications = new AtomicInteger();
-    chain.register("test.unavailable", BEFORE, 0, conditionalModifier(false, applications));
-    chain.register(
-        "test.failing", BEFORE, 1, throwingAvailabilityModifier(applications));
-    chain.register("test.available", BEFORE, 2, conditionalModifier(true, applications));
+    chain.register("test.unavailable", 0, conditionalModifier(false, applications));
+    chain.register("test.failing", 1, throwingAvailabilityModifier(applications));
+    chain.register("test.available", 2, conditionalModifier(true, applications));
 
-    chain.applyCameraState(BEFORE, state, context);
+    chain.applyCameraState(state, context);
 
     assertEquals(1, applications.get());
   }
@@ -95,7 +89,6 @@ class PerspectiveModifierChainImplTest {
     state.setOrthographicHeight(16.0f);
     chain.register(
         "test.failing",
-        BEFORE,
         0,
         modifier(
             s -> {
@@ -107,9 +100,9 @@ class PerspectiveModifierChainImplTest {
               throw new IllegalStateException("failure");
             }));
     chain.register(
-        "test.later", BEFORE, 1, modifier(s -> s.position().add(1.0, 0.0, 0.0)));
+        "test.later", 1, modifier(s -> s.position().add(1.0, 0.0, 0.0)));
 
-    chain.applyCameraState(BEFORE, state, context);
+    chain.applyCameraState(state, context);
 
     TestUtils.assertVectorEquals(new Vector3d(2.0, 2.0, 3.0), state.position());
     TestUtils.assertQuatEquals(new Quaternionf().rotationY(0.25f), state.rotation());
@@ -126,7 +119,6 @@ class PerspectiveModifierChainImplTest {
     state.setOrthographicHeight(16.0f);
     chain.register(
         "test.invalid",
-        BEFORE,
         0,
         modifier(
             s -> {
@@ -136,7 +128,7 @@ class PerspectiveModifierChainImplTest {
               s.setOrthographicHeight(Float.NaN);
             }));
 
-    chain.applyCameraState(BEFORE, state, context);
+    chain.applyCameraState(state, context);
 
     TestUtils.assertVectorEquals(new Vector3d(1.0, 2.0, 3.0), state.position());
     TestUtils.assertQuatEquals(new Quaternionf().rotationX(0.5f), state.rotation());
@@ -145,38 +137,25 @@ class PerspectiveModifierChainImplTest {
   }
 
   @Test
-  void appliesOnlyTheRequestedPhase() {
-    chain.register("test.before", BEFORE, 0, modifier(s -> appendDigit(s, 1)));
-    chain.register("test.after", AFTER, 0, modifier(s -> appendDigit(s, 2)));
-
-    chain.applyCameraState(AFTER, state, context);
-    assertEquals(2.0, state.position().x);
-
-    chain.applyCameraState(BEFORE, state, context);
-    assertEquals(21.0, state.position().x);
-  }
-
-  @Test
   void rejectsDuplicateIdsUntilRegistrationIsRemoved() {
     PerspectiveModifier modifier = modifier(s -> {});
-    PerspectiveModifierRegistration first = chain.register("test.same", BEFORE, 0, modifier);
+    PerspectiveModifierRegistration first = chain.register("test.same", 0, modifier);
 
     assertThrows(
-        IllegalArgumentException.class, () -> chain.register("test.same", AFTER, 0, modifier));
+        IllegalArgumentException.class, () -> chain.register("test.same", 0, modifier));
     assertTrue(first.unregister());
-    chain.register("test.same", AFTER, 0, modifier);
+    chain.register("test.same", 0, modifier);
   }
 
   @Test
   void rejectsInvalidRegistrationArguments() {
     PerspectiveModifier modifier = modifier(s -> {});
 
-    assertThrows(NullPointerException.class, () -> chain.register(null, BEFORE, 0, modifier));
-    assertThrows(NullPointerException.class, () -> chain.register("test.id", null, 0, modifier));
-    assertThrows(NullPointerException.class, () -> chain.register("test.id", BEFORE, 0, null));
-    assertThrows(
-        IllegalArgumentException.class, () -> chain.register("", BEFORE, 0, modifier));
-    assertThrows(NullPointerException.class, () -> chain.applyCameraState(null, state, context));
+    assertThrows(NullPointerException.class, () -> chain.register(null, 0, modifier));
+    assertThrows(NullPointerException.class, () -> chain.register("test.id", 0, null));
+    assertThrows(IllegalArgumentException.class, () -> chain.register("", 0, modifier));
+    assertThrows(NullPointerException.class, () -> chain.applyCameraState(null, context));
+    assertThrows(NullPointerException.class, () -> chain.applyCameraState(state, null));
   }
 
   private static PerspectiveModifier modifier(Consumer<PerspectiveState.Mutable> action) {

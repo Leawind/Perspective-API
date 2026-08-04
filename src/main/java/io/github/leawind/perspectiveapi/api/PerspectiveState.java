@@ -52,8 +52,7 @@ public interface PerspectiveState {
   /// modified in-place.
   ///
   /// Passed to {@link PerspectiveBehavior#applyCameraState} and
-  /// {@link PerspectiveModifier#apply} during their configured stages of the camera state
-  /// computation pipeline.
+  /// {@link PerspectiveModifier#apply} during camera state computation.
   @ApiStatus.NonExtendable
   interface Mutable extends PerspectiveState {
 

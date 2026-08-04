@@ -5,9 +5,9 @@ import org.jspecify.annotations.NonNull;
 
 /// Represents a cooperative camera-state transformation.
 ///
-/// A modifier is registered in a {@link PerspectiveModifierPhase}. It should mutate only the
-/// fields it owns and compose its change with the state produced by the perspective and earlier
-/// modifiers.
+/// A modifier is applied after the active perspective and before perspective-switch transition
+/// interpolation. It should mutate only the fields it owns and compose its change with the state
+/// produced by the perspective and earlier modifiers.
 @ApiStatus.OverrideOnly
 public interface PerspectiveModifier {
 
@@ -27,8 +27,7 @@ public interface PerspectiveModifier {
   /// If this method fails, the failure is logged, all changes made by this modifier are reverted,
   /// and later modifiers continue to run.
   ///
-  /// @param state the camera state produced by the perspective, transition, and earlier applicable
-  ///   modifiers
+  /// @param state the camera state produced by the perspective and earlier applicable modifiers
   /// @param context   The context containing frame-specific data.
   /// @apiNote Both arguments are temporary and must not be retained after this method returns.
   ///   Repeated rotation calculations can accumulate floating-point error, and the camera pipeline

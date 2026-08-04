@@ -110,12 +110,9 @@ Modifier 对当前 Perspective 产生的状态进行协作式变换，但不拥�
 
 Modifier 按优先级依次执行。同优先级使用注册顺序，但不同模组不应依赖相同优先级下的执行顺序。每个 Modifier 应具有稳定 ID，用于诊断冲突和记录错误。
 
-Modifier 分为两个阶段：
+Modifier 在 Perspective 切换过渡之前执行。Perspective 切换过渡以 Perspective 和全部 Modifier 合成后的状态作为目标，并从切换前最终实际采用的相机状态开始插值。
 
-- 过渡前：修改 Perspective 的目标状态，其结果参与 Perspective 切换过渡
-- 过渡后：修改已经完成过渡的最终视觉状态，不被 Perspective 切换过渡削弱
-
-平滑改变基础视角目标的修正适合在过渡前执行；相机震动、临时 roll 等最终视觉效果通常适合在过渡后执行。
+Modifier 的启用、停用或参数变化本身不会触发 Perspective 切换过渡。需要渐入、渐出、惯性或其他时间变化的 Modifier 应自行维护相应状态；如果同时正在切换 Perspective，Modifier 当前帧产生的目标状态会参与该切换过渡。
 
 一个功能在 Perspective API 之外处理输入，并不妨碍它同时使用 Modifier。输入处理可以先更新 camera entity 的朝向或使用方自己的状态，Modifier 再把尚未包含在基础状态中的相机效果合成到管线中。两部分必须有明确边界，不能由输入处理和 Modifier 重复应用同一旋转分量。
 
@@ -154,11 +151,10 @@ Modifier 应只修改自己负责的字段，并按照 API 约定的旋转方向
 2. 建立符合 API 坐标约定的初始相机状态
 3. 调用当前 Perspective 计算目标状态
 4. 校验状态，并回退 Perspective 产生的无效字段
-5. 按顺序应用过渡前 Modifier，并在每次调用后校验状态
+5. 按顺序应用 Modifier，并在每次调用后校验状态
 6. 应用 Perspective 切换过渡
-7. 按顺序应用过渡后 Modifier，并在每次调用后校验状态
-8. 将最终位置、旋转、FOV 和投影设置写回原版相机与渲染流程
-9. 通知当前 Perspective 最终实际采用的状态
+7. 将最终位置、旋转、FOV 和投影设置写回原版相机与渲染流程
+8. 通知当前 Perspective 最终实际采用的状态
 
 只读取相机结果的其他模组在此之后直接读取原版 `Camera`，不需要通过 Perspective API 注册观察者。
 
