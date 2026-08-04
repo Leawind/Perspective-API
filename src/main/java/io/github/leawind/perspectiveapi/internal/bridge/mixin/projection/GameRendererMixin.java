@@ -13,7 +13,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 /*? } else {*/
-/*import io.github.leawind.perspectiveapi.internal.bridge.ProjectionBridge;
+/*import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import io.github.leawind.perspectiveapi.internal.bridge.ProjectionBridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyProjectionContext;
 import net.minecraft.client.Minecraft;
@@ -22,16 +23,16 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 /^? if >=1.21.11 {^/
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.blaze3d.ProjectionType;
 import net.minecraft.client.Camera;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 /^? } else {^/
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexSorting;
-import org.spongepowered.asm.mixin.injection.Redirect;
 /^? }^/
 *//*? }*/
 
@@ -159,16 +160,14 @@ public abstract class GameRendererMixin {
       new ModifyProjectionContext();
   @Unique private boolean perspective_api$orthographic;
 
-  @Redirect(
+  @ModifyExpressionValue(
       method = "renderLevel",
       at =
           @At(
               value = "INVOKE",
               target =
                   "Lnet/minecraft/client/renderer/GameRenderer;getProjectionMatrix(D)Lorg/joml/Matrix4f;"))
-  private Matrix4f perspective_api$modifyProjection(
-      GameRenderer renderer, double fovDeg) {
-    Matrix4f original = renderer.getProjectionMatrix(fovDeg);
+  private Matrix4f perspective_api$modifyProjection(Matrix4f original) {
     perspective_api$projectionContext.setup();
     GameClientEvents.MODIFY_PROJECTION.emit(perspective_api$projectionContext);
     perspective_api$orthographic = perspective_api$projectionContext.orthographic;
@@ -184,7 +183,7 @@ public abstract class GameRendererMixin {
         false);
   }
 
-  @Redirect(
+  @WrapOperation(
       method = "renderLevel",
       at =
           @At(
@@ -192,11 +191,10 @@ public abstract class GameRendererMixin {
               target =
                   "Lnet/minecraft/client/renderer/GameRenderer;resetProjectionMatrix(Lorg/joml/Matrix4f;)V"))
   private void perspective_api$setWorldProjection(
-      GameRenderer renderer, Matrix4f projectionMatrix) {
+      GameRenderer renderer, Matrix4f projectionMatrix, Operation<Void> original) {
+    original.call(renderer, projectionMatrix);
     if (perspective_api$orthographic) {
       RenderSystem.setProjectionMatrix(projectionMatrix, VertexSorting.ORTHOGRAPHIC_Z);
-    } else {
-      renderer.resetProjectionMatrix(projectionMatrix);
     }
   }
   *//*? }*/
