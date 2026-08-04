@@ -6,8 +6,8 @@ import org.jspecify.annotations.NonNull;
 
 /// Represents a camera perspective that can be applied to the game camera.
 ///
-/// A Perspective acts as the foundational {@link PerspectiveModifier} that establishes
-/// the base camera state.
+/// A Perspective establishes the base camera state before cooperative {@link PerspectiveModifier}
+/// transformations are applied.
 ///
 /// PerspectiveBehavior implementations can be discovered via {@link java.util.ServiceLoader} or
 /// registered at runtime through the {@link PerspectiveRegistry}.
@@ -95,8 +95,8 @@ public interface PerspectiveBehavior {
   ///
   /// As the base perspective, this method receives the vanilla camera state and establishes the
   /// foundational target state.
-  /// Subsequent {@link PerspectiveModifier}s will further mutate this state before transition
-  /// interpolation.
+  /// Subsequent {@link PerspectiveModifier}s may mutate this state before or after transition
+  /// interpolation according to their registered phase.
   /// If this method fails, the failure is logged and the complete target state is restored to the
   /// vanilla state received before this method was called.
   ///

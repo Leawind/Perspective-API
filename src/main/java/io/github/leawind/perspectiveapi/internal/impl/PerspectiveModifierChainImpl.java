@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.PerspectiveContext;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveModifierPhase;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
@@ -18,10 +19,18 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
       new ExtensionInvoker(LoggerFactory.getLogger(PerspectiveModifierChainImpl.class), "Modifier");
 
   private final class Registration implements PerspectiveModifierRegistration {
+    private final String id;
+    private final PerspectiveModifierPhase phase;
     private final int priority;
     private final PerspectiveModifier modifier;
 
-    private Registration(int priority, @NonNull PerspectiveModifier modifier) {
+    private Registration(
+        @NonNull String id,
+        @NonNull PerspectiveModifierPhase phase,
+        int priority,
+        @NonNull PerspectiveModifier modifier) {
+      this.id = id;
+      this.phase = phase;
       this.priority = priority;
       this.modifier = modifier;
     }
@@ -42,13 +51,24 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
 
   @Override
   public @NonNull PerspectiveModifierRegistration register(
-      int priority, @NonNull PerspectiveModifier modifier) {
+      @NonNull String id,
+      @NonNull PerspectiveModifierPhase phase,
+      int priority,
+      @NonNull PerspectiveModifier modifier) {
+    Objects.requireNonNull(id);
+    Objects.requireNonNull(phase);
     Objects.requireNonNull(modifier);
-    Registration registration = new Registration(priority, modifier);
+    if (id.isEmpty()) throw new IllegalArgumentException("Modifier id must not be empty");
+    Registration registration = new Registration(id, phase, priority, modifier);
     synchronized (this) {
+      if (entries.stream().anyMatch(entry -> entry.id.equals(id))) {
+        throw new IllegalArgumentException("Modifier id is already registered: '" + id + "'");
+      }
       List<Registration> newList = new ArrayList<>(entries);
       newList.add(registration);
-      newList.sort(Comparator.comparingInt(entry -> entry.priority));
+      newList.sort(
+          Comparator.comparing((Registration entry) -> entry.phase)
+              .thenComparingInt(entry -> entry.priority));
       this.entries = List.copyOf(newList);
     }
     return registration;
@@ -65,18 +85,19 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     }
   }
 
-  /// Applies all active modifiers' camera state transformations sequentially.
-  ///
-  /// Called after the base perspective establishes the target state,
-  /// but before transition interpolation.
+  /// Applies active modifiers in one pipeline phase sequentially.
   ///
   /// Position, rotation, FOV, and orthographic height are validated after each modifier;
   /// invalid fields are individually reverted.
   public void applyCameraState(
-      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {
+      @NonNull PerspectiveModifierPhase phase,
+      PerspectiveState.@NonNull Mutable state,
+      @NonNull PerspectiveContext ctx) {
+    Objects.requireNonNull(phase);
     PerspectiveStateImpl backup = new PerspectiveStateImpl();
     for (Registration entry : entries) {
-      String id = entry.modifier.getClass().getName();
+      if (entry.phase != phase) continue;
+      String id = entry.id;
       if (!EXTENSIONS.testOrElse(id, "isAvailable", entry.modifier::isAvailable, false)) continue;
 
       backup.set(state);
@@ -85,7 +106,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
         continue;
       }
       sanitizer.sanitize(
-          "modifier." + id,
+          "modifier." + phase + "." + id,
           state,
           backup,
           () -> "Modifier '" + id + "' produced invalid state. Reverting.");

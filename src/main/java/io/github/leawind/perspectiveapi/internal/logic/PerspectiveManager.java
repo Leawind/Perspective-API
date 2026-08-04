@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveModifierPhase;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
@@ -269,8 +270,9 @@ public final class PerspectiveManager {
         backupState,
         () -> "Perspective '" + current.info().id() + "' provided invalid state");
 
-    // Apply modifiers
-    modifiers.applyCameraState(targetState, renderTickContext);
+    // Apply modifiers to the perspective target state
+    modifiers.applyCameraState(
+        PerspectiveModifierPhase.BEFORE_TRANSITION, targetState, renderTickContext);
 
     // Transition interpolation
     if (isTransitioning) {
@@ -278,6 +280,10 @@ public final class PerspectiveManager {
       sanitizer.sanitize(
           "transition", targetState, backupState, () -> "Transition produced invalid state");
     }
+
+    // Apply modifiers to the final visual state
+    modifiers.applyCameraState(
+        PerspectiveModifierPhase.AFTER_TRANSITION, targetState, renderTickContext);
 
     isTempStateInited = true;
 

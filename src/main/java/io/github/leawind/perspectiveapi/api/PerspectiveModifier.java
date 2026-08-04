@@ -3,11 +3,11 @@ package io.github.leawind.perspectiveapi.api;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 
-/// Represents a pure mathematical modifier that mutates camera states.
+/// Represents a cooperative camera-state transformation.
 ///
-/// Modifiers are applied sequentially **before** the transition interpolation.
-/// They mutate the target state, and the transition will smoothly interpolate from the previous
-/// state to this modified target state.
+/// A modifier is registered in a {@link PerspectiveModifierPhase}. It should mutate only the
+/// fields it owns and compose its change with the state produced by the perspective and earlier
+/// modifiers.
 @ApiStatus.OverrideOnly
 public interface PerspectiveModifier {
 
@@ -22,13 +22,13 @@ public interface PerspectiveModifier {
     return true;
   }
 
-  /// Mutates the camera target state in-place.
+  /// Mutates the current camera state in-place.
   ///
   /// If this method fails, the failure is logged, all changes made by this modifier are reverted,
   /// and later modifiers continue to run.
   ///
-  /// @param state The target camera state, potentially modified by the base
-  ///   perspective and previous modifiers. Can be mutated.
+  /// @param state the camera state produced by the perspective, transition, and earlier applicable
+  ///   modifiers
   /// @param context   The context containing frame-specific data.
   /// @apiNote Both arguments are temporary and must not be retained after this method returns.
   ///   Repeated rotation calculations can accumulate floating-point error, and the camera pipeline
