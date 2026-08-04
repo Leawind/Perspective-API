@@ -120,7 +120,7 @@ class TransitionImplTest {
   }
 
   @Test
-  void switchesProjectionModeAndScaleDiscretelyWhenModesDiffer() {
+  void switchesProjectionModeDiscretelyAndInterpolatesOrthographicHeight() {
     start.setProjectionMode(ProjectionMode.PERSPECTIVE);
     start.setOrthographicHeight(10.0f);
     target.setProjectionMode(ProjectionMode.ORTHOGRAPHIC);
@@ -131,7 +131,7 @@ class TransitionImplTest {
     transition.update(1_001.0, target, dest);
 
     assertEquals(ProjectionMode.ORTHOGRAPHIC, dest.projectionMode());
-    assertEquals(30.0f, dest.getOrthographicHeight());
+    assertEquals(10.2f, dest.getOrthographicHeight(), 1.0e-4f);
   }
 
   private void assertHalfway(PerspectiveStateImpl actual) {

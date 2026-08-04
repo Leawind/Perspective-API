@@ -38,7 +38,6 @@ public final class TransitionImpl implements Transition {
   private final Vector3d startPosition = new Vector3d();
   private final Quaternionf startRotation = new Quaternionf();
   private float startFovDeg = DEFAULT_FOV_DEG;
-  private ProjectionMode startProjectionMode = ProjectionMode.PERSPECTIVE;
   private float startOrthographicHeight = PerspectiveStateImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT;
 
   // endregion
@@ -116,7 +115,6 @@ public final class TransitionImpl implements Transition {
     this.startPosition.set(startState.position());
     this.startRotation.set(startState.rotation());
     this.startFovDeg = startState.getFovDeg();
-    this.startProjectionMode = startState.projectionMode();
     this.startOrthographicHeight = startState.getOrthographicHeight();
     this.prevRotation.set(startState.rotation());
     this.prevEasedProgress = 0;
@@ -136,9 +134,7 @@ public final class TransitionImpl implements Transition {
     ProjectionMode targetProjectionMode = target.projectionMode();
     dest.setProjectionMode(targetProjectionMode);
     dest.setOrthographicHeight(
-        startProjectionMode == targetProjectionMode
-            ? updateOrthographicHeight(currentTimeMs, target.getOrthographicHeight())
-            : target.getOrthographicHeight());
+        updateOrthographicHeight(currentTimeMs, target.getOrthographicHeight()));
   }
 
   private void updateTransform(

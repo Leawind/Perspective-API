@@ -83,7 +83,7 @@ public final class PerspectiveManager {
   // region current state
   private volatile @Nullable Perspective current = null;
   private volatile @Nullable PerspectiveBehavior currentBehavior = null;
-  private volatile @Nullable PerspectiveBehavior previousBehavior = null;
+  private volatile boolean transitionAllowed;
 
   // endregion
 
@@ -162,7 +162,7 @@ public final class PerspectiveManager {
 
     PerspectiveBehavior deactivated = currentBehavior;
     currentBehavior = null;
-    previousBehavior = null;
+    transitionAllowed = false;
     isTempStateInited = false;
     if (deactivated != null) {
       extensions.run(
@@ -180,16 +180,23 @@ public final class PerspectiveManager {
     // If the current perspective changed
     PerspectiveBehavior previousBehavior = currentBehavior;
     if (resolved != previous || previousBehavior == null) {
+      boolean outgoingAllowsTransition =
+          previousBehavior != null
+              && allowsTransition(
+                  previous.info().id(), previousBehavior, false);
       if (previousBehavior != null) {
         extensions.run(
             previousBehavior.getClass().getName(), "onDeactivate", previousBehavior::onDeactivate);
       }
-      this.previousBehavior = previousBehavior;
       current = resolved;
       this.currentBehavior = resolvedBehavior;
 
       updateCameraType(resolved.info().baseType());
       extensions.run(resolved.info().id(), "onActivate", resolvedBehavior::onActivate);
+      boolean incomingAllowsTransition =
+          previousBehavior != null
+              && allowsTransition(resolved.info().id(), resolvedBehavior, true);
+      transitionAllowed = outgoingAllowsTransition && incomingAllowsTransition;
       startTransition();
     } else if (registryChanged) {
       updateCameraType(resolved.info().baseType());
@@ -242,18 +249,12 @@ public final class PerspectiveManager {
       }
       current = this.current;
       currentBehavior = this.currentBehavior;
-      PerspectiveBehavior previousBehavior = this.previousBehavior;
 
       if (current == null || currentBehavior == null) {
         return;
       }
       now = TransitionImpl.getTimeMs();
-      isTransitioning =
-          transition.isInTransition(now)
-              && allowsTransition(current.info().id(), currentBehavior, true)
-              && (previousBehavior == null
-                  || allowsTransition(
-                      previousBehavior.getClass().getName(), previousBehavior, false));
+      isTransitioning = transitionAllowed && transition.isInTransition(now);
 
       renderTickContext.setup(partialTicks, entity, isTransitioning);
     }
