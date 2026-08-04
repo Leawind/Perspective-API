@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonParser;
@@ -16,6 +17,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
 import java.io.IOException;
@@ -125,7 +127,10 @@ class StateManagerImplTest {
     PerspectiveAPI.setEnabled(true);
     PerspectiveAPI.setLogicTickInterval(PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL);
     PerspectiveAPI.getTransition().setDurationMs(260.0);
-    PerspectiveAPI.getTransition().setBlendPower(0.6);
+    FixedStartChasingRotationTransitionAlgorithm algorithm = transitionAlgorithm();
+    if (algorithm != null) {
+      algorithm.setBlendPower(FixedStartChasingRotationTransitionAlgorithm.DEFAULT_BLEND_POWER);
+    }
     PerspectiveManager.INSTANCE
         .switchers()
         .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
@@ -192,19 +197,26 @@ class StateManagerImplTest {
   }
 
   @Test
-  void roundTripPreservesTransitionSettings() {
+  void roundTripPreservesTransitionSettings() throws IOException {
     Path filePath = tempDir.resolve("transition.json");
     StateManager manager = new StateManagerImpl(filePath);
+    FixedStartChasingRotationTransitionAlgorithm algorithm = transitionAlgorithm();
+    assumeTrue(algorithm != null);
     PerspectiveAPI.getTransition().setDurationMs(450.0);
-    PerspectiveAPI.getTransition().setBlendPower(1.25);
+    algorithm.setBlendPower(1.25);
 
     manager.tryExtractAndSave();
+    var savedState = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
+    assertEquals(
+        1.25,
+        savedState.get("transition.fixed_start_chasing_rotation.blend_power").getAsDouble());
+    assertFalse(savedState.has("transition.blend_power"));
     PerspectiveAPI.getTransition().setDurationMs(1.0);
-    PerspectiveAPI.getTransition().setBlendPower(1.0);
+    algorithm.setBlendPower(1.0);
     manager.tryLoadAndApply();
 
     assertEquals(450.0, PerspectiveAPI.getTransition().getDurationMs());
-    assertEquals(1.25, PerspectiveAPI.getTransition().getBlendPower());
+    assertEquals(1.25, algorithm.getBlendPower());
   }
 
   @Test
@@ -345,7 +357,7 @@ class StateManagerImplTest {
         {
           "enabled": false,
           "transition.duration_ms": -1.0,
-          "transition.blend_power": 1.0
+          "transition.fixed_start_chasing_rotation.blend_power": 1.0
         }
         """);
     PerspectiveAPI.setEnabled(true);
@@ -353,5 +365,13 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertTrue(PerspectiveAPI.isEnabled());
+  }
+
+  private static @Nullable FixedStartChasingRotationTransitionAlgorithm transitionAlgorithm() {
+    if (PerspectiveManager.INSTANCE.transition().algorithm()
+        instanceof FixedStartChasingRotationTransitionAlgorithm algorithm) {
+      return algorithm;
+    }
+    return null;
   }
 }

@@ -7,7 +7,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
-import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
 import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
@@ -63,7 +62,7 @@ public final class PerspectiveManager {
   private final PerspectiveOverrideChainImpl overrides;
   private final PerspectiveSwitcherManagerImpl switchers;
 
-  public @NonNull Transition transition() {
+  public @NonNull TransitionImpl transition() {
     return transition;
   }
 

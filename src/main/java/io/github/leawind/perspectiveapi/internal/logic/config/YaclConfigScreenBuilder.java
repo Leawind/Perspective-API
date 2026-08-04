@@ -11,6 +11,9 @@ import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
+import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
+import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -56,46 +59,7 @@ public final class YaclConfigScreenBuilder {
                                                     + ".config_screen.option.logic_tick_interval.value",
                                                 v)))
                         .build())
-                .group(
-                    OptionGroup.createBuilder()
-                        .name(text("config_screen.group.transition"))
-                        .option(
-                            Option.<Double>createBuilder()
-                                .name(text("config_screen.option.transition_duration"))
-                                .description(
-                                    OptionDescription.of(
-                                        text("config_screen.option.transition_duration.desc")))
-                                .binding(
-                                    260.0,
-                                    () -> PerspectiveAPI.getTransition().getDurationMs(),
-                                    v -> PerspectiveAPI.getTransition().setDurationMs(v))
-                                .controller(
-                                    opt ->
-                                        DoubleSliderControllerBuilder.create(opt)
-                                            .range(0.0, 800.0)
-                                            .step(20.0)
-                                            .formatValue(
-                                                v -> Component.literal(v.intValue() + " ms")))
-                                .build())
-                        .option(
-                            Option.<Double>createBuilder()
-                                .name(text("config_screen.option.blend_power"))
-                                .description(
-                                    OptionDescription.of(
-                                        text("config_screen.option.blend_power.desc")))
-                                .binding(
-                                    0.6,
-                                    PerspectiveAPI.getTransition()::getBlendPower,
-                                    PerspectiveAPI.getTransition()::setBlendPower)
-                                .controller(
-                                    opt ->
-                                        DoubleSliderControllerBuilder.create(opt)
-                                            .range(0.1, 4.0)
-                                            .step(0.1)
-                                            .formatValue(
-                                                v -> Component.literal(String.format("%.1f", v))))
-                                .build())
-                        .build())
+                .group(buildTransitionGroup())
                 .option(
                     Option.<PerspectiveSwitcher>createBuilder()
                         .name(text("config_screen.option.switcher"))
@@ -149,6 +113,49 @@ public final class YaclConfigScreenBuilder {
                 .build())
         .build()
         .generateScreen(parent);
+  }
+
+  private static OptionGroup buildTransitionGroup() {
+    OptionGroup.Builder builder =
+        OptionGroup.createBuilder()
+            .name(text("config_screen.group.transition"))
+            .option(
+                Option.<Double>createBuilder()
+                    .name(text("config_screen.option.transition_duration"))
+                    .description(
+                        OptionDescription.of(text("config_screen.option.transition_duration.desc")))
+                    .binding(
+                        TransitionImpl.DEFAULT_DURATION_MS,
+                        () -> PerspectiveAPI.getTransition().getDurationMs(),
+                        v -> PerspectiveAPI.getTransition().setDurationMs(v))
+                    .controller(
+                        opt ->
+                            DoubleSliderControllerBuilder.create(opt)
+                                .range(0.0, 800.0)
+                                .step(20.0)
+                                .formatValue(v -> Component.literal(v.intValue() + " ms")))
+                    .build());
+
+    if (PerspectiveManager.INSTANCE.transition().algorithm()
+        instanceof FixedStartChasingRotationTransitionAlgorithm algorithm) {
+      builder.option(
+          Option.<Double>createBuilder()
+              .name(text("config_screen.option.blend_power"))
+              .description(
+                  OptionDescription.of(text("config_screen.option.blend_power.desc")))
+              .binding(
+                  FixedStartChasingRotationTransitionAlgorithm.DEFAULT_BLEND_POWER,
+                  algorithm::getBlendPower,
+                  algorithm::setBlendPower)
+              .controller(
+                  opt ->
+                      DoubleSliderControllerBuilder.create(opt)
+                          .range(0.1, 4.0)
+                          .step(0.1)
+                          .formatValue(v -> Component.literal(String.format("%.1f", v))))
+              .build());
+    }
+    return builder.build();
   }
 
   private static Component text(String key) {

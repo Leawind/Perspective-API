@@ -3,53 +3,31 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.internal.utils.Utils;
-import io.github.leawind.perspectiveapi.internal.utils.smooth.Blender;
-import io.github.leawind.perspectiveapi.internal.utils.smooth.Blenders;
+import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmFactory;
 import java.util.Objects;
-import org.joml.Quaternionf;
-import org.joml.Quaternionfc;
-import org.joml.Vector3d;
-import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 /// Controls smooth camera transitions between perspectives.
 ///
-/// Position, FOV, and orthographic height interpolate from the fixed transition start toward the
-/// current target. Rotation uses chase interpolation so a moving target remains smooth between
-/// rendered frames. Projection mode changes are discrete.
+/// Owns the fixed transition window and delegates continuous-state interpolation to the selected
+/// algorithm. Projection mode changes are discrete.
 public final class TransitionImpl implements Transition {
+  public static final double DEFAULT_DURATION_MS = 260.0;
 
-  private static final double MIN_DELTA_MS = 0.1;
-  private static final float DEFAULT_FOV_DEG = 70.0f;
+  /// Change this constant to compare algorithms while keeping every implementation in source.
+  private static final TransitionAlgorithmFactory SELECTED_ALGORITHM =
+      FixedStartChasingRotationTransitionAlgorithm::new;
 
-  // region settings
-
-  private double durationMs = 260;
-  private Blender blender = Blenders::easeInOut;
-  private double blendPower = 0.6;
-
-  // endregion
-
-  // region start state
-
+  private double durationMs = DEFAULT_DURATION_MS;
   private double startTimeMs;
-  private final Vector3d startPosition = new Vector3d();
-  private final Quaternionf startRotation = new Quaternionf();
-  private float startFovDeg = DEFAULT_FOV_DEG;
-  private float startOrthographicHeight = PerspectiveStateImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT;
+  private final TransitionAlgorithm algorithm;
 
-  // endregion
-
-  // region interpolation state
-
-  private final Quaternionf prevRotation = new Quaternionf();
-  private float prevEasedProgress = 0;
-
-  // endregion
-
-  public TransitionImpl() {}
+  public TransitionImpl() {
+    algorithm = Objects.requireNonNull(SELECTED_ALGORITHM.create());
+  }
 
   public static double getTimeMs() {
     return GLFW.glfwGetTime() * 1000;
@@ -73,51 +51,15 @@ public final class TransitionImpl implements Transition {
     return durationMs;
   }
 
-  /// Sets the blending function used for easing.
-  public void setBlender(@NonNull Blender blender) {
-    this.blender = Objects.requireNonNull(blender);
-  }
-
-  /// Returns the current blending function.
-  public @NonNull Blender getBlender() {
-    return blender;
-  }
-
-  public void setBlendPower(double blendPower) {
-    if (!Double.isFinite(blendPower) || blendPower <= 0) {
-      throw new IllegalArgumentException("blendPower must be finite and positive");
-    }
-    this.blendPower = blendPower;
-  }
-
-  public double getBlendPower() {
-    return blendPower;
-  }
-
-  /// @return progress in `[0, 1]`
-  private float computeEasedProgress(double currentTimeMs) {
-    double deltaMs = currentTimeMs - startTimeMs;
-    deltaMs = Math.max(deltaMs, MIN_DELTA_MS);
-
-    float t = (float) (deltaMs / durationMs);
-    t = Utils.clamp(t, 0, 1);
-    t = blender.blend(t);
-    if (blendPower != 1) {
-      t = (float) Math.pow(t, blendPower);
-    }
-    t = Utils.clamp(t, 0, 1);
-    return t;
+  /// Returns the selected internal interpolation algorithm.
+  public @NonNull TransitionAlgorithm algorithm() {
+    return algorithm;
   }
 
   /// Starts a new transition from the given start state.
   public void setStartState(double startTimeMs, @NonNull PerspectiveState startState) {
     this.startTimeMs = startTimeMs;
-    this.startPosition.set(startState.position());
-    this.startRotation.set(startState.rotation());
-    this.startFovDeg = startState.getFovDeg();
-    this.startOrthographicHeight = startState.getOrthographicHeight();
-    this.prevRotation.set(startState.rotation());
-    this.prevEasedProgress = 0;
+    algorithm.start(Objects.requireNonNull(startState));
   }
 
   /// Interpolates continuous camera state from the start state toward the target state and writes
@@ -128,43 +70,23 @@ public final class TransitionImpl implements Transition {
       double currentTimeMs,
       @NonNull PerspectiveState target,
       PerspectiveState.@NonNull Mutable dest) {
-    updateTransform(
-        currentTimeMs, target.position(), target.rotation(), dest.position(), dest.rotation());
-    dest.setFovDeg(updateFovDeg(currentTimeMs, target.getFovDeg()));
+    Objects.requireNonNull(target);
+    Objects.requireNonNull(dest);
+    double elapsedTimeMs = Math.max(0, currentTimeMs - startTimeMs);
+    if (durationMs == 0 || elapsedTimeMs >= durationMs) {
+      copyContinuousState(target, dest);
+    } else {
+      algorithm.update(elapsedTimeMs, durationMs, target, dest);
+    }
     ProjectionMode targetProjectionMode = target.projectionMode();
     dest.setProjectionMode(targetProjectionMode);
-    dest.setOrthographicHeight(
-        updateOrthographicHeight(currentTimeMs, target.getOrthographicHeight()));
   }
 
-  private void updateTransform(
-      double currentTimeMs,
-      Vector3dc targetPosition,
-      Quaternionfc targetRotation,
-      Vector3d destPosition,
-      Quaternionf destRotation) {
-    float easedProgress = computeEasedProgress(currentTimeMs);
-
-    // Position: interpolate from fixed start to dynamic target
-    startPosition.lerp(targetPosition, easedProgress, destPosition);
-
-    // Rotation: chase interpolation from previous frame result to dynamic target
-    double k = (easedProgress - prevEasedProgress) / (1 - prevEasedProgress);
-    k = Utils.clamp(k, 0, 1);
-
-    prevRotation.slerp(targetRotation, (float) k, destRotation);
-    prevRotation.set(destRotation);
-    prevEasedProgress = easedProgress;
-  }
-
-  private float updateFovDeg(double currentTimeMs, float targetFovDeg) {
-    float easedProgress = computeEasedProgress(currentTimeMs);
-    return startFovDeg + (targetFovDeg - startFovDeg) * easedProgress;
-  }
-
-  private float updateOrthographicHeight(double currentTimeMs, float targetOrthographicHeight) {
-    float easedProgress = computeEasedProgress(currentTimeMs);
-    return startOrthographicHeight
-        + (targetOrthographicHeight - startOrthographicHeight) * easedProgress;
+  private static void copyContinuousState(
+      @NonNull PerspectiveState source, PerspectiveState.@NonNull Mutable destination) {
+    destination.position().set(source.position());
+    destination.rotation().set(source.rotation());
+    destination.setFovDeg(source.getFovDeg());
+    destination.setOrthographicHeight(source.getOrthographicHeight());
   }
 }
