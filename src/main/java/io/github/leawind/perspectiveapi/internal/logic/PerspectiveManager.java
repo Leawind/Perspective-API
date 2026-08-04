@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
@@ -15,6 +16,7 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainIm
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateImpl;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateSnapshot;
 import io.github.leawind.perspectiveapi.internal.impl.ThrottledPerspectiveSanitizer;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
@@ -88,7 +90,8 @@ public final class PerspectiveManager {
 
   // region camera state
 
-  private boolean isLastAppliedStateInitialized;
+  private boolean isTransitionStartStateInitialized;
+  private boolean hasPreviousCameraState;
   private final Quaternionf tempMcQuat = new Quaternionf();
 
   private final PerspectiveStateImpl targetState = new PerspectiveStateImpl();
@@ -115,6 +118,11 @@ public final class PerspectiveManager {
   /// Returns the perspective that currently owns the camera, or `null` when none is active.
   public @Nullable Perspective getCurrent() {
     return currentBehavior == null ? null : current;
+  }
+
+  /// Returns an independent snapshot of the last completed main-camera update.
+  public @Nullable PerspectiveState getPreviousCameraState() {
+    return hasPreviousCameraState ? new PerspectiveStateSnapshot(lastAppliedState) : null;
   }
 
   /// Returns the last resolved perspective, using the default before initial resolution.
@@ -163,10 +171,10 @@ public final class PerspectiveManager {
     PerspectiveBehavior deactivated = currentBehavior;
     currentBehavior = null;
     transitionAllowed = false;
-    isLastAppliedStateInitialized = false;
+    isTransitionStartStateInitialized = false;
+    hasPreviousCameraState = false;
     if (deactivated != null) {
-      extensions.run(
-          deactivated.getClass().getName(), "onDeactivate", deactivated::onDeactivate);
+      extensions.run(deactivated.getClass().getName(), "onDeactivate", deactivated::onDeactivate);
     }
   }
 
@@ -182,8 +190,7 @@ public final class PerspectiveManager {
     if (resolved != previous || previousBehavior == null) {
       boolean outgoingAllowsTransition =
           previousBehavior != null
-              && allowsTransition(
-                  previous.info().id(), previousBehavior, false);
+              && allowsTransition(previous.info().id(), previousBehavior, false);
       if (previousBehavior != null) {
         extensions.run(
             previousBehavior.getClass().getName(), "onDeactivate", previousBehavior::onDeactivate);
@@ -226,9 +233,9 @@ public final class PerspectiveManager {
   /// 2. Apply the active perspective and sanitize its target state
   /// 3. Apply and sanitize modifiers
   /// 4. Apply and sanitize perspective-switch transition interpolation
-  /// 5. Capture the state used as the start of a future transition
-  /// 6. Write the final state to the camera
-  /// 7. Call {@link PerspectiveBehavior#afterApplyCameraState}
+  /// 5. Write the final state to the camera
+  /// 6. Call {@link PerspectiveBehavior#afterApplyCameraState}
+  /// 7. Publish an independent source for previous-state snapshots and future transitions
   ///
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
@@ -286,9 +293,6 @@ public final class PerspectiveManager {
           "transition", targetState, backupState, () -> "Transition produced invalid state");
     }
 
-    lastAppliedState.set(targetState);
-    isLastAppliedStateInitialized = true;
-
     // Write to camera
     Bridge.setCameraPosition(camera, targetState.position());
     Bridge.setCameraRotation(camera, CameraSpace.apiToMc(targetState.rotation(), tempMcQuat));
@@ -299,6 +303,12 @@ public final class PerspectiveManager {
         current.info().id(),
         "postApply",
         () -> currentBehavior.afterApplyCameraState(backupState, renderTickContext));
+
+    if (PerspectiveAPI.isEnabled()) {
+      lastAppliedState.set(targetState);
+      isTransitionStartStateInitialized = true;
+      hasPreviousCameraState = true;
+    }
   }
 
   /// Called by ModEvents during MODIFY_FIELD_OF_VIEW.
@@ -326,14 +336,14 @@ public final class PerspectiveManager {
   }
 
   private void startTransition() {
-    if (!isLastAppliedStateInitialized) {
+    if (!isTransitionStartStateInitialized) {
       Camera camera = Bridge.getMainCamera();
       if (camera != null) {
         captureVanillaState(camera, lastAppliedState);
       } else {
         lastAppliedState.set(targetState);
       }
-      isLastAppliedStateInitialized = true;
+      isTransitionStartStateInitialized = true;
     }
     transition.setStartState(TransitionImpl.getTimeMs(), lastAppliedState);
   }

@@ -54,6 +54,8 @@ public final class PerspectiveAPI {
 
     @Nullable Perspective current();
 
+    @Nullable PerspectiveState previousCameraState();
+
     boolean isCurrent(@NonNull String id);
 
     void onEnabledChanged(boolean enabled);
@@ -160,6 +162,24 @@ public final class PerspectiveAPI {
   /// Returns the chain of modifiers applied to the camera state
   public static @NonNull PerspectiveModifierChain getModifierChain() {
     return requireRuntime().modifiers();
+  }
+
+  /// Returns the final state from the last completed main-camera update.
+  ///
+  /// The snapshot includes the active perspective, all modifiers, and perspective-switch
+  /// transition interpolation. It is published only after the camera update and final-state
+  /// callback have completed, so querying it from inside a camera-state callback still returns the
+  /// preceding completed update.
+  ///
+  /// The returned snapshot is independent and can be retained by the caller. It remains available
+  /// across level and dimension changes, but is invalidated when Perspective API is disabled.
+  ///
+  /// @return an independent read-only snapshot, or `null` before the first completed camera update
+  ///   and while the API is disabled
+  /// @throws IllegalStateException if called before the internal runtime is initialized
+  @ApiStatus.Experimental
+  public static @Nullable PerspectiveState getPreviousCameraState() {
+    return requireRuntime().previousCameraState();
   }
 
   /// Returns the priority-based chain for temporary camera overrides

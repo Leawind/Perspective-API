@@ -7,10 +7,11 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 
-/// A read-only, temporary view of the camera state managed by Perspective API.
+/// A read-only view or snapshot of camera state managed by Perspective API.
 ///
 /// Comprises position (world space), rotation (API convention, +Z forward),
 /// and projection settings.
+/// The method or callback providing a state documents whether it is temporary or can be retained.
 @ApiStatus.NonExtendable
 public interface PerspectiveState {
 

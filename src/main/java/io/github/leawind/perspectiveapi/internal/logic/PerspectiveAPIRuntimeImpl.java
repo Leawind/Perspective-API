@@ -5,6 +5,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
+import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
@@ -45,6 +46,11 @@ final class PerspectiveAPIRuntimeImpl implements PerspectiveAPI.Runtime {
   @Override
   public @Nullable Perspective current() {
     return PerspectiveManager.INSTANCE.getCurrent();
+  }
+
+  @Override
+  public @Nullable PerspectiveState previousCameraState() {
+    return PerspectiveManager.INSTANCE.getPreviousCameraState();
   }
 
   @Override

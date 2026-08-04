@@ -26,6 +26,7 @@
 | 临时替换玩家当前选择的基础视角         | Perspective + 临时覆盖   |
 | 在任意基础视角上协作式叠加相机效果     | Modifier                 |
 | 只读取最终相机状态或原版 `CameraType`  | 直接读取原版对象         |
+| 读取上一次相机更新的最终状态           | Perspective API 历史快照 |
 | 处理输入、HUD、截图、camera entity 等  | 由使用方自行实现         |
 | 生成额外渲染通道或从主相机派生其他视图 | 由使用方自己的渲染器实现 |
 
@@ -55,6 +56,12 @@ Perspective API 只协调相机状态。一个 Perspective 或 Modifier 可以�
 - 截取、编码或保存渲染结果
 
 这些功能可以查询当前 Perspective，以确保只在相关视角生效。
+
+### 上一次最终相机状态
+
+需要从上一帧最终画面开始生成连续相机路径时，使用 `PerspectiveAPI.getPreviousCameraState()` 取得上一次完成的主相机更新结果。该状态已经包含 Perspective、Modifier 和 Perspective 切换过渡的结果，不应改用当前 Perspective 的目标状态代替。
+
+该方法在尚无有效快照时返回 `null`。每次返回的 `PerspectiveState` 都是独立的只读快照，可以由调用方保留并在后续帧继续使用。只需要读取当前帧结果的功能仍应在合适的 render tick 阶段直接读取原版 `Camera`。
 
 ## 假想的模组特性
 
@@ -134,7 +141,7 @@ Grand Teleport 的完整高空转场决定了基础相机路径，应实现为�
 
 该 Perspective 应禁止普通进入和离开过渡，因为起飞、水平移动和下降等阶段已经组成完整的自定义动画。位置、旋转和 FOV 由 Perspective 根据传送阶段计算。
 
-为从上一帧最终画面平滑开始，模组应在合适的 render tick 中直接从原版 `Camera` 缓存最终相机状态。新 Perspective 激活后以该快照作为自定义路径的起点，而不假定改变 `BaseType` 后收到的原版初始状态仍等于上一帧画面。
+为从上一帧最终画面平滑开始，模组应在转场开始时通过 `PerspectiveAPI.getPreviousCameraState()` 取得上一次完成的主相机更新结果。新 Perspective 以该快照作为自定义路径的起点，而不假定改变 `BaseType` 后收到的原版初始状态仍等于上一帧画面。
 
 跨维度转场期间，覆盖注册保持存在，并根据模组自己的传送状态继续返回该 Perspective。换世界只触发重新求值，不应要求重新注册覆盖。
 
@@ -257,7 +264,7 @@ Freecam 可以注册为不可切换 Perspective，使其只能由自己的启用
 
 输入、HUD、camera entity、截图和额外渲染通道继续由各模组自行实现，不需要为了覆盖这些附属功能扩大相机状态 API。
 
-Grand Teleport 所需的上一帧最终状态可以直接从原版 `Camera` 缓存，不要求 Perspective API 增加只读观察者。特殊视频投影也可以在模组自己的渲染器中从基础相机派生，不要求扩展单个相机状态的投影模式。
+Grand Teleport 所需的上一帧最终状态由 Perspective API 的历史快照方法直接提供，不要求模组自行选择 render tick 时机并从原版 `Camera` 缓存。特殊视频投影仍然可以在模组自己的渲染器中从基础相机派生，不要求扩展单个相机状态的投影模式。
 
 锁定视角可以利用 `controllable` trait 判断当前 Perspective 是否适合通过鼠标事件进行闭环控制，但输入注入和运行时状态判断仍由锁定模组实现。
 

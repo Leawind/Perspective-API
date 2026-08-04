@@ -12,7 +12,9 @@ Perspective API 负责协调会修改、替换或叠加相机状态的功能，�
 
 [USE_CASES.md](./USE_CASES.md) 是设计时的调查材料，不是 Perspective API 必须支持的需求清单。该文档中列出的模组或特性未必适合使用 Perspective API，同一个模组也可能只有部分功能适合使用。
 
-只需要读取最终相机状态或当前原版 `CameraType` 的功能，不需要依赖 Perspective API。它们应当在合适的 render tick 阶段直接从原版 `Camera` 或其他原版状态中读取结果。Perspective API 应确保最终结果正确写回原版对象，而不是另外建立一套供只读消费者使用的平行状态来源。
+只需要读取当前最终相机状态或当前原版 `CameraType` 的功能，不需要依赖 Perspective API。它们应当在合适的 render tick 阶段直接从原版 `Camera` 或其他原版状态中读取结果。Perspective API 应确保最终结果正确写回原版对象，而不是另外建立一套供普通只读消费者使用的平行状态来源。
+
+需要以上一次最终相机状态为起点生成连续相机路径的功能不能总是在所需时机从原版 `Camera` 取得该历史状态。Perspective API 应保存上一次完成的主相机更新结果，并通过公共只读方法直接提供这个快照。
 
 以下内容目前不属于核心相机状态，不因为与相机有关就自动纳入 Perspective API：
 
@@ -155,8 +157,24 @@ Modifier 应只修改自己负责的字段，并按照 API 约定的旋转方向
 6. 应用 Perspective 切换过渡
 7. 将最终位置、旋转、FOV 和投影设置写回原版相机与渲染流程
 8. 通知当前 Perspective 最终实际采用的状态
+9. 将该最终状态发布为下一次相机更新可以查询的历史快照
 
-只读取相机结果的其他模组在此之后直接读取原版 `Camera`，不需要通过 Perspective API 注册观察者。
+只读取当前相机结果的其他模组在此之后直接读取原版 `Camera`，不需要通过 Perspective API 注册观察者。
+
+## 上一次最终相机状态
+
+Perspective API 提供 `PerspectiveAPI.getPreviousCameraState()`，返回上一次完成的主相机更新中最终实际采用的完整 `PerspectiveState`，包括位置、旋转、FOV、投影模式和正交视野高度。
+
+该方法具有以下语义：
+
+- 当前相机更新完全结束后才替换快照；在本次更新过程中查询时，得到的仍然是上一次完成的结果
+- 快照包含 Perspective、全部 Modifier 和 Perspective 切换过渡共同产生并已写回原版相机的状态
+- 在尚未完成过任何相机更新，或者快照已经失效时返回 `null`
+- 每次查询返回独立的只读快照；调用方可以跨越后续相机更新保留该对象，Perspective API 不会复用或修改它
+- 换世界或跨维度本身不清除快照，以便相机转场能够使用切换前最后一帧的状态
+- 禁用 Perspective API 时快照失效；重新启用后，在第一次相机更新完成前返回 `null`
+
+这个方法用于取得相机状态管线的历史边界，而不是替代原版 `Camera` 成为当前状态的通用读取入口，也不要求 API 提供逐帧观察者事件。
 
 ## 相机状态约定
 
