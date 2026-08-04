@@ -7,7 +7,7 @@
 
 # Perspective API
 
-![API version](https://img.shields.io/github/v/tag/Leawind/Perspective-API?label=API&color=818181)
+![Latest API version](https://img.shields.io/github/v/tag/Leawind/Perspective-API?label=Latest&color=818181)
 
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/LIqveQm1?style=flat&logo=modrinth&color=17B85A&cacheSeconds=3600&label=Modrinth)](https://modrinth.com/mod/perspective-api)
 [![CurseForge Downloads](https://img.shields.io/curseforge/dt/1575322?style=flat&logo=curseforge&cacheSeconds=3600&label=CurseForge)](https://www.curseforge.com/minecraft/mc-mods/perspective-api)
