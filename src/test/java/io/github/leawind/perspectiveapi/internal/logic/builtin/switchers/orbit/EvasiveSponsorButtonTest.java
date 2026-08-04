@@ -57,7 +57,7 @@ class EvasiveSponsorButtonTest {
   void forcedEscapeMayTouchScreenEdge() {
     EvasiveSponsorButton button = new EvasiveSponsorButton();
     button.update(320, 180, 43, 160, 20, 0);
-    double mouseX = button.x() + button.width() - 1;
+    double mouseX = 43;
     double mouseY = button.y() + EvasiveSponsorButton.HEIGHT * 0.5;
 
     button.update(320, 180, 43, mouseX, mouseY, 0);
