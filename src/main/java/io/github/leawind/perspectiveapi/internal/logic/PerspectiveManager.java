@@ -89,11 +89,12 @@ public final class PerspectiveManager {
 
   // region camera state
 
-  private boolean isTempStateInited = false;
+  private boolean isTransitionStateInitialized;
   private final Quaternionf tempMcQuat = new Quaternionf();
 
   private final PerspectiveStateImpl targetState = new PerspectiveStateImpl();
   private final PerspectiveStateImpl backupState = new PerspectiveStateImpl();
+  private final PerspectiveStateImpl stateBeforeAfterModifiers = new PerspectiveStateImpl();
   private float cachedVanillaFovDeg = PerspectiveStateImpl.DEFAULT_FOV_DEGREES;
 
   // endregion
@@ -163,7 +164,7 @@ public final class PerspectiveManager {
     PerspectiveBehavior deactivated = currentBehavior;
     currentBehavior = null;
     transitionAllowed = false;
-    isTempStateInited = false;
+    isTransitionStateInitialized = false;
     if (deactivated != null) {
       extensions.run(
           deactivated.getClass().getName(), "onDeactivate", deactivated::onDeactivate);
@@ -260,15 +261,8 @@ public final class PerspectiveManager {
     }
 
     // Backup vanilla state for fallback
-    {
-      Bridge.getCameraPosition(camera, targetState.position());
-      Bridge.getCameraRotation(camera, tempMcQuat);
-      CameraSpace.mcToApi(tempMcQuat, targetState.rotation());
-      targetState.setFovDeg(cachedVanillaFovDeg);
-      targetState.setProjectionMode(ProjectionMode.PERSPECTIVE);
-      targetState.setOrthographicHeight(PerspectiveStateImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT);
-      backupState.set(targetState);
-    }
+    captureVanillaState(camera, targetState);
+    backupState.set(targetState);
 
     // Apply perspective
     if (!extensions.run(
@@ -296,11 +290,12 @@ public final class PerspectiveManager {
           "transition", targetState, backupState, () -> "Transition produced invalid state");
     }
 
+    stateBeforeAfterModifiers.set(targetState);
+    isTransitionStateInitialized = true;
+
     // Apply modifiers to the final visual state
     modifiers.applyCameraState(
         PerspectiveModifierPhase.AFTER_TRANSITION, targetState, renderTickContext);
-
-    isTempStateInited = true;
 
     // Write to camera
     Bridge.setCameraPosition(camera, targetState.position());
@@ -338,16 +333,26 @@ public final class PerspectiveManager {
   }
 
   private void startTransition() {
-    if (!isTempStateInited) {
+    if (!isTransitionStateInitialized) {
       Camera camera = Bridge.getMainCamera();
       if (camera != null) {
-        Bridge.getCameraPosition(camera, targetState.position());
-        Bridge.getCameraRotation(camera, tempMcQuat);
-        CameraSpace.mcToApi(tempMcQuat, targetState.rotation());
-        isTempStateInited = true;
+        captureVanillaState(camera, stateBeforeAfterModifiers);
+      } else {
+        stateBeforeAfterModifiers.set(targetState);
       }
+      isTransitionStateInitialized = true;
     }
-    transition.setStartState(TransitionImpl.getTimeMs(), targetState);
+    transition.setStartState(TransitionImpl.getTimeMs(), stateBeforeAfterModifiers);
+  }
+
+  private void captureVanillaState(
+      @NonNull Camera camera, @NonNull PerspectiveStateImpl destination) {
+    Bridge.getCameraPosition(camera, destination.position());
+    Bridge.getCameraRotation(camera, tempMcQuat);
+    CameraSpace.mcToApi(tempMcQuat, destination.rotation());
+    destination.setFovDeg(cachedVanillaFovDeg);
+    destination.setProjectionMode(ProjectionMode.PERSPECTIVE);
+    destination.setOrthographicHeight(PerspectiveStateImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT);
   }
 
   private boolean allowsTransition(
