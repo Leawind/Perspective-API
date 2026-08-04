@@ -1,6 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.impl.context;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveContext;
+import java.util.Objects;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
@@ -19,8 +20,8 @@ public class PerspectiveContextImpl implements PerspectiveContext {
   }
 
   @Override
-  public @Nullable Entity cameraEntity() {
-    return cameraEntity;
+  public @NonNull Entity cameraEntity() {
+    return Objects.requireNonNull(cameraEntity, "Perspective context is not initialized");
   }
 
   @Override
