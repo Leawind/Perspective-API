@@ -3,7 +3,7 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.FeedForwardCorrectionTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmFactory;
 import java.util.Objects;
@@ -19,7 +19,7 @@ public final class TransitionImpl implements Transition {
 
   /// Change this constant to compare algorithms while keeping every implementation in source.
   private static final TransitionAlgorithmFactory SELECTED_ALGORITHM =
-      FixedStartChasingRotationTransitionAlgorithm::new;
+      FeedForwardCorrectionTransitionAlgorithm::new;
 
   private double durationMs = DEFAULT_DURATION_MS;
   private double startTimeMs;

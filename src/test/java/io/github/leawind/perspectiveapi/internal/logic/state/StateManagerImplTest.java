@@ -197,12 +197,24 @@ class StateManagerImplTest {
   }
 
   @Test
-  void roundTripPreservesTransitionSettings() throws IOException {
+  void roundTripPreservesTransitionDuration() {
     Path filePath = tempDir.resolve("transition.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    PerspectiveAPI.getTransition().setDurationMs(450.0);
+
+    manager.tryExtractAndSave();
+    PerspectiveAPI.getTransition().setDurationMs(1.0);
+    manager.tryLoadAndApply();
+
+    assertEquals(450.0, PerspectiveAPI.getTransition().getDurationMs());
+  }
+
+  @Test
+  void roundTripPreservesFixedStartAlgorithmSettings() throws IOException {
+    Path filePath = tempDir.resolve("transition-algorithm.json");
     StateManager manager = new StateManagerImpl(filePath);
     FixedStartChasingRotationTransitionAlgorithm algorithm = transitionAlgorithm();
     assumeTrue(algorithm != null);
-    PerspectiveAPI.getTransition().setDurationMs(450.0);
     algorithm.setBlendPower(1.25);
 
     manager.tryExtractAndSave();
@@ -211,11 +223,9 @@ class StateManagerImplTest {
         1.25,
         savedState.get("transition.fixed_start_chasing_rotation.blend_power").getAsDouble());
     assertFalse(savedState.has("transition.blend_power"));
-    PerspectiveAPI.getTransition().setDurationMs(1.0);
     algorithm.setBlendPower(1.0);
     manager.tryLoadAndApply();
 
-    assertEquals(450.0, PerspectiveAPI.getTransition().getDurationMs());
     assertEquals(1.25, algorithm.getBlendPower());
   }
 
