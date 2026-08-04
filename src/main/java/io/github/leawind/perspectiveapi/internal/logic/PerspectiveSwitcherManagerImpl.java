@@ -88,7 +88,7 @@ public class PerspectiveSwitcherManagerImpl
     var currentSwitcher = this.currentSwitcher;
     if (currentSwitcher == null) {
       currentSwitcher = this.currentSwitcher = defaultSwitcher;
-      Perspective current = PerspectiveManager.INSTANCE.getCurrent();
+      Perspective current = PerspectiveManager.INSTANCE.getLastResolvedOrDefault();
       PerspectiveSwitcherBehavior activated = currentSwitcher;
       EXTENSIONS.run(activated.id(), "onActivated", () -> activated.onActivated(current));
     }
@@ -117,7 +117,7 @@ public class PerspectiveSwitcherManagerImpl
         EXTENSIONS.run(old.id(), "onDeactivated", old::onDeactivated);
       }
       this.currentSwitcher = behavior;
-      Perspective current = PerspectiveManager.INSTANCE.getCurrent();
+      Perspective current = PerspectiveManager.INSTANCE.getLastResolvedOrDefault();
       EXTENSIONS.run(behavior.id(), "onActivated", () -> behavior.onActivated(current));
     }
   }

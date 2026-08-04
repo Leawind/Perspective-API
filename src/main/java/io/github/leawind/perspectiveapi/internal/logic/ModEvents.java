@@ -24,12 +24,6 @@ public final class ModEvents {
           manager.clientTick(minecraft);
         });
 
-    GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
-        ignored -> {
-          if (!PerspectiveAPI.isEnabled()) return;
-          manager.clearTransientOverrides();
-        });
-
     GameClientEvents.SETUP_CAMERA.on(
         (ctx) -> {
           if (!PerspectiveAPI.isEnabled()) return;

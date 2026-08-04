@@ -5,7 +5,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierPhase;
-import io.github.leawind.perspectiveapi.api.PerspectiveOverrideRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
@@ -61,7 +60,6 @@ public final class PerspectiveManager {
   private final TransitionImpl transition;
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
-  private final PerspectiveOverrideRegistration switcherOverride;
   private final PerspectiveSwitcherManagerImpl switchers;
 
   public @NonNull Transition transition() {
@@ -105,7 +103,7 @@ public final class PerspectiveManager {
     PerspectiveRegistryImpl.INSTANCE.onUpdate().on(() -> registryDirty = true);
 
     overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
-    switcherOverride = overrides.register(Integer.MIN_VALUE, switchers);
+    overrides.register(Integer.MIN_VALUE, switchers);
 
     modifiers = new PerspectiveModifierChainImpl(sanitizer);
 
@@ -114,14 +112,17 @@ public final class PerspectiveManager {
 
   // region perspective management
 
-  /// @throws IllegalStateException if called before SPI discovery completes during mod loading
-  public @NonNull Perspective getCurrent() throws IllegalStateException {
-    var current = this.current;
-    if (current == null) {
-      current = PerspectiveRegistryImpl.INSTANCE.getDefault();
-      this.current = current;
-    }
+  /// Returns the perspective that currently owns the camera, or `null` when none is active.
+  public @Nullable Perspective getCurrent() {
+    return currentBehavior == null ? null : current;
+  }
 
+  /// Returns the last resolved perspective, using the default before initial resolution.
+  public @NonNull Perspective getLastResolvedOrDefault() {
+    Perspective current = this.current;
+    if (current != null) return current;
+    current = PerspectiveRegistryImpl.INSTANCE.getDefault();
+    this.current = current;
     return current;
   }
 
@@ -152,8 +153,21 @@ public final class PerspectiveManager {
     logicUpdateScheduler.reset();
   }
 
-  void clearTransientOverrides() {
-    overrides.clearExcept(switcherOverride);
+  public void onEnabledChanged(boolean enabled) {
+    logicUpdateScheduler.reset();
+    if (enabled) {
+      registryDirty = true;
+      return;
+    }
+
+    PerspectiveBehavior deactivated = currentBehavior;
+    currentBehavior = null;
+    previousBehavior = null;
+    isTempStateInited = false;
+    if (deactivated != null) {
+      extensions.run(
+          deactivated.getClass().getName(), "onDeactivate", deactivated::onDeactivate);
+    }
   }
 
   private void updateCurrentPerspective(boolean registryChanged) {
@@ -174,8 +188,8 @@ public final class PerspectiveManager {
       current = resolved;
       this.currentBehavior = resolvedBehavior;
 
-      extensions.run(resolved.info().id(), "onActivate", resolvedBehavior::onActivate);
       updateCameraType(resolved.info().baseType());
+      extensions.run(resolved.info().id(), "onActivate", resolvedBehavior::onActivate);
       startTransition();
     } else if (registryChanged) {
       updateCameraType(resolved.info().baseType());
@@ -318,7 +332,7 @@ public final class PerspectiveManager {
 
   // endregion
 
-  public void setCurrent(@NonNull Perspective perspective) {
+  public void restoreLastResolved(@NonNull Perspective perspective) {
     current = perspective;
   }
 

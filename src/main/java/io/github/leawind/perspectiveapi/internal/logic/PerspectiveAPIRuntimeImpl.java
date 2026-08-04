@@ -10,6 +10,7 @@ import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.Objects;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 final class PerspectiveAPIRuntimeImpl implements PerspectiveAPI.Runtime {
   static final PerspectiveAPIRuntimeImpl INSTANCE = new PerspectiveAPIRuntimeImpl();
@@ -42,14 +43,19 @@ final class PerspectiveAPIRuntimeImpl implements PerspectiveAPI.Runtime {
   }
 
   @Override
-  public @NonNull Perspective current() throws IllegalStateException {
+  public @Nullable Perspective current() {
     return PerspectiveManager.INSTANCE.getCurrent();
   }
 
   @Override
   public boolean isCurrent(@NonNull String id) {
     Objects.requireNonNull(id);
-    return PerspectiveRegistryImpl.INSTANCE.isDefaultFound()
-        && PerspectiveManager.INSTANCE.getCurrent().info().id().equals(id);
+    Perspective current = PerspectiveManager.INSTANCE.getCurrent();
+    return current != null && current.info().id().equals(id);
+  }
+
+  @Override
+  public void onEnabledChanged(boolean enabled) {
+    PerspectiveManager.INSTANCE.onEnabledChanged(enabled);
   }
 }

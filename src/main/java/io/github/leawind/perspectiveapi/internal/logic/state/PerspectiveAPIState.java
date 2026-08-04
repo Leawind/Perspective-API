@@ -145,7 +145,7 @@ public final class PerspectiveAPIState {
 
     if (managerCurrent != null) {
       Perspective perspective = PerspectiveRegistryImpl.INSTANCE.getOrDefault(managerCurrent);
-      PerspectiveManager.INSTANCE.setCurrent(perspective);
+      PerspectiveManager.INSTANCE.restoreLastResolved(perspective);
     }
 
     if (managerSwitcher != null) {
@@ -166,7 +166,7 @@ public final class PerspectiveAPIState {
     return new PerspectiveAPIState(
         PerspectiveAPI.isEnabled(),
         PerspectiveAPI.getLogicTickInterval(),
-        Optional.of(PerspectiveManager.INSTANCE.getCurrent().info().id()),
+        Optional.of(PerspectiveManager.INSTANCE.getLastResolvedOrDefault().info().id()),
         Optional.of(PerspectiveAPI.getSwitcherManager().getSelectedSwitcher().id()),
         PerspectiveAPI.getTransition().getDurationMs(),
         PerspectiveAPI.getTransition().getBlendPower(),

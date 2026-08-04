@@ -52,9 +52,11 @@ public final class PerspectiveAPI {
 
     @NonNull PerspectiveSwitcherManager switchers();
 
-    @NonNull Perspective current() throws IllegalStateException;
+    @Nullable Perspective current();
 
     boolean isCurrent(@NonNull String id);
+
+    void onEnabledChanged(boolean enabled);
   }
 
   /// Installs the internal runtime implementation.
@@ -114,9 +116,13 @@ public final class PerspectiveAPI {
 
   /// Enable or disable the mod Perspective API
   ///
-  /// When disabled, the mod reverts to vanilla camera behavior
+  /// When disabled, the active perspective is deactivated and the mod stops modifying camera
+  /// state. Registered perspectives, overrides, and modifiers are retained.
   public static void setEnabled(boolean enabled) {
+    if (PerspectiveAPI.enabled == enabled) return;
     PerspectiveAPI.enabled = enabled;
+    Runtime runtime = PerspectiveAPI.runtime;
+    if (runtime != null) runtime.onEnabledChanged(enabled);
   }
 
   /// Returns the number of client ticks between Perspective API logic updates.
@@ -168,19 +174,20 @@ public final class PerspectiveAPI {
     return requireRuntime().switchers();
   }
 
-  /// Returns the currently active perspective, or throws if mod is not initialized.
+  /// Returns the perspective that currently owns the base camera state.
   ///
-  /// Use {@link #isCurrent(String)} to check if the current perspective has specific id;
+  /// Returns `null` while Perspective API is disabled or before a perspective has been activated.
+  /// Use {@link #isCurrent(String)} to check a specific ID without a null check.
   ///
   /// @throws IllegalStateException if called before SPI discovery completes during mod loading
-  public static @NonNull Perspective getCurrent() throws IllegalStateException {
+  public static @Nullable Perspective getCurrent() throws IllegalStateException {
     return requireRuntime().current();
   }
 
   /// Checks if the currently active perspective matches the given ID.
   ///
-  /// Returns `false` if called before SPI discovery completes, unlike {@link #getCurrent()} which
-  /// throws.
+  /// Returns `false` while Perspective API is disabled, before a perspective has been activated,
+  /// or before SPI discovery completes.
   ///
   /// @param id the perspective ID to check
   /// @return `true` if the current perspective has the given ID, `false` otherwise

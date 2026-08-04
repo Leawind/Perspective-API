@@ -87,15 +87,4 @@ public final class PerspectiveOverrideChainImpl
       return false;
     }
   }
-
-  /// Clears all entries except the registration identified by the given handle.
-  public void clearExcept(@NonNull PerspectiveOverrideRegistration registration) {
-    Objects.requireNonNull(registration);
-    synchronized (this) {
-      List<Registration> newList = new ArrayList<>(entries);
-      if (newList.removeIf(entry -> entry != registration)) {
-        this.entries = List.copyOf(newList);
-      }
-    }
-  }
 }

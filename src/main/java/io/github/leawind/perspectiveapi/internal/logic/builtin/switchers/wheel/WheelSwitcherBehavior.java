@@ -149,9 +149,9 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   public @Nullable String getSelectedPerspectiveId() {
     var selected = this.selected;
     if (selected == null) {
-      String current = PerspectiveAPI.getCurrent().info().id();
-      if (list.contains(current)) {
-        this.selected = current;
+      Perspective current = PerspectiveAPI.getCurrent();
+      if (current != null && list.contains(current.info().id())) {
+        this.selected = current.info().id();
       }
     }
     return this.selected;
