@@ -2,15 +2,12 @@ package io.github.leawind.perspectiveapi.internal.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
-import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
-import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithm;
-import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmType;
+import io.github.leawind.perspectiveapi.internal.impl.transition.position.FixedStartPositionTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.rotation.ChasingRotationTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.testutils.TestUtils;
 import org.joml.Quaternionf;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,51 +23,72 @@ class TransitionImplTest {
     transition = new TransitionImpl();
     transition.setDurationMs(100.0);
     start = state(0.0, 0.0f, 60.0f);
+    start.setOrthographicHeight(10.0f);
     target = state(10.0, 90.0f, 100.0f);
+    target.setOrthographicHeight(30.0f);
     transition.setStartState(1_000.0, start);
   }
 
   @Test
-  void exposesCommonDefaultAndUsesIndependentAlgorithmInstances() {
-    TransitionImpl first = new TransitionImpl();
-    TransitionImpl second = new TransitionImpl();
-
-    assertEquals(TransitionImpl.DEFAULT_DURATION_MS, first.getDurationMs());
-    assertEquals(TransitionImpl.DEFAULT_ALGORITHM, first.getAlgorithmType());
-    assertNotSame(first.algorithm(), second.algorithm());
+  void exposesIndependentDefaultAlgorithms() {
+    assertEquals(TransitionImpl.DEFAULT_DURATION_MS, new TransitionImpl().getDurationMs());
+    assertEquals(TransitionImpl.DEFAULT_POSITION_ALGORITHM, transition.getPositionAlgorithm());
+    assertEquals(TransitionImpl.DEFAULT_ROTATION_ALGORITHM, transition.getRotationAlgorithm());
+    assertEquals(TransitionImpl.DEFAULT_FOV_ALGORITHM, transition.getFovAlgorithm());
+    assertEquals(
+        TransitionImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT_ALGORITHM,
+        transition.getOrthographicHeightAlgorithm());
   }
 
   @Test
-  void switchesAlgorithmAtRuntimeAndReinitializesItFromTransitionStart() {
-    TransitionAlgorithm previous = transition.algorithm();
-    FixedStartChasingRotationTransitionAlgorithm expectedAlgorithm =
-        new FixedStartChasingRotationTransitionAlgorithm();
-    expectedAlgorithm.start(start);
-    PerspectiveStateImpl expected = new PerspectiveStateImpl();
-    expectedAlgorithm.update(50.0, 100.0, target, expected);
+  void switchesOnlyTheSelectedChannelAtRuntime() {
+    transition.setPositionAlgorithm(FixedStartPositionTransitionAlgorithm.INSTANCE);
+    PerspectiveStateImpl actual = new PerspectiveStateImpl();
 
-    transition.setAlgorithmType(TransitionAlgorithmType.FIXED_START_CHASING_ROTATION);
+    transition.update(1_050.0, target, actual);
+
+    assertEquals(5.0f, actual.position().x(), 1.0e-6);
+    TestUtils.assertQuatEquals(rotation(45.0f), actual.rotation());
+    assertEquals(80.0f, actual.getFovDeg(), 1.0e-4f);
+    assertEquals(20.0f, actual.getOrthographicHeight(), 1.0e-4f);
+  }
+
+  @Test
+  void switchesEachChannelIndependently() {
+    transition.setPositionAlgorithm(FixedStartPositionTransitionAlgorithm.INSTANCE);
+    transition.setRotationAlgorithm(ChasingRotationTransitionAlgorithm.INSTANCE);
+    PerspectiveStateImpl actual = new PerspectiveStateImpl();
+
+    transition.update(1_050.0, target, actual);
+
+    assertEquals(5.0f, actual.position().x(), 1.0e-6);
+    TestUtils.assertQuatEquals(rotation(45.0f), actual.rotation());
+    assertEquals(80.0f, actual.getFovDeg(), 1.0e-4f);
+    assertEquals(20.0f, actual.getOrthographicHeight(), 1.0e-4f);
+  }
+
+  @Test
+  void switchingPositionAlgorithmReinitializesOnlyPositionFromTransitionStart() {
+    PerspectiveStateImpl intermediate = new PerspectiveStateImpl();
+    transition.update(1_025.0, target, intermediate);
+
+    transition.setPositionAlgorithm(FixedStartPositionTransitionAlgorithm.INSTANCE);
     PerspectiveStateImpl actual = new PerspectiveStateImpl();
     transition.update(1_050.0, target, actual);
 
-    assertEquals(
-        TransitionAlgorithmType.FIXED_START_CHASING_ROTATION, transition.getAlgorithmType());
-    assertNotSame(previous, transition.algorithm());
-    assertStateEquals(expected, actual);
+    assertEquals(5.0f, actual.position().x(), 1.0e-6);
+    TestUtils.assertQuatEquals(rotation(45.0f), actual.rotation());
+    assertEquals(80.0f, actual.getFovDeg(), 1.0e-4f);
+    assertEquals(20.0f, actual.getOrthographicHeight(), 1.0e-4f);
   }
 
   @Test
-  void settingCurrentAlgorithmTypeKeepsItsInstance() {
-    TransitionAlgorithm algorithm = transition.algorithm();
-
-    transition.setAlgorithmType(transition.getAlgorithmType());
-
-    assertSame(algorithm, transition.algorithm());
-  }
-
-  @Test
-  void rejectsNullAlgorithmType() {
-    assertThrows(NullPointerException.class, () -> transition.setAlgorithmType(null));
+  void rejectsNullAlgorithms() {
+    assertThrows(NullPointerException.class, () -> transition.setPositionAlgorithm(null));
+    assertThrows(NullPointerException.class, () -> transition.setRotationAlgorithm(null));
+    assertThrows(NullPointerException.class, () -> transition.setFovAlgorithm(null));
+    assertThrows(
+        NullPointerException.class, () -> transition.setOrthographicHeightAlgorithm(null));
   }
 
   @Test
@@ -79,6 +97,39 @@ class TransitionImplTest {
     assertThrows(IllegalArgumentException.class, () -> transition.setDurationMs(Double.NaN));
     assertThrows(
         IllegalArgumentException.class, () -> transition.setDurationMs(Double.POSITIVE_INFINITY));
+  }
+
+  @Test
+  void appliesCustomBlenderToEveryDefaultChannel() {
+    transition.setBlender(progress -> progress * progress);
+    PerspectiveStateImpl actual = new PerspectiveStateImpl();
+
+    transition.update(1_050.0, target, actual);
+
+    assertEquals(2.5, actual.position().x(), 1.0e-6);
+    TestUtils.assertQuatEquals(rotation(22.5f), actual.rotation());
+    assertEquals(70.0f, actual.getFovDeg(), 1.0e-4f);
+    assertEquals(15.0f, actual.getOrthographicHeight(), 1.0e-4f);
+  }
+
+  @Test
+  void appliesCustomBlenderToEveryAlternativeAlgorithm() {
+    transition.setPositionAlgorithm(FixedStartPositionTransitionAlgorithm.INSTANCE);
+    transition.setRotationAlgorithm(ChasingRotationTransitionAlgorithm.INSTANCE);
+    transition.setBlender(progress -> progress * progress);
+    PerspectiveStateImpl actual = new PerspectiveStateImpl();
+
+    transition.update(1_050.0, target, actual);
+
+    assertEquals(2.5, actual.position().x(), 1.0e-6);
+    TestUtils.assertQuatEquals(rotation(22.5f), actual.rotation());
+    assertEquals(70.0f, actual.getFovDeg(), 1.0e-4f);
+    assertEquals(15.0f, actual.getOrthographicHeight(), 1.0e-4f);
+  }
+
+  @Test
+  void rejectsNullBlender() {
+    assertThrows(NullPointerException.class, () -> transition.setBlender(null));
   }
 
   @Test
@@ -120,10 +171,22 @@ class TransitionImplTest {
   }
 
   @Test
+  void inProgressUpdateSupportsAliasingTargetAndDestination() {
+    transition.update(1_050.0, target, target);
+
+    assertEquals(5.0, target.position().x(), 1.0e-6);
+    TestUtils.assertQuatEquals(rotation(45.0f), target.rotation());
+    assertEquals(80.0f, target.getFovDeg(), 1.0e-4f);
+    assertEquals(20.0f, target.getOrthographicHeight(), 1.0e-4f);
+  }
+
+  @Test
   void completedUpdateSupportsAliasingTargetAndDestination() {
     transition.update(1_100.0, target, target);
 
-    assertStateEquals(state(10.0, 90.0f, 100.0f), target);
+    PerspectiveStateImpl expected = state(10.0, 90.0f, 100.0f);
+    expected.setOrthographicHeight(30.0f);
+    assertStateEquals(expected, target);
   }
 
   private static void assertStateEquals(PerspectiveStateImpl expected, PerspectiveStateImpl actual) {

@@ -12,7 +12,6 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
-import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,11 +70,6 @@ public final class PerspectiveAPIState {
                       Codec.DOUBLE
                           .optionalFieldOf("transition.duration_ms", 300.0)
                           .forGetter(s -> s.transitionDurationMs),
-                      Codec.DOUBLE
-                          .optionalFieldOf(
-                              "transition.fixed_start_chasing_rotation.blend_power",
-                              FixedStartChasingRotationTransitionAlgorithm.DEFAULT_BLEND_POWER)
-                          .forGetter(s -> s.fixedStartChasingRotationBlendPower),
                       SECTIONS_CODEC
                           .optionalFieldOf("sections", Map.of())
                           .forGetter(s -> s.sections))
@@ -86,7 +80,6 @@ public final class PerspectiveAPIState {
   private final @Nullable String managerCurrent;
   private final @Nullable String managerSwitcher;
   private final double transitionDurationMs;
-  private final double fixedStartChasingRotationBlendPower;
   private final Map<String, Dynamic<?>> sections;
 
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -96,14 +89,12 @@ public final class PerspectiveAPIState {
       Optional<String> managerCurrent,
       Optional<String> managerSwitcher,
       double transitionDurationMs,
-      double fixedStartChasingRotationBlendPower,
       Map<String, Dynamic<?>> sections) {
     this.enabled = enabled;
     this.logicTickInterval = logicTickInterval;
     this.managerCurrent = managerCurrent.orElse(null);
     this.managerSwitcher = managerSwitcher.orElse(null);
     this.transitionDurationMs = transitionDurationMs;
-    this.fixedStartChasingRotationBlendPower = fixedStartChasingRotationBlendPower;
     this.sections = Collections.unmodifiableMap(new TreeMap<>(sections));
   }
 
@@ -114,10 +105,6 @@ public final class PerspectiveAPIState {
     return enabled == that.enabled
         && logicTickInterval == that.logicTickInterval
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
-        && Double.compare(
-                that.fixedStartChasingRotationBlendPower,
-                fixedStartChasingRotationBlendPower)
-            == 0
         && Objects.equals(managerCurrent, that.managerCurrent)
         && Objects.equals(managerSwitcher, that.managerSwitcher)
         && sections.equals(that.sections);
@@ -131,7 +118,6 @@ public final class PerspectiveAPIState {
         managerCurrent,
         managerSwitcher,
         transitionDurationMs,
-        fixedStartChasingRotationBlendPower,
         sections);
   }
 
@@ -142,14 +128,6 @@ public final class PerspectiveAPIState {
     if (!Double.isFinite(transitionDurationMs) || transitionDurationMs < 0) {
       throw new IllegalArgumentException("transition.duration_ms must be finite and non-negative");
     }
-    FixedStartChasingRotationTransitionAlgorithm fixedStartAlgorithm = fixedStartAlgorithm();
-    if (fixedStartAlgorithm != null
-        && (!Double.isFinite(fixedStartChasingRotationBlendPower)
-            || fixedStartChasingRotationBlendPower <= 0)) {
-      throw new IllegalArgumentException(
-          "transition.fixed_start_chasing_rotation.blend_power must be finite and positive");
-    }
-
     PerspectiveAPI.setEnabled(enabled);
     PerspectiveAPI.setLogicTickInterval(logicTickInterval);
 
@@ -167,37 +145,18 @@ public final class PerspectiveAPIState {
     }
 
     PerspectiveAPI.getTransition().setDurationMs(transitionDurationMs);
-    if (fixedStartAlgorithm != null) {
-      fixedStartAlgorithm.setBlendPower(fixedStartChasingRotationBlendPower);
-    }
     applySections(sections);
   }
 
   static PerspectiveAPIState extract(@Nullable PerspectiveAPIState existing) {
     Map<String, Dynamic<?>> existingSections = existing == null ? Map.of() : existing.sections;
-    FixedStartChasingRotationTransitionAlgorithm fixedStartAlgorithm = fixedStartAlgorithm();
-    double fixedStartChasingRotationBlendPower =
-        fixedStartAlgorithm != null
-            ? fixedStartAlgorithm.getBlendPower()
-            : existing != null
-                ? existing.fixedStartChasingRotationBlendPower
-                : FixedStartChasingRotationTransitionAlgorithm.DEFAULT_BLEND_POWER;
     return new PerspectiveAPIState(
         PerspectiveAPI.isEnabled(),
         PerspectiveAPI.getLogicTickInterval(),
         Optional.of(PerspectiveManager.INSTANCE.getLastResolvedOrDefault().info().id()),
         Optional.of(PerspectiveAPI.getSwitcherManager().getSelectedSwitcher().id()),
         PerspectiveAPI.getTransition().getDurationMs(),
-        fixedStartChasingRotationBlendPower,
         extractSections(existingSections));
-  }
-
-  private static @Nullable FixedStartChasingRotationTransitionAlgorithm fixedStartAlgorithm() {
-    if (PerspectiveManager.INSTANCE.transition().algorithm()
-        instanceof FixedStartChasingRotationTransitionAlgorithm algorithm) {
-      return algorithm;
-    }
-    return null;
   }
 
   public static synchronized void registerSection(@NonNull Section<?> section) {

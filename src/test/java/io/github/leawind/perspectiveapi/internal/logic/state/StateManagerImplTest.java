@@ -3,7 +3,6 @@ package io.github.leawind.perspectiveapi.internal.logic.state;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,8 +17,10 @@ import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
-import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
-import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmType;
+import io.github.leawind.perspectiveapi.internal.impl.transition.position.FixedStartPositionTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.rotation.ChasingRotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FixedStartFovTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FixedStartOrthographicHeightTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
 import java.io.IOException;
@@ -129,13 +130,12 @@ class StateManagerImplTest {
     PerspectiveAPI.setEnabled(true);
     PerspectiveAPI.setLogicTickInterval(PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL);
     PerspectiveAPI.getTransition().setDurationMs(260.0);
-    FixedStartChasingRotationTransitionAlgorithm algorithm = transitionAlgorithm();
-    if (algorithm != null) {
-      algorithm.setBlendPower(FixedStartChasingRotationTransitionAlgorithm.DEFAULT_BLEND_POWER);
-    }
+    PerspectiveManager.INSTANCE.transition().setPositionAlgorithm(TransitionImpl.DEFAULT_POSITION_ALGORITHM);
+    PerspectiveManager.INSTANCE.transition().setRotationAlgorithm(TransitionImpl.DEFAULT_ROTATION_ALGORITHM);
+    PerspectiveManager.INSTANCE.transition().setFovAlgorithm(TransitionImpl.DEFAULT_FOV_ALGORITHM);
     PerspectiveManager.INSTANCE
         .transition()
-        .setAlgorithmType(TransitionImpl.DEFAULT_ALGORITHM);
+        .setOrthographicHeightAlgorithm(TransitionImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT_ALGORITHM);
     PerspectiveManager.INSTANCE
         .switchers()
         .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
@@ -215,47 +215,54 @@ class StateManagerImplTest {
   }
 
   @Test
-  void roundTripPreservesFixedStartAlgorithmSettings() throws IOException {
-    Path filePath = tempDir.resolve("transition-algorithm.json");
+  void roundTripDoesNotPersistDebugTransitionAlgorithms() throws IOException {
+    Path filePath = tempDir.resolve("transition-algorithm-types.json");
     StateManager manager = new StateManagerImpl(filePath);
     PerspectiveManager.INSTANCE
         .transition()
-        .setAlgorithmType(TransitionAlgorithmType.FIXED_START_CHASING_ROTATION);
-    FixedStartChasingRotationTransitionAlgorithm algorithm = transitionAlgorithm();
-    assertNotNull(algorithm);
-    algorithm.setBlendPower(1.25);
-
-    manager.tryExtractAndSave();
-    var savedState = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
-    assertEquals(
-        1.25,
-        savedState.get("transition.fixed_start_chasing_rotation.blend_power").getAsDouble());
-    assertFalse(savedState.has("transition.blend_power"));
-    algorithm.setBlendPower(1.0);
-    manager.tryLoadAndApply();
-
-    assertEquals(1.25, algorithm.getBlendPower());
-  }
-
-  @Test
-  void roundTripDoesNotPersistDebugTransitionAlgorithm() throws IOException {
-    Path filePath = tempDir.resolve("transition-algorithm-type.json");
-    StateManager manager = new StateManagerImpl(filePath);
+        .setPositionAlgorithm(FixedStartPositionTransitionAlgorithm.INSTANCE);
     PerspectiveManager.INSTANCE
         .transition()
-        .setAlgorithmType(TransitionAlgorithmType.FIXED_START_CHASING_ROTATION);
+        .setRotationAlgorithm(ChasingRotationTransitionAlgorithm.INSTANCE);
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setFovAlgorithm(FixedStartFovTransitionAlgorithm.INSTANCE);
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setOrthographicHeightAlgorithm(
+            FixedStartOrthographicHeightTransitionAlgorithm.INSTANCE);
 
     manager.tryExtractAndSave();
     var savedState = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
     PerspectiveManager.INSTANCE
         .transition()
-        .setAlgorithmType(TransitionAlgorithmType.FEED_FORWARD_CORRECTION);
+        .setPositionAlgorithm(TransitionImpl.DEFAULT_POSITION_ALGORITHM);
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setRotationAlgorithm(TransitionImpl.DEFAULT_ROTATION_ALGORITHM);
+    PerspectiveManager.INSTANCE.transition().setFovAlgorithm(TransitionImpl.DEFAULT_FOV_ALGORITHM);
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setOrthographicHeightAlgorithm(TransitionImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT_ALGORITHM);
     manager.tryLoadAndApply();
 
-    assertFalse(savedState.has("transition.algorithm"));
+    assertFalse(savedState.has("transition.position_algorithm"));
+    assertFalse(savedState.has("transition.rotation_algorithm"));
+    assertFalse(savedState.has("transition.fov_algorithm"));
+    assertFalse(savedState.has("transition.orthographic_height_algorithm"));
+    assertFalse(savedState.has("transition.fixed_start_chasing_rotation.blend_power"));
     assertEquals(
-        TransitionAlgorithmType.FEED_FORWARD_CORRECTION,
-        PerspectiveManager.INSTANCE.transition().getAlgorithmType());
+        TransitionImpl.DEFAULT_POSITION_ALGORITHM,
+        PerspectiveManager.INSTANCE.transition().getPositionAlgorithm());
+    assertEquals(
+        TransitionImpl.DEFAULT_ROTATION_ALGORITHM,
+        PerspectiveManager.INSTANCE.transition().getRotationAlgorithm());
+    assertEquals(
+        TransitionImpl.DEFAULT_FOV_ALGORITHM,
+        PerspectiveManager.INSTANCE.transition().getFovAlgorithm());
+    assertEquals(
+        TransitionImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT_ALGORITHM,
+        PerspectiveManager.INSTANCE.transition().getOrthographicHeightAlgorithm());
   }
 
   @Test
@@ -395,8 +402,7 @@ class StateManagerImplTest {
         """
         {
           "enabled": false,
-          "transition.duration_ms": -1.0,
-          "transition.fixed_start_chasing_rotation.blend_power": 1.0
+          "transition.duration_ms": -1.0
         }
         """);
     PerspectiveAPI.setEnabled(true);
@@ -404,13 +410,5 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertTrue(PerspectiveAPI.isEnabled());
-  }
-
-  private static @Nullable FixedStartChasingRotationTransitionAlgorithm transitionAlgorithm() {
-    if (PerspectiveManager.INSTANCE.transition().algorithm()
-        instanceof FixedStartChasingRotationTransitionAlgorithm algorithm) {
-      return algorithm;
-    }
-    return null;
   }
 }

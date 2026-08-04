@@ -3,27 +3,45 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithm;
-import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmType;
+import io.github.leawind.perspectiveapi.internal.impl.transition.position.FeedForwardCorrectionPositionTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.position.PositionTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.rotation.FeedForwardCorrectionRotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.rotation.RotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FixedStartFovTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FixedStartOrthographicHeightTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FovTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.OrthographicHeightTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.utils.Utils;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.Blenders;
 import java.util.Objects;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
 
 /// Controls smooth camera transitions between perspectives.
 ///
-/// Owns the fixed transition window and delegates continuous-state interpolation to the selected
+/// Owns the fixed transition window and delegates every continuous state channel to its selected
 /// algorithm. Projection mode changes are discrete.
 public final class TransitionImpl implements Transition {
   public static final double DEFAULT_DURATION_MS = 260.0;
-  public static final TransitionAlgorithmType DEFAULT_ALGORITHM =
-      TransitionAlgorithmType.FEED_FORWARD_CORRECTION;
+  public static final PositionTransitionAlgorithm DEFAULT_POSITION_ALGORITHM =
+      FeedForwardCorrectionPositionTransitionAlgorithm.INSTANCE;
+  public static final RotationTransitionAlgorithm DEFAULT_ROTATION_ALGORITHM =
+      FeedForwardCorrectionRotationTransitionAlgorithm.INSTANCE;
+  public static final FovTransitionAlgorithm DEFAULT_FOV_ALGORITHM =
+      FixedStartFovTransitionAlgorithm.INSTANCE;
+  public static final OrthographicHeightTransitionAlgorithm DEFAULT_ORTHOGRAPHIC_HEIGHT_ALGORITHM =
+      FixedStartOrthographicHeightTransitionAlgorithm.INSTANCE;
 
   private double durationMs = DEFAULT_DURATION_MS;
+  private Blender blender = Blenders::easeOut;
   private double startTimeMs;
   private final PerspectiveStateImpl startState = new PerspectiveStateImpl();
   private boolean hasStartState;
-  private TransitionAlgorithmType algorithmType = DEFAULT_ALGORITHM;
-  private TransitionAlgorithm algorithm = DEFAULT_ALGORITHM.create();
+  private PositionTransitionAlgorithm positionAlgorithm = DEFAULT_POSITION_ALGORITHM;
+  private RotationTransitionAlgorithm rotationAlgorithm = DEFAULT_ROTATION_ALGORITHM;
+  private FovTransitionAlgorithm fovAlgorithm = DEFAULT_FOV_ALGORITHM;
+  private OrthographicHeightTransitionAlgorithm orthographicHeightAlgorithm =
+      DEFAULT_ORTHOGRAPHIC_HEIGHT_ALGORITHM;
 
   public static double getTimeMs() {
     return GLFW.glfwGetTime() * 1000;
@@ -47,25 +65,75 @@ public final class TransitionImpl implements Transition {
     return durationMs;
   }
 
-  /// Returns the selected internal interpolation algorithm.
-  public @NonNull TransitionAlgorithm algorithm() {
-    return algorithm;
+  @Override
+  public void setBlender(@NonNull Blender blender) {
+    this.blender = Objects.requireNonNull(blender);
   }
 
-  public @NonNull TransitionAlgorithmType getAlgorithmType() {
-    return algorithmType;
+  @Override
+  public @NonNull Blender getBlender() {
+    return blender;
   }
 
-  /// Changes the interpolation algorithm without changing the fixed transition window.
+  public @NonNull PositionTransitionAlgorithm getPositionAlgorithm() {
+    return positionAlgorithm;
+  }
+
+  public @NonNull RotationTransitionAlgorithm getRotationAlgorithm() {
+    return rotationAlgorithm;
+  }
+
+  public @NonNull FovTransitionAlgorithm getFovAlgorithm() {
+    return fovAlgorithm;
+  }
+
+  public @NonNull OrthographicHeightTransitionAlgorithm getOrthographicHeightAlgorithm() {
+    return orthographicHeightAlgorithm;
+  }
+
+  /// Changes the position algorithm without changing the fixed transition window.
   ///
   /// If a transition has already been initialized, the new algorithm restarts from that
-  /// transition's original start state and immediately takes over subsequent updates.
-  public void setAlgorithmType(@NonNull TransitionAlgorithmType algorithmType) {
-    Objects.requireNonNull(algorithmType);
-    if (this.algorithmType == algorithmType) return;
-    this.algorithmType = algorithmType;
-    algorithm = algorithmType.create();
-    if (hasStartState) algorithm.start(startState);
+  /// transition's original start position and immediately takes over subsequent updates.
+  public void setPositionAlgorithm(@NonNull PositionTransitionAlgorithm algorithm) {
+    Objects.requireNonNull(algorithm);
+    if (positionAlgorithm == algorithm) return;
+    positionAlgorithm = algorithm;
+    if (hasStartState) positionAlgorithm.start(startState.position());
+  }
+
+  /// Changes the rotation algorithm without changing the fixed transition window.
+  ///
+  /// If a transition has already been initialized, the new algorithm restarts from that
+  /// transition's original start rotation and immediately takes over subsequent updates.
+  public void setRotationAlgorithm(@NonNull RotationTransitionAlgorithm algorithm) {
+    Objects.requireNonNull(algorithm);
+    if (rotationAlgorithm == algorithm) return;
+    rotationAlgorithm = algorithm;
+    if (hasStartState) rotationAlgorithm.start(startState.rotation());
+  }
+
+  /// Changes the FOV algorithm without changing the fixed transition window.
+  ///
+  /// If a transition has already been initialized, the new algorithm restarts from that
+  /// transition's original FOV and immediately takes over subsequent updates.
+  public void setFovAlgorithm(@NonNull FovTransitionAlgorithm algorithm) {
+    Objects.requireNonNull(algorithm);
+    if (fovAlgorithm == algorithm) return;
+    fovAlgorithm = algorithm;
+    if (hasStartState) fovAlgorithm.start(startState.getFovDeg());
+  }
+
+  /// Changes the orthographic-height algorithm without changing the fixed transition window.
+  ///
+  /// If a transition has already been initialized, the new algorithm restarts from that
+  /// transition's original orthographic height and immediately takes over subsequent updates.
+  public void setOrthographicHeightAlgorithm(
+      @NonNull OrthographicHeightTransitionAlgorithm algorithm) {
+    Objects.requireNonNull(algorithm);
+    if (orthographicHeightAlgorithm == algorithm) return;
+    orthographicHeightAlgorithm = algorithm;
+    if (hasStartState) orthographicHeightAlgorithm.start(startState.getOrthographicHeight());
   }
 
   /// Starts a new transition from the given start state.
@@ -73,7 +141,10 @@ public final class TransitionImpl implements Transition {
     this.startTimeMs = startTimeMs;
     this.startState.set(Objects.requireNonNull(startState));
     hasStartState = true;
-    algorithm.start(this.startState);
+    positionAlgorithm.start(this.startState.position());
+    rotationAlgorithm.start(this.startState.rotation());
+    fovAlgorithm.start(this.startState.getFovDeg());
+    orthographicHeightAlgorithm.start(this.startState.getOrthographicHeight());
   }
 
   /// Interpolates continuous camera state from the start state toward the target state and writes
@@ -90,10 +161,22 @@ public final class TransitionImpl implements Transition {
     if (durationMs == 0 || elapsedTimeMs >= durationMs) {
       copyContinuousState(target, dest);
     } else {
-      algorithm.update(elapsedTimeMs, durationMs, target, dest);
+      float progress = computeEasedProgress(elapsedTimeMs);
+      positionAlgorithm.update(progress, target.position(), dest.position());
+      rotationAlgorithm.update(progress, target.rotation(), dest.rotation());
+      dest.setFovDeg(fovAlgorithm.update(progress, target.getFovDeg()));
+      dest.setOrthographicHeight(
+          orthographicHeightAlgorithm.update(progress, target.getOrthographicHeight()));
     }
     ProjectionMode targetProjectionMode = target.projectionMode();
     dest.setProjectionMode(targetProjectionMode);
+  }
+
+  private float computeEasedProgress(double elapsedTimeMs) {
+    float progress = (float) Utils.clamp(elapsedTimeMs / durationMs, 0, 1);
+    float easedProgress = blender.blend(progress);
+    if (!Float.isFinite(easedProgress)) return 0;
+    return Utils.clamp(easedProgress, 0, 1);
   }
 
   private static void copyContinuousState(
