@@ -3,9 +3,8 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
-import io.github.leawind.perspectiveapi.internal.impl.transition.FeedForwardCorrectionTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithm;
-import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmFactory;
+import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmType;
 import java.util.Objects;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
@@ -16,18 +15,15 @@ import org.lwjgl.glfw.GLFW;
 /// algorithm. Projection mode changes are discrete.
 public final class TransitionImpl implements Transition {
   public static final double DEFAULT_DURATION_MS = 260.0;
-
-  /// Change this constant to compare algorithms while keeping every implementation in source.
-  private static final TransitionAlgorithmFactory SELECTED_ALGORITHM =
-      FeedForwardCorrectionTransitionAlgorithm::new;
+  public static final TransitionAlgorithmType DEFAULT_ALGORITHM =
+      TransitionAlgorithmType.FEED_FORWARD_CORRECTION;
 
   private double durationMs = DEFAULT_DURATION_MS;
   private double startTimeMs;
-  private final TransitionAlgorithm algorithm;
-
-  public TransitionImpl() {
-    algorithm = Objects.requireNonNull(SELECTED_ALGORITHM.create());
-  }
+  private final PerspectiveStateImpl startState = new PerspectiveStateImpl();
+  private boolean hasStartState;
+  private TransitionAlgorithmType algorithmType = DEFAULT_ALGORITHM;
+  private TransitionAlgorithm algorithm = DEFAULT_ALGORITHM.create();
 
   public static double getTimeMs() {
     return GLFW.glfwGetTime() * 1000;
@@ -56,10 +52,28 @@ public final class TransitionImpl implements Transition {
     return algorithm;
   }
 
+  public @NonNull TransitionAlgorithmType getAlgorithmType() {
+    return algorithmType;
+  }
+
+  /// Changes the interpolation algorithm without changing the fixed transition window.
+  ///
+  /// If a transition has already been initialized, the new algorithm restarts from that
+  /// transition's original start state and immediately takes over subsequent updates.
+  public void setAlgorithmType(@NonNull TransitionAlgorithmType algorithmType) {
+    Objects.requireNonNull(algorithmType);
+    if (this.algorithmType == algorithmType) return;
+    this.algorithmType = algorithmType;
+    algorithm = algorithmType.create();
+    if (hasStartState) algorithm.start(startState);
+  }
+
   /// Starts a new transition from the given start state.
   public void setStartState(double startTimeMs, @NonNull PerspectiveState startState) {
     this.startTimeMs = startTimeMs;
-    algorithm.start(Objects.requireNonNull(startState));
+    this.startState.set(Objects.requireNonNull(startState));
+    hasStartState = true;
+    algorithm.start(this.startState);
   }
 
   /// Interpolates continuous camera state from the start state toward the target state and writes

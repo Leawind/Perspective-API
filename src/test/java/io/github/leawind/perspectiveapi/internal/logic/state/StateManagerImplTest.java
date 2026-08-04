@@ -3,9 +3,9 @@ package io.github.leawind.perspectiveapi.internal.logic.state;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonParser;
@@ -17,7 +17,9 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
+import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmType;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
 import java.io.IOException;
@@ -132,6 +134,9 @@ class StateManagerImplTest {
       algorithm.setBlendPower(FixedStartChasingRotationTransitionAlgorithm.DEFAULT_BLEND_POWER);
     }
     PerspectiveManager.INSTANCE
+        .transition()
+        .setAlgorithmType(TransitionImpl.DEFAULT_ALGORITHM);
+    PerspectiveManager.INSTANCE
         .switchers()
         .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
     TEST_STATE_SECTION.value = "default";
@@ -213,8 +218,11 @@ class StateManagerImplTest {
   void roundTripPreservesFixedStartAlgorithmSettings() throws IOException {
     Path filePath = tempDir.resolve("transition-algorithm.json");
     StateManager manager = new StateManagerImpl(filePath);
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setAlgorithmType(TransitionAlgorithmType.FIXED_START_CHASING_ROTATION);
     FixedStartChasingRotationTransitionAlgorithm algorithm = transitionAlgorithm();
-    assumeTrue(algorithm != null);
+    assertNotNull(algorithm);
     algorithm.setBlendPower(1.25);
 
     manager.tryExtractAndSave();
@@ -227,6 +235,27 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertEquals(1.25, algorithm.getBlendPower());
+  }
+
+  @Test
+  void roundTripDoesNotPersistDebugTransitionAlgorithm() throws IOException {
+    Path filePath = tempDir.resolve("transition-algorithm-type.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setAlgorithmType(TransitionAlgorithmType.FIXED_START_CHASING_ROTATION);
+
+    manager.tryExtractAndSave();
+    var savedState = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setAlgorithmType(TransitionAlgorithmType.FEED_FORWARD_CORRECTION);
+    manager.tryLoadAndApply();
+
+    assertFalse(savedState.has("transition.algorithm"));
+    assertEquals(
+        TransitionAlgorithmType.FEED_FORWARD_CORRECTION,
+        PerspectiveManager.INSTANCE.transition().getAlgorithmType());
   }
 
   @Test

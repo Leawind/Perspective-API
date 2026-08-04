@@ -3,10 +3,14 @@ package io.github.leawind.perspectiveapi.internal.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
+import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmType;
 import io.github.leawind.perspectiveapi.testutils.TestUtils;
 import org.joml.Quaternionf;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +36,41 @@ class TransitionImplTest {
     TransitionImpl second = new TransitionImpl();
 
     assertEquals(TransitionImpl.DEFAULT_DURATION_MS, first.getDurationMs());
+    assertEquals(TransitionImpl.DEFAULT_ALGORITHM, first.getAlgorithmType());
     assertNotSame(first.algorithm(), second.algorithm());
+  }
+
+  @Test
+  void switchesAlgorithmAtRuntimeAndReinitializesItFromTransitionStart() {
+    TransitionAlgorithm previous = transition.algorithm();
+    FixedStartChasingRotationTransitionAlgorithm expectedAlgorithm =
+        new FixedStartChasingRotationTransitionAlgorithm();
+    expectedAlgorithm.start(start);
+    PerspectiveStateImpl expected = new PerspectiveStateImpl();
+    expectedAlgorithm.update(50.0, 100.0, target, expected);
+
+    transition.setAlgorithmType(TransitionAlgorithmType.FIXED_START_CHASING_ROTATION);
+    PerspectiveStateImpl actual = new PerspectiveStateImpl();
+    transition.update(1_050.0, target, actual);
+
+    assertEquals(
+        TransitionAlgorithmType.FIXED_START_CHASING_ROTATION, transition.getAlgorithmType());
+    assertNotSame(previous, transition.algorithm());
+    assertStateEquals(expected, actual);
+  }
+
+  @Test
+  void settingCurrentAlgorithmTypeKeepsItsInstance() {
+    TransitionAlgorithm algorithm = transition.algorithm();
+
+    transition.setAlgorithmType(transition.getAlgorithmType());
+
+    assertSame(algorithm, transition.algorithm());
+  }
+
+  @Test
+  void rejectsNullAlgorithmType() {
+    assertThrows(NullPointerException.class, () -> transition.setAlgorithmType(null));
   }
 
   @Test

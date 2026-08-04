@@ -13,18 +13,22 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.transition.FixedStartChasingRotationTransitionAlgorithm;
+import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithmType;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
+import io.github.leawind.perspectiveapi.platform.api.Services;
+import java.util.List;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public final class YaclConfigScreenBuilder {
 
   public static Screen build(Screen parent) {
-    return YetAnotherConfigLib.createBuilder()
-        .title(text("config_screen.title"))
-        .category(
-            ConfigCategory.createBuilder()
+    var builder =
+        YetAnotherConfigLib.createBuilder()
+            .title(text("config_screen.title"))
+            .category(
+                ConfigCategory.createBuilder()
                 .name(text("config_screen.title"))
                 .option(
                     Option.<Boolean>createBuilder()
@@ -110,9 +114,38 @@ public final class YaclConfigScreenBuilder {
                                                         v)))
                                 .build())
                         .build())
+                    .build());
+    if (Services.PLATFORM_HELPER.isDevelopmentEnvironment()) {
+      builder.category(buildDebugCategory());
+    }
+    return builder.build().generateScreen(parent);
+  }
+
+  private static ConfigCategory buildDebugCategory() {
+    TransitionImpl transition = PerspectiveManager.INSTANCE.transition();
+    return ConfigCategory.createBuilder()
+        .name(text("config_screen.category.debug"))
+        .option(
+            Option.<TransitionAlgorithmType>createBuilder()
+                .name(text("config_screen.option.transition_algorithm"))
+                .description(
+                    OptionDescription.of(
+                        text("config_screen.option.transition_algorithm.desc")))
+                .binding(
+                    TransitionImpl.DEFAULT_ALGORITHM,
+                    transition::getAlgorithmType,
+                    transition::setAlgorithmType)
+                .controller(
+                    opt ->
+                        CyclingListControllerBuilder.create(opt)
+                            .values(List.of(TransitionAlgorithmType.values()))
+                            .formatValue(
+                                type ->
+                                    text(
+                                        "config_screen.option.transition_algorithm."
+                                            + type.id())))
                 .build())
-        .build()
-        .generateScreen(parent);
+        .build();
   }
 
   private static OptionGroup buildTransitionGroup() {
