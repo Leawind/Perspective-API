@@ -1,5 +1,33 @@
 # Perspective API Agent 指南
 
+- Perspective API 仍处于 Beta 阶段，允许进行大规模重构，并应彻底删除废弃的类、方法、字段、测试和文档，不为旧接口保留兼容层
+
+## 设计原则
+
+### 基本原则
+
+> 基本原则由人类开发者亲自编写，不可擅自改动
+
+Perspective API 的核心目标：让涉及相机状态控制权的模组互相兼容。
+
+相机状态包括位置、旋转（包括滚转角）、FOV（透视），还可以包含投影模式、正交视角的视野高度（实验性）
+
+- 涉及到相机状态的 Minecraft 版本差异应由本模组内部处理
+- 不为特定模组编写专用的兼容逻辑
+
+### 基本设计
+
+> 这些设计通常不应该改动
+
+#### CameraType
+
+BaseType 与原版的 CameraType 枚举一一对应。
+
+Minecraft 中有许多机制都会根据当前 CameraType 有不同的行为，包括但不限于第一人称手部渲染、本玩家的玩家实体渲染、望远镜UI渲染等。
+这些行为在不同 Minecraft 版本中很可能存在差异，且无法预测其将来的变化。
+
+也就是说 BaseType 只是为了控制原版中的这类行为，其具体含义是不透明的，本模组不能基于当前 Minecraft 版本的行为细分其功能。
+
 ## 编码指南
 
 - 公共 API 中的返回类型、参数类型必须拥有 Nullability 注解，除非是基本类型
@@ -7,16 +35,18 @@
 - 接口和实现类方法的 Nullability 注解要保持一致
 - 简单的卫语句可以不使用花括号：`if (condition) return;`
 
-### 代码格式
+### 代码风格
+
+#### 格式化
 
 - Java
-  - 遵循 `google-java-format` 规范（非强制要求）
+  - 遵循 `google-java-format` 规范（非强制要求，不要调用它进行格式化）
   - 缩进：2 个空格
   - 大括号：K&R 风格（左括号不换行）
   - 导入语句：禁止使用通配符导入（如 `import java.util.*`）
-- md、yaml、json 等文件用 deno 进行格式化：`deno fmt`
+- md, yml, json, toml 等文件用 deno 进行格式化：`deno fmt`
 
-### Javadoc 风格
+#### Javadoc 风格
 
 使用 `///` 风格，类似 markdown 语法。
 
@@ -36,29 +66,7 @@
 - 表示角度或弧度的参数和变量名要用后缀表示其单位：`Deg` 是角度，`Rad` 是弧度
 - Mixin 类以 `Mixin` 为后缀，例如 `MinecraftMixin`
 
-## 架构与依赖约束
-
-本项目采用严格的分层架构，各层职责与依赖方向必须严格遵守，严禁反向依赖。
-
-### 包依赖方向
-
-`api` ➜ `logic` / `impl` ➜ `bridge` ➜ `utils`
-
-注：`api` 层原则上不依赖 `internal`，但允许依赖 `bridge` 层中无状态的、纯粹用于构建跨版本基础类型（如 `Identifier`）的工具方法，例如 `Bridge.createIdentifier`。
-
-### 核心约束
-
-1. `bridge` 层禁令：`bridge` 包（包含所有 Mixin）严禁直接 import 或调用 `logic`、`impl` 或 `api` 包中的业务类
-2. 事件驱动解耦：`bridge` 层的 Mixin 仅负责拦截原版调用，并发射通用事件（Event）；`logic` 层负责监听这些事件并执行具体业务
-3. `logic` 层无宏化：`logic` 包和 `api` 包应尽可能保持 100% 无 Stonecutter 条件编译宏，所有 Minecraft 版本差异必须下沉并封装在 `bridge` 层
-
-这些约束由根项目的 `checkArchitecture` 任务自动检查。所有变体的 `check` 任务和 `buildAndCollect` 都会运行该检查。
-
-## Minecraft 版本兼容性
-
-当一个构建产物兼容连续的多个 Minecraft 版本时，应以其中最低版本作为开发和构建目标。模组元数据中的 Minecraft 版本要求只声明为 `>=` 该最低版本，不声明上界；这是项目有意采用的兼容性策略，不应为不同变体补充 `<` 上界。发布平台上的额外版本标签则在对应变体的 `gradle.properties` 中通过 `publish.additionalMcVersions` 声明。
-
-## Stonecutter 条件编译
+### Stonecutter 指南
 
 当前激活的 Minecraft 版本可以在 `stonecutter.gradle.kts` 文件中找到。
 
@@ -123,7 +131,7 @@ private void beforeCameraUpdate(float partialTicks, CallbackInfo ci) {
 /*? } */
 ```
 
-### 风格
+#### 风格
 
 - 当需要使用 else、else-if 时，尽量用 `>=` 条件，不要用 `<` 或 `<=`
 - 如果一个方法体中使用了 Stonecutter 条件编译，且需要通过注释说明为什么需要条件编译，应将该注释写在方法的 Javadoc 中，而不是方法体中
@@ -148,7 +156,7 @@ return currentVersion().dataVersion().version();
 /*? }*/
 ```
 
-### 格式化提示
+#### 格式化提示
 
 合并相邻的条件编译块时（即 `*/` 后紧跟 `/*?`），应确保它们紧邻而非被空白分隔：
 
@@ -156,6 +164,28 @@ return currentVersion().dataVersion().version();
 查找：(\s|^)\*/(\s|\n)+/\*\?
 替换：*//*?
 ```
+
+## Minecraft 版本兼容性
+
+当一个构建产物兼容连续的多个 Minecraft 版本时，应以其中最低版本作为开发和构建目标。模组元数据中的 Minecraft 版本要求只声明为 `>=` 该最低版本，不声明上界；这是项目有意采用的兼容性策略，不应为不同变体补充 `<` 上界。发布平台上的额外版本标签则在对应变体的 `gradle.properties` 中通过 `publish.additionalMcVersions` 声明。
+
+## 架构与依赖约束
+
+本项目采用严格的分层架构，各层职责与依赖方向必须严格遵守，严禁反向依赖。
+
+### 包依赖方向
+
+`api` ➜ `logic` / `impl` ➜ `bridge` ➜ `utils`
+
+注：`api` 层原则上不依赖 `internal`，但允许依赖 `bridge` 层中无状态的、纯粹用于构建跨版本基础类型（如 `Identifier`）的工具方法，例如 `Bridge.createIdentifier`。
+
+### 核心约束
+
+1. `bridge` 层禁令：`bridge` 包（包含所有 Mixin）严禁直接 import 或调用 `logic`、`impl` 或 `api` 包中的业务类
+2. 事件驱动解耦：`bridge` 层的 Mixin 仅负责拦截原版调用，并发射通用事件（Event）；`logic` 层负责监听这些事件并执行具体业务
+3. `logic` 层无宏化：`logic` 包和 `api` 包应尽可能保持 100% 无 Stonecutter 条件编译宏，所有 Minecraft 版本差异必须下沉并封装在 `bridge` 层
+
+这些约束由根项目的 `checkArchitecture` 任务自动检查。所有变体的 `check` 任务和 `buildAndCollect` 都会运行该检查。
 
 ## 工作流指南
 
