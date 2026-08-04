@@ -26,7 +26,7 @@ import org.jspecify.annotations.Nullable;
 /// @param id the non-empty stable perspective ID
 /// @param name the display name
 /// @param description the optional description
-/// @param baseType the vanilla camera type used as a fallback
+/// @param baseType the opaque vanilla camera type selected while the perspective is active
 /// @param switchable whether player-facing switchers may select the perspective
 /// @param priority the sorting priority within switchers, where lower values appear first
 /// @param icon the optional icon texture
@@ -165,8 +165,11 @@ public record PerspectiveInfo(
     /// behavior class name.
     @NonNull String id();
 
-    /// The vanilla camera type used as a fallback when this perspective does not explicitly modify
-    /// the camera transform or projection settings.
+    /// The opaque vanilla camera type selected while this perspective is active.
+    ///
+    /// Minecraft uses its current camera type for version-dependent behavior beyond camera
+    /// position and rotation. This value maps to that enum exactly; it does not describe or imply
+    /// stable Perspective API semantics.
     @NonNull BaseType baseType() default BaseType.THIRD_PERSON_BACK;
 
     /// The translation key for the perspective's display name.
@@ -213,10 +216,17 @@ public record PerspectiveInfo(
     ///
     /// - `first_person`: the perspective primarily observes from the camera entity's eyes
     /// - `third_person`: the perspective primarily observes the camera entity from outside
+    /// - `controllable`: standard mouse-look input continuously and predictably controls the
+    ///   visible viewing direction
     ///
     /// Traits describe stable perspective semantics, not transient per-frame state. They cannot be
     /// changed after the perspective is registered. Shared traits should use lowercase `snake_case`
     /// without a namespace. Mod-specific traits may use `<namespace>:<trait>`.
+    ///
+    /// `controllable` should be declared only when adjusted standard mouse-look deltas are consumed
+    /// by the perspective's control implementation and feedback from target screen position can
+    /// form a stable closed loop. It does not promise that the client is currently capturing mouse
+    /// input or grant exclusive ownership of that input.
     @ApiStatus.Experimental
     @NonNull String[] traits() default {};
   }

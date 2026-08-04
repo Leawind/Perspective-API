@@ -22,11 +22,12 @@ import org.jspecify.annotations.NonNull;
 /// @see PerspectiveRegistry#registerDefault
 @ApiStatus.OverrideOnly
 public interface PerspectiveBehavior {
-  /// Logical base types for camera perspectives, decoupled from Minecraft's internal
-  /// implementation.
+  /// Values that map one-to-one to Minecraft's vanilla camera types.
   ///
-  /// Using this enum instead of `net.minecraft.client.CameraType` prevents `AnnotationFormatError`
-  /// during early mod initialization and ensures the API remains stable across game versions.
+  /// A base type selects vanilla behavior that depends on the current camera type before this
+  /// perspective produces its camera state. Those behaviors are version-dependent and opaque to
+  /// Perspective API. Callers must not infer finer semantics from behavior observed in one
+  /// Minecraft version.
   enum BaseType {
     FIRST_PERSON,
     THIRD_PERSON_BACK,
@@ -34,13 +35,17 @@ public interface PerspectiveBehavior {
   }
 
   /// Whether smooth transitions are allowed when switching TO this perspective.
-  /// A failure is logged and treated as `false`.
+  ///
+  /// This method is evaluated once when a switch to this perspective occurs. A failure is logged
+  /// and treated as `false`.
   default boolean allowTransitionIn() {
     return true;
   }
 
   /// Whether smooth transitions are allowed when switching FROM this perspective.
-  /// A failure is logged and treated as `false`.
+  ///
+  /// This method is evaluated once when a switch from this perspective occurs. A failure is logged
+  /// and treated as `false`.
   default boolean allowTransitionOut() {
     return true;
   }
