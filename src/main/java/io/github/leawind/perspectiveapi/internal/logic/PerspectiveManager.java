@@ -223,15 +223,14 @@ public final class PerspectiveManager {
   ///
   /// ### Steps
   ///
-  /// 1. Prepare and validate context — return early if context invalid
-  /// 2. Call `preApplyWhenActive` callback
-  /// 3. Apply base perspective to target state via `applyCameraState`
-  /// 4. Sanitize target state, fallback if invalid
-  /// 5. Apply modifier chain to target state via `applyCameraState`.
-  ///    Sanitize after applying each modifier
-  /// 6. Apply transition interpolation if transitioning, and sanitize
-  /// 7. Write final state to camera
-  /// 8. Call `postApplyWhenActive` callback
+  /// 1. Prepare the frame context and read the vanilla camera state
+  /// 2. Apply the active perspective and sanitize its target state
+  /// 3. Apply and sanitize before-transition modifiers
+  /// 4. Apply and sanitize perspective-switch transition interpolation
+  /// 5. Capture the state used as the start of a future transition
+  /// 6. Apply and sanitize after-transition modifiers
+  /// 7. Write the final state to the camera
+  /// 8. Call {@link PerspectiveBehavior#afterApplyCameraState}
   ///
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
