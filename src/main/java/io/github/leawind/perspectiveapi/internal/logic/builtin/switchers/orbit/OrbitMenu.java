@@ -128,9 +128,6 @@ final class OrbitMenu {
 
   void closeFromKey() {
     if (!opened) return;
-    if (mode == Mode.SELECTING && hoveredActor != null && isAvailable(hoveredActor)) {
-      model.activate(hoveredActor.perspectiveId());
-    }
     close();
   }
 
@@ -362,6 +359,10 @@ final class OrbitMenu {
 
   private void setHovered(@Nullable PerspectiveActor actor) {
     hoveredActor = actor;
+    if (mode == Mode.SELECTING) {
+      if (actor != null && isAvailable(actor)) model.activate(actor.perspectiveId());
+      return;
+    }
     if (actor != null && isAvailable(actor)) model.preview(actor.perspectiveId());
     else model.clearPreview();
   }
