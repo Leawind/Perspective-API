@@ -44,8 +44,6 @@ final class OrbitMenu {
   private static final double CANDIDATE_SPACING = 0.1;
   private static final double LINEAR_DRAG_FACTOR = 12;
   private static final double LAYOUT_SPRING_MAX_FORCE = 160;
-  private static final int SPONSOR_BUTTON_MIN_WIDTH = 43;
-  private static final int SPONSOR_BUTTON_HORIZONTAL_PADDING = 2;
   private static final String SPONSOR_URL = "https://leawind.github.io/zh_cn/donate?autolang";
   private static final PairForce DISABLED_REPULSION = InverseSquareForces.coulomb(0.025, 0.035, 10);
 
@@ -470,17 +468,12 @@ final class OrbitMenu {
     if (mode == Mode.SELECTING) updateSelectingHover();
     else {
       updateEditingHover();
-      int sponsorButtonWidth =
-          Math.max(
-              SPONSOR_BUTTON_MIN_WIDTH,
-              Minecraft.getInstance()
-                      .font
-                      .width(Component.translatable(OrbitMenuRenderer.SPONSOR_TEXT_KEY))
-                  + SPONSOR_BUTTON_HORIZONTAL_PADDING);
+      Component sponsorText = Component.translatable(OrbitMenuRenderer.SPONSOR_TEXT_KEY);
       sponsorButton.update(
           screenWidth,
           screenHeight,
-          sponsorButtonWidth,
+          Minecraft.getInstance().font.width(sponsorText),
+          Minecraft.getInstance().font.lineHeight,
           mouseScreen.x,
           mouseScreen.y,
           frameSeconds);

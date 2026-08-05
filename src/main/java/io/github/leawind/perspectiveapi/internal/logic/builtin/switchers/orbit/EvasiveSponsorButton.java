@@ -4,7 +4,6 @@ import java.util.Locale;
 import org.joml.Vector2d;
 
 final class EvasiveSponsorButton {
-  static final int HEIGHT = 16;
   static final int HOME_INSET = 18;
 
   private static final double REPULSION_RANGE = 112;
@@ -22,6 +21,7 @@ final class EvasiveSponsorButton {
   private boolean initialized;
   private boolean visible;
   private int width;
+  private int height;
   private int screenWidth;
   private int screenHeight;
 
@@ -35,12 +35,14 @@ final class EvasiveSponsorButton {
       int screenWidth,
       int screenHeight,
       int width,
+      int height,
       double mouseX,
       double mouseY,
       double frameSeconds) {
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
     this.width = width;
+    this.height = height;
     visible = fitsOnScreen();
     if (!visible) return;
 
@@ -75,11 +77,15 @@ final class EvasiveSponsorButton {
     return width;
   }
 
+  int height() {
+    return height;
+  }
+
   boolean contains(double x, double y) {
     if (!visible) return false;
     int left = x();
     int top = y();
-    return x >= left && x < left + width && y >= top && y < top + HEIGHT;
+    return x >= left && x < left + width && y >= top && y < top + height;
   }
 
   static boolean isClickEnabled(String languageCode) {
@@ -97,7 +103,7 @@ final class EvasiveSponsorButton {
     double left = position.x;
     double top = position.y;
     double right = left + width;
-    double bottom = top + HEIGHT;
+    double bottom = top + height;
     double nearestX = clamp(mouseX, left, right);
     double nearestY = clamp(mouseY, top, bottom);
     double distance = Math.hypot(nearestX - mouseX, nearestY - mouseY);
@@ -134,7 +140,7 @@ final class EvasiveSponsorButton {
     double[][] candidates = {
       {mouseX - width - FORCED_ESCAPE_GAP, currentY},
       {mouseX + FORCED_ESCAPE_GAP, currentY},
-      {currentX, mouseY - HEIGHT - FORCED_ESCAPE_GAP},
+      {currentX, mouseY - height - FORCED_ESCAPE_GAP},
       {currentX, mouseY + FORCED_ESCAPE_GAP},
       {minX(), minY()},
       {maxX(), minY()},
@@ -184,11 +190,11 @@ final class EvasiveSponsorButton {
   }
 
   private boolean fitsOnScreen() {
-    return width > 0 && screenWidth >= width && screenHeight >= HEIGHT;
+    return width > 0 && height > 0 && screenWidth >= width && screenHeight >= height;
   }
 
   private boolean containsAt(double left, double top, double x, double y) {
-    return x >= left && x < left + width && y >= top && y < top + HEIGHT;
+    return x >= left && x < left + width && y >= top && y < top + height;
   }
 
   private double centerX() {
@@ -196,7 +202,7 @@ final class EvasiveSponsorButton {
   }
 
   private double centerY() {
-    return position.y + HEIGHT * 0.5;
+    return position.y + height * 0.5;
   }
 
   private double minX() {
@@ -212,7 +218,7 @@ final class EvasiveSponsorButton {
   }
 
   private double maxY() {
-    return screenHeight - HEIGHT;
+    return screenHeight - height;
   }
 
   private double homeX() {

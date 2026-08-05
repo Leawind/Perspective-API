@@ -23,8 +23,8 @@ final class OrbitMenuRenderer {
   private static final int COLOR_TEXT = 0xFF_FF_FF_FF;
   private static final int COLOR_ORBIT = 0x99_FF_FF_FF;
   private static final int COLOR_GHOST_SLOT = 0xCC_FF_FF_FF;
-  private static final int COLOR_SPONSOR_BORDER = 0xEE_FF_FF_FF;
-  private static final int COLOR_SPONSOR_BACKGROUND = 0xDD_20_20_20;
+  private static final int COLOR_SPONSOR_TEXT = 0x55_FF_FF_FF;
+  private static final int COLOR_HELP_BACKGROUND = 0xDD_20_20_20;
   private static final double ORBIT_DASH_PERIOD_PX = 14;
   private static final double ORBIT_DASH_RATIO = 0.57;
   private static final int GHOST_DASH_PERIOD_PX = 8;
@@ -69,14 +69,15 @@ final class OrbitMenuRenderer {
     int x = button.x();
     int y = button.y();
     int width = button.width();
-    canvas.fill(x, y, x + width, y + EvasiveSponsorButton.HEIGHT, COLOR_SPONSOR_BORDER);
-    canvas.fill(
-        x + 1, y + 1, x + width - 1, y + EvasiveSponsorButton.HEIGHT - 1, COLOR_SPONSOR_BACKGROUND);
-    drawCenteredText(
-        canvas,
-        Component.translatable(SPONSOR_TEXT_KEY),
-        x + width / 2,
-        y + (EvasiveSponsorButton.HEIGHT - Minecraft.getInstance().font.lineHeight) / 2);
+    Font font = Minecraft.getInstance().font;
+    Component text = Component.translatable(SPONSOR_TEXT_KEY);
+    canvas.text(
+        font,
+        text,
+        x + (width - font.width(text)) / 2,
+        y + (button.height() - font.lineHeight) / 2,
+        COLOR_SPONSOR_TEXT,
+        true);
   }
 
   private void drawGrabbedWheelSlot(DrawContext canvas, OrbitMenu menu) {
@@ -165,7 +166,7 @@ final class OrbitMenuRenderer {
 
     canvas.fill(x, y, x + HELP_BUTTON_SIZE, y + HELP_BUTTON_SIZE, COLOR_TEXT);
     canvas.fill(
-        x + 1, y + 1, x + HELP_BUTTON_SIZE - 1, y + HELP_BUTTON_SIZE - 1, COLOR_SPONSOR_BACKGROUND);
+        x + 1, y + 1, x + HELP_BUTTON_SIZE - 1, y + HELP_BUTTON_SIZE - 1, COLOR_HELP_BACKGROUND);
     canvas.text(
         font,
         HELP_BUTTON_TEXT,
