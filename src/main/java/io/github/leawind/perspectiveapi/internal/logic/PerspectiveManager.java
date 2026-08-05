@@ -233,11 +233,12 @@ public final class PerspectiveManager {
   ///
   /// 1. Prepare the frame context and read the vanilla camera state
   /// 2. Apply the active perspective and sanitize its target state
-  /// 3. Apply and sanitize modifiers
-  /// 4. Apply and sanitize perspective-switch transition interpolation
-  /// 5. Write the final state to the camera
-  /// 6. Call {@link PerspectiveBehavior#afterApplyCameraState}
-  /// 7. Publish an independent source for previous-state snapshots and future transitions
+  /// 3. Snapshot the perspective result for modifiers
+  /// 4. Apply and sanitize modifiers
+  /// 5. Apply and sanitize perspective-switch transition interpolation
+  /// 6. Write the final state to the camera
+  /// 7. Call {@link PerspectiveBehavior#afterApplyCameraState}
+  /// 8. Publish an independent source for previous-state snapshots and future transitions
   ///
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
@@ -287,6 +288,8 @@ public final class PerspectiveManager {
         targetState,
         backupState,
         () -> "Perspective '" + current.info().id() + "' provided invalid state");
+
+    renderTickContext.setPerspectiveBaseState(new PerspectiveStateSnapshot(targetState));
 
     // Apply modifiers to the perspective target state
     modifiers.applyCameraState(targetState, renderTickContext);

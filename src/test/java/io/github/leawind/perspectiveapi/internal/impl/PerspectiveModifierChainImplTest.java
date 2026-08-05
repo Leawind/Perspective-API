@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveContext;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
+import io.github.leawind.perspectiveapi.api.PerspectiveModifierContext;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 class PerspectiveModifierChainImplTest {
   private PerspectiveModifierChainImpl chain;
   private PerspectiveStateImpl state;
-  private PerspectiveContext context;
+  private PerspectiveContextImpl context;
 
   @BeforeEach
   void beforeEach() {
@@ -33,6 +33,7 @@ class PerspectiveModifierChainImplTest {
             new ThrottledPerspectiveSanitizer(new Sanitizer.ThrottledAction(0)));
     state = new PerspectiveStateImpl();
     context = new PerspectiveContextImpl();
+    context.setPerspectiveBaseState(new PerspectiveStateSnapshot(state));
   }
 
   @Test
@@ -137,6 +138,28 @@ class PerspectiveModifierChainImplTest {
   }
 
   @Test
+  void perspectiveBaseStateDoesNotIncludeEarlierModifiers() {
+    state.position().set(1.0, 2.0, 3.0);
+    context.setPerspectiveBaseState(new PerspectiveStateSnapshot(state));
+    chain.register("test.first", 0, modifier(s -> s.position().set(9.0, 9.0, 9.0)));
+    chain.register(
+        "test.restore-base",
+        1,
+        new PerspectiveModifier() {
+          @Override
+          public void apply(
+              PerspectiveState.@NonNull Mutable state,
+              @NonNull PerspectiveModifierContext context) {
+            state.position().set(context.perspectiveBaseState().position());
+          }
+        });
+
+    chain.applyCameraState(state, context);
+
+    TestUtils.assertVectorEquals(new Vector3d(1.0, 2.0, 3.0), state.position());
+  }
+
+  @Test
   void rejectsDuplicateIdsUntilRegistrationIsRemoved() {
     PerspectiveModifier modifier = modifier(s -> {});
     PerspectiveModifierRegistration first = chain.register("test.same", 0, modifier);
@@ -162,7 +185,7 @@ class PerspectiveModifierChainImplTest {
     return new PerspectiveModifier() {
       @Override
       public void apply(
-          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {
+          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveModifierContext context) {
         action.accept(state);
       }
     };
@@ -178,7 +201,7 @@ class PerspectiveModifierChainImplTest {
 
       @Override
       public void apply(
-          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {
+          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveModifierContext context) {
         applications.incrementAndGet();
       }
     };
@@ -193,7 +216,7 @@ class PerspectiveModifierChainImplTest {
 
       @Override
       public void apply(
-          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {
+          PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveModifierContext context) {
         applications.incrementAndGet();
       }
     };

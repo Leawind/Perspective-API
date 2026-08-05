@@ -1,8 +1,8 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveContext;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifier;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveModifierContext;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
@@ -78,7 +78,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
   /// Position, rotation, FOV, and orthographic height are validated after each modifier;
   /// invalid fields are individually reverted.
   public void applyCameraState(
-      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext ctx) {
+      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveModifierContext ctx) {
     Objects.requireNonNull(state);
     Objects.requireNonNull(ctx);
     PerspectiveStateImpl backup = new PerspectiveStateImpl();

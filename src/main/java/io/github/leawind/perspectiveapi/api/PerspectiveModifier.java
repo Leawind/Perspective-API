@@ -7,7 +7,8 @@ import org.jspecify.annotations.NonNull;
 ///
 /// A modifier is applied after the active perspective and before perspective-switch transition
 /// interpolation. It should mutate only the fields it owns and compose its change with the state
-/// produced by the perspective and earlier modifiers.
+/// produced by the perspective and earlier modifiers. {@link PerspectiveModifierContext}
+/// provides the perspective's unmodified base result when a modifier needs a stable source state.
 @ApiStatus.OverrideOnly
 public interface PerspectiveModifier {
 
@@ -28,10 +29,10 @@ public interface PerspectiveModifier {
   /// and later modifiers continue to run.
   ///
   /// @param state the camera state produced by the perspective and earlier applicable modifiers
-  /// @param context   The context containing frame-specific data.
+  /// @param context frame-specific data and the perspective's unmodified base state
   /// @apiNote Both arguments are temporary and must not be retained after this method returns.
   ///   Repeated rotation calculations can accumulate floating-point error, and the camera pipeline
   ///   rejects rotations outside its unit-length tolerance.
   default void apply(
-      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {}
+      PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveModifierContext context) {}
 }
