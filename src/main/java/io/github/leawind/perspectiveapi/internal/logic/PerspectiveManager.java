@@ -22,6 +22,7 @@ import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContext
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
+import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -224,7 +225,9 @@ public final class PerspectiveManager {
 
   private final PerspectiveContextImpl renderTickContext = new PerspectiveContextImpl();
 
-  /// Updates camera transform and projection settings based on the current perspective.
+  /// Updates the main camera's transform and projection settings based on the current perspective.
+  ///
+  /// Calls for auxiliary cameras are ignored.
   ///
   /// ### Steps
   ///
@@ -238,7 +241,10 @@ public final class PerspectiveManager {
   ///
   /// @param partialTicks interpolation factor between ticks
   /// @param camera the camera to update
-  public void updateCamera(float partialTicks, Camera camera) {
+  public void updateCamera(float partialTicks, @NonNull Camera camera) {
+    Objects.requireNonNull(camera);
+    if (Bridge.getMainCamera() != camera) return;
+
     // Prepare and validate context
     Entity entity;
     Perspective current;
