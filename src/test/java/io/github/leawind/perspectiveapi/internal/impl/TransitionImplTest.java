@@ -47,10 +47,7 @@ class TransitionImplTest {
 
     transition.update(1_050.0, target, actual);
 
-    assertEquals(5.0f, actual.position().x(), 1.0e-6);
-    TestUtils.assertQuatEquals(rotation(45.0f), actual.rotation());
-    assertEquals(80.0f, actual.getFovDeg(), 1.0e-4f);
-    assertEquals(20.0f, actual.getOrthographicHeight(), 1.0e-4f);
+    assertStateAtProgress(easedProgressAtHalfDuration(), actual);
   }
 
   @Test
@@ -61,10 +58,7 @@ class TransitionImplTest {
 
     transition.update(1_050.0, target, actual);
 
-    assertEquals(5.0f, actual.position().x(), 1.0e-6);
-    TestUtils.assertQuatEquals(rotation(45.0f), actual.rotation());
-    assertEquals(80.0f, actual.getFovDeg(), 1.0e-4f);
-    assertEquals(20.0f, actual.getOrthographicHeight(), 1.0e-4f);
+    assertStateAtProgress(easedProgressAtHalfDuration(), actual);
   }
 
   @Test
@@ -76,10 +70,7 @@ class TransitionImplTest {
     PerspectiveStateImpl actual = new PerspectiveStateImpl();
     transition.update(1_050.0, target, actual);
 
-    assertEquals(5.0f, actual.position().x(), 1.0e-6);
-    TestUtils.assertQuatEquals(rotation(45.0f), actual.rotation());
-    assertEquals(80.0f, actual.getFovDeg(), 1.0e-4f);
-    assertEquals(20.0f, actual.getOrthographicHeight(), 1.0e-4f);
+    assertStateAtProgress(easedProgressAtHalfDuration(), actual);
   }
 
   @Test
@@ -174,10 +165,7 @@ class TransitionImplTest {
   void inProgressUpdateSupportsAliasingTargetAndDestination() {
     transition.update(1_050.0, target, target);
 
-    assertEquals(5.0, target.position().x(), 1.0e-6);
-    TestUtils.assertQuatEquals(rotation(45.0f), target.rotation());
-    assertEquals(80.0f, target.getFovDeg(), 1.0e-4f);
-    assertEquals(20.0f, target.getOrthographicHeight(), 1.0e-4f);
+    assertStateAtProgress(easedProgressAtHalfDuration(), target);
   }
 
   @Test
@@ -195,6 +183,17 @@ class TransitionImplTest {
     assertEquals(expected.getFovDeg(), actual.getFovDeg());
     assertEquals(expected.projectionMode(), actual.projectionMode());
     assertEquals(expected.getOrthographicHeight(), actual.getOrthographicHeight());
+  }
+
+  private float easedProgressAtHalfDuration() {
+    return transition.getBlender().blend(0.5f);
+  }
+
+  private static void assertStateAtProgress(float progress, PerspectiveStateImpl actual) {
+    assertEquals(10.0f * progress, actual.position().x(), 1.0e-6);
+    TestUtils.assertQuatEquals(rotation(90.0f * progress), actual.rotation());
+    assertEquals(60.0f + 40.0f * progress, actual.getFovDeg(), 1.0e-4f);
+    assertEquals(10.0f + 20.0f * progress, actual.getOrthographicHeight(), 1.0e-4f);
   }
 
   private static PerspectiveStateImpl state(double x, float yawDeg, float fovDeg) {
