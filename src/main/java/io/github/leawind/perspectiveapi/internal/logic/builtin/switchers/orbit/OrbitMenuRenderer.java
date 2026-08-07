@@ -54,7 +54,14 @@ final class OrbitMenuRenderer {
     if (hovered != null && hovered != grabbed) drawActor(canvas, menu, hovered, 1.15);
     if (grabbed != null) drawActor(canvas, menu, grabbed, 1.22);
 
-    PerspectiveActor labelActor = grabbed != null ? grabbed : hovered;
+    PerspectiveActor labelActor;
+    if (menu.mode() == OrbitMenu.Mode.SELECTING) {
+      String resolvedId = menu.model().resolvedId();
+      labelActor = resolvedId != null ? menu.actor(resolvedId) : null;
+    } else {
+      labelActor = grabbed != null ? grabbed : hovered;
+    }
+
     if (labelActor != null) drawLabel(canvas, context, menu, labelActor);
     if (menu.mode() == OrbitMenu.Mode.EDITING) {
       drawSponsorButton(canvas, menu);
