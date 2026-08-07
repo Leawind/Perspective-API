@@ -207,7 +207,7 @@ public final class PerspectiveManager {
   /// 4. Apply and sanitize modifiers
   /// 5. Apply and sanitize perspective-switch transition interpolation
   /// 6. Write the final state to the camera
-  /// 7. Call {@link PerspectiveBehavior#afterApplyCameraState}
+  /// 7. Call {@link PerspectiveBehavior#afterCameraStateResolved}
   /// 8. Publish an independent source for previous-state snapshots and future transitions
   ///
   /// @param partialTicks interpolation factor between ticks
@@ -247,8 +247,8 @@ public final class PerspectiveManager {
     // Apply perspective
     if (!extensions.run(
         current.info().id(),
-        "apply",
-        () -> currentBehavior.applyCameraState(targetState, renderTickContext))) {
+        "computeCameraState",
+        () -> currentBehavior.computeCameraState(targetState, renderTickContext))) {
       targetState.set(backupState);
     }
 
@@ -279,8 +279,8 @@ public final class PerspectiveManager {
     backupState.set(targetState);
     extensions.run(
         current.info().id(),
-        "postApply",
-        () -> currentBehavior.afterApplyCameraState(backupState, renderTickContext));
+        "afterCameraStateResolved",
+        () -> currentBehavior.afterCameraStateResolved(backupState, renderTickContext));
 
     if (PerspectiveAPI.isEnabled()) {
       lastAppliedState.set(targetState);

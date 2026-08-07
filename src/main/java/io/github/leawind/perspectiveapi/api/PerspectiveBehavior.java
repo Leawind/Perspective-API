@@ -104,21 +104,22 @@ public interface PerspectiveBehavior {
   /// @apiNote `state` must not be stored or referenced outside this method call. `context` is also
   ///   valid only for this call. Repeated rotation calculations can accumulate floating-point
   ///   error, and the camera pipeline rejects rotations outside its unit-length tolerance.
-  default void applyCameraState(
+  default void computeCameraState(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {}
 
-  /// Called on every render frame when this perspective is active, **after** the final camera state
-  /// has been fully computed and applied, including all modifier transformations and transition
+  /// Called on every render frame when this perspective is active, after the final camera state has
+  /// been written to the Minecraft camera, including all modifier transformations and transition
   /// interpolation.
   ///
-  /// Provides the exact state written to the Minecraft camera, suitable for raycasts, hit-testing,
-  /// or other spatial queries that depend on the actual rendered viewpoint. A failure is logged and
-  /// otherwise ignored for that frame.
+  /// Provides the exact position and rotation written to the camera, suitable for raycasts,
+  /// hit-testing, or other spatial queries that depend on the actual rendered viewpoint. FOV and
+  /// projection settings are applied later in the same frame by the projection pipeline. A failure
+  /// is logged and otherwise ignored for that frame.
   ///
   /// @param state The final camera state that has been applied.
   /// @param context The context containing frame-specific data.
   /// @apiNote Neither argument may be stored or referenced after this method returns.
-  default void afterApplyCameraState(
+  default void afterCameraStateResolved(
       @NonNull PerspectiveState state, @NonNull PerspectiveContext context) {}
 
   // endregion

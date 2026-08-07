@@ -50,7 +50,7 @@ public interface PerspectiveState {
 
   /// A mutable view of {@link PerspectiveState} whose spatial fields can be modified in-place.
   ///
-  /// Passed to {@link PerspectiveBehavior#applyCameraState} and {@link PerspectiveModifier#apply}
+  /// Passed to {@link PerspectiveBehavior#computeCameraState} and {@link PerspectiveModifier#apply}
   /// during camera state computation.
   @ApiStatus.NonExtendable
   interface Mutable extends PerspectiveState {
