@@ -160,7 +160,8 @@ public final class PerspectiveManager {
     PerspectiveBehavior previousBehavior = currentBehavior;
     if (resolved != previous || previousBehavior == null) {
       boolean outgoingAllowsTransition =
-          previousBehavior != null
+          previous != null
+              && previousBehavior != null
               && allowsTransition(previous.info().id(), previousBehavior, false);
       if (previousBehavior != null) {
         extensions.run(

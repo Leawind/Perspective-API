@@ -5,12 +5,9 @@ import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.logic.state.StateManagerImpl;
 import java.nio.file.Files;
 import net.minecraft.client.Minecraft;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("ConstantConditions")
 public final class ModEvents {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ModEvents.class);
 
   public static void register() {
     PerspectiveManager manager = PerspectiveManager.INSTANCE;
