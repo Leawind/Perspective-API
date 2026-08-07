@@ -159,9 +159,19 @@ public record PerspectiveInfo(
   public @interface Declaration {
     /// The non-empty identifier for this perspective.
     ///
-    /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`). If multiple behaviors
-    /// use the same ID, the behavior with the lower {@link #priority()} value is registered. Ties
-    /// are resolved by the lexicographically earlier fully qualified behavior class name.
+    /// If multiple behaviors use the same ID, the behavior with the lower {@link #priority()} value
+    /// is registered. Ties are resolved by the lexicographically earlier fully qualified behavior
+    /// class name.
+    ///
+    /// ### Recommended Format
+    ///
+    /// ```
+    /// <modid>.<path>
+    /// ```
+    ///
+    /// ### Example
+    ///
+    /// - `examplemod.free_camera`
     @NonNull String id();
 
     /// The opaque vanilla camera type selected while this perspective is active.
@@ -169,11 +179,19 @@ public record PerspectiveInfo(
     /// Minecraft uses its current camera type for version-dependent behavior beyond camera position
     /// and rotation. This value maps to that enum exactly; it does not describe or imply stable
     /// Perspective API semantics.
+    ///
+    /// Refer to `net.minecraft.client.CameraType`
     @NonNull BaseType baseType() default BaseType.THIRD_PERSON_BACK;
 
     /// The translation key for the perspective's display name.
     ///
-    /// If left empty, it defaults to `perspective.<id>.name`.
+    /// If left empty, it defaults to `perspective.<id>.name`, where `<id>` is {@link #id()}
+    ///
+    /// ### Recommended Format
+    ///
+    /// ```
+    /// perspective_api.<id>.name
+    /// ```
     ///
     /// @see PerspectiveInfo#name()
     @NonNull String nameKey() default "";
@@ -182,12 +200,24 @@ public record PerspectiveInfo(
     ///
     /// If left empty, it defaults to `null`.
     ///
+    /// ### Recommended Format
+    ///
+    /// ```
+    /// perspective.<id>.description
+    /// ```
+    ///
     /// @see PerspectiveInfo#description()
     @NonNull String descriptionKey() default "";
 
     /// The string representation of the `Identifier` for the perspective's icon texture.
     ///
-    /// If left empty, it defaults to `null`.
+    /// If left empty, it defaults to `null` which means no icon.
+    ///
+    /// ### Recommended Format
+    ///
+    /// ```
+    /// <namespace>:textures/perspective/<path>.png
+    /// ```
     ///
     /// @see PerspectiveInfo#icon()
     @NonNull String icon() default "";
@@ -202,9 +232,9 @@ public record PerspectiveInfo(
 
     /// The sorting priority within the switcher and duplicate-ID resolution.
     ///
-    /// Lower values appear earlier in the cycle and take precedence over a duplicate ID. Switcher
-    /// ordering is effective only when {@link #switchable()} is `true`, but duplicate-ID resolution
-    /// always uses this value.
+    /// Lower values appear earlier in the switcher and take precedence over a duplicate ID.
+    /// Switcher ordering is effective only when {@link #switchable()} is `true`, but duplicate-ID
+    /// resolution always uses this value.
     int priority() default 0;
 
     /// Semantic traits of this perspective.
