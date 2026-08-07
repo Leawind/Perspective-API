@@ -142,6 +142,10 @@ final class OrbitSwitcherModel {
     return previewId != null ? previewId : activeId;
   }
 
+  @Nullable String activeId() {
+    return activeId;
+  }
+
   void ensureActive() {
     if (activeId != null && isAvailable(activeId)) return;
     activeId = firstAvailable();

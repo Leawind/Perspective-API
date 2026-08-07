@@ -51,7 +51,7 @@ final class OrbitMenuRenderer {
     for (PerspectiveActor actor : actors) {
       if (actor != grabbed && actor != hovered) drawActor(canvas, menu, actor, 1);
     }
-    if (hovered != null && hovered != grabbed) drawActor(canvas, menu, hovered, 1.15);
+    if (hovered != null && hovered != grabbed) drawActor(canvas, menu, hovered, 1);
     if (grabbed != null) drawActor(canvas, menu, grabbed, 1.22);
 
     PerspectiveActor labelActor;
@@ -247,7 +247,7 @@ final class OrbitMenuRenderer {
     int y = (int) menu.worldToScreenY(actor.body().position().y) - size / 2;
 
     canvas.drawGamemodeSwitcherSlot(x, y, size, size, COLOR_TEXT);
-    if (actor.perspectiveId().equals(menu.model().resolvedId())) {
+    if (actor.perspectiveId().equals(menu.model().activeId())) {
       canvas.drawGamemodeSwitcherSelection(x, y, size, size, COLOR_TEXT);
     }
 
