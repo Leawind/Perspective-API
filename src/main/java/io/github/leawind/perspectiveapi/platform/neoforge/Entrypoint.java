@@ -4,7 +4,7 @@ package io.github.leawind.perspectiveapi.platform.neoforge;
 /*import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.logic.ModEntrypoint;
 /^?   if >=1.21.11 {^/
-/^import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 
@@ -15,8 +15,8 @@ public final class Entrypoint {
     NeoForgeModInitializer.initialize();
   }
 }
-^//^?   } else {^/
-import net.neoforged.api.distmarker.Dist;
+/^?   } else {^/
+/^import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -31,5 +31,5 @@ public final class Entrypoint {
     NeoForgeModInitializer.initialize();
   }
 }
-/^?   }^/
+^//^?   }^/
 *//*? }*/

@@ -30,8 +30,8 @@ import org.jspecify.annotations.Nullable;
 /// @param switchable whether player-facing switchers may select the perspective
 /// @param priority the sorting priority within switchers, where lower values appear first
 /// @param icon the optional icon texture
-/// @param traits the stable semantic traits declared when the perspective is registered; see
-///     {@link Declaration#traits()} for recommended shared traits
+/// @param traits the stable semantic traits declared when the perspective is registered; see {@link
+///   Declaration#traits()} for recommended shared traits
 public record PerspectiveInfo(
     @NonNull String id,
     @NonNull Component name,
@@ -70,7 +70,7 @@ public record PerspectiveInfo(
   ///
   /// @throws NullPointerException if `trait` is `null`
   /// @throws IllegalArgumentException if `trait` is not lowercase `snake_case` with an optional
-  ///     namespace
+  ///   namespace
   @ApiStatus.Experimental
   private static void validateTrait(@NonNull String trait) {
     Objects.requireNonNull(trait);
@@ -159,17 +159,16 @@ public record PerspectiveInfo(
   public @interface Declaration {
     /// The non-empty identifier for this perspective.
     ///
-    /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`).
-    /// If multiple behaviors use the same ID, the behavior with the lower {@link #priority()}
-    /// value is registered. Ties are resolved by the lexicographically earlier fully qualified
-    /// behavior class name.
+    /// Recommended format: `<modid>.<path>` (e.g., `examplemod.free_camera`). If multiple behaviors
+    /// use the same ID, the behavior with the lower {@link #priority()} value is registered. Ties
+    /// are resolved by the lexicographically earlier fully qualified behavior class name.
     @NonNull String id();
 
     /// The opaque vanilla camera type selected while this perspective is active.
     ///
-    /// Minecraft uses its current camera type for version-dependent behavior beyond camera
-    /// position and rotation. This value maps to that enum exactly; it does not describe or imply
-    /// stable Perspective API semantics.
+    /// Minecraft uses its current camera type for version-dependent behavior beyond camera position
+    /// and rotation. This value maps to that enum exactly; it does not describe or imply stable
+    /// Perspective API semantics.
     @NonNull BaseType baseType() default BaseType.THIRD_PERSON_BACK;
 
     /// The translation key for the perspective's display name.
@@ -186,8 +185,7 @@ public record PerspectiveInfo(
     /// @see PerspectiveInfo#description()
     @NonNull String descriptionKey() default "";
 
-    /// The string representation of the `Identifier` or `ResourceLocation` for the perspective's
-    /// icon texture.
+    /// The string representation of the `Identifier` for the perspective's icon texture.
     ///
     /// If left empty, it defaults to `null`.
     ///
@@ -197,16 +195,16 @@ public record PerspectiveInfo(
     /// Whether this perspective is allowed to be manually selected by the player via a {@link
     /// PerspectiveSwitcherBehavior}.
     ///
-    /// If set to `false`, the perspective can only be activated programmatically through the
-    /// {@link PerspectiveOverrideChain}.
+    /// If set to `false`, the perspective can only be activated programmatically through the {@link
+    /// PerspectiveOverrideChain}.
     @ApiStatus.Experimental
     boolean switchable() default true;
 
     /// The sorting priority within the switcher and duplicate-ID resolution.
     ///
-    /// Lower values appear earlier in the cycle and take precedence over a duplicate ID.
-    /// Switcher ordering is effective only when {@link #switchable()} is `true`, but duplicate-ID
-    /// resolution always uses this value.
+    /// Lower values appear earlier in the cycle and take precedence over a duplicate ID. Switcher
+    /// ordering is effective only when {@link #switchable()} is `true`, but duplicate-ID resolution
+    /// always uses this value.
     int priority() default 0;
 
     /// Semantic traits of this perspective.
@@ -238,8 +236,8 @@ public record PerspectiveInfo(
   @Target(ElementType.TYPE)
   @Documented
   public @interface Default {
-    /// The priority of this default perspective. Higher values take precedence if multiple
-    /// defaults are registered.
+    /// The priority of this default perspective. Higher values take precedence if multiple defaults
+    /// are registered.
     int priority() default 0;
   }
 }

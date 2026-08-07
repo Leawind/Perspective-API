@@ -29,11 +29,11 @@ import net.minecraft.client.Camera;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 /^? } else {^/
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+/^import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexSorting;
-/^? }^/
+^//^? }^/
 *//*? }*/
 
 @Mixin(GameRenderer.class)

@@ -8,15 +8,15 @@ import net.neoforged.fml.ModList;
 public class NeoForgeModInitializer {
   static void initialize() {
     /^? if >=1.20.6 {^/
-    /^ModList.get()
+    ModList.get()
         .getModContainerById(PerspectiveAPI.MOD_ID)
         .ifPresent(
             container ->
                 container.registerExtensionPoint(
                     net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
                     (ignored, screen) -> ConfigScreenManager.findAndBuild(screen)));
-    ^//^? } else {^/
-    ModList.get()
+    /^? } else {^/
+    /^ModList.get()
         .getModContainerById(PerspectiveAPI.MOD_ID)
         .ifPresent(
             container ->
@@ -25,7 +25,7 @@ public class NeoForgeModInitializer {
                     () ->
                         new net.neoforged.neoforge.client.ConfigScreenHandler.ConfigScreenFactory(
                             (minecraft, screen) -> ConfigScreenManager.findAndBuild(screen))));
-    /^? }^/
+    ^//^? }^/
   }
 }
 *//*? }*/

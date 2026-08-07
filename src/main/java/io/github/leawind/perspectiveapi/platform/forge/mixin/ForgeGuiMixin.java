@@ -22,7 +22,7 @@ public abstract class ForgeGuiMixin {
 
   @Inject(method = "render", at = @At("TAIL"))
   private void perspectiveApi$afterRender(
-      net.minecraft.client.gui.GuiGraphics graphics,
+      net.minecraft.client.gui.GuiGraphicsExtractor graphics,
       float partialTick,
       CallbackInfo ci) {
     ForgeGui self = (ForgeGui) (Object) this;

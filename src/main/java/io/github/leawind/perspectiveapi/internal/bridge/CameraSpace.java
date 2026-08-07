@@ -29,8 +29,7 @@ public final class CameraSpace {
     IS_INTERNAL_IDENTITY_QUAT_NEGATIVE_Z = true;
     /*? } else {*/
     /*IS_INTERNAL_IDENTITY_QUAT_NEGATIVE_Z = false;
-     */
-    /*? }*/
+    *//*? }*/
 
     UP = new Vector3f(0, 1, 0);
     DOWN = new Vector3f(0, -1, 0);

@@ -21,7 +21,7 @@ public abstract class ExtendedGuiMixin {
 
   @Inject(method = "render", at = @At("TAIL"))
   private void perspectiveApi$afterRender(
-      net.minecraft.client.gui.GuiGraphics graphics,
+      net.minecraft.client.gui.GuiGraphicsExtractor graphics,
       float partialTick,
       CallbackInfo ci) {
     var minecraft = net.minecraft.client.Minecraft.getInstance();
