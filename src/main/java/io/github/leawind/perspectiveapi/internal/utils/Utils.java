@@ -1,6 +1,14 @@
 package io.github.leawind.perspectiveapi.internal.utils;
 
+import org.joml.Quaternionf;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class Utils {
+  public static final Logger DEBUG_LOGGER = LoggerFactory.getLogger("Debug");
+
   private Utils() {}
 
   /// Clamps a float value between min and max.
@@ -58,5 +66,17 @@ public final class Utils {
     } catch (ClassNotFoundException e) {
       return false;
     }
+  }
+
+  public static String toString(Quaternionf quat) {
+    return String.format("Quatf(%.4f, %.4f, %.4f, %.4f)", quat.x(), quat.y(), quat.z(), quat.w());
+  }
+
+  public static String toString(Vector3f v) {
+    return String.format("Vector3f(%.4f, %.4f, %.4f)", v.x(), v.y(), v.z());
+  }
+
+  public static String toString(Vector2f v) {
+    return String.format("Vector2f(%.4f, %.4f)", v.x(), v.y());
   }
 }

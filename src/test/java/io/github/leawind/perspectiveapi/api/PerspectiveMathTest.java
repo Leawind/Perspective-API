@@ -92,6 +92,21 @@ class PerspectiveMathTest {
   }
 
   @Test
+  void eulerQuaternionRoundTripPreservesRotationsAtGimbalLock() {
+    for (float pitchDeg : new float[] {-90.0f, 90.0f}) {
+      for (float yawDeg : new float[] {-170.0f, -90.0f, 0.0f, 90.0f, 170.0f}) {
+        for (float rollDeg : new float[] {-150.0f, -30.0f, 0.0f, 45.0f, 160.0f}) {
+          Quaternionf quaternion =
+              PerspectiveMath.eulerDegToQuat(pitchDeg, yawDeg, rollDeg, new Quaternionf());
+          assertCanonicalGimbalLockRoundTrip(quaternion);
+          assertCanonicalGimbalLockRoundTrip(
+              new Quaternionf(-quaternion.x(), -quaternion.y(), -quaternion.z(), -quaternion.w()));
+        }
+      }
+    }
+  }
+
+  @Test
   void directionEulerRoundTripPreservesDirection() {
     for (Vector3f eulerDeg : representativeEulerAngles()) {
       Vector3f direction = PerspectiveMath.eulerDegToDirection(eulerDeg, new Vector3f());
@@ -139,5 +154,21 @@ class PerspectiveMathTest {
         new Vector3f(20.0f, 35.0f, 0.0f),
         new Vector3f(-40.0f, 120.0f, 15.0f),
         new Vector3f(70.0f, -160.0f, -45.0f));
+  }
+
+  private static void assertCanonicalGimbalLockRoundTrip(Quaternionf quaternion) {
+    Vector3f convertedEulerDeg = PerspectiveMath.toEulerDeg(quaternion, new Vector3f());
+    Vector2f convertedEulerDeg2 = PerspectiveMath.toEulerDeg(quaternion, new Vector2f());
+    Vector3f convertedEulerRad = PerspectiveMath.toEulerRad(quaternion, new Vector3f());
+    Vector2f convertedEulerRad2 = PerspectiveMath.toEulerRad(quaternion, new Vector2f());
+    Quaternionf convertedQuaternion =
+        PerspectiveMath.eulerDegToQuat(convertedEulerDeg, new Quaternionf());
+
+    TestUtils.assertAngleEquals(0.0f, convertedEulerDeg.z(), 1e-4f);
+    TestUtils.assertAngleEquals(
+        new Vector2f(convertedEulerDeg.x(), convertedEulerDeg.y()), convertedEulerDeg2, 1e-4f);
+    TestUtils.assertAngleEquals(
+        new Vector2f(convertedEulerRad.x(), convertedEulerRad.y()), convertedEulerRad2, 1e-6f);
+    TestUtils.assertQuatEquals(quaternion, convertedQuaternion);
   }
 }

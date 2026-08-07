@@ -57,8 +57,8 @@ import org.jspecify.annotations.NonNull;
 ///
 /// ## Unit Vectors
 ///
-/// A unit vector pointing from the origin to a target can represent orientation,
-/// but cannot represent roll.
+/// A unit vector pointing from the origin to a target can represent orientation, but cannot
+/// represent roll.
 ///
 /// When converting from Euler angles or quaternions to this format, roll information is lost.
 @ApiStatus.Experimental
@@ -67,6 +67,7 @@ public final class PerspectiveMath {
   private PerspectiveMath() {}
 
   private static final float RAD_TO_DEG = (float) (180 / Math.PI);
+  private static final float EULER_SINGULARITY_EPSILON = 1.0e-6f;
 
   public static final Vector3fc FORWARD = new Vector3f(0, 0, 1);
   public static final Vector3fc BACKWARD = new Vector3f(0, 0, -1);
@@ -105,16 +106,46 @@ public final class PerspectiveMath {
 
   // region to euler radian
 
+  /// Converts a quaternion to Y-X-Z Euler angles in radians.
+  ///
+  /// At a gimbal lock, returns an equivalent canonical representation with roll set to zero and the
+  /// coupled rotation folded into yaw.
   public static @NonNull Vector3f toEulerRad(
       @NonNull Quaternionfc rotation, @NonNull Vector3f dest) {
-    rotation.getEulerAnglesYXZ(dest);
+    getEulerAnglesYXZ(rotation, dest);
     return dest.mul(1, -1, 1);
   }
 
+  /// Converts a quaternion to the pitch and yaw of its canonical Y-X-Z Euler representation in
+  /// radians, discarding roll.
   public static @NonNull Vector2f toEulerRad(
       @NonNull Quaternionfc rotation, @NonNull Vector2f dest) {
     Vector3f full = toEulerRad(rotation, new Vector3f());
     return dest.set(full.x(), full.y());
+  }
+
+  private static Vector3f getEulerAnglesYXZ(Quaternionfc rotation, Vector3f dest) {
+    float x = rotation.x();
+    float y = rotation.y();
+    float z = rotation.z();
+    float w = rotation.w();
+    float lengthSquared = rotation.lengthSquared();
+    if (!(lengthSquared > 0.0f) || !Float.isFinite(lengthSquared)) {
+      return rotation.getEulerAnglesYXZ(dest);
+    }
+
+    float yawNumerator = x * z + y * w;
+    float yawDenominator = 0.5f * lengthSquared - y * y - x * x;
+    float singularityThreshold = EULER_SINGULARITY_EPSILON * lengthSquared;
+    if (yawNumerator * yawNumerator + yawDenominator * yawDenominator
+        <= singularityThreshold * singularityThreshold) {
+      float sinPitch = -2.0f * (y * z - w * x) / lengthSquared;
+      float pitch = java.lang.Math.copySign((float) (Math.PI * 0.5), sinPitch);
+      float yaw = Math.atan2(w * y - x * z, 0.5f * lengthSquared - y * y - z * z);
+      return dest.set(pitch, yaw, 0.0f);
+    }
+
+    return rotation.getEulerAnglesYXZ(dest);
   }
 
   public static @NonNull Vector3f directionToEulerRad(
@@ -153,11 +184,17 @@ public final class PerspectiveMath {
 
   // region to euler degrees
 
+  /// Converts a quaternion to Y-X-Z Euler angles in degrees.
+  ///
+  /// At a gimbal lock, returns an equivalent canonical representation with roll set to zero and the
+  /// coupled rotation folded into yaw.
   public static @NonNull Vector3f toEulerDeg(
       @NonNull Quaternionfc rotation, @NonNull Vector3f dest) {
     return toEulerRad(rotation, dest).mul(RAD_TO_DEG);
   }
 
+  /// Converts a quaternion to the pitch and yaw of its canonical Y-X-Z Euler representation in
+  /// degrees, discarding roll.
   public static @NonNull Vector2f toEulerDeg(
       @NonNull Quaternionfc rotation, @NonNull Vector2f dest) {
     return toEulerRad(rotation, dest).mul(RAD_TO_DEG);
