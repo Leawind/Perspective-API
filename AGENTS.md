@@ -269,7 +269,7 @@ scope 根据主要受影响的包决定，如果没有合适的就不写：
 - 将公共 API 中的类/接口移动到内部包
 - 修改公共 API 方法的行为（不再向后兼容）
 
-如果包含破坏性变更，必须在 footer 中添加：
+标注了 `@ApiStatus.Internal` 的成员不属于公共 API，不保证兼容，移除或修改它们**不算**破坏性变更，不要为其添加 `BREAKING CHANGE`。仅当未标注 `@ApiStatus.Internal` 的公共 API 成员发生上述变化时，才需要在 footer 中添加：
 
 ```
 BREAKING CHANGE: <破坏性变更简要描述>
