@@ -30,66 +30,13 @@ public final class PerspectiveAPI {
   /// The display name of Perspective API
   public static final String MOD_NAME = "Perspective API";
 
-  /// Default number of client ticks between logic updates.
-  @ApiStatus.Internal public static final int DEFAULT_LOGIC_TICK_INTERVAL = 1;
-
   private static volatile boolean enabled = true;
-  private static volatile int logicTickInterval = DEFAULT_LOGIC_TICK_INTERVAL;
-  private static volatile @Nullable Runtime runtime;
-  private static final Object RUNTIME_LOCK = new Object();
-  private static final InitializationCoordinator INITIALIZATION = new InitializationCoordinator();
-
-  /// Runtime services installed by the internal implementation during mod initialization.
-  @ApiStatus.Internal
-  public interface Runtime {
-    @NonNull PerspectiveRegistry registry();
-
-    @NonNull Transition transition();
-
-    @NonNull PerspectiveModifierChain modifiers();
-
-    @NonNull PerspectiveOverrideChain overrides();
-
-    @NonNull PerspectiveSwitcherManager switchers();
-
-    @Nullable Perspective current();
-
-    @Nullable PerspectiveState previousCameraState();
-
-    boolean isCurrent(@NonNull String id);
-
-    void onEnabledChanged(boolean enabled);
-  }
-
-  /// Installs the internal runtime implementation.
-  @ApiStatus.Internal
-  public static void installRuntime(@NonNull Runtime runtime) {
-    Objects.requireNonNull(runtime);
-    synchronized (RUNTIME_LOCK) {
-      Runtime existing = PerspectiveAPI.runtime;
-      if (existing != null) {
-        if (existing.getClass() != runtime.getClass()) {
-          throw new IllegalStateException("Perspective API runtime is already installed");
-        }
-        return;
-      }
-      PerspectiveAPI.runtime = runtime;
-    }
-  }
-
-  private static @NonNull Runtime requireRuntime() {
-    Runtime runtime = PerspectiveAPI.runtime;
-    if (runtime == null) {
-      throw new IllegalStateException("Perspective API runtime is not initialized");
-    }
-    return runtime;
-  }
 
   /// Runs an action after Perspective API has completed initialization.
   ///
   /// If the API is already ready, the action runs synchronously before this method returns.
-  /// Otherwise, it runs synchronously on the thread that completes API initialization. Callers
-  /// must not assume a particular thread or rely on the execution order of actions registered by
+  /// Otherwise, it runs synchronously on the thread that completes API initialization. Callers must
+  /// not assume a particular thread or rely on the execution order of actions registered by
   /// different threads.
   ///
   /// The action is invoked exactly once. If multiple queued actions fail, all actions are invoked
@@ -98,17 +45,7 @@ public final class PerspectiveAPI {
   /// @param key an identifier used to attribute failures
   /// @param action the initialization action
   public static void runWhenReady(@NonNull String key, @NonNull Runnable action) {
-    INITIALIZATION.runWhenReady(key, action);
-  }
-
-  /// Marks Perspective API as ready and runs all queued initialization actions.
-  @ApiStatus.Internal
-  public static void finishInitialization() {
-    if (runtime == null) {
-      throw new IllegalStateException(
-          "Cannot finish Perspective API initialization before installing its runtime");
-    }
-    INITIALIZATION.finish();
+    PerspectiveAPIRuntime.runWhenReady(key, action);
   }
 
   /// @return whether the mod Perspective API is currently enabled
@@ -118,30 +55,13 @@ public final class PerspectiveAPI {
 
   /// Enable or disable the mod Perspective API
   ///
-  /// When disabled, the active perspective is deactivated and the mod stops modifying camera
-  /// state. Registered perspectives, overrides, and modifiers are retained.
+  /// When disabled, the active perspective is deactivated and the mod stops modifying camera state.
+  /// Registered perspectives, overrides, and modifiers are retained.
   public static void setEnabled(boolean enabled) {
     if (PerspectiveAPI.enabled == enabled) return;
     PerspectiveAPI.enabled = enabled;
-    Runtime runtime = PerspectiveAPI.runtime;
+    PerspectiveAPIRuntime.Services runtime = PerspectiveAPIRuntime.installed();
     if (runtime != null) runtime.onEnabledChanged(enabled);
-  }
-
-  /// Returns the number of client ticks between Perspective API logic updates.
-  @ApiStatus.Internal
-  public static int getLogicTickInterval() {
-    return logicTickInterval;
-  }
-
-  /// Sets the number of client ticks between Perspective API logic updates.
-  ///
-  /// @throws IllegalArgumentException if `logicTickInterval` is less than `1`
-  @ApiStatus.Internal
-  public static void setLogicTickInterval(int logicTickInterval) {
-    if (logicTickInterval < 1) {
-      throw new IllegalArgumentException("logicTickInterval must be at least 1");
-    }
-    PerspectiveAPI.logicTickInterval = logicTickInterval;
   }
 
   /// Returns the global registry for perspectives.
@@ -150,26 +70,26 @@ public final class PerspectiveAPI {
   ///
   /// @throws IllegalStateException if called before the internal runtime is initialized
   public static @NonNull PerspectiveRegistry getRegistry() {
-    return requireRuntime().registry();
+    return PerspectiveAPIRuntime.require().registry();
   }
 
   /// Returns the controller for smooth camera transitions.
   @ApiStatus.Experimental
   public static @NonNull Transition getTransition() {
-    return requireRuntime().transition();
+    return PerspectiveAPIRuntime.require().transition();
   }
 
   /// Returns the chain of modifiers applied to the camera state
   public static @NonNull PerspectiveModifierChain getModifierChain() {
-    return requireRuntime().modifiers();
+    return PerspectiveAPIRuntime.require().modifiers();
   }
 
   /// Returns the final state from the last completed main-camera update.
   ///
-  /// The snapshot includes the active perspective, all modifiers, and perspective-switch
-  /// transition interpolation. It is published only after the camera update and final-state
-  /// callback have completed, so querying it from inside a camera-state callback still returns the
-  /// preceding completed update.
+  /// The snapshot includes the active perspective, all modifiers, and perspective-switch transition
+  /// interpolation. It is published only after the camera update and final-state callback have
+  /// completed, so querying it from inside a camera-state callback still returns the preceding
+  /// completed update.
   ///
   /// The returned snapshot is independent and can be retained by the caller. It remains available
   /// across level and dimension changes, but is invalidated when Perspective API is disabled.
@@ -179,19 +99,19 @@ public final class PerspectiveAPI {
   /// @throws IllegalStateException if called before the internal runtime is initialized
   @ApiStatus.Experimental
   public static @Nullable PerspectiveState getPreviousCameraState() {
-    return requireRuntime().previousCameraState();
+    return PerspectiveAPIRuntime.require().previousCameraState();
   }
 
   /// Returns the priority-based chain for temporary camera overrides
   @ApiStatus.Experimental
   public static @NonNull PerspectiveOverrideChain getOverrideChain() {
-    return requireRuntime().overrides();
+    return PerspectiveAPIRuntime.require().overrides();
   }
 
   /// Returns the manager for perspective switchers
   @ApiStatus.Experimental
   public static @NonNull PerspectiveSwitcherManager getSwitcherManager() {
-    return requireRuntime().switchers();
+    return PerspectiveAPIRuntime.require().switchers();
   }
 
   /// Returns the perspective that currently owns the base camera state.
@@ -201,19 +121,19 @@ public final class PerspectiveAPI {
   ///
   /// @throws IllegalStateException if called before SPI discovery completes during mod loading
   public static @Nullable Perspective getCurrent() throws IllegalStateException {
-    return requireRuntime().current();
+    return PerspectiveAPIRuntime.require().current();
   }
 
   /// Checks if the currently active perspective matches the given ID.
   ///
-  /// Returns `false` while Perspective API is disabled, before a perspective has been activated,
-  /// or before SPI discovery completes.
+  /// Returns `false` while Perspective API is disabled, before a perspective has been activated, or
+  /// before SPI discovery completes.
   ///
   /// @param id the perspective ID to check
   /// @return `true` if the current perspective has the given ID, `false` otherwise
   public static boolean isCurrent(@NonNull String id) {
     Objects.requireNonNull(id);
-    Runtime runtime = PerspectiveAPI.runtime;
+    PerspectiveAPIRuntime.Services runtime = PerspectiveAPIRuntime.installed();
     return runtime != null && runtime.isCurrent(id);
   }
 }

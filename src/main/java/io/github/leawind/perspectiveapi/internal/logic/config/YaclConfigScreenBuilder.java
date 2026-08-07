@@ -50,9 +50,9 @@ public final class YaclConfigScreenBuilder {
                                 OptionDescription.of(
                                     text("config_screen.option.logic_tick_interval.desc")))
                             .binding(
-                                PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL,
-                                PerspectiveAPI::getLogicTickInterval,
-                                PerspectiveAPI::setLogicTickInterval)
+                                PerspectiveManager.DEFAULT_LOGIC_TICK_INTERVAL,
+                                PerspectiveManager::getLogicTickInterval,
+                                PerspectiveManager::setLogicTickInterval)
                             .controller(
                                 opt ->
                                     IntegerSliderControllerBuilder.create(opt)

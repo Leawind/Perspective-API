@@ -59,7 +59,7 @@ public final class PerspectiveAPIState {
                       Codec.BOOL.optionalFieldOf("enabled", true).forGetter((s) -> s.enabled),
                       Codec.INT
                           .optionalFieldOf(
-                              "logic_tick_interval", PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL)
+                              "logic_tick_interval", PerspectiveManager.DEFAULT_LOGIC_TICK_INTERVAL)
                           .forGetter(s -> s.logicTickInterval),
                       Codec.STRING
                           .optionalFieldOf("manager.current")
@@ -129,7 +129,7 @@ public final class PerspectiveAPIState {
       throw new IllegalArgumentException("transition.duration_ms must be finite and non-negative");
     }
     PerspectiveAPI.setEnabled(enabled);
-    PerspectiveAPI.setLogicTickInterval(logicTickInterval);
+    PerspectiveManager.setLogicTickInterval(logicTickInterval);
 
     if (managerCurrent != null) {
       Perspective perspective = PerspectiveRegistryImpl.INSTANCE.getOrDefault(managerCurrent);
@@ -152,7 +152,7 @@ public final class PerspectiveAPIState {
     Map<String, Dynamic<?>> existingSections = existing == null ? Map.of() : existing.sections;
     return new PerspectiveAPIState(
         PerspectiveAPI.isEnabled(),
-        PerspectiveAPI.getLogicTickInterval(),
+        PerspectiveManager.getLogicTickInterval(),
         Optional.of(PerspectiveManager.INSTANCE.getLastResolvedOrDefault().info().id()),
         Optional.of(PerspectiveAPI.getSwitcherManager().getSelectedSwitcher().id()),
         PerspectiveAPI.getTransition().getDurationMs(),

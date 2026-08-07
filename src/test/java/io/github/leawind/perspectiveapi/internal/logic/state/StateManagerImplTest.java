@@ -128,10 +128,14 @@ class StateManagerImplTest {
   @AfterEach
   void afterEach() throws IOException {
     PerspectiveAPI.setEnabled(true);
-    PerspectiveAPI.setLogicTickInterval(PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL);
+    PerspectiveManager.setLogicTickInterval(PerspectiveManager.DEFAULT_LOGIC_TICK_INTERVAL);
     PerspectiveAPI.getTransition().setDurationMs(260.0);
-    PerspectiveManager.INSTANCE.transition().setPositionAlgorithm(TransitionImpl.DEFAULT_POSITION_ALGORITHM);
-    PerspectiveManager.INSTANCE.transition().setRotationAlgorithm(TransitionImpl.DEFAULT_ROTATION_ALGORITHM);
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setPositionAlgorithm(TransitionImpl.DEFAULT_POSITION_ALGORITHM);
+    PerspectiveManager.INSTANCE
+        .transition()
+        .setRotationAlgorithm(TransitionImpl.DEFAULT_ROTATION_ALGORITHM);
     PerspectiveManager.INSTANCE.transition().setFovAlgorithm(TransitionImpl.DEFAULT_FOV_ALGORITHM);
     PerspectiveManager.INSTANCE
         .transition()
@@ -229,8 +233,7 @@ class StateManagerImplTest {
         .setFovAlgorithm(FixedStartFovTransitionAlgorithm.INSTANCE);
     PerspectiveManager.INSTANCE
         .transition()
-        .setOrthographicHeightAlgorithm(
-            FixedStartOrthographicHeightTransitionAlgorithm.INSTANCE);
+        .setOrthographicHeightAlgorithm(FixedStartOrthographicHeightTransitionAlgorithm.INSTANCE);
 
     manager.tryExtractAndSave();
     var savedState = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
@@ -269,13 +272,13 @@ class StateManagerImplTest {
   void roundTripPreservesLogicTickInterval() {
     Path filePath = tempDir.resolve("logic.json");
     StateManager manager = new StateManagerImpl(filePath);
-    PerspectiveAPI.setLogicTickInterval(4);
+    PerspectiveManager.setLogicTickInterval(4);
 
     manager.tryExtractAndSave();
-    PerspectiveAPI.setLogicTickInterval(1);
+    PerspectiveManager.setLogicTickInterval(1);
     manager.tryLoadAndApply();
 
-    assertEquals(4, PerspectiveAPI.getLogicTickInterval());
+    assertEquals(4, PerspectiveManager.getLogicTickInterval());
   }
 
   @Test
@@ -389,7 +392,8 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertTrue(PerspectiveAPI.isEnabled());
-    assertEquals(PerspectiveAPI.DEFAULT_LOGIC_TICK_INTERVAL, PerspectiveAPI.getLogicTickInterval());
+    assertEquals(
+        PerspectiveManager.DEFAULT_LOGIC_TICK_INTERVAL, PerspectiveManager.getLogicTickInterval());
   }
 
   @Test

@@ -2,6 +2,7 @@ package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
+import io.github.leawind.perspectiveapi.api.PerspectiveAPIRuntime;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
@@ -38,14 +39,34 @@ public final class PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManager.class);
   public static final PerspectiveManager INSTANCE;
 
+  /// Default number of client ticks between logic updates.
+  public static final int DEFAULT_LOGIC_TICK_INTERVAL = 1;
+
+  private static volatile int logicTickInterval = DEFAULT_LOGIC_TICK_INTERVAL;
+
   static {
-    PerspectiveAPI.installRuntime(PerspectiveAPIRuntimeImpl.INSTANCE);
+    PerspectiveAPIRuntime.install(PerspectiveAPIRuntimeImpl.INSTANCE);
     try {
       INSTANCE = new PerspectiveManager(OrbitSwitcherBehavior.INSTANCE);
     } catch (Throwable e) {
       LOGGER.error("Failed to initialize PerspectiveManager", e);
       throw e;
     }
+  }
+
+  /// Returns the number of client ticks between Perspective API logic updates.
+  public static int getLogicTickInterval() {
+    return logicTickInterval;
+  }
+
+  /// Sets the number of client ticks between Perspective API logic updates.
+  ///
+  /// @throws IllegalArgumentException if `logicTickInterval` is less than `1`
+  public static void setLogicTickInterval(int logicTickInterval) {
+    if (logicTickInterval < 1) {
+      throw new IllegalArgumentException("logicTickInterval must be at least 1");
+    }
+    PerspectiveManager.logicTickInterval = logicTickInterval;
   }
 
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
@@ -144,7 +165,7 @@ public final class PerspectiveManager {
       registryDirty = false;
       logicUpdateScheduler.reset();
       updateCurrentPerspective(true);
-    } else if (logicUpdateScheduler.tick(PerspectiveAPI.getLogicTickInterval())) {
+    } else if (logicUpdateScheduler.tick(getLogicTickInterval())) {
       updateCurrentPerspective(false);
     }
 
