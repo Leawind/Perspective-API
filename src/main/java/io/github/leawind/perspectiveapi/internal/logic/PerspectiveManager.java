@@ -26,7 +26,6 @@ import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import java.util.Objects;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import org.joml.Quaternionf;
 import org.jspecify.annotations.NonNull;
@@ -39,11 +38,6 @@ public final class PerspectiveManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(PerspectiveManager.class);
   public static final PerspectiveManager INSTANCE;
 
-  /// Default number of client ticks between logic updates.
-  public static final int DEFAULT_LOGIC_TICK_INTERVAL = 1;
-
-  private static volatile int logicTickInterval = DEFAULT_LOGIC_TICK_INTERVAL;
-
   static {
     PerspectiveAPIRuntime.install(PerspectiveAPIRuntimeImpl.INSTANCE);
     try {
@@ -54,29 +48,11 @@ public final class PerspectiveManager {
     }
   }
 
-  /// Returns the number of client ticks between Perspective API logic updates.
-  public static int getLogicTickInterval() {
-    return logicTickInterval;
-  }
-
-  /// Sets the number of client ticks between Perspective API logic updates.
-  ///
-  /// @throws IllegalArgumentException if `logicTickInterval` is less than `1`
-  public static void setLogicTickInterval(int logicTickInterval) {
-    if (logicTickInterval < 1) {
-      throw new IllegalArgumentException("logicTickInterval must be at least 1");
-    }
-    PerspectiveManager.logicTickInterval = logicTickInterval;
-  }
-
   private final Sanitizer.ThrottledAction throttledAction = new Sanitizer.ThrottledAction(5000);
   private final ExtensionInvoker extensions = new ExtensionInvoker(LOGGER, "Perspective");
 
   private final ThrottledPerspectiveSanitizer sanitizer =
       new ThrottledPerspectiveSanitizer(throttledAction);
-  private final LogicUpdateScheduler logicUpdateScheduler = new LogicUpdateScheduler();
-  private volatile boolean registryDirty;
-
   // region components
 
   private final TransitionImpl transition;
@@ -124,7 +100,6 @@ public final class PerspectiveManager {
 
   private PerspectiveManager(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
     switchers = new PerspectiveSwitcherManagerImpl(defaultSwitcher);
-    PerspectiveRegistryImpl.INSTANCE.onUpdate().on(() -> registryDirty = true);
 
     overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
     overrides.register(Integer.MIN_VALUE, switchers);
@@ -155,39 +130,8 @@ public final class PerspectiveManager {
     return current;
   }
 
-  public void clientTick(Minecraft minecraft) {
-    PerspectiveRegistryImpl.INSTANCE.beginAvailabilitySnapshot();
-
-    // tick switchers
-    switchers.clientTick(minecraft);
-
-    if (registryDirty) {
-      registryDirty = false;
-      logicUpdateScheduler.reset();
-      updateCurrentPerspective(true);
-    } else if (logicUpdateScheduler.tick(getLogicTickInterval())) {
-      updateCurrentPerspective(false);
-    }
-
-    Perspective current = this.current;
-    PerspectiveBehavior currentBehavior = this.currentBehavior;
-    if (current == null || currentBehavior == null) return;
-
-    // Run perspective client tick
-    extensions.run(
-        current.info().id(), "clientTick", () -> currentBehavior.clientTickWhenActive(minecraft));
-  }
-
-  void resetLogicUpdateScheduler() {
-    logicUpdateScheduler.reset();
-  }
-
   public void onEnabledChanged(boolean enabled) {
-    logicUpdateScheduler.reset();
-    if (enabled) {
-      registryDirty = true;
-      return;
-    }
+    if (enabled) return;
 
     PerspectiveBehavior deactivated = currentBehavior;
     currentBehavior = null;
@@ -199,7 +143,13 @@ public final class PerspectiveManager {
     }
   }
 
-  private void updateCurrentPerspective(boolean registryChanged) {
+  /// Resolves the current perspective before vanilla reads {@link CameraType} to update the main
+  /// camera for a render frame.
+  void beforeMainCameraUpdate() {
+    updateCurrentPerspective();
+  }
+
+  private void updateCurrentPerspective() {
     // Resolve current id from override chain
     Perspective previous = current;
     Perspective resolved = PerspectiveRegistryImpl.INSTANCE.getOrDefault(overrides.get());
@@ -226,8 +176,6 @@ public final class PerspectiveManager {
               && allowsTransition(resolved.info().id(), resolvedBehavior, true);
       transitionAllowed = outgoingAllowsTransition && incomingAllowsTransition;
       startTransition();
-    } else if (registryChanged) {
-      updateCameraType(resolved.info().baseType());
     }
   }
 

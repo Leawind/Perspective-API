@@ -380,7 +380,7 @@ class PerspectiveRegistryImplTest {
   }
 
   @Test
-  void reuseAvailabilityResultWithinClientTick() {
+  void evaluatesAvailabilityForEveryCall() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
     ToggleAvailabilityPerspective behavior = new ToggleAvailabilityPerspective();
     registry.registerSilent(behavior);
@@ -389,38 +389,24 @@ class PerspectiveRegistryImplTest {
     overrides.register(0, () -> AVAILABILITY_ID);
 
     behavior.available = true;
-    registry.beginAvailabilitySnapshot();
-
     assertTrue(perspective.isAvailable());
     behavior.available = false;
-    assertEquals(AVAILABILITY_ID, overrides.get());
-    assertTrue(perspective.isAvailable());
-    assertEquals(1, behavior.evaluationCount);
-
-    registry.beginAvailabilitySnapshot();
-
+    assertNull(overrides.get());
     assertFalse(perspective.isAvailable());
-    assertEquals(2, behavior.evaluationCount);
+    assertEquals(3, behavior.evaluationCount);
   }
 
   @Test
-  void cacheAvailabilityFailureWithinClientTick() {
+  void retriesAvailabilityAfterFailure() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
     ToggleAvailabilityPerspective behavior = new ToggleAvailabilityPerspective();
     registry.registerSilent(behavior);
     var perspective = registry.get(AVAILABILITY_ID);
 
     behavior.throwsException = true;
-    registry.beginAvailabilitySnapshot();
-
     assertFalse(perspective.isAvailable());
     behavior.throwsException = false;
     behavior.available = true;
-    assertFalse(perspective.isAvailable());
-    assertEquals(1, behavior.evaluationCount);
-
-    registry.beginAvailabilitySnapshot();
-
     assertTrue(perspective.isAvailable());
     assertEquals(2, behavior.evaluationCount);
   }

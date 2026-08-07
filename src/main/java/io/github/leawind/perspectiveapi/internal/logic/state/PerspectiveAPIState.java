@@ -57,10 +57,6 @@ public final class PerspectiveAPIState {
           inst ->
               inst.group(
                       Codec.BOOL.optionalFieldOf("enabled", true).forGetter((s) -> s.enabled),
-                      Codec.INT
-                          .optionalFieldOf(
-                              "logic_tick_interval", PerspectiveManager.DEFAULT_LOGIC_TICK_INTERVAL)
-                          .forGetter(s -> s.logicTickInterval),
                       Codec.STRING
                           .optionalFieldOf("manager.current")
                           .forGetter(s -> Optional.ofNullable(s.managerCurrent)),
@@ -76,7 +72,6 @@ public final class PerspectiveAPIState {
                   .apply(inst, PerspectiveAPIState::new));
 
   private final boolean enabled;
-  private final int logicTickInterval;
   private final @Nullable String managerCurrent;
   private final @Nullable String managerSwitcher;
   private final double transitionDurationMs;
@@ -85,13 +80,11 @@ public final class PerspectiveAPIState {
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private PerspectiveAPIState(
       boolean enabled,
-      int logicTickInterval,
       Optional<String> managerCurrent,
       Optional<String> managerSwitcher,
       double transitionDurationMs,
       Map<String, Dynamic<?>> sections) {
     this.enabled = enabled;
-    this.logicTickInterval = logicTickInterval;
     this.managerCurrent = managerCurrent.orElse(null);
     this.managerSwitcher = managerSwitcher.orElse(null);
     this.transitionDurationMs = transitionDurationMs;
@@ -103,7 +96,6 @@ public final class PerspectiveAPIState {
     if (this == o) return true;
     if (!(o instanceof PerspectiveAPIState that)) return false;
     return enabled == that.enabled
-        && logicTickInterval == that.logicTickInterval
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
         && Objects.equals(managerCurrent, that.managerCurrent)
         && Objects.equals(managerSwitcher, that.managerSwitcher)
@@ -112,24 +104,14 @@ public final class PerspectiveAPIState {
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        enabled,
-        logicTickInterval,
-        managerCurrent,
-        managerSwitcher,
-        transitionDurationMs,
-        sections);
+    return Objects.hash(enabled, managerCurrent, managerSwitcher, transitionDurationMs, sections);
   }
 
   public void apply() {
-    if (logicTickInterval < 1) {
-      throw new IllegalArgumentException("logic_tick_interval must be at least 1");
-    }
     if (!Double.isFinite(transitionDurationMs) || transitionDurationMs < 0) {
       throw new IllegalArgumentException("transition.duration_ms must be finite and non-negative");
     }
     PerspectiveAPI.setEnabled(enabled);
-    PerspectiveManager.setLogicTickInterval(logicTickInterval);
 
     if (managerCurrent != null) {
       Perspective perspective = PerspectiveRegistryImpl.INSTANCE.getOrDefault(managerCurrent);
@@ -152,7 +134,6 @@ public final class PerspectiveAPIState {
     Map<String, Dynamic<?>> existingSections = existing == null ? Map.of() : existing.sections;
     return new PerspectiveAPIState(
         PerspectiveAPI.isEnabled(),
-        PerspectiveManager.getLogicTickInterval(),
         Optional.of(PerspectiveManager.INSTANCE.getLastResolvedOrDefault().info().id()),
         Optional.of(PerspectiveAPI.getSwitcherManager().getSelectedSwitcher().id()),
         PerspectiveAPI.getTransition().getDurationMs(),

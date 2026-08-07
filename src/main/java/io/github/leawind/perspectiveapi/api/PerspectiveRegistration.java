@@ -14,11 +14,12 @@ public interface PerspectiveRegistration {
 
   /// Removes this exact registration.
   ///
-  /// If the perspective is active, selection and lifecycle state are reconciled on the next active
-  /// client tick. The behavior must remain usable until its `onDeactivate()` callback.
+  /// If the perspective is active, selection and lifecycle state are reconciled before the next
+  /// main-camera render update. The behavior must remain usable until its `onDeactivate()`
+  /// callback.
   ///
   /// @return `true` if the registration was removed, or `false` if it was already absent
   /// @throws IllegalStateException if removing it would leave the registry without a default
-  ///     perspective
+  ///   perspective
   boolean unregister();
 }

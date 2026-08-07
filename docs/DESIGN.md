@@ -145,7 +145,7 @@ Modifier 应只修改自己负责的字段，并按照 API 约定的旋转方向
 3. 新 Perspective 收到激活通知
 4. 根据双方是否允许过渡决定是否开始普通切换过渡
 
-只有当前生效的 Perspective 接收 active client tick 和逐帧相机状态回调。
+只有当前生效的 Perspective 接收逐帧相机状态回调。Perspective API 不为 Perspective、Switcher、覆盖项或 Modifier 调度 client tick 回调；需要按 client tick 更新状态的实现应自行监听加载器事件，并在渲染阶段提供已缓存的值。
 
 禁用 Perspective API 时，当前 Perspective 应失去相机控制权并收到停用通知；此时查询接口不应继续报告它正在生效。重新启用后重新解析并激活有效 Perspective。
 

@@ -34,32 +34,28 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   public static final PerspectiveRegistryImpl INSTANCE = new PerspectiveRegistryImpl();
 
   private static final class RegisteredPerspective implements Perspective {
-    private final PerspectiveRegistryImpl owner;
     private final PerspectiveBehavior behavior;
     private final @Nullable Integer defaultPriority;
     private final PerspectiveInfo info;
     private volatile boolean initialized;
 
     private RegisteredPerspective(
-        @NonNull PerspectiveRegistryImpl owner,
         @NonNull PerspectiveInfo info,
         @Nullable Integer defaultPriority,
         @NonNull PerspectiveBehavior behavior) {
-      this.owner = owner;
       this.behavior = behavior;
       this.defaultPriority = defaultPriority;
       this.info = info;
     }
 
     private static @NonNull RegisteredPerspective fromDeclaration(
-        @NonNull PerspectiveRegistryImpl owner, @NonNull PerspectiveBehavior behavior) {
+        @NonNull PerspectiveBehavior behavior) {
       PerspectiveInfo.Declaration declaration = getDeclaration(behavior);
 
       PerspectiveInfo.Default defaultAnnotation =
           behavior.getClass().getAnnotation(PerspectiveInfo.Default.class);
       Integer defaultPriority = defaultAnnotation == null ? null : defaultAnnotation.priority();
-      return new RegisteredPerspective(
-          owner, createInfo(declaration), defaultPriority, behavior);
+      return new RegisteredPerspective(createInfo(declaration), defaultPriority, behavior);
     }
 
     private static @NonNull PerspectiveInfo createInfo(
@@ -115,7 +111,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
 
     @Override
     public boolean isAvailable() {
-      return owner.availabilitySnapshot.isAvailable(this);
+      return evaluateAvailability();
     }
   }
 
@@ -140,20 +136,11 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     }
   }
 
-  private static final class AvailabilitySnapshot {
-    private final Map<RegisteredPerspective, Boolean> values = new ConcurrentHashMap<>();
-
-    private boolean isAvailable(@NonNull RegisteredPerspective entry) {
-      return values.computeIfAbsent(entry, RegisteredPerspective::evaluateAvailability);
-    }
-  }
-
   private final Map<String, RegisteredPerspective> entries = new ConcurrentHashMap<>();
   private final IdentityHashMap<PerspectiveBehavior, RegisteredPerspective> entriesByBehavior =
       new IdentityHashMap<>();
 
   private volatile @Nullable RegisteredPerspective defaultEntry;
-  private volatile AvailabilitySnapshot availabilitySnapshot = new AvailabilitySnapshot();
   private final SimpleEventEmitter.Owned<Void> onUpdate = SimpleEventEmitter.create();
 
   public PerspectiveRegistryImpl() {}
@@ -186,19 +173,10 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return defaultEntry != null;
   }
 
-  /// Starts a new lazily evaluated perspective-availability snapshot.
-  ///
-  /// Within one snapshot, each registered perspective behavior is evaluated at most once. All
-  /// subsequent {@link Perspective#isAvailable()} calls reuse that result until this method is
-  /// called for the next client tick.
-  public void beginAvailabilitySnapshot() {
-    availabilitySnapshot = new AvailabilitySnapshot();
-  }
-
   /// Registers a service-discovered behavior without emitting an update event.
   public void registerSilent(@NonNull PerspectiveBehavior behavior) {
     Objects.requireNonNull(behavior);
-    RegisteredPerspective entry = RegisteredPerspective.fromDeclaration(this, behavior);
+    RegisteredPerspective entry = RegisteredPerspective.fromDeclaration(behavior);
     String id = entry.info.id();
     RegisteredPerspective displaced;
     synchronized (this) {
@@ -249,7 +227,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       @NonNull PerspectiveBehavior behavior) {
     Objects.requireNonNull(info);
     Objects.requireNonNull(behavior);
-    RegisteredPerspective entry = new RegisteredPerspective(this, info, defaultPriority, behavior);
+    RegisteredPerspective entry = new RegisteredPerspective(info, defaultPriority, behavior);
     String id = info.id();
     synchronized (this) {
       rejectDuplicateBehavior(behavior);

@@ -7,16 +7,16 @@ import org.jspecify.annotations.NonNull;
 ///
 /// A modifier is applied after the active perspective and before perspective-switch transition
 /// interpolation. It should mutate only the fields it owns and compose its change with the state
-/// produced by the perspective and earlier modifiers. {@link PerspectiveModifierContext}
-/// provides the perspective's unmodified base result when a modifier needs a stable source state.
+/// produced by the perspective and earlier modifiers. {@link PerspectiveModifierContext} provides
+/// the perspective's unmodified base result when a modifier needs a stable source state.
 @ApiStatus.OverrideOnly
 public interface PerspectiveModifier {
 
   /// Returns whether this modifier is currently available.
   ///
-  /// If `false`, this modifier is skipped during the current frame's camera transformations
-  /// but remains registered in the chain for future frames.
-  /// A failure is logged and treated as `false` for that frame.
+  /// If `false`, this modifier is skipped during the current frame's camera transformations but
+  /// remains registered in the chain for future frames. A failure is logged and treated as `false`
+  /// for that frame.
   ///
   /// @return `true` to apply, `false` to skip.
   default boolean isAvailable() {

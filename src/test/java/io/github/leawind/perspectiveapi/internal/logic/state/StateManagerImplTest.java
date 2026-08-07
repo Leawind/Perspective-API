@@ -28,7 +28,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -90,9 +89,6 @@ class StateManagerImplTest {
     public void onActivated(@NonNull Perspective currentPerspective) {}
 
     @Override
-    public void clientTickWhenActive(@NonNull Minecraft minecraft) {}
-
-    @Override
     public void onDeactivated() {}
 
     @Override
@@ -128,7 +124,6 @@ class StateManagerImplTest {
   @AfterEach
   void afterEach() throws IOException {
     PerspectiveAPI.setEnabled(true);
-    PerspectiveManager.setLogicTickInterval(PerspectiveManager.DEFAULT_LOGIC_TICK_INTERVAL);
     PerspectiveAPI.getTransition().setDurationMs(260.0);
     PerspectiveManager.INSTANCE
         .transition()
@@ -269,19 +264,6 @@ class StateManagerImplTest {
   }
 
   @Test
-  void roundTripPreservesLogicTickInterval() {
-    Path filePath = tempDir.resolve("logic.json");
-    StateManager manager = new StateManagerImpl(filePath);
-    PerspectiveManager.setLogicTickInterval(4);
-
-    manager.tryExtractAndSave();
-    PerspectiveManager.setLogicTickInterval(1);
-    manager.tryLoadAndApply();
-
-    assertEquals(4, PerspectiveManager.getLogicTickInterval());
-  }
-
-  @Test
   void roundTripPreservesSelectedSwitcherById() {
     Path filePath = tempDir.resolve("switcher.json");
     StateManager manager = new StateManagerImpl(filePath);
@@ -372,28 +354,6 @@ class StateManagerImplTest {
             .getAsJsonObject("unknown.section")
             .get("answer")
             .getAsInt());
-  }
-
-  @Test
-  void invalidLogicTickIntervalIsNotPartiallyApplied() throws IOException {
-    Path filePath = tempDir.resolve("invalid-logic.json");
-    StateManager manager = new StateManagerImpl(filePath);
-    Files.createDirectories(filePath.getParent());
-    Files.writeString(
-        filePath,
-        """
-        {
-          "enabled": false,
-          "logic_tick_interval": 0
-        }
-        """);
-    PerspectiveAPI.setEnabled(true);
-
-    manager.tryLoadAndApply();
-
-    assertTrue(PerspectiveAPI.isEnabled());
-    assertEquals(
-        PerspectiveManager.DEFAULT_LOGIC_TICK_INTERVAL, PerspectiveManager.getLogicTickInterval());
   }
 
   @Test

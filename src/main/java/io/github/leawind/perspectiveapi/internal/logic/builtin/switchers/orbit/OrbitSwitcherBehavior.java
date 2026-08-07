@@ -11,7 +11,6 @@ import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.List;
 import java.util.Objects;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -56,6 +55,14 @@ public final class OrbitSwitcherBehavior
           keyStateTracker.tick(key.isDown());
           while (key.consumeClick()) {}
         });
+    GameClientEvents.CLIENT_TICK_START.on(
+        minecraft -> {
+          if (!PerspectiveAPI.isEnabled()
+              || minecraft.level == null
+              || minecraft.player == null
+              || PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() != this) return;
+          if (menu.isOpened() && Bridge.getScreen(minecraft) != null) menu.close();
+        });
     menu.init();
   }
 
@@ -85,12 +92,6 @@ public final class OrbitSwitcherBehavior
   public void onActivated(@NonNull Perspective currentPerspective) {
     model.activate(currentPerspective.info().id());
     model.ensureActive();
-  }
-
-  @Override
-  public void clientTickWhenActive(@NonNull Minecraft minecraft) {
-    model.ensureActive();
-    if (menu.isOpened() && Bridge.getScreen(minecraft) != null) menu.close();
   }
 
   @Override

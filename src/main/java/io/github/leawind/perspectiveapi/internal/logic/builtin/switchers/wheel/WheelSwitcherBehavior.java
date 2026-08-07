@@ -63,6 +63,16 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
           getKeyStateTracker().tick(key.isDown());
           while (key.consumeClick()) {}
         });
+    GameClientEvents.CLIENT_TICK_START.on(
+        minecraft -> {
+          if (!PerspectiveAPI.isEnabled()
+              || minecraft.level == null
+              || minecraft.player == null
+              || PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() != this) return;
+
+          wheelMenu.tick();
+          if (wheelMenu.isOpened() && Bridge.getScreen(minecraft) != null) closeWheel();
+        });
     GameClientEvents.RENDER_GUI_OVERLAY.on(
         ctx -> {
           if (!PerspectiveAPI.isEnabled()) return;
@@ -120,23 +130,6 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   @Override
-  public void clientTickWhenActive(@NonNull Minecraft minecraft) {
-    wheelMenu.tick();
-
-    String selected = this.selected;
-    if (selected != null) {
-      var p = registry.get(selected);
-      if (p == null || !p.isAvailable()) {
-        cycleBackward();
-      }
-    }
-
-    if (wheelMenu.isOpened() && Bridge.getScreen(minecraft) != null) {
-      closeWheel();
-    }
-  }
-
-  @Override
   public void onDeactivated() {
     getKeyStateTracker().reset();
     if (wheelMenu.isOpened()) {
@@ -153,6 +146,12 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
       if (current != null && list.contains(current.info().id())) {
         this.selected = current.info().id();
       }
+      selected = this.selected;
+    }
+
+    if (selected != null) {
+      Perspective perspective = registry.get(selected);
+      if (perspective == null || !perspective.isAvailable()) cycleBackward();
     }
     return this.selected;
   }

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
-import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -131,11 +130,5 @@ public class PerspectiveSwitcherManagerImpl
     PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
     return EXTENSIONS.callOrElse(
         switcher.id(), "getSelectedPerspectiveId", switcher::getSelectedPerspectiveId, null);
-  }
-
-  void clientTick(@NonNull Minecraft minecraft) {
-    PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
-    EXTENSIONS.run(
-        switcher.id(), "clientTickWhenActive", () -> switcher.clientTickWhenActive(minecraft));
   }
 }

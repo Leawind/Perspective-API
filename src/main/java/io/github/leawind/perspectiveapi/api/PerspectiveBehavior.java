@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 
@@ -52,16 +51,18 @@ public interface PerspectiveBehavior {
 
   /// Returns whether this perspective is currently eligible to be resolved as active.
   ///
-  /// Switchers and override resolution skip unavailable perspectives. If no available candidate can
-  /// be resolved, the default perspective is used as a safety fallback even if it reports itself as
-  /// unavailable.
+  /// {@link PerspectiveSwitcher} and {@link PerspectiveOverrideChain} resolution skip unavailable
+  /// perspectives. If no available candidate can be resolved, the default perspective is used as a
+  /// safety fallback even if it reports itself as unavailable.
   ///
-  /// The registry evaluates this method lazily at most once per active client tick and shares the
-  /// result with every {@link Perspective#isAvailable()} call during that tick. Implementations
-  /// should not rely on invocation count or side effects.
-  /// A failure is logged and treated as `false` for the current availability snapshot.
+  /// Perspective API evaluates this method whenever availability is needed. It does not cache the
+  /// result.
   ///
   /// @return `true` if this perspective is eligible for resolution
+  /// @apiNote
+  ///   - Implementations must return a cheap cached value here.
+  ///   - Do not rely on invocation count or side effects.
+  ///   - A failure is logged and treated as `false` for that evaluation.
   default boolean isAvailable() {
     return true;
   }
@@ -74,23 +75,17 @@ public interface PerspectiveBehavior {
 
   // region events
 
-  /// Called when this perspective becomes the current perspective.
-  /// A failure is logged and otherwise ignored.
+  /// Called when this perspective becomes the current perspective. A failure is logged and
+  /// otherwise ignored.
   ///
   /// @see #onDeactivate()
   default void onActivate() {}
 
-  /// Called when this perspective is no longer the current perspective.
-  /// A failure is logged and otherwise ignored.
+  /// Called when this perspective is no longer the current perspective. A failure is logged and
+  /// otherwise ignored.
   ///
   /// @see #onActivate()
   default void onDeactivate() {}
-
-  /// Called every client tick when this perspective is active.
-  /// A failure is logged and otherwise ignored for that tick.
-  ///
-  /// @see #isAvailable()
-  default void clientTickWhenActive(@NonNull Minecraft minecraft) {}
 
   // endregion
 
@@ -99,32 +94,29 @@ public interface PerspectiveBehavior {
   /// Modifies the camera's target state in-place.
   ///
   /// As the base perspective, this method receives the vanilla camera state and establishes the
-  /// foundational target state.
-  /// Subsequent {@link PerspectiveModifier}s may mutate this state before perspective-switch
-  /// transition interpolation.
-  /// If this method fails, the failure is logged and the complete target state is restored to the
-  /// vanilla state received before this method was called.
+  /// foundational target state. Subsequent {@link PerspectiveModifier}s may mutate this state
+  /// before perspective-switch transition interpolation. If this method fails, the failure is
+  /// logged and the complete target state is restored to the vanilla state received before this
+  /// method was called.
   ///
   /// @param state The vanilla camera state. Can be mutated.
-  /// @param context   The context containing frame-specific data.
-  /// @apiNote `state` must not be stored or referenced outside this method
-  ///   call. `context` is also valid only for this call. Repeated rotation calculations can
-  ///   accumulate floating-point error, and the camera pipeline rejects rotations outside its
-  ///   unit-length tolerance.
+  /// @param context The context containing frame-specific data.
+  /// @apiNote `state` must not be stored or referenced outside this method call. `context` is also
+  ///   valid only for this call. Repeated rotation calculations can accumulate floating-point
+  ///   error, and the camera pipeline rejects rotations outside its unit-length tolerance.
   default void applyCameraState(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveContext context) {}
 
-  /// Called on every render frame when this perspective is active,
-  /// **after** the final camera state has been fully computed and applied,
-  /// including all modifier transformations and transition interpolation.
+  /// Called on every render frame when this perspective is active, **after** the final camera state
+  /// has been fully computed and applied, including all modifier transformations and transition
+  /// interpolation.
   ///
-  /// Provides the exact state written to the Minecraft camera, suitable for
-  /// raycasts, hit-testing, or other spatial queries that depend on the
-  /// actual rendered viewpoint.
-  /// A failure is logged and otherwise ignored for that frame.
+  /// Provides the exact state written to the Minecraft camera, suitable for raycasts, hit-testing,
+  /// or other spatial queries that depend on the actual rendered viewpoint. A failure is logged and
+  /// otherwise ignored for that frame.
   ///
   /// @param state The final camera state that has been applied.
-  /// @param context   The context containing frame-specific data.
+  /// @param context The context containing frame-specific data.
   /// @apiNote Neither argument may be stored or referenced after this method returns.
   default void afterApplyCameraState(
       @NonNull PerspectiveState state, @NonNull PerspectiveContext context) {}

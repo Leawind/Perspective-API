@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -37,9 +36,6 @@ class PerspectiveSwitcherManagerImplTest {
 
     @Override
     public void onActivated(@NonNull Perspective currentPerspective) {}
-
-    @Override
-    public void clientTickWhenActive(@NonNull Minecraft minecraft) {}
 
     @Override
     public void onDeactivated() {}

@@ -21,10 +21,13 @@ public interface Perspective {
 
   /// Returns whether this perspective is currently eligible to be resolved as active.
   ///
-  /// The underlying {@link PerspectiveBehavior#isAvailable()} is evaluated lazily at most once per
-  /// active client tick. Repeated calls during the same tick reuse the same result.
+  /// The underlying {@link PerspectiveBehavior#isAvailable()} is evaluated independently for every
+  /// call. Perspective API does not cache availability. Implementations should return a cheap,
+  /// side-effect-free cached value when their availability depends on state updated elsewhere.
   ///
   /// If no available candidate can be resolved, the default perspective is used as a safety
   /// fallback even if it reports itself as unavailable.
+  ///
+  /// @see PerspectiveBehavior#isAvailable()
   boolean isAvailable();
 }

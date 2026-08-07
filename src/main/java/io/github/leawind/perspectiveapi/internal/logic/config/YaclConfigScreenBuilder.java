@@ -43,28 +43,6 @@ public final class YaclConfigScreenBuilder {
                                 PerspectiveAPI::setEnabled)
                             .controller(TickBoxControllerBuilder::create)
                             .build())
-                    .option(
-                        Option.<Integer>createBuilder()
-                            .name(text("config_screen.option.logic_tick_interval"))
-                            .description(
-                                OptionDescription.of(
-                                    text("config_screen.option.logic_tick_interval.desc")))
-                            .binding(
-                                PerspectiveManager.DEFAULT_LOGIC_TICK_INTERVAL,
-                                PerspectiveManager::getLogicTickInterval,
-                                PerspectiveManager::setLogicTickInterval)
-                            .controller(
-                                opt ->
-                                    IntegerSliderControllerBuilder.create(opt)
-                                        .range(1, 3)
-                                        .step(1)
-                                        .formatValue(
-                                            v ->
-                                                Component.translatable(
-                                                    PerspectiveAPI.MOD_ID
-                                                        + ".config_screen.option.logic_tick_interval.value",
-                                                    v)))
-                            .build())
                     .group(buildTransitionGroup())
                     .option(
                         Option.<PerspectiveSwitcher>createBuilder()

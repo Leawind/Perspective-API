@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.logic.state.StateManagerImpl;
 import java.nio.file.Files;
+import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,20 +15,12 @@ public final class ModEvents {
   public static void register() {
     PerspectiveManager manager = PerspectiveManager.INSTANCE;
 
-    GameClientEvents.CLIENT_TICK_START.on(
-        minecraft -> {
-          if (!PerspectiveAPI.isEnabled() || minecraft.level == null || minecraft.player == null) {
-            manager.resetLogicUpdateScheduler();
+    GameClientEvents.BEFORE_MAIN_CAMERA_UPDATE.on(
+        () -> {
+          Minecraft minecraft = Minecraft.getInstance();
+          if (!PerspectiveAPI.isEnabled() || minecraft.level == null || minecraft.player == null)
             return;
-          }
-
-          manager.clientTick(minecraft);
-        });
-
-    GameClientEvents.AFTER_CLIENT_LEVEL_CHANGE.on(
-        ignored -> {
-          if (!PerspectiveAPI.isEnabled()) return;
-          manager.resetLogicUpdateScheduler();
+          manager.beforeMainCameraUpdate();
         });
 
     GameClientEvents.SETUP_CAMERA.on(

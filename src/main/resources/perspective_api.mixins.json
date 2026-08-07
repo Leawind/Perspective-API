@@ -5,6 +5,7 @@
   "minVersion": "0.8",
   "refmap": "perspective_api.refmap.json",
   "client": [
+    "cameraupdate.GameRendererMixin",
     "fov.CameraMixin",
     "fov.GameRendererMixin",
     "gui.GuiMixin",
