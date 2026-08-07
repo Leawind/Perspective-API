@@ -59,13 +59,14 @@ final class OrbitMenuRenderer {
       String resolvedId = menu.model().resolvedId();
       labelActor = resolvedId != null ? menu.actor(resolvedId) : null;
     } else {
-      labelActor = grabbed != null ? grabbed : hovered;
+      labelActor = null;
     }
 
     if (labelActor != null) drawLabel(canvas, context, menu, labelActor);
     if (menu.mode() == OrbitMenu.Mode.EDITING) {
       drawSponsorButton(canvas, menu);
       drawEditingHelpTooltip(canvas, menu);
+      if (hovered != null && hovered != grabbed) drawActorTooltip(canvas, menu, hovered);
     }
   }
 
@@ -193,6 +194,21 @@ final class OrbitMenuRenderer {
       lines.add(Component.literal(lineText));
     }
     canvas.tooltip(font, lines, menu.mouseScreenX(), menu.mouseScreenY());
+  }
+
+  private void drawActorTooltip(DrawContext canvas, OrbitMenu menu, PerspectiveActor actor) {
+    Perspective perspective = menu.model().perspective(actor.perspectiveId());
+    if (perspective == null) return;
+
+    List<Component> lines = new ArrayList<>();
+    lines.add(perspective.info().name());
+    Component description = perspective.info().description();
+    if (description != null) {
+      for (String lineText : description.getString().split("\\n")) {
+        lines.add(Component.literal(lineText));
+      }
+    }
+    canvas.tooltip(Minecraft.getInstance().font, lines, menu.mouseScreenX(), menu.mouseScreenY());
   }
 
   private int helpButtonX(Font font, int selectedCenterX, Component selectedTitle) {
