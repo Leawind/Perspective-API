@@ -479,7 +479,7 @@ final class OrbitMenu {
           mouseScreen.y,
           frameSeconds);
     }
-    renderer.render(context, this);
+    renderer.render(context, this, frameSeconds);
   }
 
   private void updateMouseWorld() {

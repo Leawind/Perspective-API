@@ -6,8 +6,11 @@ import io.github.leawind.perspectiveapi.internal.bridge.events.GuiRenderContext;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.AvailabilityIndicatorRenderer;
 import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherModel.Group;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.ExpSmoothDouble;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
@@ -33,8 +36,12 @@ final class OrbitMenuRenderer {
   private static final int HELP_BUTTON_SIZE = 11;
   private static final int HELP_BUTTON_MARGIN = 3;
   private static final String EDITING_HELP_KEY = "perspective_api.switcher.orbit_switcher.help";
+  private static final double SCALE_HALFLIFE = 0.008;
+  private static final double HOVER_SCALE = 1.15;
+  private static final double GRAB_SCALE = 1.22;
+  private final Map<String, ExpSmoothDouble> smoothScales = new HashMap<>();
 
-  void render(GuiRenderContext context, OrbitMenu menu) {
+  void render(GuiRenderContext context, OrbitMenu menu, double frameSeconds) {
     DrawContext canvas = context.drawContext;
     if (menu.mode() == OrbitMenu.Mode.EDITING) drawEditingAreas(canvas, context, menu);
     drawGrabbedWheelSlot(canvas, menu);
@@ -49,10 +56,18 @@ final class OrbitMenuRenderer {
     PerspectiveActor grabbed = menu.grabbedActor();
     PerspectiveActor hovered = menu.hoveredActor();
     for (PerspectiveActor actor : actors) {
-      if (actor != grabbed && actor != hovered) drawActor(canvas, menu, actor, 1);
+      smoothScales
+          .computeIfAbsent(
+              actor.perspectiveId(),
+              ignored -> new ExpSmoothDouble().setHalflife(SCALE_HALFLIFE).setCurrent(1))
+          .setTarget(targetScale(menu, actor))
+          .update(frameSeconds);
     }
-    if (hovered != null && hovered != grabbed) drawActor(canvas, menu, hovered, 1);
-    if (grabbed != null) drawActor(canvas, menu, grabbed, 1.22);
+    for (PerspectiveActor actor : actors) {
+      if (actor != grabbed && actor != hovered) drawActor(canvas, menu, actor);
+    }
+    if (hovered != null && hovered != grabbed) drawActor(canvas, menu, hovered);
+    if (grabbed != null) drawActor(canvas, menu, grabbed);
 
     PerspectiveActor labelActor;
     if (menu.mode() == OrbitMenu.Mode.SELECTING) {
@@ -253,11 +268,20 @@ final class OrbitMenuRenderer {
     }
   }
 
-  private void drawActor(
-      DrawContext canvas, OrbitMenu menu, PerspectiveActor actor, double renderScale) {
+  private static double targetScale(OrbitMenu menu, PerspectiveActor actor) {
+    if (actor == menu.grabbedActor()) return GRAB_SCALE;
+    if (menu.mode() == OrbitMenu.Mode.SELECTING
+        && actor.perspectiveId().equals(menu.model().resolvedId())) {
+      return HOVER_SCALE;
+    }
+    return 1;
+  }
+
+  private void drawActor(DrawContext canvas, OrbitMenu menu, PerspectiveActor actor) {
     Perspective perspective = menu.model().perspective(actor.perspectiveId());
     if (perspective == null) return;
 
+    double renderScale = smoothScales.get(actor.perspectiveId()).getCurrent();
     int size = actorSize(menu, renderScale);
     int x = (int) menu.worldToScreenX(actor.body().position().x) - size / 2;
     int y = (int) menu.worldToScreenY(actor.body().position().y) - size / 2;
