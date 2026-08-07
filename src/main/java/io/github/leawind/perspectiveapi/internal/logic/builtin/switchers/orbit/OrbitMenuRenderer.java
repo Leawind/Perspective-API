@@ -38,6 +38,7 @@ final class OrbitMenuRenderer {
   private static final String EDITING_HELP_KEY = "perspective_api.switcher.orbit_switcher.help";
   private static final double SCALE_HALFLIFE = 0.008;
   private static final double HOVER_SCALE = 1.15;
+  private static final double EDIT_HOVER_SCALE = 1.1;
   private static final double GRAB_SCALE = 1.22;
   private final Map<String, ExpSmoothDouble> smoothScales = new HashMap<>();
 
@@ -273,6 +274,9 @@ final class OrbitMenuRenderer {
     if (menu.mode() == OrbitMenu.Mode.SELECTING
         && actor.perspectiveId().equals(menu.model().resolvedId())) {
       return HOVER_SCALE;
+    }
+    if (menu.mode() == OrbitMenu.Mode.EDITING && actor == menu.hoveredActor()) {
+      return EDIT_HOVER_SCALE;
     }
     return 1;
   }
