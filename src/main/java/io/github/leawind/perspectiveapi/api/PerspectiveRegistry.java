@@ -18,8 +18,8 @@ public interface PerspectiveRegistry {
 
   /// Registers a runtime perspective that participates in default-perspective resolution.
   ///
-  /// Higher default priorities take precedence. Ties are resolved by perspective ID.
-  /// Runtime registration does not inspect annotations on the behavior class.
+  /// Higher default priorities take precedence. Ties are resolved by perspective ID. Runtime
+  /// registration does not inspect annotations on the behavior class.
   ///
   /// @throws IllegalArgumentException if the ID or behavior instance is already registered
   @NonNull PerspectiveRegistration registerDefault(

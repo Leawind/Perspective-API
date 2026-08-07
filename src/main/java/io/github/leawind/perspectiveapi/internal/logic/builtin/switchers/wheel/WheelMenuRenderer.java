@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -24,9 +23,8 @@ import org.slf4j.LoggerFactory;
 
 /// Renders the perspective wheel menu overlay.
 ///
-/// Only the currently selected sector is highlighted with a white
-/// semi-transparent filled ring-sector shape. Icons and center label are
-/// drawn on top.
+/// Only the currently selected sector is highlighted with a white semi-transparent filled
+/// ring-sector shape. Icons and center label are drawn on top.
 public final class WheelMenuRenderer {
   private static final Logger LOGGER = LoggerFactory.getLogger(WheelMenuRenderer.class);
   private static final Sanitizer.ThrottledAction DRAW_ERROR_LOG =
@@ -45,8 +43,10 @@ public final class WheelMenuRenderer {
 
   /// unit: vmin
   private static final float RING_RADIUS = 0.25f;
+
   /// unit: vmin
   private static final float RING_ICON_SIZE = 0.08f;
+
   /// unit: vmin
   private static final float CENTER_ICON_SIZE = 0.10f;
 
@@ -56,15 +56,17 @@ public final class WheelMenuRenderer {
   // endregion
 
   private double lastRenderTime = Double.MAX_VALUE;
+
   /// `[0, 1]`
   private final ExpSmoothDouble smoothScale = new ExpSmoothDouble().setHalflife(0.015);
+
   private final ExpSmoothDouble smoothRotation = new ExpSmoothDouble().setHalflife(0.015);
 
   private static final double ITEM_SCALE_HALFLIFE = 0.015;
   private final Map<String, ExpSmoothDouble> smoothItemScales = new HashMap<>();
 
-  /// Called when the list rotates. Adds one sector's worth of angular offset
-  /// so the renderer can animate the rotation.
+  /// Called when the list rotates. Adds one sector's worth of angular offset so the renderer can
+  /// animate the rotation.
   void notifyScroll(double sectorRad, boolean clockwise) {
     double delta = clockwise ? -sectorRad : sectorRad;
     smoothRotation.setCurrent(smoothRotation.getCurrent() + delta);

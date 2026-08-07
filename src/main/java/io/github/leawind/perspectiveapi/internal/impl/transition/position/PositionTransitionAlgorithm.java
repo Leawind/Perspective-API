@@ -17,8 +17,5 @@ public interface PositionTransitionAlgorithm {
   void start(@NonNull Vector3dc startPosition);
 
   /// Writes the position at globally eased `progress` toward `targetPosition` into `destPosition`.
-  void update(
-      float progress,
-      @NonNull Vector3dc targetPosition,
-      @NonNull Vector3d destPosition);
+  void update(float progress, @NonNull Vector3dc targetPosition, @NonNull Vector3d destPosition);
 }

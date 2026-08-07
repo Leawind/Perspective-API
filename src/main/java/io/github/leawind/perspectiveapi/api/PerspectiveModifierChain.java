@@ -6,8 +6,8 @@ import org.jspecify.annotations.NonNull;
 /// Manages an ordered chain of {@link PerspectiveModifier}s.
 ///
 /// Modifiers are applied sequentially by ascending priority before perspective-switch transition
-/// interpolation. Entries with the same priority are applied in registration order. Different
-/// mods should not rely on registration order to coordinate modifiers with the same priority.
+/// interpolation. Entries with the same priority are applied in registration order. Different mods
+/// should not rely on registration order to coordinate modifiers with the same priority.
 @ApiStatus.NonExtendable
 public interface PerspectiveModifierChain {
 

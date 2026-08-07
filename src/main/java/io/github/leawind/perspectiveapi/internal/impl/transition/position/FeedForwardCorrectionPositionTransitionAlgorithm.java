@@ -35,9 +35,7 @@ public final class FeedForwardCorrectionPositionTransitionAlgorithm
 
   @Override
   public void update(
-      float progress,
-      @NonNull Vector3dc targetPosition,
-      @NonNull Vector3d destPosition) {
+      float progress, @NonNull Vector3dc targetPosition, @NonNull Vector3d destPosition) {
     this.targetPosition.set(Objects.requireNonNull(targetPosition));
     Objects.requireNonNull(destPosition);
 

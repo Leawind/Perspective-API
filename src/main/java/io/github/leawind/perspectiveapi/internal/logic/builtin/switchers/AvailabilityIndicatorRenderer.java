@@ -26,11 +26,7 @@ public final class AvailabilityIndicatorRenderer {
   }
 
   private static void draw(
-      DrawContext canvas,
-      Identifier sprite,
-      float iconCenterX,
-      float iconCenterY,
-      float iconSize) {
+      DrawContext canvas, Identifier sprite, float iconCenterX, float iconCenterY, float iconSize) {
     float centerX = iconCenterX + iconSize * OFFSET;
     float centerY = iconCenterY + iconSize * OFFSET;
     float size = iconSize * SIZE;

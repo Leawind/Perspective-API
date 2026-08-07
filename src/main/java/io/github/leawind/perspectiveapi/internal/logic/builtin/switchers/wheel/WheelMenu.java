@@ -12,8 +12,8 @@ import org.joml.Vector2f;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-/// Manages the lifecycle, state, input, and rendering of the perspective
-/// wheel menu overlay as an internal component of {@link WheelSwitcherBehavior}.
+/// Manages the lifecycle, state, input, and rendering of the perspective wheel menu overlay as an
+/// internal component of {@link WheelSwitcherBehavior}.
 public final class WheelMenu {
   private static final int MAX_ITEMS = 9;
 
@@ -39,10 +39,9 @@ public final class WheelMenu {
     this.onHover = onHover;
   }
 
-  /// Updates the displayed items to reflect the given available IDs.
-  /// Existing {@link WheelMenuItem} instances are preserved; only new IDs
-  /// cause new instances to be created. Current list order is kept as much
-  /// as possible.
+  /// Updates the displayed items to reflect the given available IDs. Existing {@link WheelMenuItem}
+  /// instances are preserved; only new IDs cause new instances to be created. Current list order is
+  /// kept as much as possible.
   public void updateItems(@NonNull List<String> availableIds) {
     items.clear();
     items.addAll(
@@ -65,8 +64,8 @@ public final class WheelMenu {
     renderer.onOpen();
   }
 
-  /// Closes the menu and returns the perspective ID that should become active.
-  /// Returns `null` if the menu was not open.
+  /// Closes the menu and returns the perspective ID that should become active. Returns `null` if
+  /// the menu was not open.
   public @Nullable String close() {
     if (!isOpened) return null;
 
@@ -104,8 +103,7 @@ public final class WheelMenu {
     renderer.notifyScroll(sectorRad, clockwise);
   }
 
-  /// Handles mouse movement to update the anchor and derive the hovered
-  /// sector.
+  /// Handles mouse movement to update the anchor and derive the hovered sector.
   public void onMouseMove(double mouseX, double mouseY) {
     if (!isOpened) return;
 

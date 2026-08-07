@@ -7,8 +7,7 @@ import org.joml.Vector3dc;
 import org.jspecify.annotations.NonNull;
 
 /// Interpolates position from a fixed start toward the current target.
-public final class FixedStartPositionTransitionAlgorithm
-    implements PositionTransitionAlgorithm {
+public final class FixedStartPositionTransitionAlgorithm implements PositionTransitionAlgorithm {
   public static final FixedStartPositionTransitionAlgorithm INSTANCE =
       new FixedStartPositionTransitionAlgorithm();
 
@@ -29,9 +28,7 @@ public final class FixedStartPositionTransitionAlgorithm
 
   @Override
   public void update(
-      float progress,
-      @NonNull Vector3dc targetPosition,
-      @NonNull Vector3d destPosition) {
+      float progress, @NonNull Vector3dc targetPosition, @NonNull Vector3d destPosition) {
     this.targetPosition.set(Objects.requireNonNull(targetPosition));
     Objects.requireNonNull(destPosition);
     startPosition.lerp(this.targetPosition, Utils.clamp(progress, 0, 1), destPosition);

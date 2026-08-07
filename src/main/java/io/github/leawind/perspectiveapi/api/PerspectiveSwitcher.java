@@ -7,11 +7,10 @@ import org.jspecify.annotations.Nullable;
 
 /// Represents a player-facing UI mechanism for selecting perspectives.
 ///
-/// A switcher presents a list of switchable perspectives and provides a display name
-/// (and optional description) for itself. The actual switching logic is defined by
-/// {@link PerspectiveSwitcherBehavior}; this interface exposes only the metadata
-/// visible to configuration and persistence systems. Extensions should not use it to change the
-/// player's switcher selection.
+/// A switcher presents a list of switchable perspectives and provides a display name (and optional
+/// description) for itself. The actual switching logic is defined by {@link
+/// PerspectiveSwitcherBehavior}; this interface exposes only the metadata visible to configuration
+/// and persistence systems. Extensions should not use it to change the player's switcher selection.
 ///
 /// @see PerspectiveSwitcherBehavior
 /// @see PerspectiveSwitcherManager

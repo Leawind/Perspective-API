@@ -18,7 +18,5 @@ public interface RotationTransitionAlgorithm {
 
   /// Writes the rotation at globally eased `progress` toward `targetRotation` into `destRotation`.
   void update(
-      float progress,
-      @NonNull Quaternionfc targetRotation,
-      @NonNull Quaternionf destRotation);
+      float progress, @NonNull Quaternionfc targetRotation, @NonNull Quaternionf destRotation);
 }

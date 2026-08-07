@@ -22,8 +22,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     private final int priority;
     private final PerspectiveModifier modifier;
 
-    private Registration(
-        @NonNull String id, int priority, @NonNull PerspectiveModifier modifier) {
+    private Registration(@NonNull String id, int priority, @NonNull PerspectiveModifier modifier) {
       this.id = id;
       this.priority = priority;
       this.modifier = modifier;
@@ -75,8 +74,8 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
 
   /// Applies active modifiers sequentially.
   ///
-  /// Position, rotation, FOV, and orthographic height are validated after each modifier;
-  /// invalid fields are individually reverted.
+  /// Position, rotation, FOV, and orthographic height are validated after each modifier; invalid
+  /// fields are individually reverted.
   public void applyCameraState(
       PerspectiveState.@NonNull Mutable state, @NonNull PerspectiveModifierContext ctx) {
     Objects.requireNonNull(state);

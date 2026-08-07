@@ -38,9 +38,7 @@ public final class FeedForwardCorrectionRotationTransitionAlgorithm
 
   @Override
   public void update(
-      float progress,
-      @NonNull Quaternionfc targetRotation,
-      @NonNull Quaternionf destRotation) {
+      float progress, @NonNull Quaternionfc targetRotation, @NonNull Quaternionf destRotation) {
     this.targetRotation.set(Objects.requireNonNull(targetRotation));
     Objects.requireNonNull(destRotation);
 
