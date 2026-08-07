@@ -110,7 +110,7 @@ public final class PerspectiveMath {
   ///
   /// At a gimbal lock, returns an equivalent canonical representation with roll set to zero and the
   /// coupled rotation folded into yaw.
-  public static @NonNull Vector3f toEulerRad(
+  public static @NonNull Vector3f quatToEulerRad(
       @NonNull Quaternionfc rotation, @NonNull Vector3f dest) {
     getEulerAnglesYXZ(rotation, dest);
     return dest.mul(1, -1, 1);
@@ -118,9 +118,9 @@ public final class PerspectiveMath {
 
   /// Converts a quaternion to the pitch and yaw of its canonical Y-X-Z Euler representation in
   /// radians, discarding roll.
-  public static @NonNull Vector2f toEulerRad(
+  public static @NonNull Vector2f quatToEulerRad(
       @NonNull Quaternionfc rotation, @NonNull Vector2f dest) {
-    Vector3f full = toEulerRad(rotation, new Vector3f());
+    Vector3f full = quatToEulerRad(rotation, new Vector3f());
     return dest.set(full.x(), full.y());
   }
 
@@ -130,7 +130,8 @@ public final class PerspectiveMath {
     float z = rotation.z();
     float w = rotation.w();
     float lengthSquared = rotation.lengthSquared();
-    if (!(lengthSquared > 0.0f) || !Float.isFinite(lengthSquared)) {
+
+    if (!(lengthSquared > 0.0f && Float.isFinite(lengthSquared))) {
       return rotation.getEulerAnglesYXZ(dest);
     }
 
@@ -190,14 +191,14 @@ public final class PerspectiveMath {
   /// coupled rotation folded into yaw.
   public static @NonNull Vector3f toEulerDeg(
       @NonNull Quaternionfc rotation, @NonNull Vector3f dest) {
-    return toEulerRad(rotation, dest).mul(RAD_TO_DEG);
+    return quatToEulerRad(rotation, dest).mul(RAD_TO_DEG);
   }
 
   /// Converts a quaternion to the pitch and yaw of its canonical Y-X-Z Euler representation in
   /// degrees, discarding roll.
   public static @NonNull Vector2f toEulerDeg(
       @NonNull Quaternionfc rotation, @NonNull Vector2f dest) {
-    return toEulerRad(rotation, dest).mul(RAD_TO_DEG);
+    return quatToEulerRad(rotation, dest).mul(RAD_TO_DEG);
   }
 
   public static @NonNull Vector3f directionToEulerDeg(
