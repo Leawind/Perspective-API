@@ -44,8 +44,13 @@ public final class ModEvents {
           if (Files.exists(stateManager.filePath())) {
             stateManager.tryLoadAndApply();
           }
+          stateManager.startAutoSave(minecraft::execute);
         });
     GameClientEvents.ON_MINECRAFT_CLOSE.on(
-        minecraft -> StateManagerImpl.getInstance(minecraft).tryExtractAndSave());
+        minecraft -> {
+          var stateManager = StateManagerImpl.getInstance(minecraft);
+          stateManager.stopAutoSave();
+          stateManager.tryExtractAndSave();
+        });
   }
 }

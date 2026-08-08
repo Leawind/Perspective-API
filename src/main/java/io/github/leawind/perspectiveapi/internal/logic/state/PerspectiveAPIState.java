@@ -13,6 +13,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
+import io.github.leawind.perspectiveapi.internal.utils.AtomicFileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -219,7 +220,7 @@ public final class PerspectiveAPIState {
             .encodeStart(JsonOps.INSTANCE, this)
             .result()
             .orElseThrow(() -> new JsonSyntaxException("Failed to encode Perspective API state"));
-    Files.writeString(path, GSON.toJson(jsonElement));
+    AtomicFileWriter.writeString(path, GSON.toJson(jsonElement));
   }
 
   public static PerspectiveAPIState load(Path path) throws IOException, JsonSyntaxException {

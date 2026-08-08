@@ -3,6 +3,8 @@ package io.github.leawind.perspectiveapi.internal.logic.state;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,6 +30,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -329,7 +333,7 @@ class StateManagerImplTest {
   }
 
   @Test
-  void savePreservesUnknownStateSections() throws IOException {
+  void savePreservesLoadedUnknownSectionsAndIgnoresExternalChanges() throws IOException {
     Path filePath = tempDir.resolve("unknown-section.json");
     StateManager manager = new StateManagerImpl(filePath);
     Files.createDirectories(filePath.getParent());
@@ -344,7 +348,30 @@ class StateManagerImplTest {
           }
         }
         """);
+    manager.tryLoadAndApply();
+    manager.tryExtractAndSave();
 
+    Files.writeString(
+        filePath,
+        """
+        {
+          "sections": {
+            "unknown.section": {
+              "answer": 99
+            },
+            "external.section": true
+          }
+        }
+        """);
+
+    manager.tryExtractAndSave();
+    assertTrue(
+        JsonParser.parseString(Files.readString(filePath))
+            .getAsJsonObject()
+            .getAsJsonObject("sections")
+            .has("external.section"));
+
+    PerspectiveAPI.setEnabled(false);
     manager.tryExtractAndSave();
 
     var root = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
@@ -354,6 +381,77 @@ class StateManagerImplTest {
             .getAsJsonObject("unknown.section")
             .get("answer")
             .getAsInt());
+    assertFalse(root.getAsJsonObject("sections").has("external.section"));
+  }
+
+  @Test
+  void saveWithoutLoadingOverwritesExistingContent() throws IOException {
+    Path filePath = tempDir.resolve("overwrite.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    Files.createDirectories(filePath.getParent());
+    Files.writeString(
+        filePath,
+        """
+        {
+          "external": true
+        }
+        """);
+
+    manager.tryExtractAndSave();
+
+    var root = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
+    assertFalse(root.has("external"));
+  }
+
+  @Test
+  void autoSaveRequestsAreCoalescedUntilTheClientTaskRuns() {
+    Path filePath = tempDir.resolve("coalesced.json");
+    StateManagerImpl manager = new StateManagerImpl(filePath);
+    var clientTasks = new LinkedBlockingQueue<Runnable>();
+    manager.startAutoSave(clientTasks::add, 1, TimeUnit.DAYS);
+    try {
+      manager.requestAutoSave(clientTasks::add);
+      manager.requestAutoSave(clientTasks::add);
+
+      assertEquals(1, clientTasks.size());
+      Runnable task = clientTasks.poll();
+      assertNotNull(task);
+      task.run();
+
+      manager.requestAutoSave(clientTasks::add);
+      assertEquals(1, clientTasks.size());
+    } finally {
+      manager.stopAutoSave();
+    }
+  }
+
+  @Test
+  void autoSaveSchedulerUsesElapsedTime() throws InterruptedException {
+    StateManagerImpl manager = new StateManagerImpl(tempDir.resolve("scheduled.json"));
+    var clientTasks = new LinkedBlockingQueue<Runnable>();
+    manager.startAutoSave(clientTasks::add, 10, TimeUnit.MILLISECONDS);
+    try {
+      assertNotNull(clientTasks.poll(2, TimeUnit.SECONDS));
+      assertNull(clientTasks.poll(50, TimeUnit.MILLISECONDS));
+    } finally {
+      manager.stopAutoSave();
+    }
+  }
+
+  @Test
+  void stoppingAutoSaveDiscardsQueuedTask() {
+    Path filePath = tempDir.resolve("stopped.json");
+    StateManagerImpl manager = new StateManagerImpl(filePath);
+    var clientTasks = new LinkedBlockingQueue<Runnable>();
+    manager.startAutoSave(clientTasks::add, 1, TimeUnit.DAYS);
+    manager.requestAutoSave(clientTasks::add);
+    Runnable task = clientTasks.poll();
+    assertNotNull(task);
+
+    manager.stopAutoSave();
+    task.run();
+
+    assertFalse(Files.exists(filePath));
   }
 
   @Test
