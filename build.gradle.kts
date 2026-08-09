@@ -264,6 +264,8 @@ afterEvaluate {
             accessToken = System.getenv("MODRINTH_TOKEN")
             projectId = System.getenv("MODRINTH_ID")
             minecraftVersions.addAll(publishedMinecraftVersions)
+            environment = CLIENT_ONLY
+
             if (isFabric) {
                 optional { slug.set("modmenu") }
             }
