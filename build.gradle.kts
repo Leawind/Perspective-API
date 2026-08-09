@@ -275,8 +275,8 @@ afterEvaluate {
             accessToken = System.getenv("CURSEFORGE_TOKEN")
             projectId = System.getenv("CURSEFORGE_ID")
             minecraftVersions.addAll(publishedMinecraftVersions)
-            clientRequired = true
-            serverRequired = false
+            client = true
+            server = false
             if (isFabric) {
                 optional { slug.set("modmenu") }
             }
