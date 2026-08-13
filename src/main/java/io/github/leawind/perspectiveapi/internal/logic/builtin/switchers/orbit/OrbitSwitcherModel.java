@@ -28,8 +28,6 @@ final class OrbitSwitcherModel {
   private final List<String> selected = new ArrayList<>();
   private final Set<String> disabled = new HashSet<>();
   private boolean initialized;
-  private @Nullable String activeId;
-  private @Nullable String previewId;
 
   void updateSwitchables(@NonNull List<@NonNull Perspective> perspectives) {
     Objects.requireNonNull(perspectives);
@@ -44,9 +42,6 @@ final class OrbitSwitcherModel {
     switchables.keySet().removeIf(id -> !incomingIds.contains(id));
     selected.removeIf(id -> !incomingIds.contains(id));
     disabled.removeIf(id -> !incomingIds.contains(id));
-    if (activeId != null && !incomingIds.contains(activeId)) activeId = null;
-    if (previewId != null && !incomingIds.contains(previewId)) previewId = null;
-
     if (!initialized && !switchables.isEmpty()) {
       initialized = true;
       selected.clear();
@@ -125,73 +120,29 @@ final class OrbitSwitcherModel {
     }
   }
 
-  void activate(@Nullable String id) {
-    if (id == null || !isAvailable(id)) return;
-    activeId = id;
+  @Nullable Perspective cycleForward(@Nullable String currentId) {
+    return cycle(currentId, 1);
   }
 
-  void preview(@Nullable String id) {
-    previewId = id != null && isAvailable(id) ? id : null;
-  }
-
-  void clearPreview() {
-    previewId = null;
-  }
-
-  @Nullable String resolvedId() {
-    return previewId != null ? previewId : activeId;
-  }
-
-  @Nullable String activeId() {
-    return activeId;
-  }
-
-  void ensureActive() {
-    if (activeId != null && isAvailable(activeId)) return;
-    activeId = firstAvailable();
-  }
-
-  void cycleForward() {
-    cycle(1);
-  }
-
-  void cycleBackward() {
-    cycle(-1);
-  }
-
-  private void cycle(int direction) {
+  private @Nullable Perspective cycle(@Nullable String currentId, int direction) {
     List<String> ordered = orderedEnabled();
-    if (ordered.isEmpty()) {
-      activeId = null;
-      return;
-    }
+    if (ordered.isEmpty()) return null;
 
-    int current = ordered.indexOf(activeId);
+    int current = ordered.indexOf(currentId);
     if (current < 0) current = direction > 0 ? -1 : 0;
     int size = ordered.size();
     for (int offset = 1; offset <= size; offset++) {
       int index = Math.floorMod(current + direction * offset, size);
       String candidate = ordered.get(index);
-      if (isAvailable(candidate)) {
-        activeId = candidate;
-        return;
-      }
+      if (isAvailable(candidate)) return switchables.get(candidate);
     }
-    activeId = null;
-  }
-
-  private @Nullable String firstAvailable() {
-    return orderedEnabled().stream().filter(this::isAvailable).findFirst().orElse(null);
+    return null;
   }
 
   private @NonNull List<@NonNull String> orderedEnabled() {
     List<String> result = new ArrayList<>(selected);
     result.addAll(candidates());
     return result;
-  }
-
-  private boolean isEnabled(String id) {
-    return switchables.containsKey(id) && !disabled.contains(id);
   }
 
   private boolean isAvailable(String id) {

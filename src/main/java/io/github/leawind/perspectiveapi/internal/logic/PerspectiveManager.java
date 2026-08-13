@@ -5,6 +5,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPIRuntime;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
+import io.github.leawind.perspectiveapi.api.PerspectiveSelection;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
@@ -59,6 +60,7 @@ public final class PerspectiveManager {
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
   private final PerspectiveSwitcherManagerImpl switchers;
+  private final PerspectiveSelectionImpl selection;
 
   public @NonNull TransitionImpl transition() {
     return transition;
@@ -74,6 +76,18 @@ public final class PerspectiveManager {
 
   public @NonNull PerspectiveSwitcherManagerImpl switchers() {
     return switchers;
+  }
+
+  public @NonNull PerspectiveSelection selection() {
+    return selection;
+  }
+
+  public @Nullable String selectedPerspectiveId() {
+    return selection.selectedPerspectiveId();
+  }
+
+  public void restoreSelection(@Nullable String perspectiveId) {
+    selection.restore(perspectiveId);
   }
 
   // endregion
@@ -99,10 +113,11 @@ public final class PerspectiveManager {
   // endregion
 
   private PerspectiveManager(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
-    switchers = new PerspectiveSwitcherManagerImpl(defaultSwitcher);
+    selection = new PerspectiveSelectionImpl();
+    switchers =
+        new PerspectiveSwitcherManagerImpl(defaultSwitcher, PerspectiveRegistryImpl.INSTANCE);
 
     overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
-    overrides.register(Integer.MIN_VALUE, switchers);
 
     modifiers = new PerspectiveModifierChainImpl(sanitizer);
 
@@ -119,15 +134,6 @@ public final class PerspectiveManager {
   /// Returns an independent snapshot of the last completed main-camera update.
   public @Nullable PerspectiveState getPreviousCameraState() {
     return hasPreviousCameraState ? new PerspectiveStateSnapshot(lastAppliedState) : null;
-  }
-
-  /// Returns the last resolved perspective, using the default before initial resolution.
-  public @NonNull Perspective getLastResolvedOrDefault() {
-    Perspective current = this.current;
-    if (current != null) return current;
-    current = PerspectiveRegistryImpl.INSTANCE.getDefault();
-    this.current = current;
-    return current;
   }
 
   public void onEnabledChanged(boolean enabled) {
@@ -150,9 +156,11 @@ public final class PerspectiveManager {
   }
 
   private void updateCurrentPerspective() {
-    // Resolve current id from override chain
+    // Resolve temporary overrides before the persistent selection.
     Perspective previous = current;
-    Perspective resolved = PerspectiveRegistryImpl.INSTANCE.getOrDefault(overrides.get());
+    String resolvedId = overrides.get();
+    if (resolvedId == null) resolvedId = selection.selectedPerspectiveId();
+    Perspective resolved = resolveAvailableOrDefault(resolvedId);
     PerspectiveBehavior resolvedBehavior =
         PerspectiveRegistryImpl.INSTANCE.getBehaviorOrDefault(resolved.info().id());
 
@@ -178,6 +186,14 @@ public final class PerspectiveManager {
       transitionAllowed = outgoingAllowsTransition && incomingAllowsTransition;
       startTransition();
     }
+  }
+
+  private @NonNull Perspective resolveAvailableOrDefault(@Nullable String perspectiveId) {
+    if (perspectiveId != null) {
+      Perspective perspective = PerspectiveRegistryImpl.INSTANCE.get(perspectiveId);
+      if (perspective != null && perspective.isAvailable()) return perspective;
+    }
+    return PerspectiveRegistryImpl.INSTANCE.getDefault();
   }
 
   private static void updateCameraType(PerspectiveBehavior.@NonNull BaseType baseType) {
@@ -308,10 +324,6 @@ public final class PerspectiveManager {
   }
 
   // endregion
-
-  public void restoreLastResolved(@NonNull Perspective perspective) {
-    current = perspective;
-  }
 
   private void startTransition() {
     if (!isTransitionStartStateInitialized) {

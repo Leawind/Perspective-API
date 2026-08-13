@@ -114,6 +114,12 @@ public final class PerspectiveAPI {
     return PerspectiveAPIRuntime.require().switchers();
   }
 
+  /// Returns the player's persistent perspective selection.
+  @ApiStatus.Experimental
+  public static @NonNull PerspectiveSelection getSelection() {
+    return PerspectiveAPIRuntime.require().selection();
+  }
+
   /// Returns the perspective that currently owns the base camera state.
   ///
   /// Returns `null` while Perspective API is disabled or before a perspective has been activated.

@@ -86,6 +86,14 @@ Switcher 会把这些 Perspective 作为独立候选项交给玩家选择。模�
 
 如果多个预设只是参数不同，可以复用同一种实现类型，但每个注册仍然需要独立的行为实例和元数据。
 
+### 上下文中的多个视角选择
+
+如果一个功能允许玩家创建多个对象，并让每个对象分别记住当前视角，可以让这些对象与 Perspective API 持有的玩家选择保持同步。
+
+功能订阅 `PerspectiveSelection` 的变化事件，在实际选择发生变化时更新当前对象指向的 Perspective。切换当前对象时，先更新当前对象引用，再把新对象保存的 Perspective 设置为玩家选择；如果 ID 未变化，不会产生重复事件。
+
+Orbit Switcher、Wheel Switcher、其他任意 Switcher 和自定义条件逻辑都直接修改同一个 `PerspectiveSelection`。变化事件由 `PerspectiveSelection` 发布，而不是由 Switcher 发布，因此该功能无需重新实现 Switcher，也不与某一种 Switcher 绑定。Perspective API 负责持久化当前玩家选择。
+
 ### 锁定视角
 
 锁定的目标是让目标实体保持在画面中，而不是直接取得相机旋转的控制权。该功能不应实现为 Modifier，而应通过注入游戏的鼠标视角移动事件形成闭环控制。

@@ -1,9 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -59,12 +57,8 @@ class OrbitSwitcherModelTest {
     model.updateSwitchables(
         List.of(perspective("a", 0, true), perspective("b", 1, false), perspective("c", 2, true)));
     model.applyLayout(List.of("c"), Set.of());
-    model.activate("c");
-
-    model.cycleForward();
-    assertEquals("a", model.resolvedId());
-    model.cycleForward();
-    assertEquals("c", model.resolvedId());
+    assertEquals("a", model.cycleForward("c").info().id());
+    assertEquals("c", model.cycleForward("a").info().id());
   }
 
   @Test
@@ -76,35 +70,17 @@ class OrbitSwitcherModelTest {
             perspective("other", 1, true),
             perspective("disabled", 2, true)));
     model.applyLayout(List.of("wheel"), Set.of("disabled"));
-    model.activate("wheel");
-
-    model.cycleForward();
-    assertEquals("other", model.resolvedId());
-    model.cycleForward();
-    assertEquals("wheel", model.resolvedId());
+    assertEquals("other", model.cycleForward("wheel").info().id());
+    assertEquals("wheel", model.cycleForward("other").info().id());
   }
 
   @Test
-  void noAvailablePerspectiveProducesNoSelection() {
-    OrbitSwitcherModel model = new OrbitSwitcherModel();
-    model.updateSwitchables(List.of(perspective("a", 0, false)));
-
-    model.ensureActive();
-
-    assertNull(model.resolvedId());
-  }
-
-  @Test
-  void unavailablePerspectiveCannotBePreviewed() {
+  void unknownCurrentSelectionStartsAtFirstAvailablePerspective() {
     OrbitSwitcherModel model = new OrbitSwitcherModel();
     model.updateSwitchables(
-        List.of(perspective("available", 0, true), perspective("unavailable", 1, false)));
-    model.activate("available");
+        List.of(perspective("a", 0, false), perspective("b", 1, true)));
 
-    model.preview("unavailable");
-
-    assertEquals("available", model.resolvedId());
-    assertFalse(model.disabled().contains("unavailable"));
+    assertEquals("b", model.cycleForward("missing").info().id());
   }
 
   @Test
@@ -122,20 +98,14 @@ class OrbitSwitcherModelTest {
   }
 
   @Test
-  void disabledPerspectiveCanBePreviewedAndActivatedDirectly() {
+  void disabledPerspectiveRemainsAddressableForDirectSelection() {
     OrbitSwitcherModel model = new OrbitSwitcherModel();
     model.updateSwitchables(
         List.of(perspective("active", 0, true), perspective("hovered", 1, true)));
-    model.activate("active");
-    model.preview("hovered");
-
     model.applyLayout(List.of("active"), Set.of("hovered"));
 
-    assertEquals("hovered", model.resolvedId());
-    model.clearPreview();
-    model.activate("hovered");
-    model.ensureActive();
-    assertEquals("hovered", model.resolvedId());
+    assertNotNull(model.perspective("hovered"));
+    assertEquals(OrbitSwitcherModel.Group.DISABLED, model.groupOf("hovered"));
   }
 
   @Test

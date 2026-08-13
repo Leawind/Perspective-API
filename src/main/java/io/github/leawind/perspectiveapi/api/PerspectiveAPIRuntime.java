@@ -27,6 +27,8 @@ public final class PerspectiveAPIRuntime {
 
     @NonNull PerspectiveSwitcherManager switchers();
 
+    @NonNull PerspectiveSelection selection();
+
     @Nullable Perspective current();
 
     @Nullable PerspectiveState previousCameraState();

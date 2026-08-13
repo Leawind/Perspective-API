@@ -86,13 +86,17 @@ Perspective 只有在满足以下条件时才应声明 `controllable`：
 
 ## 玩家选择与临时覆盖
 
-玩家通过 Perspective Switcher 选择自己的持久 Perspective。Switcher 只负责玩家选择，不拥有高于其他模组的特殊控制权。
+Perspective API 持有并持久化唯一的玩家 Perspective 选择。Switcher 只负责交互，不拥有选择状态。包括内置 Orbit Switcher 在内的任意 Switcher 与自定义条件逻辑都直接通过同一个 `PerspectiveSelection` 读取和写入当前选择，两种选择来源地位相同。
+
+`PerspectiveSwitcherManager` 只管理 Switcher 的注册、当前选择和生命周期。Switcher 仅在自己处于激活状态时响应玩家输入；这属于 Switcher 的交互生命周期，不限制其他逻辑直接修改玩家的 Perspective 选择。
+
+该选择只保存原始 Perspective ID，不保存解析后的回退结果。ID 实际变化后，选择对象完成状态修改，再同步通知已注册的监听器；相同 ID 不触发事件。监听器在事件中产生的后续选择变化会排队到当前通知结束后依次发布。这样，其他功能可以在自己的上下文对象与 API 选择之间同步状态，而不需要与任何具体 Switcher 耦合。
 
 需要临时替换基础视角的功能通过临时覆盖参与选择。有效 Perspective 按以下顺序解析：
 
 1. 按优先级从高到低检查临时覆盖
 2. 使用第一个指向已注册且当前可用 Perspective 的覆盖
-3. 没有有效临时覆盖时，使用当前 Switcher 选择的 Perspective
+3. 没有有效临时覆盖时，使用持久的玩家选择
 4. 仍然无法解析时，使用默认 Perspective
 
 较低优先级的选择在被覆盖期间仍然保留。临时覆盖停止生效后，API 重新解析并恢复下面仍然有效的选择；调用方不需要保存和还原原版相机字段。
@@ -149,7 +153,7 @@ Modifier 应只修改自己负责的字段，并按照 API 约定的旋转方向
 
 禁用 Perspective API 时，当前 Perspective 应失去相机控制权并收到停用通知；此时查询接口不应继续报告它正在生效。重新启用后重新解析并激活有效 Perspective。
 
-注册表变化、Perspective 可用性变化和 Switcher 选择变化都会触发重新解析。换世界或跨维度本身不删除注册；需要限制在单个世界中的功能应通过自身状态使对应 Perspective 或覆盖失效。
+注册表变化、Perspective 可用性变化和玩家选择变化都会在后续相机更新中参与重新解析。换世界或跨维度本身不删除注册；需要限制在单个世界中的功能应通过自身状态使对应 Perspective 或覆盖失效。
 
 ## 相机状态管线
 

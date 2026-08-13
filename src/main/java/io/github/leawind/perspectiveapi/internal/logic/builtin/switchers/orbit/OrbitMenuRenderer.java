@@ -72,8 +72,8 @@ final class OrbitMenuRenderer {
 
     PerspectiveActor labelActor;
     if (menu.mode() == OrbitMenu.Mode.SELECTING) {
-      String resolvedId = menu.model().resolvedId();
-      labelActor = resolvedId != null ? menu.actor(resolvedId) : null;
+      String selectedId = menu.selectedPerspectiveId();
+      labelActor = selectedId != null ? menu.actor(selectedId) : null;
     } else {
       labelActor = null;
     }
@@ -272,7 +272,7 @@ final class OrbitMenuRenderer {
   private static double targetScale(OrbitMenu menu, PerspectiveActor actor) {
     if (actor == menu.grabbedActor()) return GRAB_SCALE;
     if (menu.mode() == OrbitMenu.Mode.SELECTING
-        && actor.perspectiveId().equals(menu.model().resolvedId())) {
+        && actor.perspectiveId().equals(menu.selectedPerspectiveId())) {
       return HOVER_SCALE;
     }
     if (menu.mode() == OrbitMenu.Mode.EDITING && actor == menu.hoveredActor()) {
@@ -291,7 +291,7 @@ final class OrbitMenuRenderer {
     int y = (int) menu.worldToScreenY(actor.body().position().y) - size / 2;
 
     canvas.drawGamemodeSwitcherSlot(x, y, size, size, COLOR_TEXT);
-    if (actor.perspectiveId().equals(menu.model().activeId())) {
+    if (actor.perspectiveId().equals(menu.selectedPerspectiveId())) {
       canvas.drawGamemodeSwitcherSelection(x, y, size, size, COLOR_TEXT);
     }
 

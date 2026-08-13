@@ -89,16 +89,6 @@ class StateManagerImplTest {
     public void onSwitchablePerspectivesUpdated(
         @NonNull List<@NonNull Perspective> switchablePerspectives) {}
 
-    @Override
-    public void onActivated(@NonNull Perspective currentPerspective) {}
-
-    @Override
-    public void onDeactivated() {}
-
-    @Override
-    public @Nullable String getSelectedPerspectiveId() {
-      return null;
-    }
   }
 
   private FileSystem fs;
@@ -142,6 +132,7 @@ class StateManagerImplTest {
     PerspectiveManager.INSTANCE
         .switchers()
         .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
+    PerspectiveManager.INSTANCE.restoreSelection(null);
     TEST_STATE_SECTION.value = "default";
     fs.close();
   }
@@ -280,6 +271,23 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertSame(TEST_SWITCHER, PerspectiveAPI.getSwitcherManager().getSelectedSwitcher());
+  }
+
+  @Test
+  void roundTripPersistsSelectionInsteadOfResolvedCurrentPerspective() throws IOException {
+    Path filePath = tempDir.resolve("selection.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    PerspectiveManager.INSTANCE.restoreSelection("test.raw_selection");
+
+    manager.tryExtractAndSave();
+    var savedState = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
+    PerspectiveManager.INSTANCE.restoreSelection("test.changed");
+    manager.tryLoadAndApply();
+
+    assertEquals(
+        "test.raw_selection", PerspectiveManager.INSTANCE.selectedPerspectiveId());
+    assertEquals("test.raw_selection", savedState.get("selection.current").getAsString());
+    assertFalse(savedState.has("manager.current"));
   }
 
   @Test

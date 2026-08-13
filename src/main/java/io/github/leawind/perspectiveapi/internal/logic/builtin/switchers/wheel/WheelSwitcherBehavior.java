@@ -27,7 +27,6 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   private final PerspectiveRegistry registry;
 
   private List<String> list = new ArrayList<>();
-  private @Nullable String selected = null;
 
   private final WheelMenu wheelMenu = new WheelMenu();
 
@@ -123,37 +122,12 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   }
 
   @Override
-  public void onActivated(@NonNull Perspective currentPerspective) {
-    if (list.contains(currentPerspective.info().id())) {
-      this.selected = currentPerspective.info().id();
-    }
-  }
-
-  @Override
   public void onDeactivated() {
     getKeyStateTracker().reset();
     if (wheelMenu.isOpened()) {
       String finalId = wheelMenu.close();
-      if (finalId != null) this.selected = finalId;
+      if (finalId != null) select(finalId);
     }
-  }
-
-  @Override
-  public @Nullable String getSelectedPerspectiveId() {
-    var selected = this.selected;
-    if (selected == null) {
-      Perspective current = PerspectiveAPI.getCurrent();
-      if (current != null && list.contains(current.info().id())) {
-        this.selected = current.info().id();
-      }
-      selected = this.selected;
-    }
-
-    if (selected != null) {
-      Perspective perspective = registry.get(selected);
-      if (perspective == null || !perspective.isAvailable()) cycleBackward();
-    }
-    return this.selected;
   }
 
   private void openWheel() {
@@ -162,15 +136,15 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
     var minecraft = Minecraft.getInstance();
     if (minecraft.level == null || minecraft.player == null) return;
 
-    wheelMenu.setOnHover(id -> this.selected = id);
-    wheelMenu.open(getSelectedPerspectiveId());
+    wheelMenu.setOnHover(this::select);
+    wheelMenu.open(PerspectiveAPI.getSelection().selectedPerspectiveId());
   }
 
   private void closeWheel() {
     String finalId = wheelMenu.close();
     wheelMenu.setOnHover(null);
     if (finalId != null) {
-      this.selected = finalId;
+      select(finalId);
     }
   }
 
@@ -178,7 +152,7 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
   private void cycleForward() {
     if (list.isEmpty()) return;
 
-    String current = selected;
+    String current = PerspectiveAPI.getSelection().selectedPerspectiveId();
     int idx = list.indexOf(current);
     int start = idx < 0 ? 0 : (idx + 1) % list.size();
 
@@ -188,8 +162,8 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
     do {
       String next = list.get(i);
       var p = registry.get(next);
-      if (p != null && p.isAvailable()) {
-        selected = next;
+      if (p != null && p.info().switchable() && p.isAvailable()) {
+        PerspectiveAPI.getSelection().setSelectedPerspective(p);
         return;
       }
       i = (i + 1) % size;
@@ -197,26 +171,10 @@ public class WheelSwitcherBehavior implements PerspectiveSwitcherBehavior {
     } while (attempts < size);
   }
 
-  /// Moves the active perspective to the previous available one.
-  private void cycleBackward() {
-    if (list.isEmpty()) return;
-
-    String current = selected;
-    int idx = list.indexOf(current);
-    int size = list.size();
-    int i = idx < 0 ? size - 1 : (idx - 1 + size) % size;
-
-    int attempts = 0;
-    do {
-      String next = list.get(i);
-
-      var p = registry.get(next);
-      if (p != null && p.isAvailable()) {
-        selected = next;
-        return;
-      }
-      i = (i - 1 + size) % size;
-      attempts++;
-    } while (attempts < size);
+  private void select(@NonNull String perspectiveId) {
+    Perspective perspective = registry.get(perspectiveId);
+    if (perspective != null && perspective.info().switchable() && perspective.isAvailable()) {
+      PerspectiveAPI.getSelection().setSelectedPerspective(perspective);
+    }
   }
 }

@@ -13,7 +13,6 @@ import java.util.Objects;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 public final class OrbitSwitcherBehavior
     implements PerspectiveSwitcherBehavior, PerspectiveAPIState.Section<OrbitSwitcherState> {
@@ -89,23 +88,10 @@ public final class OrbitSwitcherBehavior
   }
 
   @Override
-  public void onActivated(@NonNull Perspective currentPerspective) {
-    model.activate(currentPerspective.info().id());
-    model.ensureActive();
-  }
-
-  @Override
   public void onDeactivated() {
     keyStateTracker.reset();
     menu.close();
     tutorial.onWheelClosed();
-    model.clearPreview();
-  }
-
-  @Override
-  public @Nullable String getSelectedPerspectiveId() {
-    model.ensureActive();
-    return model.resolvedId();
   }
 
   @Override
@@ -134,7 +120,6 @@ public final class OrbitSwitcherBehavior
     setHoldTicks(state.holdTicks());
     tutorial.applyState(state.wheelHintCompleted(), state.editorHintCompleted());
     model.applyLayout(state.selected(), state.disabled());
-    model.ensureActive();
     menu.syncActors();
   }
 
@@ -167,7 +152,9 @@ public final class OrbitSwitcherBehavior
   }
 
   private void onPress() {
-    model.cycleForward();
+    var selection = PerspectiveAPI.getSelection();
+    Perspective next = model.cycleForward(selection.selectedPerspectiveId());
+    if (next != null) selection.setSelectedPerspective(next);
     tutorial.onShortPress();
   }
 

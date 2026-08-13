@@ -135,7 +135,6 @@ final class OrbitMenu {
     if (!opened) return;
     releaseActor(false);
     closeCursorLease();
-    model.clearPreview();
     opened = false;
     hoveredActor = null;
     wheelAnchor.reset();
@@ -168,6 +167,10 @@ final class OrbitMenu {
 
   OrbitSwitcherModel model() {
     return model;
+  }
+
+  @Nullable String selectedPerspectiveId() {
+    return PerspectiveAPI.getSelection().selectedPerspectiveId();
   }
 
   EvasiveSponsorButton sponsorButton() {
@@ -274,7 +277,6 @@ final class OrbitMenu {
   private void enterEditing() {
     mode = Mode.EDITING;
     owner.onEditingOpened();
-    model.clearPreview();
     Minecraft minecraft = Minecraft.getInstance();
     restoreMouseGrab = minecraft.mouseHandler.isMouseGrabbed();
     if (restoreMouseGrab) minecraft.mouseHandler.releaseMouse();
@@ -286,7 +288,6 @@ final class OrbitMenu {
   private void exitEditing() {
     releaseActor(false);
     closeCursorLease();
-    model.clearPreview();
     mode = Mode.SELECTING;
     hasLastMouse = false;
     hoveredActor = null;
@@ -312,7 +313,7 @@ final class OrbitMenu {
     if (allowClick
         && isShortDrag(
             mouseScreen.x - grabStartMouseScreen.x, mouseScreen.y - grabStartMouseScreen.y)) {
-      model.activate(releasedActor.perspectiveId());
+      select(releasedActor);
     }
   }
 
@@ -359,12 +360,7 @@ final class OrbitMenu {
 
   private void setHovered(@Nullable PerspectiveActor actor) {
     hoveredActor = actor;
-    if (mode == Mode.SELECTING) {
-      if (actor != null && isAvailable(actor)) model.activate(actor.perspectiveId());
-      return;
-    }
-    if (actor != null && isAvailable(actor)) model.preview(actor.perspectiveId());
-    else model.clearPreview();
+    if (mode == Mode.SELECTING && actor != null) select(actor);
   }
 
   /// Treats only the dragged actor's position as player input. Positions produced by the physics
@@ -605,14 +601,16 @@ final class OrbitMenu {
     }
   }
 
-  private boolean isAvailable(PerspectiveActor actor) {
-    Perspective perspective = model.perspective(actor.perspectiveId());
-    return perspective != null && perspective.isAvailable();
-  }
-
   private boolean isOwnerActive() {
     return PerspectiveAPI.isEnabled()
         && PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() == owner;
+  }
+
+  private void select(@NonNull PerspectiveActor actor) {
+    Perspective perspective = model.perspective(actor.perspectiveId());
+    if (perspective != null && perspective.info().switchable() && perspective.isAvailable()) {
+      PerspectiveAPI.getSelection().setSelectedPerspective(perspective);
+    }
   }
 
   private static boolean hasOpenScreen() {

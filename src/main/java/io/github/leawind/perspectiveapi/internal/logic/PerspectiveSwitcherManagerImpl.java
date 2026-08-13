@@ -12,30 +12,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Supplier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-public class PerspectiveSwitcherManagerImpl
-    implements PerspectiveSwitcherManager, Supplier<@Nullable String> {
+public class PerspectiveSwitcherManagerImpl implements PerspectiveSwitcherManager {
   private static final ExtensionInvoker EXTENSIONS =
       new ExtensionInvoker(
           LoggerFactory.getLogger(PerspectiveSwitcherManagerImpl.class), "Switcher");
 
   private final Map<String, PerspectiveSwitcherBehavior> switchers = new HashMap<>();
+  private final PerspectiveRegistryImpl registry;
 
   private final PerspectiveSwitcherBehavior defaultSwitcher;
   private @Nullable PerspectiveSwitcherBehavior currentSwitcher = null;
 
-  public PerspectiveSwitcherManagerImpl(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
+  public PerspectiveSwitcherManagerImpl(
+      @NonNull PerspectiveSwitcherBehavior defaultSwitcher,
+      @NonNull PerspectiveRegistryImpl registry) {
     this.defaultSwitcher = Objects.requireNonNull(defaultSwitcher);
-    PerspectiveRegistryImpl.INSTANCE.onUpdate().on(this::notifySwitchables);
+    this.registry = Objects.requireNonNull(registry);
+    registry.onUpdate().on(this::notifySwitchables);
     register(defaultSwitcher);
   }
 
   private @NonNull List<@NonNull Perspective> getSwitchables() {
-    return PerspectiveRegistryImpl.INSTANCE.getAllPerspectives().stream()
+    return registry.getAllPerspectives().stream()
         .filter(perspective -> perspective.info().switchable())
         .sorted(
             Comparator.comparingInt((Perspective perspective) -> perspective.info().priority())
@@ -87,9 +89,8 @@ public class PerspectiveSwitcherManagerImpl
     var currentSwitcher = this.currentSwitcher;
     if (currentSwitcher == null) {
       currentSwitcher = this.currentSwitcher = defaultSwitcher;
-      Perspective current = PerspectiveManager.INSTANCE.getLastResolvedOrDefault();
       PerspectiveSwitcherBehavior activated = currentSwitcher;
-      EXTENSIONS.run(activated.id(), "onActivated", () -> activated.onActivated(current));
+      EXTENSIONS.run(activated.id(), "onActivated", activated::onActivated);
     }
 
     return currentSwitcher;
@@ -116,19 +117,11 @@ public class PerspectiveSwitcherManagerImpl
         EXTENSIONS.run(old.id(), "onDeactivated", old::onDeactivated);
       }
       this.currentSwitcher = behavior;
-      Perspective current = PerspectiveManager.INSTANCE.getLastResolvedOrDefault();
-      EXTENSIONS.run(behavior.id(), "onActivated", () -> behavior.onActivated(current));
+      EXTENSIONS.run(behavior.id(), "onActivated", behavior::onActivated);
     }
   }
 
   public @Nullable PerspectiveSwitcherBehavior getById(@NonNull String id) {
     return switchers.get(Objects.requireNonNull(id));
-  }
-
-  @Override
-  public @Nullable String get() {
-    PerspectiveSwitcherBehavior switcher = getSelectedSwitcher();
-    return EXTENSIONS.callOrElse(
-        switcher.id(), "getSelectedPerspectiveId", switcher::getSelectedPerspectiveId, null);
   }
 }
