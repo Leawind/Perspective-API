@@ -1,7 +1,7 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics.BodyType;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics.PhysicsBody;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics.BodyType;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics.PhysicsBody;
 import java.util.Objects;
 import org.joml.Vector2d;
 import org.joml.Vector2dc;

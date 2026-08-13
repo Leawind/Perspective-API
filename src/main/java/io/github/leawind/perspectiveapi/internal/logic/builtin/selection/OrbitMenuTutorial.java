@@ -1,11 +1,11 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
 import io.github.leawind.perspectiveapi.internal.bridge.gui.TutorialHint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 
-final class OrbitSwitcherTutorial {
+final class OrbitMenuTutorial {
   private boolean wheelHintCompleted;
   private boolean editorHintCompleted;
   private @Nullable TutorialHint visibleHint;

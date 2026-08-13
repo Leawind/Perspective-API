@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

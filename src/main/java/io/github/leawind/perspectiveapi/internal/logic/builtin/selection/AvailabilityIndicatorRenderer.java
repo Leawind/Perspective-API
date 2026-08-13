@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;

@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-final class OrbitSwitcherModel {
+final class OrbitMenuModel {
   enum Group {
     SELECTED,
     CANDIDATE,

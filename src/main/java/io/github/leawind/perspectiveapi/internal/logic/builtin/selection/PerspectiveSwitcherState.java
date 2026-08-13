@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -7,8 +7,8 @@ import java.util.Objects;
 import java.util.Set;
 import org.jspecify.annotations.NonNull;
 
-/// Persisted player configuration for the orbit switcher.
-public record OrbitSwitcherState(
+/// Persisted player configuration for the built-in perspective switcher.
+public record PerspectiveSwitcherState(
     @NonNull List<@NonNull String> selected,
     @NonNull Set<@NonNull String> disabled,
     int holdTicks,
@@ -17,7 +17,7 @@ public record OrbitSwitcherState(
   private static final Codec<Set<String>> STRING_SET_CODEC =
       Codec.STRING.listOf().xmap(Set::copyOf, values -> values.stream().sorted().toList());
 
-  static final Codec<OrbitSwitcherState> CODEC =
+  static final Codec<PerspectiveSwitcherState> CODEC =
       RecordCodecBuilder.create(
           instance ->
               instance
@@ -25,29 +25,29 @@ public record OrbitSwitcherState(
                       Codec.STRING
                           .listOf()
                           .optionalFieldOf("selected", List.of())
-                          .forGetter(OrbitSwitcherState::selected),
+                          .forGetter(PerspectiveSwitcherState::selected),
                       STRING_SET_CODEC
                           .optionalFieldOf("disabled", Set.of())
-                          .forGetter(OrbitSwitcherState::disabled),
+                          .forGetter(PerspectiveSwitcherState::disabled),
                       Codec.intRange(
-                              OrbitSwitcherBehavior.MIN_HOLD_TICKS,
-                              OrbitSwitcherBehavior.MAX_HOLD_TICKS)
-                          .optionalFieldOf("hold_ticks", OrbitSwitcherBehavior.DEFAULT_HOLD_TICKS)
-                          .forGetter(OrbitSwitcherState::holdTicks),
+                              PerspectiveSwitcher.MIN_HOLD_TICKS,
+                              PerspectiveSwitcher.MAX_HOLD_TICKS)
+                          .optionalFieldOf("hold_ticks", PerspectiveSwitcher.DEFAULT_HOLD_TICKS)
+                          .forGetter(PerspectiveSwitcherState::holdTicks),
                       Codec.BOOL
                           .optionalFieldOf("wheel_hint_completed", false)
-                          .forGetter(OrbitSwitcherState::wheelHintCompleted),
+                          .forGetter(PerspectiveSwitcherState::wheelHintCompleted),
                       Codec.BOOL
                           .optionalFieldOf("editor_hint_completed", false)
-                          .forGetter(OrbitSwitcherState::editorHintCompleted))
-                  .apply(instance, OrbitSwitcherState::new));
+                          .forGetter(PerspectiveSwitcherState::editorHintCompleted))
+                  .apply(instance, PerspectiveSwitcherState::new));
 
-  public OrbitSwitcherState {
+  public PerspectiveSwitcherState {
     Objects.requireNonNull(selected);
     Objects.requireNonNull(disabled);
     selected.forEach(Objects::requireNonNull);
     disabled.forEach(Objects::requireNonNull);
-    OrbitSwitcherBehavior.validateHoldTicks(holdTicks);
+    PerspectiveSwitcher.validateHoldTicks(holdTicks);
     selected = List.copyOf(selected);
     disabled = Set.copyOf(disabled);
   }

@@ -25,8 +25,6 @@ public final class PerspectiveAPIRuntime {
 
     @NonNull PerspectiveOverrideChain overrides();
 
-    @NonNull PerspectiveSwitcherManager switchers();
-
     @NonNull PerspectiveSelection selection();
 
     @Nullable Perspective current();

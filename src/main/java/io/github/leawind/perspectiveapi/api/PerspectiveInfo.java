@@ -27,8 +27,9 @@ import org.jspecify.annotations.Nullable;
 /// @param name the display name
 /// @param description the optional description
 /// @param baseType the opaque vanilla camera type selected while the perspective is active
-/// @param switchable whether player-facing switchers may select the perspective
-/// @param priority the sorting priority within switchers, where lower values appear first
+/// @param switchable whether the built-in perspective switcher may select the perspective
+/// @param priority the sorting priority within the built-in perspective switcher, where lower
+///   values appear first
 /// @param icon the optional icon texture
 /// @param traits the stable semantic traits declared when the perspective is registered; see {@link
 ///   Declaration#traits()} for recommended shared traits
@@ -222,18 +223,18 @@ public record PerspectiveInfo(
     /// @see PerspectiveInfo#icon()
     @NonNull String icon() default "";
 
-    /// Whether this perspective is allowed to be manually selected by the player via a {@link
-    /// PerspectiveSwitcherBehavior}.
+    /// Whether this perspective is allowed to be manually selected by the player through the
+    /// built-in perspective switcher.
     ///
     /// If set to `false`, the perspective can only be activated programmatically through the {@link
     /// PerspectiveOverrideChain}.
     @ApiStatus.Experimental
     boolean switchable() default true;
 
-    /// The sorting priority within the switcher and duplicate-ID resolution.
+    /// The sorting priority within the built-in perspective switcher and duplicate-ID resolution.
     ///
-    /// Lower values appear earlier in the switcher and take precedence over a duplicate ID.
-    /// Switcher ordering is effective only when {@link #switchable()} is `true`, but duplicate-ID
+    /// Lower values appear earlier in the selector and take precedence over a duplicate ID.
+    /// Selector ordering is effective only when {@link #switchable()} is `true`, but duplicate-ID
     /// resolution always uses this value.
     int priority() default 0;
 

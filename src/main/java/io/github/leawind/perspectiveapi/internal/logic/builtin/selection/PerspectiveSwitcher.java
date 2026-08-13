@@ -1,38 +1,37 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
 import com.mojang.serialization.Codec;
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
+import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.logic.state.PerspectiveAPIState;
 import io.github.leawind.perspectiveapi.internal.utils.KeyStateTracker;
 import java.util.List;
 import java.util.Objects;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 
-public final class OrbitSwitcherBehavior
-    implements PerspectiveSwitcherBehavior, PerspectiveAPIState.Section<OrbitSwitcherState> {
+public final class PerspectiveSwitcher
+    implements PerspectiveAPIState.Section<PerspectiveSwitcherState> {
   public static final String ID = PerspectiveAPI.MOD_ID + ".orbit_switcher";
   public static final int DEFAULT_HOLD_TICKS = 3;
   public static final int MIN_HOLD_TICKS = 0;
   public static final int MAX_HOLD_TICKS = 20;
-  public static final OrbitSwitcherBehavior INSTANCE;
+  public static final PerspectiveSwitcher INSTANCE;
 
   static {
-    INSTANCE = new OrbitSwitcherBehavior();
+    INSTANCE = new PerspectiveSwitcher();
     PerspectiveAPIState.registerSection(INSTANCE);
   }
 
-  private final OrbitSwitcherModel model = new OrbitSwitcherModel();
-  private final OrbitSwitcherTutorial tutorial = new OrbitSwitcherTutorial();
+  private final OrbitMenuModel model = new OrbitMenuModel();
+  private final OrbitMenuTutorial tutorial = new OrbitMenuTutorial();
   private final KeyStateTracker keyStateTracker;
   private final OrbitMenu menu = new OrbitMenu(this, model);
 
-  private OrbitSwitcherBehavior() {
+  private PerspectiveSwitcher() {
     keyStateTracker =
         KeyStateTracker.builder()
             .setHoldTicks(DEFAULT_HOLD_TICKS)
@@ -43,12 +42,12 @@ public final class OrbitSwitcherBehavior
   }
 
   @SuppressWarnings("StatementWithEmptyBody")
-  @Override
   public void init() {
+    PerspectiveRegistryImpl.INSTANCE.onUpdate().on(this::updateSwitchables);
+    updateSwitchables();
     GameClientEvents.HANDLE_KEYBINDS_START.on(
         minecraft -> {
           if (!PerspectiveAPI.isEnabled()) return;
-          if (PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() != this) return;
 
           KeyMapping key = minecraft.options.keyTogglePerspective;
           keyStateTracker.tick(key.isDown());
@@ -58,37 +57,26 @@ public final class OrbitSwitcherBehavior
         minecraft -> {
           if (!PerspectiveAPI.isEnabled()
               || minecraft.level == null
-              || minecraft.player == null
-              || PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() != this) return;
+              || minecraft.player == null) return;
           if (menu.isOpened() && Bridge.getScreen(minecraft) != null) menu.close();
         });
     menu.init();
   }
 
-  @Override
-  public @NonNull String id() {
-    return ID;
+  private void updateSwitchables() {
+    List<Perspective> switchables =
+        PerspectiveRegistryImpl.INSTANCE.getAllPerspectives().stream()
+            .filter(perspective -> perspective.info().switchable())
+            .toList();
+    updateSwitchables(switchables);
   }
 
-  @Override
-  public @NonNull Component name() {
-    return Component.translatable("perspective_api.switcher.orbit_switcher.name");
-  }
-
-  @Override
-  public @NonNull Component description() {
-    return Component.translatable("perspective_api.switcher.orbit_switcher.description");
-  }
-
-  @Override
-  public void onSwitchablePerspectivesUpdated(
-      @NonNull List<@NonNull Perspective> switchablePerspectives) {
-    model.updateSwitchables(switchablePerspectives);
+  void updateSwitchables(@NonNull List<@NonNull Perspective> switchables) {
+    model.updateSwitchables(switchables);
     menu.syncActors();
   }
 
-  @Override
-  public void onDeactivated() {
+  public void deactivate() {
     keyStateTracker.reset();
     menu.close();
     tutorial.onWheelClosed();
@@ -96,17 +84,17 @@ public final class OrbitSwitcherBehavior
 
   @Override
   public @NonNull String stateId() {
-    return id();
+    return ID;
   }
 
   @Override
-  public @NonNull Codec<OrbitSwitcherState> stateCodec() {
-    return OrbitSwitcherState.CODEC;
+  public @NonNull Codec<PerspectiveSwitcherState> stateCodec() {
+    return PerspectiveSwitcherState.CODEC;
   }
 
   @Override
-  public @NonNull OrbitSwitcherState extractState() {
-    return new OrbitSwitcherState(
+  public @NonNull PerspectiveSwitcherState extractState() {
+    return new PerspectiveSwitcherState(
         model.selected(),
         model.disabled(),
         getHoldTicks(),
@@ -115,7 +103,7 @@ public final class OrbitSwitcherBehavior
   }
 
   @Override
-  public void applyState(@NonNull OrbitSwitcherState state) {
+  public void applyState(@NonNull PerspectiveSwitcherState state) {
     Objects.requireNonNull(state);
     setHoldTicks(state.holdTicks());
     tutorial.applyState(state.wheelHintCompleted(), state.editorHintCompleted());
@@ -153,12 +141,12 @@ public final class OrbitSwitcherBehavior
 
   private void onPress() {
     var selection = PerspectiveAPI.getSelection();
-    Perspective next = model.cycleForward(selection.selectedPerspectiveId());
-    if (next != null) selection.setSelectedPerspective(next);
+    Perspective next = model.cycleForward(selection.get());
+    if (next != null) selection.set(next.info().id());
     tutorial.onShortPress();
   }
 
-  OrbitSwitcherModel model() {
+  OrbitMenuModel model() {
     return model;
   }
 

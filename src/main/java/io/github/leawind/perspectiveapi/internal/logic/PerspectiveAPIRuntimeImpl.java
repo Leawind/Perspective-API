@@ -7,7 +7,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
 import io.github.leawind.perspectiveapi.api.PerspectiveSelection;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
-import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherManager;
 import io.github.leawind.perspectiveapi.api.Transition;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import java.util.Objects;
@@ -37,11 +36,6 @@ final class PerspectiveAPIRuntimeImpl implements PerspectiveAPIRuntime.Services 
   @Override
   public @NonNull PerspectiveOverrideChain overrides() {
     return PerspectiveManager.INSTANCE.overrides();
-  }
-
-  @Override
-  public @NonNull PerspectiveSwitcherManager switchers() {
-    return PerspectiveManager.INSTANCE.switchers();
   }
 
   @Override

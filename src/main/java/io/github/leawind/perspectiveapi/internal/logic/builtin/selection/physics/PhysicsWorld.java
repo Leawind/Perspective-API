@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics;
 
 import java.util.ArrayList;
 import java.util.Collections;

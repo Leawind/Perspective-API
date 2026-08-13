@@ -10,7 +10,6 @@ import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.transition.TransitionAlgorithms;
 import io.github.leawind.perspectiveapi.internal.impl.transition.position.PositionTransitionAlgorithm;
@@ -18,7 +17,7 @@ import io.github.leawind.perspectiveapi.internal.impl.transition.rotation.Rotati
 import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FovTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.OrthographicHeightTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.platform.api.Services;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -44,58 +43,7 @@ public final class YaclConfigScreenBuilder {
                             .controller(TickBoxControllerBuilder::create)
                             .build())
                     .group(buildTransitionGroup())
-                    .option(
-                        Option.<PerspectiveSwitcher>createBuilder()
-                            .name(text("config_screen.option.switcher"))
-                            .description(
-                                switcher -> {
-                                  Component desc = switcher.description();
-                                  if (desc == null) return OptionDescription.EMPTY;
-                                  return OptionDescription.of(desc);
-                                })
-                            .binding(
-                                PerspectiveAPI.getSwitcherManager().getSelectedSwitcher(),
-                                () -> PerspectiveAPI.getSwitcherManager().getSelectedSwitcher(),
-                                switcher ->
-                                    PerspectiveAPI.getSwitcherManager()
-                                        .setSelectedSwitcher(switcher))
-                            .controller(
-                                opt ->
-                                    CyclingListControllerBuilder.create(opt)
-                                        .values(
-                                            PerspectiveAPI.getSwitcherManager()
-                                                .getAvailableSwitchers())
-                                        .formatValue(PerspectiveSwitcher::name))
-                            .build())
-                    .group(
-                        OptionGroup.createBuilder()
-                            .name(text("config_screen.group.orbit_switcher"))
-                            .option(
-                                Option.<Integer>createBuilder()
-                                    .name(text("config_screen.option.orbit_switcher_hold_ticks"))
-                                    .description(
-                                        OptionDescription.of(
-                                            text(
-                                                "config_screen.option.orbit_switcher_hold_ticks.desc")))
-                                    .binding(
-                                        OrbitSwitcherBehavior.DEFAULT_HOLD_TICKS,
-                                        OrbitSwitcherBehavior.INSTANCE::getHoldTicks,
-                                        OrbitSwitcherBehavior.INSTANCE::setHoldTicks)
-                                    .controller(
-                                        opt ->
-                                            IntegerSliderControllerBuilder.create(opt)
-                                                .range(
-                                                    OrbitSwitcherBehavior.MIN_HOLD_TICKS,
-                                                    OrbitSwitcherBehavior.MAX_HOLD_TICKS)
-                                                .step(1)
-                                                .formatValue(
-                                                    v ->
-                                                        Component.translatable(
-                                                            PerspectiveAPI.MOD_ID
-                                                                + ".config_screen.option.orbit_switcher_hold_ticks.value",
-                                                            v)))
-                                    .build())
-                            .build())
+                    .group(buildPerspectiveSwitcherGroup())
                     .build());
     if (Services.PLATFORM_HELPER.isDevelopmentEnvironment()) {
       builder.category(buildDebugCategory());
@@ -208,6 +156,36 @@ public final class YaclConfigScreenBuilder {
                     .build());
 
     return builder.build();
+  }
+
+  private static OptionGroup buildPerspectiveSwitcherGroup() {
+    return OptionGroup.createBuilder()
+        .name(text("config_screen.group.perspective_switcher"))
+        .option(
+            Option.<Integer>createBuilder()
+                .name(text("config_screen.option.perspective_switcher_hold_ticks"))
+                .description(
+                    OptionDescription.of(
+                        text("config_screen.option.perspective_switcher_hold_ticks.desc")))
+                .binding(
+                    PerspectiveSwitcher.DEFAULT_HOLD_TICKS,
+                    PerspectiveSwitcher.INSTANCE::getHoldTicks,
+                    PerspectiveSwitcher.INSTANCE::setHoldTicks)
+                .controller(
+                    opt ->
+                        IntegerSliderControllerBuilder.create(opt)
+                            .range(
+                                PerspectiveSwitcher.MIN_HOLD_TICKS,
+                                PerspectiveSwitcher.MAX_HOLD_TICKS)
+                            .step(1)
+                            .formatValue(
+                                value ->
+                                    Component.translatable(
+                                        PerspectiveAPI.MOD_ID
+                                            + ".config_screen.option.perspective_switcher_hold_ticks.value",
+                                        value)))
+                .build())
+        .build();
   }
 
   private static Component text(String key) {

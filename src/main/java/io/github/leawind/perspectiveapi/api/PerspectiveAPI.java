@@ -108,12 +108,6 @@ public final class PerspectiveAPI {
     return PerspectiveAPIRuntime.require().overrides();
   }
 
-  /// Returns the manager for perspective switchers
-  @ApiStatus.Experimental
-  public static @NonNull PerspectiveSwitcherManager getSwitcherManager() {
-    return PerspectiveAPIRuntime.require().switchers();
-  }
-
   /// Returns the player's persistent perspective selection.
   @ApiStatus.Experimental
   public static @NonNull PerspectiveSelection getSelection() {

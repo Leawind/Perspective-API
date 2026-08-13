@@ -1,4 +1,4 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
@@ -6,13 +6,13 @@ import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GameClientEvents;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GuiRenderContext;
 import io.github.leawind.perspectiveapi.internal.bridge.events.MouseInputContext;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherModel.Group;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics.BodyType;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics.DragForce;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics.InverseSquareForces;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics.PairForce;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics.PhysicsBody;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.physics.PhysicsWorld;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.OrbitMenuModel.Group;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics.BodyType;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics.DragForce;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics.InverseSquareForces;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics.PairForce;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics.PhysicsBody;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.physics.PhysicsWorld;
 import io.github.leawind.perspectiveapi.internal.utils.WheelAnchor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,8 +47,8 @@ final class OrbitMenu {
   private static final String SPONSOR_URL = "https://leawind.github.io/zh_cn/donate?autolang";
   private static final PairForce DISABLED_REPULSION = InverseSquareForces.coulomb(0.025, 0.035, 10);
 
-  private final OrbitSwitcherBehavior owner;
-  private final OrbitSwitcherModel model;
+  private final PerspectiveSwitcher owner;
+  private final OrbitMenuModel model;
   private final PhysicsWorld world = new PhysicsWorld();
   private final Map<String, PerspectiveActor> actors = new HashMap<>();
   private final OrbitMenuRenderer renderer = new OrbitMenuRenderer();
@@ -73,7 +73,7 @@ final class OrbitMenu {
   private boolean hasLastMouse;
   private long lastRenderNanos;
 
-  OrbitMenu(@NonNull OrbitSwitcherBehavior owner, @NonNull OrbitSwitcherModel model) {
+  OrbitMenu(@NonNull PerspectiveSwitcher owner, @NonNull OrbitMenuModel model) {
     this.owner = Objects.requireNonNull(owner);
     this.model = Objects.requireNonNull(model);
     world.setMaxTotalForce(320);
@@ -165,12 +165,12 @@ final class OrbitMenu {
     return grabbedActor;
   }
 
-  OrbitSwitcherModel model() {
+  OrbitMenuModel model() {
     return model;
   }
 
   @Nullable String selectedPerspectiveId() {
-    return PerspectiveAPI.getSelection().selectedPerspectiveId();
+    return PerspectiveAPI.getSelection().get();
   }
 
   EvasiveSponsorButton sponsorButton() {
@@ -602,14 +602,13 @@ final class OrbitMenu {
   }
 
   private boolean isOwnerActive() {
-    return PerspectiveAPI.isEnabled()
-        && PerspectiveAPI.getSwitcherManager().getSelectedSwitcher() == owner;
+    return PerspectiveAPI.isEnabled();
   }
 
   private void select(@NonNull PerspectiveActor actor) {
     Perspective perspective = model.perspective(actor.perspectiveId());
     if (perspective != null && perspective.info().switchable() && perspective.isAvailable()) {
-      PerspectiveAPI.getSelection().setSelectedPerspective(perspective);
+      PerspectiveAPI.getSelection().set(actor.perspectiveId());
     }
   }
 

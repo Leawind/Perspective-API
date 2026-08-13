@@ -9,7 +9,6 @@ import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
-import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
 import io.github.leawind.perspectiveapi.internal.utils.AtomicFileWriter;
 import java.io.IOException;
@@ -59,9 +58,6 @@ public final class PerspectiveAPIState {
                       Codec.STRING
                           .optionalFieldOf("selection.current")
                           .forGetter(s -> Optional.ofNullable(s.currentSelection)),
-                      Codec.STRING
-                          .optionalFieldOf("manager.switcher")
-                          .forGetter(s -> Optional.ofNullable(s.managerSwitcher)),
                       Codec.DOUBLE
                           .optionalFieldOf("transition.duration_ms", 300.0)
                           .forGetter(s -> s.transitionDurationMs),
@@ -72,7 +68,6 @@ public final class PerspectiveAPIState {
 
   private final boolean enabled;
   private final @Nullable String currentSelection;
-  private final @Nullable String managerSwitcher;
   private final double transitionDurationMs;
   private final Map<String, Dynamic<?>> sections;
 
@@ -80,12 +75,10 @@ public final class PerspectiveAPIState {
   private PerspectiveAPIState(
       boolean enabled,
       Optional<String> currentSelection,
-      Optional<String> managerSwitcher,
       double transitionDurationMs,
       Map<String, Dynamic<?>> sections) {
     this.enabled = enabled;
     this.currentSelection = currentSelection.orElse(null);
-    this.managerSwitcher = managerSwitcher.orElse(null);
     this.transitionDurationMs = transitionDurationMs;
     this.sections = Collections.unmodifiableMap(new TreeMap<>(sections));
   }
@@ -97,13 +90,12 @@ public final class PerspectiveAPIState {
     return enabled == that.enabled
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
         && Objects.equals(currentSelection, that.currentSelection)
-        && Objects.equals(managerSwitcher, that.managerSwitcher)
         && sections.equals(that.sections);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, currentSelection, managerSwitcher, transitionDurationMs, sections);
+    return Objects.hash(enabled, currentSelection, transitionDurationMs, sections);
   }
 
   public void apply() {
@@ -113,15 +105,6 @@ public final class PerspectiveAPIState {
     PerspectiveAPI.setEnabled(enabled);
 
     PerspectiveManager.INSTANCE.restoreSelection(currentSelection);
-
-    if (managerSwitcher != null) {
-      PerspectiveSwitcherBehavior switcher =
-          PerspectiveManager.INSTANCE.switchers().getById(managerSwitcher);
-      if (switcher != null) {
-        PerspectiveManager.INSTANCE.switchers().setSelectedSwitcher(switcher);
-      }
-    }
-
     PerspectiveAPI.getTransition().setDurationMs(transitionDurationMs);
     applySections(sections);
   }
@@ -130,8 +113,7 @@ public final class PerspectiveAPIState {
     Map<String, Dynamic<?>> existingSections = existing == null ? Map.of() : existing.sections;
     return new PerspectiveAPIState(
         PerspectiveAPI.isEnabled(),
-        Optional.ofNullable(PerspectiveManager.INSTANCE.selectedPerspectiveId()),
-        Optional.of(PerspectiveAPI.getSwitcherManager().getSelectedSwitcher().id()),
+        Optional.ofNullable(PerspectiveManager.INSTANCE.getSelected()),
         PerspectiveAPI.getTransition().getDurationMs(),
         extractSections(existingSections));
   }

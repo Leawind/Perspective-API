@@ -5,18 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
-import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveRegistryImpl;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.transition.position.FixedStartPositionTransitionAlgorithm;
@@ -24,23 +21,19 @@ import io.github.leawind.perspectiveapi.internal.impl.transition.rotation.Chasin
 import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FixedStartFovTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FixedStartOrthographicHeightTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.logic.PerspectiveManager;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.PerspectiveSwitcher;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class StateManagerImplTest {
-  private static final TestSwitcher TEST_SWITCHER = new TestSwitcher();
   private static final TestStateSection TEST_STATE_SECTION = new TestStateSection();
 
   static {
@@ -72,25 +65,6 @@ class StateManagerImplTest {
     }
   }
 
-  private static final class TestSwitcher implements PerspectiveSwitcherBehavior {
-    private static final String ID = "test.persisted_switcher";
-
-    @Override
-    public @NonNull String id() {
-      return ID;
-    }
-
-    @Override
-    public @NonNull Component name() {
-      return Component.literal(ID);
-    }
-
-    @Override
-    public void onSwitchablePerspectivesUpdated(
-        @NonNull List<@NonNull Perspective> switchablePerspectives) {}
-
-  }
-
   private FileSystem fs;
   private Path tempDir;
 
@@ -110,9 +84,6 @@ class StateManagerImplTest {
     if (!PerspectiveRegistryImpl.INSTANCE.contains("perspective_api.first_person")) {
       PerspectiveRegistryImpl.INSTANCE.registerSilent(TestPerspective.INSTANCE);
     }
-    if (PerspectiveManager.INSTANCE.switchers().getById(TestSwitcher.ID) == null) {
-      PerspectiveManager.INSTANCE.switchers().register(TEST_SWITCHER);
-    }
   }
 
   @AfterEach
@@ -129,9 +100,6 @@ class StateManagerImplTest {
     PerspectiveManager.INSTANCE
         .transition()
         .setOrthographicHeightAlgorithm(TransitionImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT_ALGORITHM);
-    PerspectiveManager.INSTANCE
-        .switchers()
-        .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
     PerspectiveManager.INSTANCE.restoreSelection(null);
     TEST_STATE_SECTION.value = "default";
     fs.close();
@@ -259,21 +227,6 @@ class StateManagerImplTest {
   }
 
   @Test
-  void roundTripPreservesSelectedSwitcherById() {
-    Path filePath = tempDir.resolve("switcher.json");
-    StateManager manager = new StateManagerImpl(filePath);
-    PerspectiveManager.INSTANCE.switchers().setSelectedSwitcher(TEST_SWITCHER);
-
-    manager.tryExtractAndSave();
-    PerspectiveManager.INSTANCE
-        .switchers()
-        .setSelectedSwitcher(PerspectiveManager.INSTANCE.switchers().getDefault());
-    manager.tryLoadAndApply();
-
-    assertSame(TEST_SWITCHER, PerspectiveAPI.getSwitcherManager().getSelectedSwitcher());
-  }
-
-  @Test
   void roundTripPersistsSelectionInsteadOfResolvedCurrentPerspective() throws IOException {
     Path filePath = tempDir.resolve("selection.json");
     StateManager manager = new StateManagerImpl(filePath);
@@ -285,7 +238,7 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertEquals(
-        "test.raw_selection", PerspectiveManager.INSTANCE.selectedPerspectiveId());
+        "test.raw_selection", PerspectiveManager.INSTANCE.getSelected());
     assertEquals("test.raw_selection", savedState.get("selection.current").getAsString());
     assertFalse(savedState.has("manager.current"));
   }
@@ -304,7 +257,7 @@ class StateManagerImplTest {
   }
 
   @Test
-  void saveIncludesOrbitSwitcherStateByStableId() throws IOException {
+  void saveIncludesPerspectiveSwitcherStateByStableId() throws IOException {
     Path filePath = tempDir.resolve("orbit-section.json");
     StateManager manager = new StateManagerImpl(filePath);
 
@@ -312,8 +265,8 @@ class StateManagerImplTest {
 
     var root = JsonParser.parseString(Files.readString(filePath)).getAsJsonObject();
     assertTrue(
-        root.getAsJsonObject("sections").has(OrbitSwitcherBehavior.ID),
-        "Orbit switcher should register its state section during initialization");
+        root.getAsJsonObject("sections").has(PerspectiveSwitcher.ID),
+        "Perspective switcher should register its state section during initialization");
   }
 
   @Test

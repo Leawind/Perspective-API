@@ -7,7 +7,6 @@ import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveSelection;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
-import io.github.leawind.perspectiveapi.api.PerspectiveSwitcherBehavior;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
@@ -21,7 +20,7 @@ import io.github.leawind.perspectiveapi.internal.impl.PerspectiveStateSnapshot;
 import io.github.leawind.perspectiveapi.internal.impl.ThrottledPerspectiveSanitizer;
 import io.github.leawind.perspectiveapi.internal.impl.TransitionImpl;
 import io.github.leawind.perspectiveapi.internal.impl.context.PerspectiveContextImpl;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherBehavior;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.PerspectiveSwitcher;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import java.util.Objects;
@@ -42,7 +41,7 @@ public final class PerspectiveManager {
   static {
     PerspectiveAPIRuntime.install(PerspectiveAPIRuntimeImpl.INSTANCE);
     try {
-      INSTANCE = new PerspectiveManager(OrbitSwitcherBehavior.INSTANCE);
+      INSTANCE = new PerspectiveManager();
     } catch (Throwable e) {
       LOGGER.error("Failed to initialize PerspectiveManager", e);
       throw e;
@@ -59,8 +58,8 @@ public final class PerspectiveManager {
   private final TransitionImpl transition;
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
-  private final PerspectiveSwitcherManagerImpl switchers;
   private final PerspectiveSelectionImpl selection;
+  private final PerspectiveSwitcher perspectiveSwitcher;
 
   public @NonNull TransitionImpl transition() {
     return transition;
@@ -74,20 +73,16 @@ public final class PerspectiveManager {
     return overrides;
   }
 
-  public @NonNull PerspectiveSwitcherManagerImpl switchers() {
-    return switchers;
-  }
-
   public @NonNull PerspectiveSelection selection() {
     return selection;
   }
 
-  public @Nullable String selectedPerspectiveId() {
-    return selection.selectedPerspectiveId();
+  public @Nullable String getSelected() {
+    return selection.get();
   }
 
   public void restoreSelection(@Nullable String perspectiveId) {
-    selection.restore(perspectiveId);
+    synchronized(selection){selection.set(perspectiveId);}
   }
 
   // endregion
@@ -112,10 +107,10 @@ public final class PerspectiveManager {
 
   // endregion
 
-  private PerspectiveManager(@NonNull PerspectiveSwitcherBehavior defaultSwitcher) {
+  private PerspectiveManager() {
     selection = new PerspectiveSelectionImpl();
-    switchers =
-        new PerspectiveSwitcherManagerImpl(defaultSwitcher, PerspectiveRegistryImpl.INSTANCE);
+    perspectiveSwitcher = PerspectiveSwitcher.INSTANCE;
+    perspectiveSwitcher.init();
 
     overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
 
@@ -139,6 +134,7 @@ public final class PerspectiveManager {
   public void onEnabledChanged(boolean enabled) {
     if (enabled) return;
 
+    perspectiveSwitcher.deactivate();
     PerspectiveBehavior deactivated = currentBehavior;
     currentBehavior = null;
     transitionAllowed = false;
@@ -159,7 +155,7 @@ public final class PerspectiveManager {
     // Resolve temporary overrides before the persistent selection.
     Perspective previous = current;
     String resolvedId = overrides.get();
-    if (resolvedId == null) resolvedId = selection.selectedPerspectiveId();
+    if (resolvedId == null) resolvedId = selection.get();
     Perspective resolved = resolveAvailableOrDefault(resolvedId);
     PerspectiveBehavior resolvedBehavior =
         PerspectiveRegistryImpl.INSTANCE.getBehaviorOrDefault(resolved.info().id());

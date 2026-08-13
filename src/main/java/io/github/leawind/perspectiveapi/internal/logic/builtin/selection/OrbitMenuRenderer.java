@@ -1,11 +1,11 @@
-package io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit;
+package io.github.leawind.perspectiveapi.internal.logic.builtin.selection;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
 import io.github.leawind.perspectiveapi.internal.bridge.events.GuiRenderContext;
 import io.github.leawind.perspectiveapi.internal.bridge.gui.DrawContext;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.AvailabilityIndicatorRenderer;
-import io.github.leawind.perspectiveapi.internal.logic.builtin.switchers.orbit.OrbitSwitcherModel.Group;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.AvailabilityIndicatorRenderer;
+import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.OrbitMenuModel.Group;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.ExpSmoothDouble;
 import java.util.ArrayList;
 import java.util.HashMap;

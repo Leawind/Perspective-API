@@ -5,13 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import net.minecraft.network.chat.Component;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 class PerspectiveSelectionImplTest {
@@ -26,10 +22,10 @@ class PerspectiveSelectionImplTest {
           selectedIds.add(selectedId);
         });
 
-    selection.setSelectedPerspective(perspective("test.first"));
-    selection.setSelectedPerspective(perspective("test.first"));
+    selection.set("test.first");
+    selection.set("test.first");
 
-    assertEquals("test.first", selection.selectedPerspectiveId());
+    assertEquals("test.first", selection.get());
     assertEquals(1, changes.get());
     assertEquals(List.of("test.first"), selectedIds);
   }
@@ -39,12 +35,12 @@ class PerspectiveSelectionImplTest {
     PerspectiveSelectionImpl selection = new PerspectiveSelectionImpl();
     List<String> changes = new ArrayList<>();
     selection.onChanged(changes::add);
-
-    selection.restore("missing.perspective");
-    assertEquals("missing.perspective", selection.selectedPerspectiveId());
-
-    selection.restore(null);
-    assertNull(selection.selectedPerspectiveId());
+    
+    synchronized(selection){selection.set("missing.perspective");}
+    assertEquals("missing.perspective", selection.get());
+    
+    synchronized(selection){selection.set((String) null);}
+    assertNull(selection.get());
     assertEquals(2, changes.size());
     assertEquals("missing.perspective", changes.get(0));
     assertNull(changes.get(1));
@@ -60,7 +56,7 @@ class PerspectiveSelectionImplTest {
         });
     selection.onChanged(selectedId -> successfulCalls.incrementAndGet());
 
-    selection.setSelectedPerspective(perspective("test.selected"));
+    selection.set("test.selected");
 
     assertEquals(1, successfulCalls.get());
   }
@@ -68,22 +64,21 @@ class PerspectiveSelectionImplTest {
   @Test
   void reentrantChangesAreQueuedUntilCurrentNotificationCompletes() {
     PerspectiveSelectionImpl selection = new PerspectiveSelectionImpl();
-    Perspective second = perspective("test.second");
     List<String> calls = new ArrayList<>();
     selection.onChanged(
         selectedId -> {
           calls.add("first:" + selectedId);
-          if (selectedId.equals("test.first")) selection.setSelectedPerspective(second);
+          if (selectedId.equals("test.first")) selection.set("test.second");
         });
     selection.onChanged(selectedId -> calls.add("second:" + selectedId));
 
-    selection.setSelectedPerspective(perspective("test.first"));
+    selection.set("test.first");
 
     assertEquals(
         List.of(
             "first:test.first", "second:test.first", "first:test.second", "second:test.second"),
         calls);
-    assertEquals("test.second", selection.selectedPerspectiveId());
+    assertEquals("test.second", selection.get());
   }
 
   @Test
@@ -96,26 +91,9 @@ class PerspectiveSelectionImplTest {
 
     assertTrue(first.unregister());
     assertFalse(first.unregister());
-    selection.setSelectedPerspective(perspective("test.selected"));
+    selection.set("test.selected");
 
     assertEquals(0, firstCalls.get());
     assertEquals(1, secondCalls.get());
-  }
-
-  private static @NonNull Perspective perspective(@NonNull String id) {
-    return new Perspective() {
-      private final PerspectiveInfo info =
-          PerspectiveInfo.builder(id, Component.literal(id)).build();
-
-      @Override
-      public @NonNull PerspectiveInfo info() {
-        return info;
-      }
-
-      @Override
-      public boolean isAvailable() {
-        return true;
-      }
-    };
   }
 }

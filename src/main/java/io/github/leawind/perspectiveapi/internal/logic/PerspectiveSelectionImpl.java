@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.internal.logic;
 
-import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveSelection;
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import java.util.ArrayDeque;
@@ -31,37 +30,22 @@ final class PerspectiveSelectionImpl implements PerspectiveSelection {
     }
   }
 
-  private @Nullable String selectedPerspectiveId;
+  /// Selected perspective ID
+  private @Nullable String selected;
+
   private List<Registration> listeners = List.of();
   private final ArrayDeque<Change> pendingChanges = new ArrayDeque<>();
   private boolean notifying;
 
   @Override
-  public synchronized @Nullable String selectedPerspectiveId() {
-    return selectedPerspectiveId;
+  public synchronized @Nullable String get() {
+    return selected;
   }
 
   @Override
-  public void setSelectedPerspective(@NonNull Perspective perspective) {
-    setSelectedPerspectiveId(Objects.requireNonNull(perspective).info().id());
-  }
-
-  @Override
-  public synchronized @NonNull ListenerRegistration onChanged(@NonNull Listener listener) {
-    Registration registration = new Registration(Objects.requireNonNull(listener));
-    List<Registration> updated = new ArrayList<>(listeners);
-    updated.add(registration);
-    listeners = List.copyOf(updated);
-    return registration;
-  }
-
-  synchronized void restore(@Nullable String perspectiveId) {
-    setSelectedPerspectiveId(perspectiveId);
-  }
-
-  private synchronized void setSelectedPerspectiveId(@Nullable String perspectiveId) {
-    if (Objects.equals(selectedPerspectiveId, perspectiveId)) return;
-    selectedPerspectiveId = perspectiveId;
+  public synchronized void set(@Nullable String perspectiveId) {
+    if (Objects.equals(selected, perspectiveId)) return;
+    selected = perspectiveId;
     pendingChanges.addLast(new Change(perspectiveId));
     if (notifying) return;
 
@@ -72,6 +56,15 @@ final class PerspectiveSelectionImpl implements PerspectiveSelection {
     } finally {
       notifying = false;
     }
+  }
+
+  @Override
+  public synchronized @NonNull ListenerRegistration onChanged(@NonNull Listener listener) {
+    Registration registration = new Registration(Objects.requireNonNull(listener));
+    List<Registration> updated = new ArrayList<>(listeners);
+    updated.add(registration);
+    listeners = List.copyOf(updated);
+    return registration;
   }
 
   private void notifyListeners(@NonNull Change change) {

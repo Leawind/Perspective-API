@@ -51,9 +51,9 @@ public interface PerspectiveBehavior {
 
   /// Returns whether this perspective is currently eligible to be resolved as active.
   ///
-  /// {@link PerspectiveSwitcher} and {@link PerspectiveOverrideChain} resolution skip unavailable
-  /// perspectives. If no available candidate can be resolved, the default perspective is used as a
-  /// safety fallback even if it reports itself as unavailable.
+  /// Player selection and {@link PerspectiveOverrideChain} resolution skip unavailable
+  /// perspectives. If no available candidate can be resolved, the default perspective is used as
+  /// a safety fallback even if it reports itself as unavailable.
   ///
   /// Perspective API evaluates this method whenever availability is needed. It does not cache the
   /// result.

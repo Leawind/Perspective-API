@@ -82,7 +82,7 @@ Perspective API 只协调相机状态。一个 Perspective 或 Modifier 可以�
 - 创建或删除预设时注册或注销对应 Perspective
 - 修改预设参数时更新 Perspective 自己读取的配置，不动态修改 trait
 
-Switcher 会把这些 Perspective 作为独立候选项交给玩家选择。模组可以默认不注册任何自定义预设，或者只注册一个默认预设。
+内置 Perspective Switcher 会把这些 Perspective 作为独立候选项交给玩家选择。模组可以默认不注册任何自定义预设，或者只注册一个默认预设。
 
 如果多个预设只是参数不同，可以复用同一种实现类型，但每个注册仍然需要独立的行为实例和元数据。
 
@@ -92,7 +92,7 @@ Switcher 会把这些 Perspective 作为独立候选项交给玩家选择。模�
 
 功能订阅 `PerspectiveSelection` 的变化事件，在实际选择发生变化时更新当前对象指向的 Perspective。切换当前对象时，先更新当前对象引用，再把新对象保存的 Perspective 设置为玩家选择；如果 ID 未变化，不会产生重复事件。
 
-Orbit Switcher、Wheel Switcher、其他任意 Switcher 和自定义条件逻辑都直接修改同一个 `PerspectiveSelection`。变化事件由 `PerspectiveSelection` 发布，而不是由 Switcher 发布，因此该功能无需重新实现 Switcher，也不与某一种 Switcher 绑定。Perspective API 负责持久化当前玩家选择。
+内置 Perspective Switcher 和自定义条件逻辑都直接修改同一个 `PerspectiveSelection`。变化事件由 `PerspectiveSelection` 发布，而不是由 Perspective Switcher 发布，因此该功能不与玩家交互方式耦合。Perspective API 负责持久化当前玩家选择。
 
 ### 锁定视角
 
@@ -258,7 +258,7 @@ Camera Utils 的不同功能适合使用不同机制：
 
 Freecam 应实现为保存独立位置和旋转的 Perspective。通过按键启用时，临时覆盖选择该 Perspective；退出后恢复玩家原来的 Perspective。
 
-Freecam 可以注册为不可切换 Perspective，使其只能由自己的启用按键控制；如果希望玩家从通用 Switcher 中选择，也可以声明为可切换。
+Freecam 可以注册为不可切换 Perspective，使其只能由自己的启用按键控制；如果希望玩家从内置 Perspective Switcher 中选择，也可以声明为可切换。
 
 阻止真实玩家移动、重定向鼠标输入和处理自由相机移动速度都由 Freecam 自己实现。Perspective 只负责把已计算的位置、旋转和可选 FOV 写入相机状态。
 
