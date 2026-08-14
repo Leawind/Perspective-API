@@ -24,16 +24,16 @@ public interface Transition {
   ///
   /// The function receives normalized elapsed time in `[0, 1]`. Its result is clamped to `[0, 1]`
   /// before algorithms use it; a non-finite result is treated as `0`.
-  void setBlender(@NonNull Blender blender);
+  void setEasing(@NonNull Easing easing);
 
   /// Returns the easing function shared by every transition algorithm.
-  @NonNull Blender getBlender();
+  @NonNull Easing getEasing();
 
   /// Maps normalized elapsed time to normalized transition progress.
   @FunctionalInterface
-  interface Blender {
+  interface Easing {
 
     /// Applies this easing function to normalized `progress` in `[0, 1]`.
-    float blend(float progress);
+    float ease(float progress);
   }
 }

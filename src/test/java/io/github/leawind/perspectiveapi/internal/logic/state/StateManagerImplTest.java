@@ -72,7 +72,7 @@ class StateManagerImplTest {
   @PerspectiveInfo.Declaration(
       id = "perspective_api.first_person",
       baseType = BaseType.FIRST_PERSON,
-      priority = 0)
+      order = 0)
   static class TestPerspective implements PerspectiveBehavior {
     static final TestPerspective INSTANCE = new TestPerspective();
   }

@@ -21,7 +21,7 @@ public final class PerspectiveStateSnapshot implements PerspectiveState {
     Objects.requireNonNull(source);
     position = new Vector3d(source.position());
     rotation = new Quaternionf(source.rotation());
-    projectionMode = source.projectionMode();
+    projectionMode = source.getProjectionMode();
     fovDeg = source.getFovDeg();
     orthographicHeight = source.getOrthographicHeight();
   }
@@ -37,7 +37,7 @@ public final class PerspectiveStateSnapshot implements PerspectiveState {
   }
 
   @Override
-  public @NonNull ProjectionMode projectionMode() {
+  public @NonNull ProjectionMode getProjectionMode() {
     return projectionMode;
   }
 

@@ -108,7 +108,7 @@ class PerspectiveModifierChainImplTest {
     TestUtils.assertVectorEquals(new Vector3d(2.0, 2.0, 3.0), state.position());
     TestUtils.assertQuatEquals(new Quaternionf().rotationY(0.25f), state.rotation());
     assertEquals(70.0f, state.getFovDeg());
-    assertEquals(ProjectionMode.ORTHOGRAPHIC, state.projectionMode());
+    assertEquals(ProjectionMode.ORTHOGRAPHIC, state.getProjectionMode());
     assertEquals(16.0f, state.getOrthographicHeight());
   }
 

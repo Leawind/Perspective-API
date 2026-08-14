@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 class PerspectiveRegistryImplTest {
 
-  private static final String PRIORITY_ID = "test.registry_duplicate_priority";
+  private static final String ORDER_ID = "test.registry_duplicate_order";
   private static final String CLASS_NAME_ID = "test.registry_duplicate_class_name";
   private static final String AVAILABILITY_ID = "test.registry_availability";
   private static final String ROLLBACK_ID = "test.registry_rollback";
@@ -41,22 +41,22 @@ class PerspectiveRegistryImplTest {
     }
   }
 
-  @PerspectiveInfo.Declaration(id = "", priority = 0)
+  @PerspectiveInfo.Declaration(id = "", order = 0)
   private static final class EmptyIdPerspective implements PerspectiveBehavior {}
 
-  @PerspectiveInfo.Declaration(id = PRIORITY_ID, priority = 10)
-  private static final class LowerPriorityPerspective implements PerspectiveBehavior {}
+  @PerspectiveInfo.Declaration(id = ORDER_ID, order = 10)
+  private static final class EarlierPerspective implements PerspectiveBehavior {}
 
-  @PerspectiveInfo.Declaration(id = PRIORITY_ID, priority = 20)
-  private static final class HigherPriorityPerspective implements PerspectiveBehavior {}
+  @PerspectiveInfo.Declaration(id = ORDER_ID, order = 20)
+  private static final class LaterPerspective implements PerspectiveBehavior {}
 
-  @PerspectiveInfo.Declaration(id = CLASS_NAME_ID, baseType = BaseType.FIRST_PERSON, priority = 0)
+  @PerspectiveInfo.Declaration(id = CLASS_NAME_ID, baseType = BaseType.FIRST_PERSON, order = 0)
   private static final class AlphaPerspective implements PerspectiveBehavior {}
 
   @PerspectiveInfo.Declaration(
       id = CLASS_NAME_ID,
       baseType = BaseType.THIRD_PERSON_BACK,
-      priority = 0)
+      order = 0)
   private static final class BetaPerspective implements PerspectiveBehavior {}
 
   @PerspectiveInfo.Declaration(id = AVAILABILITY_ID)
@@ -79,23 +79,23 @@ class PerspectiveRegistryImplTest {
       nameKey = "test.registry.name",
       descriptionKey = "test.registry.description",
       switchable = false,
-      priority = 7,
+      order = 7,
       traits = {"third_person", "test:custom_trait"})
   private static final class MetadataPerspective implements PerspectiveBehavior {}
 
-  @PerspectiveInfo.Declaration(id = "test.registry_default_low", priority = 20)
+  @PerspectiveInfo.Declaration(id = "test.registry_default_low", order = 20)
   @PerspectiveInfo.Default(priority = 1)
   private static final class LowDefaultPerspective implements PerspectiveBehavior {}
 
-  @PerspectiveInfo.Declaration(id = "test.registry_default_b", priority = 10)
+  @PerspectiveInfo.Declaration(id = "test.registry_default_b", order = 10)
   @PerspectiveInfo.Default(priority = 5)
   private static final class DefaultBPerspective implements PerspectiveBehavior {}
 
-  @PerspectiveInfo.Declaration(id = "test.registry_default_a", priority = 10)
+  @PerspectiveInfo.Declaration(id = "test.registry_default_a", order = 10)
   @PerspectiveInfo.Default(priority = 5)
   private static final class DefaultAPerspective implements PerspectiveBehavior {}
 
-  @PerspectiveInfo.Declaration(id = ROLLBACK_ID, priority = 10)
+  @PerspectiveInfo.Declaration(id = ROLLBACK_ID, order = 10)
   private static final class OriginalPerspective implements PerspectiveBehavior {
     private final AtomicInteger initCalls;
 
@@ -104,15 +104,15 @@ class PerspectiveRegistryImplTest {
     }
 
     @Override
-    public void init() {
+    public void initialize() {
       initCalls.incrementAndGet();
     }
   }
 
-  @PerspectiveInfo.Declaration(id = ROLLBACK_ID, priority = 0)
+  @PerspectiveInfo.Declaration(id = ROLLBACK_ID, order = 0)
   private static final class FailingReplacementPerspective implements PerspectiveBehavior {
     @Override
-    public void init() {
+    public void initialize() {
       throw new IllegalStateException("init failure");
     }
   }
@@ -136,16 +136,16 @@ class PerspectiveRegistryImplTest {
   }
 
   @Test
-  void keepLowerPriorityDuplicate() {
+  void keepEarlierDuplicate() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
-    registry.registerSilent(new HigherPriorityPerspective());
-    registry.registerSilent(new LowerPriorityPerspective());
+    registry.registerSilent(new LaterPerspective());
+    registry.registerSilent(new EarlierPerspective());
 
-    assertEquals(10, registry.get(PRIORITY_ID).info().priority());
+    assertEquals(10, registry.get(ORDER_ID).info().order());
   }
 
   @Test
-  void resolveEqualPriorityByBehaviorClassName() {
+  void resolveEqualOrderByBehaviorClassName() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
     registry.registerSilent(new BetaPerspective());
     registry.registerSilent(new AlphaPerspective());
@@ -165,7 +165,7 @@ class PerspectiveRegistryImplTest {
     assertEquals("test.registry_metadata", info.id());
     assertEquals(BaseType.THIRD_PERSON_FRONT, info.baseType());
     assertFalse(info.switchable());
-    assertEquals(7, info.priority());
+    assertEquals(7, info.order());
     assertEquals("test.registry.name", info.name().getString());
     assertEquals("test.registry.description", info.description().getString());
     assertNull(info.icon());
@@ -263,7 +263,7 @@ class PerspectiveRegistryImplTest {
     PerspectiveInfo initial =
         PerspectiveInfo.builder("test.runtime", Component.literal("Runtime"))
             .baseType(BaseType.FIRST_PERSON)
-            .priority(3)
+            .order(3)
             .trait("first_person")
             .build();
 
@@ -352,7 +352,7 @@ class PerspectiveRegistryImplTest {
     PerspectiveBehavior failing =
         new PerspectiveBehavior() {
           @Override
-          public void init() {
+          public void initialize() {
             established.unregister();
             throw new IllegalStateException("init failure");
           }

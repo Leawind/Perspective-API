@@ -78,7 +78,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
           description,
           declaration.baseType(),
           declaration.switchable(),
-          declaration.priority(),
+          declaration.order(),
           icon,
           Set.copyOf(Arrays.asList(declaration.traits())));
     }
@@ -254,7 +254,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private void initializeOrRollback(
       @NonNull RegisteredPerspective entry, @Nullable RegisteredPerspective displaced) {
     try {
-      entry.behavior.init();
+      entry.behavior.initialize();
       synchronized (this) {
         entry.initialized = true;
         recomputeDefault();
@@ -277,8 +277,8 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   /// Orders duplicate service registrations by their documented precedence.
   private static int compareRegistration(
       @NonNull RegisteredPerspective left, @NonNull RegisteredPerspective right) {
-    int priority = Integer.compare(left.info.priority(), right.info.priority());
-    if (priority != 0) return priority;
+    int order = Integer.compare(left.info.order(), right.info.order());
+    if (order != 0) return order;
     return left.behavior.getClass().getName().compareTo(right.behavior.getClass().getName());
   }
 
@@ -340,7 +340,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     return entries.values().stream()
         .sorted(
             Comparator.comparingInt(
-                    (RegisteredPerspective perspective) -> perspective.info.priority())
+                    (RegisteredPerspective perspective) -> perspective.info.order())
                 .thenComparing(perspective -> perspective.info.id()))
         .map(entry -> (Perspective) entry)
         .toList();

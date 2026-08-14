@@ -28,7 +28,7 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
   }
 
   @Override
-  public @NonNull ProjectionMode projectionMode() {
+  public @NonNull ProjectionMode getProjectionMode() {
     return projectionMode;
   }
 
@@ -62,7 +62,7 @@ public class PerspectiveStateImpl implements PerspectiveState.Mutable {
     position.set(source.position());
     rotation.set(source.rotation());
     fovDeg = source.getFovDeg();
-    projectionMode = Objects.requireNonNull(source.projectionMode());
+    projectionMode = Objects.requireNonNull(source.getProjectionMode());
     orthographicHeight = source.getOrthographicHeight();
     return this;
   }

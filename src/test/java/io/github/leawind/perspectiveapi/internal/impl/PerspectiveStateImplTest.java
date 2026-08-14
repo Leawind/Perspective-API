@@ -19,7 +19,7 @@ class PerspectiveStateImplTest {
     TestUtils.assertVectorEquals(new Vector3d(), state.position());
     TestUtils.assertQuatEquals(new Quaternionf(), state.rotation());
     assertEquals(PerspectiveStateImpl.DEFAULT_FOV_DEGREES, state.getFovDeg());
-    assertEquals(ProjectionMode.PERSPECTIVE, state.projectionMode());
+    assertEquals(ProjectionMode.PERSPECTIVE, state.getProjectionMode());
     assertEquals(
         PerspectiveStateImpl.DEFAULT_ORTHOGRAPHIC_HEIGHT, state.getOrthographicHeight());
   }
@@ -40,7 +40,7 @@ class PerspectiveStateImplTest {
     TestUtils.assertVectorEquals(new Vector3d(1.0, 2.0, 3.0), state.position());
     TestUtils.assertQuatEquals(new Quaternionf().rotationY(0.5f), state.rotation());
     assertEquals(95.0f, state.getFovDeg());
-    assertEquals(ProjectionMode.ORTHOGRAPHIC, state.projectionMode());
+    assertEquals(ProjectionMode.ORTHOGRAPHIC, state.getProjectionMode());
     assertEquals(24.0f, state.getOrthographicHeight());
   }
 
@@ -61,7 +61,7 @@ class PerspectiveStateImplTest {
     TestUtils.assertVectorEquals(source.position(), copy.position());
     TestUtils.assertQuatEquals(source.rotation(), copy.rotation());
     assertEquals(source.getFovDeg(), copy.getFovDeg());
-    assertEquals(source.projectionMode(), copy.projectionMode());
+    assertEquals(source.getProjectionMode(), copy.getProjectionMode());
     assertEquals(source.getOrthographicHeight(), copy.getOrthographicHeight());
 
     source.position().zero();
@@ -71,7 +71,7 @@ class PerspectiveStateImplTest {
     source.setOrthographicHeight(1.0f);
     TestUtils.assertVectorEquals(new Vector3d(1.0, 2.0, 3.0), copy.position());
     assertEquals(80.0f, copy.getFovDeg());
-    assertEquals(ProjectionMode.ORTHOGRAPHIC, copy.projectionMode());
+    assertEquals(ProjectionMode.ORTHOGRAPHIC, copy.getProjectionMode());
     assertEquals(32.0f, copy.getOrthographicHeight());
   }
 

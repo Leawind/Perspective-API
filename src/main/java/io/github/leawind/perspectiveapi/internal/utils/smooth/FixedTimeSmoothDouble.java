@@ -12,7 +12,7 @@ public final class FixedTimeSmoothDouble {
   private double current;
   private double target;
 
-  private @NonNull Blender blender = Blenders::easeInOut;
+  private @NonNull Blender blender = EasingFunctions::easeInOut;
 
   public FixedTimeSmoothDouble setBlender(Blender blender) {
     this.blender = blender;

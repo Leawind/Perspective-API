@@ -10,18 +10,18 @@ class SmoothTest {
 
   @Test
   void blendersHaveExpectedEndpointsAndMidpoints() {
-    assertEquals(0.0f, Blenders.linear(0.0f));
-    assertEquals(0.5f, Blenders.linear(0.5f));
-    assertEquals(1.0f, Blenders.linear(1.0f));
+    assertEquals(0.0f, EasingFunctions.linear(0.0f));
+    assertEquals(0.5f, EasingFunctions.linear(0.5f));
+    assertEquals(1.0f, EasingFunctions.linear(1.0f));
 
-    assertEquals(0.0f, Blenders.easeInOut(0.0f));
-    assertEquals(0.5f, Blenders.easeInOut(0.5f));
-    assertEquals(1.0f, Blenders.easeInOut(1.0f));
-    assertEquals(0.25f, Blenders.easeIn(0.5f));
-    assertEquals(0.75f, Blenders.easeOut(0.5f));
-    assertEquals(1.0f - Math.sqrt(0.5), Blenders.sineIn(0.5f), 1.0e-6);
-    assertEquals(Math.sqrt(0.5), Blenders.sineOut(0.5f), 1.0e-6);
-    assertEquals(0.5f, Blenders.sineInOut(0.5f), 1.0e-6f);
+    assertEquals(0.0f, EasingFunctions.easeInOut(0.0f));
+    assertEquals(0.5f, EasingFunctions.easeInOut(0.5f));
+    assertEquals(1.0f, EasingFunctions.easeInOut(1.0f));
+    assertEquals(0.25f, EasingFunctions.easeIn(0.5f));
+    assertEquals(0.75f, EasingFunctions.easeOut(0.5f));
+    assertEquals(1.0f - Math.sqrt(0.5), EasingFunctions.sineIn(0.5f), 1.0e-6);
+    assertEquals(Math.sqrt(0.5), EasingFunctions.sineOut(0.5f), 1.0e-6);
+    assertEquals(0.5f, EasingFunctions.sineInOut(0.5f), 1.0e-6f);
   }
 
   @Test
@@ -67,7 +67,7 @@ class SmoothTest {
             .setDuration(10.0)
             .setStart(5.0, 20.0)
             .setTarget(40.0)
-            .setBlender(Blenders::linear);
+            .setBlender(EasingFunctions::linear);
 
     assertSame(smooth, smooth.update(0.0));
     assertEquals(20.0, smooth.getCurrent(), DELTA);

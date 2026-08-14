@@ -28,11 +28,11 @@ public interface PerspectiveState {
   /// @see #getFovDeg()
   /// @see #getOrthographicHeight()
   @ApiStatus.Experimental
-  @NonNull ProjectionMode projectionMode();
+  @NonNull ProjectionMode getProjectionMode();
 
   /// Returns the field of view in degrees.
   ///
-  /// This value is effective only when {@link #projectionMode()} is {@link
+  /// This value is effective only when {@link #getProjectionMode()} is {@link
   /// ProjectionMode#PERSPECTIVE}. During camera-state calculation, its initial value is the latest
   /// valid vanilla FOV captured on an earlier render frame. Each valid capture is used by the next
   /// camera-state calculation; invalid samples are ignored. This intentional one-frame cache keeps
@@ -43,7 +43,7 @@ public interface PerspectiveState {
   /// Returns the vertical span of the orthographic view in world units.
   ///
   /// The horizontal span is this value multiplied by the viewport aspect ratio. This value is
-  /// effective only when {@link #projectionMode()} is {@link ProjectionMode#ORTHOGRAPHIC}. It is
+  /// effective only when {@link #getProjectionMode()} is {@link ProjectionMode#ORTHOGRAPHIC}. It is
   /// always finite and at least `0.0001`. There is no project-defined upper bound.
   @ApiStatus.Experimental
   float getOrthographicHeight();

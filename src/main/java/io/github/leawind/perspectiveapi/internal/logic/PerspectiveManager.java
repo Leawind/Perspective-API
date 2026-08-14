@@ -82,7 +82,9 @@ public final class PerspectiveManager {
   }
 
   public void restoreSelection(@Nullable String perspectiveId) {
-    synchronized(selection){selection.set(perspectiveId);}
+    synchronized (selection) {
+      selection.set(perspectiveId);
+    }
   }
 
   // endregion
@@ -315,7 +317,7 @@ public final class PerspectiveManager {
 
   /// Writes the already-computed projection settings into a bridge context.
   public void modifyProjection(@NonNull ModifyProjectionContext context) {
-    context.orthographic = targetState.projectionMode() == ProjectionMode.ORTHOGRAPHIC;
+    context.orthographic = targetState.getProjectionMode() == ProjectionMode.ORTHOGRAPHIC;
     context.orthographicHeight = targetState.getOrthographicHeight();
   }
 
@@ -348,8 +350,8 @@ public final class PerspectiveManager {
       @NonNull String id, @NonNull PerspectiveBehavior behavior, boolean incoming) {
     return extensions.testOrElse(
         id,
-        incoming ? "allowTransitionIn" : "allowTransitionOut",
-        incoming ? behavior::allowTransitionIn : behavior::allowTransitionOut,
+        incoming ? "allowsTransitionIn" : "allowsTransitionOut",
+        incoming ? behavior::allowsTransitionIn : behavior::allowsTransitionOut,
         false);
   }
 }

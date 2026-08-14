@@ -10,7 +10,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 @PerspectiveInfo.Declaration(
     id = ThirdPersonBackPerspective.ID,
     baseType = BaseType.THIRD_PERSON_BACK,
-    priority = 1,
+    order = 1,
     icon = "perspective_api:textures/perspective/third_person_back.png",
     traits = {"third_person", "controllable"})
 public class ThirdPersonBackPerspective implements PerspectiveBehavior {

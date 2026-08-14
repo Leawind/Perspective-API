@@ -11,7 +11,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 @PerspectiveInfo.Declaration(
     id = FirstPersonPerspective.ID,
     baseType = BaseType.FIRST_PERSON,
-    priority = 0,
+    order = 0,
     icon = "perspective_api:textures/perspective/first_person.png",
     traits = {"first_person", "controllable"})
 public class FirstPersonPerspective implements PerspectiveBehavior {

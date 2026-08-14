@@ -28,8 +28,8 @@ import org.jspecify.annotations.Nullable;
 /// @param description the optional description
 /// @param baseType the opaque vanilla camera type selected while the perspective is active
 /// @param switchable whether the built-in perspective switcher may select the perspective
-/// @param priority the sorting priority within the built-in perspective switcher, where lower
-///   values appear first
+/// @param order the sorting order within the built-in perspective switcher, where lower values
+///   appear first
 /// @param icon the optional icon texture
 /// @param traits the stable semantic traits declared when the perspective is registered; see {@link
 ///   Declaration#traits()} for recommended shared traits
@@ -39,7 +39,7 @@ public record PerspectiveInfo(
     @Nullable Component description,
     @NonNull BaseType baseType,
     @ApiStatus.Experimental boolean switchable,
-    int priority,
+    int order,
     @Nullable Identifier icon,
     @ApiStatus.Experimental @NonNull Set<@NonNull String> traits) {
 
@@ -92,7 +92,7 @@ public record PerspectiveInfo(
     private @Nullable Component description;
     private BaseType baseType = BaseType.THIRD_PERSON_BACK;
     private boolean switchable = true;
-    private int priority;
+    private int order;
     private @Nullable Identifier icon;
     private final Set<String> traits = new LinkedHashSet<>();
 
@@ -116,8 +116,8 @@ public record PerspectiveInfo(
       return this;
     }
 
-    public @NonNull Builder priority(int priority) {
-      this.priority = priority;
+    public @NonNull Builder order(int order) {
+      this.order = order;
       return this;
     }
 
@@ -145,8 +145,7 @@ public record PerspectiveInfo(
     }
 
     public @NonNull PerspectiveInfo build() {
-      return new PerspectiveInfo(
-          id, name, description, baseType, switchable, priority, icon, traits);
+      return new PerspectiveInfo(id, name, description, baseType, switchable, order, icon, traits);
     }
   }
 
@@ -160,8 +159,8 @@ public record PerspectiveInfo(
   public @interface Declaration {
     /// The non-empty identifier for this perspective.
     ///
-    /// If multiple behaviors use the same ID, the behavior with the lower {@link #priority()} value
-    /// is registered. Ties are resolved by the lexicographically earlier fully qualified behavior
+    /// If multiple behaviors use the same ID, the behavior with the lower {@link #order()} value is
+    /// registered. Ties are resolved by the lexicographically earlier fully qualified behavior
     /// class name.
     ///
     /// ### Recommended Format
@@ -231,12 +230,12 @@ public record PerspectiveInfo(
     @ApiStatus.Experimental
     boolean switchable() default true;
 
-    /// The sorting priority within the built-in perspective switcher and duplicate-ID resolution.
+    /// The sorting order within the built-in perspective switcher and duplicate-ID resolution.
     ///
     /// Lower values appear earlier in the selector and take precedence over a duplicate ID.
     /// Selector ordering is effective only when {@link #switchable()} is `true`, but duplicate-ID
     /// resolution always uses this value.
-    int priority() default 0;
+    int order() default 0;
 
     /// Semantic traits of this perspective.
     ///

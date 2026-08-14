@@ -77,8 +77,7 @@ class OrbitMenuModelTest {
   @Test
   void unknownCurrentSelectionStartsAtFirstAvailablePerspective() {
     OrbitMenuModel model = new OrbitMenuModel();
-    model.updateSwitchables(
-        List.of(perspective("a", 0, false), perspective("b", 1, true)));
+    model.updateSwitchables(List.of(perspective("a", 0, false), perspective("b", 1, true)));
 
     assertEquals("b", model.cycleForward("missing").info().id());
   }
@@ -116,7 +115,8 @@ class OrbitMenuModelTest {
         List.of(perspective("a", 0, true), perspective("b", 1, true), perspective("c", 2, true)));
 
     try {
-      switcher.applyState(new PerspectiveSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false));
+      switcher.applyState(
+          new PerspectiveSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false));
 
       assertEquals(List.of("c", "b"), switcher.model().selected());
       assertEquals(Set.of("a"), switcher.model().disabled());
@@ -142,7 +142,10 @@ class OrbitMenuModelTest {
   @Test
   void oldStateDefaultsTutorialHintsToIncomplete() {
     PerspectiveSwitcherState state =
-        PerspectiveSwitcherState.CODEC.parse(JsonOps.INSTANCE, new JsonObject()).result().orElseThrow();
+        PerspectiveSwitcherState.CODEC
+            .parse(JsonOps.INSTANCE, new JsonObject())
+            .result()
+            .orElseThrow();
 
     assertEquals(
         new PerspectiveSwitcherState(
@@ -150,17 +153,17 @@ class OrbitMenuModelTest {
         state);
   }
 
-  private static Perspective perspective(String id, int priority, boolean available) {
-    return new TestPerspective(id, priority, available);
+  private static Perspective perspective(String id, int order, boolean available) {
+    return new TestPerspective(id, order, available);
   }
 
   private record TestPerspective(@NonNull PerspectiveInfo info, boolean available)
       implements Perspective {
-    private TestPerspective(@NonNull String id, int priority, boolean available) {
+    private TestPerspective(@NonNull String id, int order, boolean available) {
       this(
           PerspectiveInfo.builder(id, Component.literal(id))
               .baseType(BaseType.FIRST_PERSON)
-              .priority(priority)
+              .order(order)
               .build(),
           available);
     }

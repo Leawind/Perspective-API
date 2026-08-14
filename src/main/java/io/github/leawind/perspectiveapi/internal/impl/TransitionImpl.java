@@ -12,7 +12,7 @@ import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FixedSta
 import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.FovTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.impl.transition.scalar.OrthographicHeightTransitionAlgorithm;
 import io.github.leawind.perspectiveapi.internal.utils.Utils;
-import io.github.leawind.perspectiveapi.internal.utils.smooth.Blenders;
+import io.github.leawind.perspectiveapi.internal.utils.smooth.EasingFunctions;
 import java.util.Objects;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.glfw.GLFW;
@@ -33,7 +33,7 @@ public final class TransitionImpl implements Transition {
       FixedStartOrthographicHeightTransitionAlgorithm.INSTANCE;
 
   private double durationMs = DEFAULT_DURATION_MS;
-  private Blender blender = Blenders::easeOut;
+  private Easing easing = EasingFunctions::easeOut;
   private double startTimeMs;
   private final PerspectiveStateImpl startState = new PerspectiveStateImpl();
   private boolean hasStartState;
@@ -66,13 +66,13 @@ public final class TransitionImpl implements Transition {
   }
 
   @Override
-  public void setBlender(@NonNull Blender blender) {
-    this.blender = Objects.requireNonNull(blender);
+  public void setEasing(@NonNull Easing easing) {
+    this.easing = Objects.requireNonNull(easing);
   }
 
   @Override
-  public @NonNull Blender getBlender() {
-    return blender;
+  public @NonNull Easing getEasing() {
+    return easing;
   }
 
   public @NonNull PositionTransitionAlgorithm getPositionAlgorithm() {
@@ -168,13 +168,13 @@ public final class TransitionImpl implements Transition {
       dest.setOrthographicHeight(
           orthographicHeightAlgorithm.update(progress, target.getOrthographicHeight()));
     }
-    ProjectionMode targetProjectionMode = target.projectionMode();
+    ProjectionMode targetProjectionMode = target.getProjectionMode();
     dest.setProjectionMode(targetProjectionMode);
   }
 
   private float computeEasedProgress(double elapsedTimeMs) {
     float progress = (float) Utils.clamp(elapsedTimeMs / durationMs, 0, 1);
-    float easedProgress = blender.blend(progress);
+    float easedProgress = easing.ease(progress);
     if (!Float.isFinite(easedProgress)) return 0;
     return Utils.clamp(easedProgress, 0, 1);
   }

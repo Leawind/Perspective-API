@@ -20,8 +20,8 @@ final class OrbitMenuModel {
     DISABLED
   }
 
-  private static final Comparator<Perspective> PRIORITY_ORDER =
-      Comparator.comparingInt((Perspective perspective) -> perspective.info().priority())
+  private static final Comparator<Perspective> PERSPECTIVE_ORDER =
+      Comparator.comparingInt((Perspective perspective) -> perspective.info().order())
           .thenComparing(perspective -> perspective.info().id());
 
   private final Map<String, Perspective> switchables = new LinkedHashMap<>();
@@ -46,7 +46,7 @@ final class OrbitMenuModel {
       initialized = true;
       selected.clear();
       switchables.values().stream()
-          .sorted(PRIORITY_ORDER)
+          .sorted(PERSPECTIVE_ORDER)
           .map(perspective -> perspective.info().id())
           .forEach(selected::add);
     }
@@ -65,7 +65,7 @@ final class OrbitMenuModel {
   @NonNull List<@NonNull String> candidates() {
     return switchables.values().stream()
         .filter(perspective -> groupOf(perspective.info().id()) == Group.CANDIDATE)
-        .sorted(PRIORITY_ORDER)
+        .sorted(PERSPECTIVE_ORDER)
         .map(perspective -> perspective.info().id())
         .toList();
   }

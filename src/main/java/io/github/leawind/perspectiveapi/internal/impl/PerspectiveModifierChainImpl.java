@@ -103,7 +103,7 @@ public final class PerspectiveModifierChainImpl implements PerspectiveModifierCh
     target.position().set(source.position());
     target.rotation().set(source.rotation());
     target.setFovDeg(source.getFovDeg());
-    target.setProjectionMode(source.projectionMode());
+    target.setProjectionMode(source.getProjectionMode());
     target.setOrthographicHeight(source.getOrthographicHeight());
   }
 }

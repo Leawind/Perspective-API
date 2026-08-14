@@ -37,7 +37,7 @@ public interface PerspectiveBehavior {
   ///
   /// This method is evaluated once when a switch to this perspective occurs. A failure is logged
   /// and treated as `false`.
-  default boolean allowTransitionIn() {
+  default boolean allowsTransitionIn() {
     return true;
   }
 
@@ -45,15 +45,15 @@ public interface PerspectiveBehavior {
   ///
   /// This method is evaluated once when a switch from this perspective occurs. A failure is logged
   /// and treated as `false`.
-  default boolean allowTransitionOut() {
+  default boolean allowsTransitionOut() {
     return true;
   }
 
   /// Returns whether this perspective is currently eligible to be resolved as active.
   ///
   /// Player selection and {@link PerspectiveOverrideChain} resolution skip unavailable
-  /// perspectives. If no available candidate can be resolved, the default perspective is used as
-  /// a safety fallback even if it reports itself as unavailable.
+  /// perspectives. If no available candidate can be resolved, the default perspective is used as a
+  /// safety fallback even if it reports itself as unavailable.
   ///
   /// Perspective API evaluates this method whenever availability is needed. It does not cache the
   /// result.
@@ -71,7 +71,7 @@ public interface PerspectiveBehavior {
   ///
   /// If this method fails during runtime registration, the registration is rolled back and the
   /// failure is propagated. A failed service-loaded provider is skipped and its failure is logged.
-  default void init() {}
+  default void initialize() {}
 
   // region events
 

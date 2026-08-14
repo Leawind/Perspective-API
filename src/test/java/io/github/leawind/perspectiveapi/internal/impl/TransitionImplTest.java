@@ -91,8 +91,8 @@ class TransitionImplTest {
   }
 
   @Test
-  void appliesCustomBlenderToEveryDefaultChannel() {
-    transition.setBlender(progress -> progress * progress);
+  void appliesCustomEasingToEveryDefaultChannel() {
+    transition.setEasing(progress -> progress * progress);
     PerspectiveStateImpl actual = new PerspectiveStateImpl();
 
     transition.update(1_050.0, target, actual);
@@ -104,10 +104,10 @@ class TransitionImplTest {
   }
 
   @Test
-  void appliesCustomBlenderToEveryAlternativeAlgorithm() {
+  void appliesCustomEasingToEveryAlternativeAlgorithm() {
     transition.setPositionAlgorithm(FixedStartPositionTransitionAlgorithm.INSTANCE);
     transition.setRotationAlgorithm(ChasingRotationTransitionAlgorithm.INSTANCE);
-    transition.setBlender(progress -> progress * progress);
+    transition.setEasing(progress -> progress * progress);
     PerspectiveStateImpl actual = new PerspectiveStateImpl();
 
     transition.update(1_050.0, target, actual);
@@ -119,8 +119,8 @@ class TransitionImplTest {
   }
 
   @Test
-  void rejectsNullBlender() {
-    assertThrows(NullPointerException.class, () -> transition.setBlender(null));
+  void rejectsNullEasing() {
+    assertThrows(NullPointerException.class, () -> transition.setEasing(null));
   }
 
   @Test
@@ -158,7 +158,7 @@ class TransitionImplTest {
 
     transition.update(1_001.0, target, dest);
 
-    assertEquals(ProjectionMode.ORTHOGRAPHIC, dest.projectionMode());
+    assertEquals(ProjectionMode.ORTHOGRAPHIC, dest.getProjectionMode());
   }
 
   @Test
@@ -181,12 +181,12 @@ class TransitionImplTest {
     TestUtils.assertVectorEquals(expected.position(), actual.position());
     TestUtils.assertQuatEquals(expected.rotation(), actual.rotation());
     assertEquals(expected.getFovDeg(), actual.getFovDeg());
-    assertEquals(expected.projectionMode(), actual.projectionMode());
+    assertEquals(expected.getProjectionMode(), actual.getProjectionMode());
     assertEquals(expected.getOrthographicHeight(), actual.getOrthographicHeight());
   }
 
   private float easedProgressAtHalfDuration() {
-    return transition.getBlender().blend(0.5f);
+    return transition.getEasing().ease(0.5f);
   }
 
   private static void assertStateAtProgress(float progress, PerspectiveStateImpl actual) {

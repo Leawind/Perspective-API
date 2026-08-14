@@ -30,7 +30,7 @@ class PerspectiveStateSnapshotTest {
     TestUtils.assertVectorEquals(new Vector3d(1.0, 2.0, 3.0), snapshot.position());
     TestUtils.assertQuatEquals(
         new Quaternionf().rotationYXZ(0.1f, 0.2f, 0.3f), snapshot.rotation());
-    assertEquals(ProjectionMode.ORTHOGRAPHIC, snapshot.projectionMode());
+    assertEquals(ProjectionMode.ORTHOGRAPHIC, snapshot.getProjectionMode());
     assertEquals(55.0f, snapshot.getFovDeg());
     assertEquals(24.0f, snapshot.getOrthographicHeight());
   }

@@ -1,7 +1,7 @@
 package io.github.leawind.perspectiveapi.internal.utils.smooth;
 
-public final class Blenders {
-  private Blenders() {}
+public final class EasingFunctions {
+  private EasingFunctions() {}
 
   /// No easing: linear interpolation.
   public static float linear(float x) {
