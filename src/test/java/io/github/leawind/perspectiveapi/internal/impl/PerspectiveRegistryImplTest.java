@@ -78,9 +78,8 @@ class PerspectiveRegistryImplTest {
       baseType = BaseType.THIRD_PERSON_FRONT,
       nameKey = "test.registry.name",
       descriptionKey = "test.registry.description",
-      switchable = false,
       order = 7,
-      traits = {"third_person", "test:custom_trait"})
+      traits = {"third_person", "switchable", "test:custom_trait"})
   private static final class MetadataPerspective implements PerspectiveBehavior {}
 
   @PerspectiveInfo.Declaration(id = "test.registry_default_low", order = 20)
@@ -164,13 +163,13 @@ class PerspectiveRegistryImplTest {
     PerspectiveInfo info = perspective.info();
     assertEquals("test.registry_metadata", info.id());
     assertEquals(BaseType.THIRD_PERSON_FRONT, info.baseType());
-    assertFalse(info.switchable());
     assertEquals(7, info.order());
     assertEquals("test.registry.name", info.name().getString());
     assertEquals("test.registry.description", info.description().getString());
     assertNull(info.icon());
-    assertEquals(Set.of("third_person", "test:custom_trait"), info.traits());
+    assertEquals(Set.of("third_person", "switchable", "test:custom_trait"), info.traits());
     assertTrue(info.hasTrait("third_person"));
+    assertTrue(info.hasTrait("switchable"));
     assertFalse(info.hasTrait("orthographic"));
     assertSame(behavior, registry.getBehaviorOrThrow(info.id()));
   }
@@ -188,6 +187,7 @@ class PerspectiveRegistryImplTest {
     source.clear();
 
     assertEquals(Set.of("third_person", "test:custom_trait"), info.traits());
+    assertFalse(info.hasTrait("switchable"));
     assertThrows(UnsupportedOperationException.class, () -> info.traits().add("orthographic"));
     assertThrows(NullPointerException.class, () -> info.hasTrait(null));
     assertThrows(
@@ -198,7 +198,7 @@ class PerspectiveRegistryImplTest {
   }
 
   @Test
-  void getAllSortsByPriorityThenId() {
+  void getAllSortsByOrderThenId() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
     registry.registerSilent(new LowDefaultPerspective());
     registry.registerSilent(new DefaultBPerspective());

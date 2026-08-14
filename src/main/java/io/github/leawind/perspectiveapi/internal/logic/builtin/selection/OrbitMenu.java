@@ -607,7 +607,9 @@ final class OrbitMenu {
 
   private void select(@NonNull PerspectiveActor actor) {
     Perspective perspective = model.perspective(actor.perspectiveId());
-    if (perspective != null && perspective.info().switchable() && perspective.isAvailable()) {
+    if (perspective != null
+        && perspective.info().hasTrait("switchable")
+        && perspective.isAvailable()) {
       PerspectiveAPI.getSelection().set(actor.perspectiveId());
     }
   }

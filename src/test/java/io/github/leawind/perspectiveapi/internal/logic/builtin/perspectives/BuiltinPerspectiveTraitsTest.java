@@ -36,6 +36,13 @@ class BuiltinPerspectiveTraitsTest {
     assertTrue(traitsOf(ThirdPersonFrontPerspective.class).contains("controllable"));
   }
 
+  @Test
+  void declareAllVanillaPerspectivesSwitchable() {
+    assertTrue(traitsOf(FirstPersonPerspective.class).contains("switchable"));
+    assertTrue(traitsOf(ThirdPersonBackPerspective.class).contains("switchable"));
+    assertTrue(traitsOf(ThirdPersonFrontPerspective.class).contains("switchable"));
+  }
+
   private static List<String> traitsOf(
       Class<? extends PerspectiveBehavior> perspectiveBehaviorClass) {
     PerspectiveInfo.Declaration declaration =

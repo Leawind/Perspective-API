@@ -40,7 +40,7 @@
 
 ### 临时功能
 
-通过物品使用、按键或游戏事件临时启用的基础视角，通常注册为不可切换 Perspective，并通过临时覆盖控制其是否生效。
+通过物品使用、按键或游戏事件临时启用的基础视角，通常不声明 `switchable` trait，并通过临时覆盖控制其是否生效。
 
 临时覆盖结束后，Perspective API 会重新解析下面仍然有效的选择。调用方不需要记录进入临时视角前的 Perspective，也不应直接保存和恢复原版相机字段。
 
@@ -67,7 +67,7 @@ Perspective API 只协调相机状态。一个 Perspective 或 Modifier 可以�
 
 ### 潜望镜
 
-潜望镜视角应注册为不可切换 Perspective，并选择与其所需原版行为对应的 `BaseType`。Perspective 在每个渲染帧中设置潜望镜的位置、旋转和 FOV。
+潜望镜视角不应声明 `switchable` trait，并应选择与其所需原版行为对应的 `BaseType`。Perspective 在每个渲染帧中设置潜望镜的位置、旋转和 FOV。
 
 使用潜望镜物品时，模组使临时覆盖返回该 Perspective；停止使用后让覆盖失效。玩家原先选择的 Perspective 会自动重新生效。
 
@@ -75,7 +75,7 @@ Perspective API 只协调相机状态。一个 Perspective 或 Modifier 可以�
 
 ### 自定义第三人称视角
 
-每个玩家预设可以作为一个运行时注册的、可切换 Perspective：
+每个玩家预设可以作为一个运行时注册并声明 `switchable` trait 的 Perspective：
 
 - 每个预设拥有稳定且唯一的 ID
 - 每个 Perspective 读取自己对应的距离、偏移、旋转方式和 FOV 参数
@@ -115,7 +115,7 @@ Trait 只说明 Perspective 本身是否支持鼠标控制。锁定模组还需�
 
 ### 正交俯视视角
 
-正交俯视视角应实现为可切换 Perspective。它负责：
+正交俯视视角应实现为声明了 `switchable` trait 的 Perspective。它负责：
 
 - 设置俯视玩家的相机位置和旋转
 - 将投影模式设置为正交投影
@@ -127,7 +127,7 @@ Trait 只说明 Perspective 本身是否支持鼠标控制。锁定模组还需�
 
 ### Shoulder Surfing Reloaded
 
-越肩相机本身适合作为一个可切换 Perspective。肩位、相机距离和位置偏移作为该 Perspective 的内部参数，由它产生完整的第三人称基础状态。
+越肩相机本身适合作为一个声明了 `switchable` trait 的 Perspective。肩位、相机距离和位置偏移作为该 Perspective 的内部参数，由它产生完整的第三人称基础状态。
 
 自由观察和玩家移动方向解耦需要模组自行处理输入与玩家朝向，但可以根据当前 Perspective 判断这些逻辑是否生效。
 
@@ -135,7 +135,7 @@ Trait 只说明 Perspective 本身是否支持鼠标控制。锁定模组还需�
 
 ### Leawind's Third Person
 
-第三人称基础相机应实现为可切换 Perspective。自由观察、偏移、距离、瞄准模式和相机平滑共同参与该 Perspective 的目标状态计算。
+第三人称基础相机应实现为声明了 `switchable` trait 的 Perspective。自由观察、偏移、距离、瞄准模式和相机平滑共同参与该 Perspective 的目标状态计算。
 
 如果玩家可以创建多个完整预设，可以像“自定义第三人称视角”场景一样，为每个预设注册独立 Perspective；如果左、中、右构图只是同一视角内的临时参数，也可以保留为一个 Perspective 的内部状态。
 
@@ -145,7 +145,7 @@ Trait 只说明 Perspective 本身是否支持鼠标控制。锁定模组还需�
 
 ### Grand Teleport
 
-Grand Teleport 的完整高空转场决定了基础相机路径，应实现为不可切换 Perspective，并通过传送期间有效的临时覆盖激活。
+Grand Teleport 的完整高空转场决定了基础相机路径，对应 Perspective 不应声明 `switchable` trait，并应通过传送期间有效的临时覆盖激活。
 
 该 Perspective 应禁止普通进入和离开过渡，因为起飞、水平移动和下降等阶段已经组成完整的自定义动画。位置、旋转和 FOV 由 Perspective 根据传送阶段计算。
 
@@ -165,7 +165,7 @@ Grand Teleport 的完整高空转场决定了基础相机路径，应实现为�
 
 ### Flashback
 
-用于回放编辑的电影摄像机可以作为不可切换 Perspective，在进入回放或相机编辑模式时通过临时覆盖激活。
+用于回放编辑的电影摄像机可以作为不声明 `switchable` trait 的 Perspective，在进入回放或相机编辑模式时通过临时覆盖激活。
 
 镜头时间轴、关键帧编辑和回放状态由 Flashback 管理；Perspective 只负责把当前时间对应的镜头状态写入基础相机。
 
@@ -220,7 +220,7 @@ Modifier 只修改 FOV，不改变位置、旋转或投影模式。滚轮控制�
 
 ### Photography
 
-由于取景器要求第一人称基础视角，它适合作为不可切换 Perspective，并在玩家使用相机物品时通过临时覆盖激活。Perspective 设置相应 `BaseType` 和取景 FOV，但不需要修改未涉及的位置或旋转。
+由于取景器要求第一人称基础视角，它适合作为不声明 `switchable` trait 的 Perspective，并在玩家使用相机物品时通过临时覆盖激活。Perspective 设置相应 `BaseType` 和取景 FOV，但不需要修改未涉及的位置或旋转。
 
 如果缩放效果还需要在其他 Perspective 中复用，可以把 FOV 缩放独立为 Modifier；否则也可以由取景器 Perspective 内部计算。
 
@@ -230,8 +230,8 @@ Modifier 只修改 FOV，不改变位置、旋转或投影模式。滚轮控制�
 
 Exposure 中适合使用 Perspective API 的功能应分别处理：
 
-- 手持相机取景器：不可切换的第一人称 Perspective
-- 自拍模式：不可切换的正面第三人称 Perspective
+- 手持相机取景器：不声明 `switchable` trait 的第一人称 Perspective
+- 自拍模式：不声明 `switchable` trait 的正面第三人称 Perspective
 - 镜头焦距缩放：取景器内部状态，或仅在相应模式生效的 Modifier
 
 这些 Perspective 在对应拍摄模式中通过临时覆盖激活，退出模式后恢复玩家原来的选择。
@@ -247,9 +247,9 @@ Exposure 中适合使用 Perspective API 的功能应分别处理：
 Camera Utils 的不同功能适合使用不同机制：
 
 - 按键或滚轮缩放：Modifier
-- 固定当前位置和旋转：不可切换 Perspective，通过按键控制的临时覆盖激活
-- 长距离第三人称相机：可切换 Perspective
-- 两个第三人称预设：两个独立的可切换 Perspective
+- 固定当前位置和旋转：不声明 `switchable` trait 的 Perspective，通过按键控制的临时覆盖激活
+- 长距离第三人称相机：声明 `switchable` trait 的 Perspective
+- 两个第三人称预设：两个独立且声明 `switchable` trait 的 Perspective
 - 只作用于 Camera Utils 视角的电影平滑：对应 Perspective 的内部计算
 
 返回上一次固定机位所需的位置和旋转由 Camera Utils 自己保存。相机固定时停用原版视角晃动属于原版行为控制，不由 Perspective API 统一处理。
@@ -258,7 +258,7 @@ Camera Utils 的不同功能适合使用不同机制：
 
 Freecam 应实现为保存独立位置和旋转的 Perspective。通过按键启用时，临时覆盖选择该 Perspective；退出后恢复玩家原来的 Perspective。
 
-Freecam 可以注册为不可切换 Perspective，使其只能由自己的启用按键控制；如果希望玩家从内置 Perspective Switcher 中选择，也可以声明为可切换。
+Freecam 可以不声明 `switchable` trait，并仅通过自己的启用按键和临时覆盖激活；如果希望玩家从内置 Perspective Switcher 中选择，则应声明该 trait。
 
 阻止真实玩家移动、重定向鼠标输入和处理自由相机移动速度都由 Freecam 自己实现。Perspective 只负责把已计算的位置、旋转和可选 FOV 写入相机状态。
 

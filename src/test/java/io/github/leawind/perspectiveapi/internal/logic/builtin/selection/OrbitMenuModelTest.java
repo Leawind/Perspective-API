@@ -35,6 +35,19 @@ class OrbitMenuModelTest {
   }
 
   @Test
+  void excludesPerspectivesWithoutSwitchableTrait() {
+    OrbitMenuModel model = new OrbitMenuModel();
+    Perspective included = perspective("included", 0, true);
+    Perspective excluded = perspectiveWithoutSwitchableTrait("excluded", 1, true);
+
+    model.updateSwitchables(List.of(included, excluded));
+
+    assertEquals(List.of("included"), model.selected());
+    assertEquals(
+        List.of("included"), model.switchables().stream().map(p -> p.info().id()).toList());
+  }
+
+  @Test
   void layoutAlwaysPartitionsEverySwitchable() {
     OrbitMenuModel model = new OrbitMenuModel();
     model.updateSwitchables(
@@ -154,20 +167,22 @@ class OrbitMenuModelTest {
   }
 
   private static Perspective perspective(String id, int order, boolean available) {
-    return new TestPerspective(id, order, available);
+    return new TestPerspective(infoBuilder(id, order).trait("switchable").build(), available);
+  }
+
+  private static Perspective perspectiveWithoutSwitchableTrait(
+      String id, int order, boolean available) {
+    return new TestPerspective(infoBuilder(id, order).build(), available);
+  }
+
+  private static PerspectiveInfo.Builder infoBuilder(String id, int order) {
+    return PerspectiveInfo.builder(id, Component.literal(id))
+        .baseType(BaseType.FIRST_PERSON)
+        .order(order);
   }
 
   private record TestPerspective(@NonNull PerspectiveInfo info, boolean available)
       implements Perspective {
-    private TestPerspective(@NonNull String id, int order, boolean available) {
-      this(
-          PerspectiveInfo.builder(id, Component.literal(id))
-              .baseType(BaseType.FIRST_PERSON)
-              .order(order)
-              .build(),
-          available);
-    }
-
     @Override
     public boolean isAvailable() {
       return available;

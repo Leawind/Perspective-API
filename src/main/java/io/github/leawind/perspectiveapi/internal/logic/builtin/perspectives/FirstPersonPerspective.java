@@ -13,7 +13,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
     baseType = BaseType.FIRST_PERSON,
     order = 0,
     icon = "perspective_api:textures/perspective/first_person.png",
-    traits = {"first_person", "controllable"})
+    traits = {"first_person", "controllable", "switchable"})
 public class FirstPersonPerspective implements PerspectiveBehavior {
   public static final String ID = "perspective_api.first_person";
 }

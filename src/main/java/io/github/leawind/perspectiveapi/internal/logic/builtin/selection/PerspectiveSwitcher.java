@@ -66,7 +66,7 @@ public final class PerspectiveSwitcher
   private void updateSwitchables() {
     List<Perspective> switchables =
         PerspectiveRegistryImpl.INSTANCE.getAllPerspectives().stream()
-            .filter(perspective -> perspective.info().switchable())
+            .filter(perspective -> perspective.info().hasTrait("switchable"))
             .toList();
     updateSwitchables(switchables);
   }

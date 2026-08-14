@@ -27,18 +27,16 @@ import org.jspecify.annotations.Nullable;
 /// @param name the display name
 /// @param description the optional description
 /// @param baseType the opaque vanilla camera type selected while the perspective is active
-/// @param switchable whether the built-in perspective switcher may select the perspective
 /// @param order the sorting order within the built-in perspective switcher, where lower values
 ///   appear first
 /// @param icon the optional icon texture
-/// @param traits the stable semantic traits declared when the perspective is registered; see {@link
+/// @param traits the stable traits declared when the perspective is registered; see {@link
 ///   Declaration#traits()} for recommended shared traits
 public record PerspectiveInfo(
     @NonNull String id,
     @NonNull Component name,
     @Nullable Component description,
     @NonNull BaseType baseType,
-    @ApiStatus.Experimental boolean switchable,
     int order,
     @Nullable Identifier icon,
     @ApiStatus.Experimental @NonNull Set<@NonNull String> traits) {
@@ -56,7 +54,7 @@ public record PerspectiveInfo(
     traits = Set.copyOf(traits);
   }
 
-  /// Returns whether this metadata declares the given semantic trait.
+  /// Returns whether this metadata declares the given trait.
   ///
   /// Trait names use lowercase `snake_case`, such as `third_person`. Shared traits should remain
   /// unqualified so independent mods can agree on the same meaning. A mod-specific trait may use
@@ -67,7 +65,7 @@ public record PerspectiveInfo(
     return traits.contains(trait);
   }
 
-  /// Validates a semantic trait name.
+  /// Validates a trait name.
   ///
   /// @throws NullPointerException if `trait` is `null`
   /// @throws IllegalArgumentException if `trait` is not lowercase `snake_case` with an optional
@@ -91,7 +89,6 @@ public record PerspectiveInfo(
     private final Component name;
     private @Nullable Component description;
     private BaseType baseType = BaseType.THIRD_PERSON_BACK;
-    private boolean switchable = true;
     private int order;
     private @Nullable Identifier icon;
     private final Set<String> traits = new LinkedHashSet<>();
@@ -111,11 +108,6 @@ public record PerspectiveInfo(
       return this;
     }
 
-    public @NonNull Builder switchable(boolean switchable) {
-      this.switchable = switchable;
-      return this;
-    }
-
     public @NonNull Builder order(int order) {
       this.order = order;
       return this;
@@ -126,7 +118,7 @@ public record PerspectiveInfo(
       return this;
     }
 
-    /// Adds a semantic trait.
+    /// Adds a trait.
     ///
     /// Adding the same trait more than once has no additional effect.
     @ApiStatus.Experimental
@@ -136,7 +128,7 @@ public record PerspectiveInfo(
       return this;
     }
 
-    /// Adds semantic traits.
+    /// Adds traits.
     @ApiStatus.Experimental
     public @NonNull Builder traits(@NonNull Collection<@NonNull String> traits) {
       Objects.requireNonNull(traits);
@@ -145,7 +137,7 @@ public record PerspectiveInfo(
     }
 
     public @NonNull PerspectiveInfo build() {
-      return new PerspectiveInfo(id, name, description, baseType, switchable, order, icon, traits);
+      return new PerspectiveInfo(id, name, description, baseType, order, icon, traits);
     }
   }
 
@@ -222,39 +214,38 @@ public record PerspectiveInfo(
     /// @see PerspectiveInfo#icon()
     @NonNull String icon() default "";
 
-    /// Whether this perspective is allowed to be manually selected by the player through the
-    /// built-in perspective switcher.
-    ///
-    /// If set to `false`, the perspective can only be activated programmatically through the {@link
-    /// PerspectiveOverrideChain}.
-    @ApiStatus.Experimental
-    boolean switchable() default true;
-
     /// The sorting order within the built-in perspective switcher and duplicate-ID resolution.
     ///
     /// Lower values appear earlier in the selector and take precedence over a duplicate ID.
-    /// Selector ordering is effective only when {@link #switchable()} is `true`, but duplicate-ID
-    /// resolution always uses this value.
+    /// Selector ordering is effective only when the `switchable` trait is declared, but
+    /// duplicate-ID resolution always uses this value.
     int order() default 0;
 
-    /// Semantic traits of this perspective.
+    /// Stable traits of this perspective.
     ///
     /// Traits form an open vocabulary. Unknown traits remain valid, and consumers should test only
     /// traits whose documented meaning they understand. Recommended shared traits include:
     ///
+    /// - `switchable`: the perspective is suitable for general-purpose player-facing perspective
+    ///   switchers
     /// - `first_person`: the perspective primarily observes from the camera entity's eyes
     /// - `third_person`: the perspective primarily observes the camera entity from outside
     /// - `controllable`: standard mouse-look input continuously and predictably controls the
     ///   visible viewing direction
     ///
-    /// Traits describe stable perspective semantics, not transient per-frame state. They cannot be
-    /// changed after the perspective is registered. Shared traits should use lowercase `snake_case`
-    /// without a namespace. Mod-specific traits may use `<namespace>:<trait>`.
+    /// Traits describe stable perspective characteristics and integration hints, not transient
+    /// per-frame state. They cannot be changed after the perspective is registered. Shared traits
+    /// should use lowercase `snake_case` without a namespace. Mod-specific traits may use
+    /// `<namespace>:<trait>`.
     ///
     /// `controllable` should be declared only when adjusted standard mouse-look deltas are consumed
     /// by the perspective's control implementation and feedback from target screen position can
     /// form a stable closed loop. It does not promise that the client is currently capturing mouse
     /// input or grant exclusive ownership of that input.
+    ///
+    /// The built-in perspective switcher includes only perspectives that declare `switchable`. This
+    /// trait does not prevent a perspective from being selected directly through {@link
+    /// PerspectiveSelection}, a {@link PerspectiveOverrideChain}, or a dedicated user interface.
     @ApiStatus.Experimental
     @NonNull String[] traits() default {};
   }

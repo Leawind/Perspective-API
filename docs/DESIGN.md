@@ -36,11 +36,9 @@ Perspective 表示一种基础视角，是相机状态的基础生产者。任�
 
 Perspective 可以来自静态声明，也可以在运行时注册。运行时注册允许模组根据玩家数据创建多个同类 Perspective，例如同一种自定义第三人称视角的多个预设。每个预设作为独立 Perspective 注册，并拥有稳定且唯一的 ID。
 
-Perspective 可以声明为：
+声明了 `switchable` trait 的 Perspective 会进入内置 Perspective Switcher，允许玩家手动选择。未声明该 trait 的 Perspective 仍可通过 `PerspectiveSelection`、临时覆盖或专用界面选择。
 
-- 可切换：允许玩家通过内置 Perspective Switcher 手动选择
-- 不可切换：只能通过临时覆盖等程序化方式激活
-- 默认 Perspective：没有其他有效选择时的安全回退
+Perspective 还可以声明为默认 Perspective，作为没有其他有效选择时的安全回退。
 
 `isAvailable()` 只表示一个已注册的 Perspective 当前能否参与选择，不表示它是否已经注册，也不应依赖调用次数或副作用。
 
@@ -48,7 +46,7 @@ Perspective 可以声明为：
 
 Perspective 的注册元数据在注册期间保持不变。需要增删或替换运行时 Perspective 时，应通过对应注册句柄操作，不由其他模组修改其元数据。
 
-Trait 描述 Perspective 提供者声明的、相对稳定的视角语义：
+Trait 描述 Perspective 提供者声明的、相对稳定的视角特征和集成提示：
 
 - trait 使用开放字符串，不使用封闭枚举
 - 共享 trait 使用约定一致的非命名空间名称
@@ -64,13 +62,16 @@ Trait 描述 Perspective 提供者声明的、相对稳定的视角语义：
 
 目前约定以下共享 trait：
 
-| Trait          | Perspective 应当声明的情况                                   |
-| -------------- | ------------------------------------------------------------ |
-| `first_person` | 主要从 camera entity 自身的观察位置观察世界                  |
-| `third_person` | 主要从 camera entity 外部观察 camera entity                  |
-| `controllable` | 标准鼠标视角移动输入能够持续、可预测地控制当前画面的观察方向 |
+| Trait          | Perspective 应当声明的情况                                     |
+| -------------- | -------------------------------------------------------------- |
+| `first_person` | 主要从 camera entity 自身的观察位置观察世界                    |
+| `third_person` | 主要从 camera entity 外部观察 camera entity                    |
+| `controllable` | 标准鼠标视角移动输入能够持续、可预测地控制当前画面的观察方向   |
+| `switchable`   | 适合出现在通用的、面向玩家的 Perspective Switcher 中供玩家选择 |
 
 `first_person` 和 `third_person` 只描述 Perspective 自身的观察方式。它们不根据 `BaseType` 自动声明，也不承诺手部、玩家实体或其他原版内容的具体渲染行为。
+
+内置 Perspective Switcher 只收录声明了 `switchable` 的 Perspective。该 trait 不限制 `PerspectiveSelection`、临时覆盖或专用界面直接选择 Perspective，第三方切换器也可以根据自己的用途决定是否采用该建议。
 
 Perspective 只有在满足以下条件时才应声明 `controllable`：
 

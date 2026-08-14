@@ -34,7 +34,7 @@ final class OrbitMenuModel {
     Set<String> incomingIds = new HashSet<>();
     for (Perspective perspective : perspectives) {
       Objects.requireNonNull(perspective);
-      if (!perspective.info().switchable()) continue;
+      if (!perspective.info().hasTrait("switchable")) continue;
       incomingIds.add(perspective.info().id());
       switchables.put(perspective.info().id(), perspective);
     }
