@@ -45,10 +45,12 @@ class PerspectiveMathTest {
         identity, PerspectiveMath.eulerDegToQuat(eulerZero3, new Quaternionf()));
     TestUtils.assertAngleEquals(
         eulerZero2, PerspectiveMath.quatToEulerRad(identity, new Vector2f()));
-    TestUtils.assertAngleEquals(eulerZero2, PerspectiveMath.toEulerDeg(identity, new Vector2f()));
+    TestUtils.assertAngleEquals(
+        eulerZero2, PerspectiveMath.quatToEulerDeg(identity, new Vector2f()));
     TestUtils.assertAngleEquals(
         eulerZero3, PerspectiveMath.quatToEulerRad(identity, new Vector3f()));
-    TestUtils.assertAngleEquals(eulerZero3, PerspectiveMath.toEulerDeg(identity, new Vector3f()));
+    TestUtils.assertAngleEquals(
+        eulerZero3, PerspectiveMath.quatToEulerDeg(identity, new Vector3f()));
   }
 
   @Test
@@ -85,7 +87,7 @@ class PerspectiveMathTest {
   void eulerQuaternionRoundTripPreservesRepresentativeRotations() {
     for (Vector3f eulerDeg : representativeEulerAngles()) {
       Quaternionf quaternion = PerspectiveMath.eulerDegToQuat(eulerDeg, new Quaternionf());
-      Vector3f convertedEulerDeg = PerspectiveMath.toEulerDeg(quaternion, new Vector3f());
+      Vector3f convertedEulerDeg = PerspectiveMath.quatToEulerDeg(quaternion, new Vector3f());
       Quaternionf convertedQuaternion =
           PerspectiveMath.eulerDegToQuat(convertedEulerDeg, new Quaternionf());
 
@@ -131,8 +133,8 @@ class PerspectiveMathTest {
     Vector3f direction = new Vector3f();
 
     assertSame(quaternion, PerspectiveMath.eulerDegToQuat(10.0f, 20.0f, 30.0f, quaternion));
-    assertSame(euler2, PerspectiveMath.toEulerDeg(quaternion, euler2));
-    assertSame(euler3, PerspectiveMath.toEulerDeg(quaternion, euler3));
+    assertSame(euler2, PerspectiveMath.quatToEulerDeg(quaternion, euler2));
+    assertSame(euler3, PerspectiveMath.quatToEulerDeg(quaternion, euler3));
     assertSame(direction, PerspectiveMath.quatToDirection(quaternion, direction));
   }
 
@@ -159,8 +161,8 @@ class PerspectiveMathTest {
   }
 
   private static void assertCanonicalGimbalLockRoundTrip(Quaternionf quaternion) {
-    Vector3f convertedEulerDeg = PerspectiveMath.toEulerDeg(quaternion, new Vector3f());
-    Vector2f convertedEulerDeg2 = PerspectiveMath.toEulerDeg(quaternion, new Vector2f());
+    Vector3f convertedEulerDeg = PerspectiveMath.quatToEulerDeg(quaternion, new Vector3f());
+    Vector2f convertedEulerDeg2 = PerspectiveMath.quatToEulerDeg(quaternion, new Vector2f());
     Vector3f convertedEulerRad = PerspectiveMath.quatToEulerRad(quaternion, new Vector3f());
     Vector2f convertedEulerRad2 = PerspectiveMath.quatToEulerRad(quaternion, new Vector2f());
     Quaternionf convertedQuaternion =

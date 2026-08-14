@@ -189,14 +189,14 @@ public final class PerspectiveMath {
   ///
   /// At a gimbal lock, returns an equivalent canonical representation with roll set to zero and the
   /// coupled rotation folded into yaw.
-  public static @NonNull Vector3f toEulerDeg(
+  public static @NonNull Vector3f quatToEulerDeg(
       @NonNull Quaternionfc rotation, @NonNull Vector3f dest) {
     return quatToEulerRad(rotation, dest).mul(RAD_TO_DEG);
   }
 
   /// Converts a quaternion to the pitch and yaw of its canonical Y-X-Z Euler representation in
   /// degrees, discarding roll.
-  public static @NonNull Vector2f toEulerDeg(
+  public static @NonNull Vector2f quatToEulerDeg(
       @NonNull Quaternionfc rotation, @NonNull Vector2f dest) {
     return quatToEulerRad(rotation, dest).mul(RAD_TO_DEG);
   }
