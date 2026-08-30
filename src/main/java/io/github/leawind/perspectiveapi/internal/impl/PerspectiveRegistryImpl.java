@@ -76,7 +76,6 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
           id,
           name,
           description,
-          declaration.baseType(),
           declaration.order(),
           icon,
           Set.copyOf(Arrays.asList(declaration.traits())));

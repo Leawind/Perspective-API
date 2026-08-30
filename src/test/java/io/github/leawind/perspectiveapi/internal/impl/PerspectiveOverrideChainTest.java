@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
-import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistration;
@@ -48,9 +47,7 @@ class PerspectiveOverrideChainTest {
         if (!contains(id)) return null;
         return new Perspective() {
           private final PerspectiveInfo info =
-              PerspectiveInfo.builder(id, Component.literal(id))
-                  .baseType(BaseType.FIRST_PERSON)
-                  .build();
+              PerspectiveInfo.builder(id, Component.literal(id)).build();
 
           @Override
           public @NonNull PerspectiveInfo info() {

@@ -66,7 +66,7 @@ public final class Bridge {
   /// Updates the camera type and triggers necessary side effects.
   ///
   /// Handles post-effect checks and renderer updates when switching between first-person
-  /// and third-person views.
+  /// and third-person views. Does nothing when the camera type is already the requested one.
   ///
   /// @param newCameraType the new camera type to set
   @SuppressWarnings("ConstantConditions")
@@ -79,6 +79,7 @@ public final class Bridge {
     }
 
     var oldCameraType = minecraft.options.getCameraType();
+    if (oldCameraType == newCameraType) return;
     if (oldCameraType.isFirstPerson() != newCameraType.isFirstPerson()) {
       minecraft.gameRenderer.checkEntityPostEffect(
           newCameraType.isFirstPerson() ? minecraft.getCameraEntity() : null);

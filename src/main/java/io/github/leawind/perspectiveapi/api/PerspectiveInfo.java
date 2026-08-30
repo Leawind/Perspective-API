@@ -1,6 +1,5 @@
 package io.github.leawind.perspectiveapi.api;
 
-import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,7 +25,6 @@ import org.jspecify.annotations.Nullable;
 /// @param id the non-empty stable perspective ID
 /// @param name the display name
 /// @param description the optional description
-/// @param baseType the opaque vanilla camera type selected while the perspective is active
 /// @param order the sorting order within the built-in perspective switcher, where lower values
 ///   appear first
 /// @param icon the optional icon texture
@@ -36,7 +34,6 @@ public record PerspectiveInfo(
     @NonNull String id,
     @NonNull Component name,
     @Nullable Component description,
-    @NonNull BaseType baseType,
     int order,
     @Nullable Identifier icon,
     @ApiStatus.Experimental @NonNull Set<@NonNull String> traits) {
@@ -47,7 +44,6 @@ public record PerspectiveInfo(
   public PerspectiveInfo {
     Objects.requireNonNull(id);
     Objects.requireNonNull(name);
-    Objects.requireNonNull(baseType);
     Objects.requireNonNull(traits);
     if (id.isEmpty()) throw new IllegalArgumentException("Perspective id must not be empty");
     traits.forEach(PerspectiveInfo::validateTrait);
@@ -88,7 +84,6 @@ public record PerspectiveInfo(
     private final String id;
     private final Component name;
     private @Nullable Component description;
-    private BaseType baseType = BaseType.THIRD_PERSON_BACK;
     private int order;
     private @Nullable Identifier icon;
     private final Set<String> traits = new LinkedHashSet<>();
@@ -100,11 +95,6 @@ public record PerspectiveInfo(
 
     public @NonNull Builder description(@Nullable Component description) {
       this.description = description;
-      return this;
-    }
-
-    public @NonNull Builder baseType(@NonNull BaseType baseType) {
-      this.baseType = Objects.requireNonNull(baseType);
       return this;
     }
 
@@ -137,7 +127,7 @@ public record PerspectiveInfo(
     }
 
     public @NonNull PerspectiveInfo build() {
-      return new PerspectiveInfo(id, name, description, baseType, order, icon, traits);
+      return new PerspectiveInfo(id, name, description, order, icon, traits);
     }
   }
 
@@ -165,15 +155,6 @@ public record PerspectiveInfo(
     ///
     /// - `examplemod.free_camera`
     @NonNull String id();
-
-    /// The opaque vanilla camera type selected while this perspective is active.
-    ///
-    /// Minecraft uses its current camera type for version-dependent behavior beyond camera position
-    /// and rotation. This value maps to that enum exactly; it does not describe or imply stable
-    /// Perspective API semantics.
-    ///
-    /// Refer to `net.minecraft.client.CameraType`
-    @NonNull BaseType baseType() default BaseType.THIRD_PERSON_BACK;
 
     /// The translation key for the perspective's display name.
     ///

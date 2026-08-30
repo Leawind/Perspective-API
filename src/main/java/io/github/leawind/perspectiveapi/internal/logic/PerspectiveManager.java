@@ -4,6 +4,7 @@ import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPIRuntime;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveSelection;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
@@ -147,8 +148,8 @@ public final class PerspectiveManager {
     }
   }
 
-  /// Resolves the current perspective before vanilla reads {@link CameraType} to update the main
-  /// camera for a render frame.
+  /// Resolves the current perspective and applies the base type it currently reports, before
+  /// vanilla reads {@link CameraType} to update the main camera for a render frame.
   void beforeMainCameraUpdate() {
     updateCurrentPerspective();
   }
@@ -176,7 +177,6 @@ public final class PerspectiveManager {
       current = resolved;
       this.currentBehavior = resolvedBehavior;
 
-      updateCameraType(resolved.info().baseType());
       extensions.run(resolved.info().id(), "onActivate", resolvedBehavior::onActivate);
       boolean incomingAllowsTransition =
           previousBehavior != null
@@ -184,6 +184,17 @@ public final class PerspectiveManager {
       transitionAllowed = outgoingAllowsTransition && incomingAllowsTransition;
       startTransition();
     }
+
+    applyReportedBaseType(resolved.info().id(), resolvedBehavior);
+  }
+
+  /// Applies the base type currently reported by the given perspective.
+  ///
+  /// Bridge keeps the vanilla camera type unchanged when the reported value did not change. A
+  /// failure is logged and the current vanilla camera type is kept for that evaluation.
+  private void applyReportedBaseType(@NonNull String id, @NonNull PerspectiveBehavior behavior) {
+    BaseType baseType = extensions.callOrElse(id, "getBaseType", behavior::getBaseType, null);
+    if (baseType != null) updateCameraType(baseType);
   }
 
   private @NonNull Perspective resolveAvailableOrDefault(@Nullable String perspectiveId) {
@@ -194,7 +205,7 @@ public final class PerspectiveManager {
     return PerspectiveRegistryImpl.INSTANCE.getDefault();
   }
 
-  private static void updateCameraType(PerspectiveBehavior.@NonNull BaseType baseType) {
+  private static void updateCameraType(@NonNull BaseType baseType) {
     Bridge.updateCameraType(
         switch (baseType) {
           case FIRST_PERSON -> CameraType.FIRST_PERSON;

@@ -18,6 +18,7 @@ import java.util.ServiceConfigurationError;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.network.chat.Component;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 class PerspectiveRegistryImplTest {
@@ -27,9 +28,17 @@ class PerspectiveRegistryImplTest {
   private static final String AVAILABILITY_ID = "test.registry_availability";
   private static final String ROLLBACK_ID = "test.registry_rollback";
 
-  private static final class MissingInfoPerspective implements PerspectiveBehavior {}
+  /// Keeps fixtures that do not test the base type itself focused on their own subject.
+  private interface FixedBaseTypeBehavior extends PerspectiveBehavior {
+    @Override
+    default @NonNull BaseType getBaseType() {
+      return BaseType.FIRST_PERSON;
+    }
+  }
 
-  private static final class EqualPerspective implements PerspectiveBehavior {
+  private static final class MissingInfoPerspective implements FixedBaseTypeBehavior {}
+
+  private static final class EqualPerspective implements FixedBaseTypeBehavior {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof EqualPerspective;
@@ -42,25 +51,22 @@ class PerspectiveRegistryImplTest {
   }
 
   @PerspectiveInfo.Declaration(id = "", order = 0)
-  private static final class EmptyIdPerspective implements PerspectiveBehavior {}
+  private static final class EmptyIdPerspective implements FixedBaseTypeBehavior {}
 
   @PerspectiveInfo.Declaration(id = ORDER_ID, order = 10)
-  private static final class EarlierPerspective implements PerspectiveBehavior {}
+  private static final class EarlierPerspective implements FixedBaseTypeBehavior {}
 
   @PerspectiveInfo.Declaration(id = ORDER_ID, order = 20)
-  private static final class LaterPerspective implements PerspectiveBehavior {}
+  private static final class LaterPerspective implements FixedBaseTypeBehavior {}
 
-  @PerspectiveInfo.Declaration(id = CLASS_NAME_ID, baseType = BaseType.FIRST_PERSON, order = 0)
-  private static final class AlphaPerspective implements PerspectiveBehavior {}
+  @PerspectiveInfo.Declaration(id = CLASS_NAME_ID, order = 0)
+  private static final class AlphaPerspective implements FixedBaseTypeBehavior {}
 
-  @PerspectiveInfo.Declaration(
-      id = CLASS_NAME_ID,
-      baseType = BaseType.THIRD_PERSON_BACK,
-      order = 0)
-  private static final class BetaPerspective implements PerspectiveBehavior {}
+  @PerspectiveInfo.Declaration(id = CLASS_NAME_ID, order = 0)
+  private static final class BetaPerspective implements FixedBaseTypeBehavior {}
 
   @PerspectiveInfo.Declaration(id = AVAILABILITY_ID)
-  private static final class ToggleAvailabilityPerspective implements PerspectiveBehavior {
+  private static final class ToggleAvailabilityPerspective implements FixedBaseTypeBehavior {
     private boolean available;
     private boolean throwsException;
     private int evaluationCount;
@@ -75,27 +81,26 @@ class PerspectiveRegistryImplTest {
 
   @PerspectiveInfo.Declaration(
       id = "test.registry_metadata",
-      baseType = BaseType.THIRD_PERSON_FRONT,
       nameKey = "test.registry.name",
       descriptionKey = "test.registry.description",
       order = 7,
       traits = {"third_person", "switchable", "test:custom_trait"})
-  private static final class MetadataPerspective implements PerspectiveBehavior {}
+  private static final class MetadataPerspective implements FixedBaseTypeBehavior {}
 
   @PerspectiveInfo.Declaration(id = "test.registry_default_low", order = 20)
   @PerspectiveInfo.Default(priority = 1)
-  private static final class LowDefaultPerspective implements PerspectiveBehavior {}
+  private static final class LowDefaultPerspective implements FixedBaseTypeBehavior {}
 
   @PerspectiveInfo.Declaration(id = "test.registry_default_b", order = 10)
   @PerspectiveInfo.Default(priority = 5)
-  private static final class DefaultBPerspective implements PerspectiveBehavior {}
+  private static final class DefaultBPerspective implements FixedBaseTypeBehavior {}
 
   @PerspectiveInfo.Declaration(id = "test.registry_default_a", order = 10)
   @PerspectiveInfo.Default(priority = 5)
-  private static final class DefaultAPerspective implements PerspectiveBehavior {}
+  private static final class DefaultAPerspective implements FixedBaseTypeBehavior {}
 
   @PerspectiveInfo.Declaration(id = ROLLBACK_ID, order = 10)
-  private static final class OriginalPerspective implements PerspectiveBehavior {
+  private static final class OriginalPerspective implements FixedBaseTypeBehavior {
     private final AtomicInteger initCalls;
 
     private OriginalPerspective(AtomicInteger initCalls) {
@@ -109,7 +114,7 @@ class PerspectiveRegistryImplTest {
   }
 
   @PerspectiveInfo.Declaration(id = ROLLBACK_ID, order = 0)
-  private static final class FailingReplacementPerspective implements PerspectiveBehavior {
+  private static final class FailingReplacementPerspective implements FixedBaseTypeBehavior {
     @Override
     public void initialize() {
       throw new IllegalStateException("init failure");
@@ -146,10 +151,11 @@ class PerspectiveRegistryImplTest {
   @Test
   void resolveEqualOrderByBehaviorClassName() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+    AlphaPerspective alpha = new AlphaPerspective();
     registry.registerSilent(new BetaPerspective());
-    registry.registerSilent(new AlphaPerspective());
+    registry.registerSilent(alpha);
 
-    assertEquals(BaseType.FIRST_PERSON, registry.get(CLASS_NAME_ID).info().baseType());
+    assertSame(alpha, registry.getBehaviorOrThrow(CLASS_NAME_ID));
   }
 
   @Test
@@ -162,7 +168,6 @@ class PerspectiveRegistryImplTest {
 
     PerspectiveInfo info = perspective.info();
     assertEquals("test.registry_metadata", info.id());
-    assertEquals(BaseType.THIRD_PERSON_FRONT, info.baseType());
     assertEquals(7, info.order());
     assertEquals("test.registry.name", info.name().getString());
     assertEquals("test.registry.description", info.description().getString());
@@ -262,7 +267,6 @@ class PerspectiveRegistryImplTest {
     registry.onUpdate().on(updates::incrementAndGet);
     PerspectiveInfo initial =
         PerspectiveInfo.builder("test.runtime", Component.literal("Runtime"))
-            .baseType(BaseType.FIRST_PERSON)
             .order(3)
             .trait("first_person")
             .build();
@@ -273,7 +277,6 @@ class PerspectiveRegistryImplTest {
     assertSame(perspective, registry.get("test.runtime"));
     assertSame(initial, perspective.info());
     assertEquals("Runtime", perspective.info().name().getString());
-    assertEquals(BaseType.FIRST_PERSON, perspective.info().baseType());
     assertTrue(perspective.info().hasTrait("first_person"));
     assertEquals(1, updates.get());
 
@@ -355,6 +358,11 @@ class PerspectiveRegistryImplTest {
           public void initialize() {
             established.unregister();
             throw new IllegalStateException("init failure");
+          }
+
+          @Override
+          public @NonNull BaseType getBaseType() {
+            return BaseType.FIRST_PERSON;
           }
         };
 

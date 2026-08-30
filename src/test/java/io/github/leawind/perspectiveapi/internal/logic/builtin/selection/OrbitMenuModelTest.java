@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import io.github.leawind.perspectiveapi.api.Perspective;
-import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import java.util.HashSet;
 import java.util.List;
@@ -176,9 +175,7 @@ class OrbitMenuModelTest {
   }
 
   private static PerspectiveInfo.Builder infoBuilder(String id, int order) {
-    return PerspectiveInfo.builder(id, Component.literal(id))
-        .baseType(BaseType.FIRST_PERSON)
-        .order(order);
+    return PerspectiveInfo.builder(id, Component.literal(id)).order(order);
   }
 
   private record TestPerspective(@NonNull PerspectiveInfo info, boolean available)

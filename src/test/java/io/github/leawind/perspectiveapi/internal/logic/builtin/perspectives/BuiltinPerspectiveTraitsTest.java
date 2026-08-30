@@ -1,9 +1,11 @@
 package io.github.leawind.perspectiveapi.internal.logic.builtin.perspectives;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
+import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
 import io.github.leawind.perspectiveapi.api.PerspectiveInfo;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,13 @@ class BuiltinPerspectiveTraitsTest {
     assertTrue(traitsOf(FirstPersonPerspective.class).contains("switchable"));
     assertTrue(traitsOf(ThirdPersonBackPerspective.class).contains("switchable"));
     assertTrue(traitsOf(ThirdPersonFrontPerspective.class).contains("switchable"));
+  }
+
+  @Test
+  void reportBaseTypesMatchingTheirVanillaCounterparts() {
+    assertEquals(BaseType.FIRST_PERSON, new FirstPersonPerspective().getBaseType());
+    assertEquals(BaseType.THIRD_PERSON_BACK, new ThirdPersonBackPerspective().getBaseType());
+    assertEquals(BaseType.THIRD_PERSON_FRONT, new ThirdPersonFrontPerspective().getBaseType());
   }
 
   private static List<String> traitsOf(

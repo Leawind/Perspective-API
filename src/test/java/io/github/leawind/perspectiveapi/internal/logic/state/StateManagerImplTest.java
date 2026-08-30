@@ -69,12 +69,14 @@ class StateManagerImplTest {
   private Path tempDir;
 
   @PerspectiveInfo.Default
-  @PerspectiveInfo.Declaration(
-      id = "perspective_api.first_person",
-      baseType = BaseType.FIRST_PERSON,
-      order = 0)
+  @PerspectiveInfo.Declaration(id = "perspective_api.first_person", order = 0)
   static class TestPerspective implements PerspectiveBehavior {
     static final TestPerspective INSTANCE = new TestPerspective();
+
+    @Override
+    public @NonNull BaseType getBaseType() {
+      return BaseType.FIRST_PERSON;
+    }
   }
 
   @BeforeEach
@@ -237,8 +239,7 @@ class StateManagerImplTest {
     PerspectiveManager.INSTANCE.restoreSelection("test.changed");
     manager.tryLoadAndApply();
 
-    assertEquals(
-        "test.raw_selection", PerspectiveManager.INSTANCE.getSelected());
+    assertEquals("test.raw_selection", PerspectiveManager.INSTANCE.getSelected());
     assertEquals("test.raw_selection", savedState.get("selection.current").getAsString());
     assertFalse(savedState.has("manager.current"));
   }

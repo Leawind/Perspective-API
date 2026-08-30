@@ -27,11 +27,30 @@ public interface PerspectiveBehavior {
   /// perspective produces its camera state. Those behaviors are version-dependent and opaque to
   /// Perspective API. Callers must not infer finer semantics from behavior observed in one
   /// Minecraft version.
+  ///
+  /// A perspective decides which value is currently in effect through {@link #getBaseType()}, and
+  /// may change it over its lifetime in response to its own conditions or events.
   enum BaseType {
     FIRST_PERSON,
     THIRD_PERSON_BACK,
     THIRD_PERSON_FRONT;
   }
+
+  /// Returns the base type in effect while this perspective is active.
+  ///
+  /// When a render frame does not modify the camera state, the perspective's behavior is exactly
+  /// the vanilla behavior of this base type.
+  ///
+  /// Perspective API evaluates this method whenever the vanilla camera type is about to be read,
+  /// including once per render frame before the main camera update. A value change takes effect
+  /// starting from the next frame's vanilla camera setup, and is applied only when the value
+  /// actually changes. How the implementation maintains the value internally is not a concern of
+  /// Perspective API.
+  ///
+  /// @apiNote
+  ///   - Implementations must return a cheap cached value here.
+  ///   - A failure is logged and treated as "keep the current value" for that evaluation.
+  @NonNull BaseType getBaseType();
 
   /// Whether smooth transitions are allowed when switching TO this perspective.
   ///

@@ -32,7 +32,7 @@ Perspective API 负责协调会修改、替换或叠加相机状态的功能，�
 
 Perspective 表示一种基础视角，是相机状态的基础生产者。任意时刻最多只有一个 Perspective 对相机生效。
 
-原版相机先按照该 Perspective 的 `BaseType` 执行原版设置，Perspective 随后以原版结果作为初始状态，修改相机的位置、旋转、FOV 或投影设置。Perspective 不需要修改所有字段；未修改的字段保留原版结果。
+原版相机先按照该 Perspective 当前生效的 base type 执行原版设置，Perspective 随后以原版结果作为初始状态，修改相机的位置、旋转、FOV 或投影设置。Perspective 不需要修改所有字段；未修改的字段保留原版结果。
 
 Perspective 可以来自静态声明，也可以在运行时注册。运行时注册允许模组根据玩家数据创建多个同类 Perspective，例如同一种自定义第三人称视角的多个预设。每个预设作为独立 Perspective 注册，并拥有稳定且唯一的 ID。
 
@@ -41,6 +41,16 @@ Perspective 可以来自静态声明，也可以在运行时注册。运行时�
 Perspective 还可以声明为默认 Perspective，作为没有其他有效选择时的安全回退。
 
 `isAvailable()` 只表示一个已注册的 Perspective 当前能否参与选择，不表示它是否已经注册，也不应依赖调用次数或副作用。
+
+## Base type
+
+Base type 与原版 `CameraType` 枚举一一对应，决定视角未修改相机状态时的原版行为，例如第一人称手部渲染、本玩家实体渲染等。其具体含义不透明，由当前 Minecraft 版本决定。
+
+每个 Perspective 通过 `PerspectiveBehavior#getBaseType()` 提供当前生效的 base type。Perspective API 在原版即将读取 camera type 的时机调用该方法，包括每帧主相机更新之前的一次，并且仅在返回值实际变化时写回原版设置。值的维护方式由 Perspective 自行决定，通常保持固定，仅在自身的事件或条件满足时变化。
+
+返回值的变化从下一帧的原版相机设置开始生效；在渲染帧中途决定的变化同样在下一帧应用。
+
+base type 不属于逐帧相机状态管线，也不是相机状态的字段，不参与切换过渡。
 
 ## 元数据与 trait
 
@@ -144,9 +154,10 @@ Modifier 应只修改自己负责的字段，并按照 API 约定的旋转方向
 当解析出的有效 Perspective 发生变化时：
 
 1. 旧 Perspective 收到停用通知
-2. 更新原版 `CameraType`
-3. 新 Perspective 收到激活通知
-4. 根据双方是否允许过渡决定是否开始普通切换过渡
+2. 新 Perspective 收到激活通知
+3. 根据双方是否允许过渡决定是否开始普通切换过渡
+
+此后每帧主相机更新之前，Perspective API 按当前生效 Perspective 的 base type 更新原版 `CameraType`，仅在值变化时写回。
 
 只有当前生效的 Perspective 接收逐帧相机状态回调。Perspective API 不为 Perspective、覆盖项或 Modifier 调度 client tick 回调；需要按 client tick 更新状态的实现应自行监听加载器事件，并在渲染阶段提供已缓存的值。
 

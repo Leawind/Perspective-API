@@ -67,7 +67,7 @@ Perspective API 只协调相机状态。一个 Perspective 或 Modifier 可以�
 
 ### 潜望镜
 
-潜望镜视角不应声明 `switchable` trait，并应选择与其所需原版行为对应的 `BaseType`。Perspective 在每个渲染帧中设置潜望镜的位置、旋转和 FOV。
+潜望镜视角不应声明 `switchable` trait，并应通过 `getBaseType()` 返回与其所需原版行为对应的 `BaseType`。Perspective 在每个渲染帧中设置潜望镜的位置、旋转和 FOV。
 
 使用潜望镜物品时，模组使临时覆盖返回该 Perspective；停止使用后让覆盖失效。玩家原先选择的 Perspective 会自动重新生效。
 
@@ -220,7 +220,7 @@ Modifier 只修改 FOV，不改变位置、旋转或投影模式。滚轮控制�
 
 ### Photography
 
-由于取景器要求第一人称基础视角，它适合作为不声明 `switchable` trait 的 Perspective，并在玩家使用相机物品时通过临时覆盖激活。Perspective 设置相应 `BaseType` 和取景 FOV，但不需要修改未涉及的位置或旋转。
+由于取景器要求第一人称基础视角，它适合作为不声明 `switchable` trait 的 Perspective，并在玩家使用相机物品时通过临时覆盖激活。Perspective 通过 `getBaseType()` 返回相应 `BaseType`，并设置取景 FOV，但不需要修改未涉及的位置或旋转。
 
 如果缩放效果还需要在其他 Perspective 中复用，可以把 FOV 缩放独立为 Modifier；否则也可以由取景器 Perspective 内部计算。
 
