@@ -44,6 +44,10 @@ public class Entrypoint {
 
     @SubscribeEvent
     public static void onComputeFov(ViewportEvent.ComputeFov computeFovEvent) {
+      // The event also fires for hand rendering, where vanilla uses a fixed
+      // ~70 deg FOV instead of the user's FOV setting.
+      if (!computeFovEvent.usedConfiguredFov()) return;
+
       modifyFovContext.setup((float) computeFovEvent.getFOV());
       GameClientEvents.MODIFY_FIELD_OF_VIEW.emit(modifyFovContext);
       computeFovEvent.setFOV(modifyFovContext.fieldOfViewDeg);
