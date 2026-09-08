@@ -16,6 +16,9 @@ import org.jspecify.annotations.Nullable;
 public interface PerspectiveOverrideChain {
   /// Registers an override and returns a handle that owns the registration.
   ///
+  /// Override IDs are global, stable diagnostic identifiers used to attribute supplier failures in
+  /// logs.
+  ///
   /// ## Priority
   ///
   /// Higher priority values are evaluated first. Do not rely on registration order to coordinate
@@ -29,10 +32,12 @@ public interface PerspectiveOverrideChain {
   /// Leave gaps between priority values, such as increments of `1000`, so compatible overrides can
   /// be inserted later.
   ///
+  /// @param id the non-empty stable override ID
   /// @param priority the evaluation priority
   /// @param supplier a supplier that returns the perspective ID, or `null` to skip It should return
   ///   a cached value when its state is updated on client ticks. A failure is logged and treated as
   ///   `null` for that render update.
+  /// @throws IllegalArgumentException if `id` is empty or already registered
   @NonNull PerspectiveOverrideRegistration register(
-      int priority, @NonNull Supplier<@Nullable String> supplier);
+      @NonNull String id, int priority, @NonNull Supplier<@Nullable String> supplier);
 }

@@ -21,10 +21,13 @@ public final class PerspectiveOverrideChainImpl
   private static final ExtensionInvoker EXTENSIONS = new ExtensionInvoker(LOGGER, "Override entry");
 
   private final class Registration implements PerspectiveOverrideRegistration {
+    private final String id;
     private final int priority;
     private final Supplier<@Nullable String> supplier;
 
-    private Registration(int priority, @NonNull Supplier<@Nullable String> supplier) {
+    private Registration(
+        @NonNull String id, int priority, @NonNull Supplier<@Nullable String> supplier) {
+      this.id = id;
       this.priority = priority;
       this.supplier = supplier;
     }
@@ -46,10 +49,9 @@ public final class PerspectiveOverrideChainImpl
   public @Nullable String get() {
     List<Registration> snapshot = this.entries;
     for (Registration entry : snapshot) {
-      String diagnosticId = entry.supplier.getClass().getName();
       String resolvedId =
           EXTENSIONS.callOrElse(
-              diagnosticId,
+              entry.id,
               "resolve",
               () -> {
                 String candidate = entry.supplier.get();
@@ -65,10 +67,15 @@ public final class PerspectiveOverrideChainImpl
 
   @Override
   public @NonNull PerspectiveOverrideRegistration register(
-      int priority, @NonNull Supplier<@Nullable String> supplier) {
+      @NonNull String id, int priority, @NonNull Supplier<@Nullable String> supplier) {
+    Objects.requireNonNull(id);
     Objects.requireNonNull(supplier);
-    Registration registration = new Registration(priority, supplier);
+    if (id.isEmpty()) throw new IllegalArgumentException("Override id must not be empty");
+    Registration registration = new Registration(id, priority, supplier);
     synchronized (this) {
+      if (entries.stream().anyMatch(entry -> entry.id.equals(id))) {
+        throw new IllegalArgumentException("Override id is already registered: '" + id + "'");
+      }
       List<Registration> newList = new ArrayList<>(entries);
       newList.add(registration);
       newList.sort(Comparator.comparingInt((Registration entry) -> entry.priority).reversed());

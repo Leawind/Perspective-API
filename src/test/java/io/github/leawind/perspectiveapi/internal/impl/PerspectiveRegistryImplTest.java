@@ -405,7 +405,7 @@ class PerspectiveRegistryImplTest {
     registry.registerSilent(behavior);
     var perspective = registry.get(AVAILABILITY_ID);
     var overrides = new PerspectiveOverrideChainImpl(registry);
-    overrides.register(0, () -> AVAILABILITY_ID);
+    overrides.register("test.availability_override", 0, () -> AVAILABILITY_ID);
 
     behavior.available = true;
     assertTrue(perspective.isAvailable());

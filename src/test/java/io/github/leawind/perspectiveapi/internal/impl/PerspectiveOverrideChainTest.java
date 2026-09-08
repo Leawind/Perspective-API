@@ -75,9 +75,9 @@ class PerspectiveOverrideChainTest {
 
   @Test
   void resolvesHighestAvailablePriority() {
-    chain.register(30, () -> "missing.id");
-    chain.register(20, () -> "test.unavailable");
-    chain.register(10, () -> "test.available");
+    chain.register("test.missing", 30, () -> "missing.id");
+    chain.register("test.unavailable", 20, () -> "test.unavailable");
+    chain.register("test.available", 10, () -> "test.available");
 
     assertEquals("test.available", chain.get());
   }
@@ -85,28 +85,29 @@ class PerspectiveOverrideChainTest {
   @Test
   void nullAndFailingSuppliersDoNotStopFallbackResolution() {
     chain.register(
+        "test.failing",
         30,
         () -> {
           throw new IllegalStateException("failure");
         });
-    chain.register(20, () -> null);
-    chain.register(10, () -> "test.fallback");
+    chain.register("test.skipping", 20, () -> null);
+    chain.register("test.fallback", 10, () -> "test.fallback");
 
     assertEquals("test.fallback", chain.get());
   }
 
   @Test
   void equalPriorityUsesRegistrationOrder() {
-    chain.register(10, () -> "test.first");
-    chain.register(10, () -> "test.second");
+    chain.register("test.first", 10, () -> "test.first");
+    chain.register("test.second", 10, () -> "test.second");
 
     assertEquals("test.first", chain.get());
   }
 
   @Test
   void registrationHandleRemovesOnlyItsOwnEntry() {
-    PerspectiveOverrideRegistration first = chain.register(10, () -> "test.first");
-    chain.register(10, () -> "test.second");
+    PerspectiveOverrideRegistration first = chain.register("test.first", 10, () -> "test.first");
+    chain.register("test.second", 10, () -> "test.second");
 
     assertTrue(first.unregister());
     assertFalse(first.unregister());
@@ -116,15 +117,26 @@ class PerspectiveOverrideChainTest {
   @Test
   void acceptsMultipleRegistrationsOfSameSupplier() {
     java.util.function.Supplier<String> supplier = () -> "test.same";
-    PerspectiveOverrideRegistration first = chain.register(10, supplier);
-    PerspectiveOverrideRegistration second = chain.register(20, supplier);
+    PerspectiveOverrideRegistration first = chain.register("test.same_low", 10, supplier);
+    PerspectiveOverrideRegistration second = chain.register("test.same_high", 20, supplier);
 
     assertTrue(second.unregister());
     assertEquals("test.same", chain.get());
   }
 
   @Test
-  void rejectsNullSupplier() {
-    assertThrows(NullPointerException.class, () -> chain.register(10, null));
+  void rejectsInvalidAndDuplicateIds() {
+    assertThrows(
+        IllegalArgumentException.class, () -> chain.register("", 10, () -> "test.first"));
+    chain.register("test.unique", 10, () -> "test.first");
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> chain.register("test.unique", 20, () -> "test.second"));
+  }
+
+  @Test
+  void rejectsNullArguments() {
+    assertThrows(NullPointerException.class, () -> chain.register(null, 10, () -> "test.first"));
+    assertThrows(NullPointerException.class, () -> chain.register("test.null_supplier", 10, null));
   }
 }
