@@ -4,7 +4,6 @@ on:
     branches:
       - release
       - beta
-      - dev
   pull_request:
   workflow_dispatch:
     inputs:
@@ -58,11 +57,11 @@ jobs:
       - name: '🛂 Setup Gradle'
         uses: gradle/actions/setup-gradle@v5
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/release' && github.ref != 'refs/heads/beta' && github.ref != 'refs/heads/dev' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/release' && github.ref != 'refs/heads/beta' }}
           validate-wrappers: true
 
       - name: '🧪 Unit tests'
-        if: ${{ steps.release.outputs.release == 'true' || inputs.run_tests == true }}
+        if: ${{ steps.release.outputs.release == 'true' || inputs.run_tests == true || github.event_name == 'pull_request' }}
         run: ./gradlew test
 
       - name: '🏗️ Build and test'

@@ -334,7 +334,7 @@ Body 需包含：`This reverts commit <SHA>`，并说明回退原因。
 
 ### CI 测试策略
 
-为了节省 CI 资源，push 到 `dev` 不运行单元测试；发布前（push 到 `beta` / `release` 触发发布流程）强制运行；手动触发 workflow 时默认运行（可通过 `run_tests` 输入关闭）。日常开发在本地自行运行测试。
+为了节省 CI 资源，push 到 `dev` 不触发 CI；发布前（push 到 `beta` / `release` 触发发布流程）、pull request 和手动触发 workflow 时运行构建与单元测试。手动触发时默认运行单元测试（可通过 `run_tests` 输入关闭）。日常开发在本地自行运行测试。
 
 ### 分支
 
