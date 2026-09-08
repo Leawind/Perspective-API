@@ -1,5 +1,11 @@
 /// Integrate Perspective API into another client-side Minecraft mod.
 ///
+/// ## API stability
+///
+/// Members marked `@ApiStatus.Experimental` may break without notice and without a changelog
+/// entry. All other public API is relatively stable: breaking changes are still possible, but
+/// they are declared as `BREAKING CHANGE` and reflected in the version number.
+///
 /// Consult the public API reference below before integrating. To find a compatible dependency,
 /// query Modrinth with the target loader and Minecraft version:
 ///

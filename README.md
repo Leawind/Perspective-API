@@ -32,6 +32,12 @@ _Perspective API_ 是一个 Minecraft 客户端视角管理框架。它提供一
 
 </div>
 
+## API Stability
+
+Members marked `@ApiStatus.Experimental` may break without notice and without a changelog entry. All other public API is relatively stable: breaking changes are still possible, but they are declared as `BREAKING CHANGE` and reflected in the version number.
+
+标注 `@ApiStatus.Experimental` 的成员可能在不通知、不记入更新日志的情况下发生破坏性变更。其余公共 API 相对稳定：破坏性变更仍有可能，但会以 `BREAKING CHANGE` 声明并反映在版本号中。
+
 <details>
 <summary>Agent Skill</summary>
 
