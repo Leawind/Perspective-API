@@ -5,6 +5,8 @@ import io.github.leawind.perspectiveapi.api.PerspectiveAPI;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPIRuntime;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior;
 import io.github.leawind.perspectiveapi.api.PerspectiveBehavior.BaseType;
+import io.github.leawind.perspectiveapi.api.PerspectiveChangeListener;
+import io.github.leawind.perspectiveapi.api.PerspectiveChangeListenerRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveSelection;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
@@ -60,6 +62,7 @@ public final class PerspectiveManager {
   private final PerspectiveModifierChainImpl modifiers;
   private final PerspectiveOverrideChainImpl overrides;
   private final PerspectiveSelectionImpl selection;
+  private final PerspectiveChangeNotifier currentChangeNotifier = new PerspectiveChangeNotifier();
   private final PerspectiveSwitcher perspectiveSwitcher;
 
   public @NonNull TransitionImpl transition() {
@@ -129,6 +132,11 @@ public final class PerspectiveManager {
     return currentBehavior == null ? null : current;
   }
 
+  public @NonNull PerspectiveChangeListenerRegistration onCurrentChanged(
+      @NonNull PerspectiveChangeListener listener) {
+    return currentChangeNotifier.subscribe(listener);
+  }
+
   /// Returns an independent snapshot of the last completed main-camera update.
   public @Nullable PerspectiveState getPreviousCameraState() {
     return hasPreviousCameraState ? new PerspectiveStateSnapshot(lastAppliedState) : null;
@@ -138,13 +146,21 @@ public final class PerspectiveManager {
     if (enabled) return;
 
     perspectiveSwitcher.deactivate();
-    PerspectiveBehavior deactivated = currentBehavior;
+    Perspective deactivatedPerspective = current;
+    PerspectiveBehavior deactivatedBehavior = currentBehavior;
+    current = null;
     currentBehavior = null;
     transitionAllowed = false;
     isTransitionStartStateInitialized = false;
     hasPreviousCameraState = false;
-    if (deactivated != null) {
-      extensions.run(deactivated.getClass().getName(), "onDeactivate", deactivated::onDeactivate);
+    if (deactivatedBehavior != null) {
+      extensions.run(
+          deactivatedBehavior.getClass().getName(),
+          "onDeactivate",
+          deactivatedBehavior::onDeactivate);
+    }
+    if (deactivatedPerspective != null) {
+      currentChangeNotifier.notifyChanged(deactivatedPerspective, null);
     }
   }
 
@@ -183,6 +199,7 @@ public final class PerspectiveManager {
               && allowsTransition(resolved.info().id(), resolvedBehavior, true);
       transitionAllowed = outgoingAllowsTransition && incomingAllowsTransition;
       startTransition();
+      currentChangeNotifier.notifyChanged(previous, resolved);
     }
 
     applyReportedBaseType(resolved.info().id(), resolvedBehavior);

@@ -2,6 +2,8 @@ package io.github.leawind.perspectiveapi.internal.logic;
 
 import io.github.leawind.perspectiveapi.api.Perspective;
 import io.github.leawind.perspectiveapi.api.PerspectiveAPIRuntime;
+import io.github.leawind.perspectiveapi.api.PerspectiveChangeListener;
+import io.github.leawind.perspectiveapi.api.PerspectiveChangeListenerRegistration;
 import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveOverrideChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveRegistry;
@@ -58,6 +60,12 @@ final class PerspectiveAPIRuntimeImpl implements PerspectiveAPIRuntime.Services 
     Objects.requireNonNull(id);
     Perspective current = PerspectiveManager.INSTANCE.getCurrent();
     return current != null && current.info().id().equals(id);
+  }
+
+  @Override
+  public @NonNull PerspectiveChangeListenerRegistration onCurrentChanged(
+      @NonNull PerspectiveChangeListener listener) {
+    return PerspectiveManager.INSTANCE.onCurrentChanged(listener);
   }
 
   @Override

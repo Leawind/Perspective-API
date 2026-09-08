@@ -159,6 +159,8 @@ Modifier 应只修改自己负责的字段，并按照 API 约定的旋转方向
 
 此后每帧主相机更新之前，Perspective API 按当前生效 Perspective 的 base type 更新原版 `CameraType`，仅在值变化时写回。
 
+有效 Perspective 的变化同时通过订阅接口通知其他功能。事件在停用与激活通知完成后同步发布，回调期间查询当前生效 Perspective 得到的已是新值。监听器内触发的后续变化排队到当前通知结束后依次发布，监听器抛出的异常被记录且不影响其他监听器。禁用 Perspective API 导致的失效也发布事件，此时新值为空。
+
 只有当前生效的 Perspective 接收逐帧相机状态回调。Perspective API 不为 Perspective、覆盖项或 Modifier 调度 client tick 回调；需要按 client tick 更新状态的实现应自行监听加载器事件，并在渲染阶段提供已缓存的值。
 
 禁用 Perspective API 时，当前 Perspective 应失去相机控制权并收到停用通知；此时查询接口不应继续报告它正在生效。重新启用后重新解析并激活有效 Perspective。

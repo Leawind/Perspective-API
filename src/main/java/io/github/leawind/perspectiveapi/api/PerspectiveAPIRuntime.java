@@ -33,6 +33,9 @@ public final class PerspectiveAPIRuntime {
 
     boolean isCurrent(@NonNull String id);
 
+    @NonNull PerspectiveChangeListenerRegistration onCurrentChanged(
+        @NonNull PerspectiveChangeListener listener);
+
     void onEnabledChanged(boolean enabled);
   }
 

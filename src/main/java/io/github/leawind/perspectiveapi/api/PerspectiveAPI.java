@@ -136,4 +136,19 @@ public final class PerspectiveAPI {
     PerspectiveAPIRuntime.Services runtime = PerspectiveAPIRuntime.installed();
     return runtime != null && runtime.isCurrent(id);
   }
+
+  /// Registers a listener for effective current-perspective changes.
+  ///
+  /// The listener is invoked after the outgoing perspective's `onDeactivate` and the incoming
+  /// perspective's `onActivate` have completed. See {@link PerspectiveChangeListener#onChanged} for
+  /// the notification contract.
+  ///
+  /// @param listener the listener to register
+  /// @return a handle that owns the subscription
+  /// @throws IllegalStateException if called before the internal runtime is initialized
+  @ApiStatus.Experimental
+  public static @NonNull PerspectiveChangeListenerRegistration onCurrentChanged(
+      @NonNull PerspectiveChangeListener listener) {
+    return PerspectiveAPIRuntime.require().onCurrentChanged(listener);
+  }
 }
