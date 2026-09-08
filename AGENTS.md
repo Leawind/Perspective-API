@@ -169,6 +169,10 @@ return currentVersion().dataVersion().version();
 
 当一个构建产物兼容连续的多个 Minecraft 版本时，应以其中最低版本作为开发和构建目标。模组元数据中的 Minecraft 版本要求只声明为 `>=` 该最低版本，不声明上界；这是项目有意采用的兼容性策略，不应为不同变体补充 `<` 上界。发布平台上的额外版本标签则在对应变体的 `gradle.properties` 中通过 `publish.additionalMcVersions` 声明。
 
+## 依赖管理
+
+依赖版本（fabricApi、YACL、ModMenu、各加载器等）在各 `versions/*-*/gradle.properties` 中手动管理。这是有意采用的策略，不引入 Renovate、Dependabot 等自动化依赖更新工具。
+
 ## 架构与依赖约束
 
 本项目采用严格的分层架构，各层职责与依赖方向必须严格遵守，严禁反向依赖。
@@ -302,6 +306,10 @@ revert: <被回退提交的 header>
 ```
 
 Body 需包含：`This reverts commit <SHA>`，并说明回退原因。
+
+### CI 测试策略
+
+为了节省 CI 资源，push 到 `dev` 不运行单元测试；发布前（push 到 `beta` / `release` 触发发布流程）强制运行；手动触发 workflow 时默认运行（可通过 `run_tests` 输入关闭）。日常开发在本地自行运行测试。
 
 ### 分支
 
