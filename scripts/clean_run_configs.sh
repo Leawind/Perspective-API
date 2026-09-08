@@ -8,8 +8,8 @@ if [ ! -d "$RUN_CONFIGS_DIR" ]; then
   exit 0
 fi
 
-# ./gradlew --no-build-cache --rerun-tasks --offline stonecutterIdea
-# ./gradlew --no-build-cache --rerun-tasks --offline configureClientLaunch
+# ./gradlew --no-build-cache --rerun-tasks stonecutterIdea
+# ./gradlew --no-build-cache --rerun-tasks configureClientLaunch
 
 echo "==> Removing configurations that are not Minecraft_Client or Stonecutter"
 for f in "$RUN_CONFIGS_DIR"/*.xml; do
