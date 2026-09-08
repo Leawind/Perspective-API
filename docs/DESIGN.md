@@ -181,6 +181,12 @@ Modifier 应只修改自己负责的字段，并按照 API 约定的旋转方向
 
 只读取当前相机结果的其他模组在此之后直接读取原版 `Camera`，不需要通过 Perspective API 注册观察者。
 
+## FOV 修改的作用范围
+
+原版存在两条独立的 FOV 计算路径：世界渲染的 FOV 基于玩家的 FOV 设置和 FOV 效果修饰；手部（HUD）渲染的 FOV 不使用玩家设置，而是基于固定值（约 70 度）。旧版本中原版以同一个方法配合布尔参数区分两条路径，26.1 起拆分为独立方法。
+
+Perspective API 的 FOV 修改只作用于世界渲染路径，不得影响手部渲染路径；否则在玩家使用高 FOV 设置时，为固定 FOV 设计的第一人称手臂会被透视拉伸。各平台实现必须遵守这一约束：Mixin 路径区分原版方法的布尔参数，Forge 事件路径检查 `usedConfiguredFov`，26.1 及以上版本只修改计算世界 FOV 的方法。
+
 ## 上一次最终相机状态
 
 Perspective API 提供 `PerspectiveAPI.getPreviousCameraState()`，返回上一次完成的主相机更新中最终实际采用的完整 `PerspectiveState`，包括位置、旋转、FOV、投影模式和正交视野高度。
