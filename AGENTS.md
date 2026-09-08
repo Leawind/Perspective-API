@@ -2,6 +2,12 @@
 
 - Perspective API 仍处于 Beta 阶段，允许进行大规模重构，并应彻底删除废弃的类、方法、字段、测试和文档，不为旧接口保留兼容层
 
+## 指南文件分工
+
+- `AGENTS.md`（本文件，入库）：项目约束、编码指南与踩坑记录
+- `AGENTS-NOTES.md`（本地，不入 git）：有时效性的调查快照，按编号追加，不是设计文档
+- `AGENTS-LOCAL.md`（本地，不入 git）：本机开发环境与工具链相关的经验，建议阅读
+
 ## 设计原则
 
 ### 基本原则
@@ -60,6 +66,8 @@ Minecraft 中有许多机制都会根据当前 CameraType 有不同的行为，�
 - 反引号行内代码
 - `{@link Xxx}` 引用类或成员
 - `@param xxx` 描述参数
+
+方法签名或参数类型本身已经能表达的约束，不要在 Javadoc 中重复警告；只有类型系统无法表达的约束（如对象生命周期、线程要求）才需要写成文档。
 
 ### 命名规范
 
@@ -257,6 +265,7 @@ scope 根据主要受影响的包决定，如果没有合适的就不写：
 | `io.github.leawind.perspectiveapi.internal.impl`   | impl     |
 | `io.github.leawind.perspectiveapi.internal.logic`  | logic    |
 | `io.github.leawind.perspectiveapi.internal.utils`  | utils    |
+| `AGENTS.md` / `AGENTS-NOTES.md`                    | agents   |
 
 #### short summary 要求
 
@@ -320,3 +329,9 @@ Body 需包含：`This reverts commit <SHA>`，并说明回退原因。
 - `fix/`：Bug 修复
 - `chore/`：构建过程或辅助工具的变动
 - `test/`：增加测试或修改现有测试
+
+## 踩坑记录
+
+实现中踩过并确认的坑，供后续任务避让；条目应写清现象与结论，不罗列排查过程。
+
+- stonecutter 的 `replacements.string` 是双向替换：条件为 true 时按 `replace(from, to)` 正向替换，为 false 时反向替换。因此源代码写任意一侧的名称都会被替换为正确值，旧版本条件分支中出现的旧类名（或看似未导入的类）不是错误，不要"修复"。建议共享源码统一使用新版本名称（如 `Identifier`、`GuiGraphicsExtractor`）：当前最高版本无需替换，旧版本自动反向替换；两个条件编译块的唯一区别是被替换的类型名时，可以合并为一个块。
