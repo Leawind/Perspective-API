@@ -11,6 +11,10 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 final class PerspectiveSelectionImpl implements PerspectiveSelection {
+  /// Lambda class names differ between JVM launches, so listener failures are attributed to this
+  /// constant instead of the listener's class.
+  private static final String LISTENER_DIAGNOSTIC_ID = "PerspectiveSelection.Listener";
+
   private static final ExtensionInvoker EXTENSIONS =
       new ExtensionInvoker(
           LoggerFactory.getLogger(PerspectiveSelectionImpl.class), "Selection listener");
@@ -70,7 +74,7 @@ final class PerspectiveSelectionImpl implements PerspectiveSelection {
   private void notifyListeners(@NonNull Change change) {
     for (Registration registration : listeners) {
       EXTENSIONS.run(
-          registration.listener.getClass().getName(),
+          LISTENER_DIAGNOSTIC_ID,
           "onChanged",
           () -> registration.listener.onChanged(change.selectedPerspectiveId()));
     }
