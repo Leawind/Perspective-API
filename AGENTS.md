@@ -197,7 +197,17 @@ return currentVersion().dataVersion().version();
 2. 事件驱动解耦：`bridge` 层的 Mixin 仅负责拦截原版调用，并发射通用事件（Event）；`logic` 层负责监听这些事件并执行具体业务
 3. `logic` 层无宏化：`logic` 包和 `api` 包应尽可能保持 100% 无 Stonecutter 条件编译宏，所有 Minecraft 版本差异必须下沉并封装在 `bridge` 层
 
-这些约束由根项目的 `checkArchitecture` 任务自动检查。所有变体的 `check` 任务和 `buildAndCollect` 都会运行该检查。
+### Mixin 约束
+
+1. 禁止使用 `@Redirect`：它会排他地占用调用点，容易与其他模组冲突；优先使用可组合的注入器
+2. 禁止使用 `@ModifyArgs`（以及注入 `Args` 参数）：Mixin 0.8.5 会在 `org.spongepowered.asm.synthetic.args` 动态生成 `Args$N`，而 Forge 1.20.1 的 ModLauncher 无法加载该包，造成目标类链接时的 `NoClassDefFoundError`。需要修改多个参数时，使用多个 `@ModifyArg` 或合适的 MixinExtras 注入器
+
+### 强制机制
+
+上述分层约束由两层检查共同强制：
+
+- 根项目的 `checkArchitecture` 任务：文本级检查（import 语句、Stonecutter 宏、Mixin 注入器注解），所有变体的 `check` 任务和 `buildAndCollect` 都会运行
+- `InternalArchitectureTest`（ArchUnit）：字节码级检查，能发现绕过 import 语句的全限定名引用，随 `test` 任务运行
 
 ## 工作流指南
 

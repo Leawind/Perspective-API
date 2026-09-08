@@ -10,7 +10,7 @@ stonecutter active "26.2-fabric"
 
 val checkArchitecture by tasks.registering {
     group = "verification"
-    description = "Checks source package dependencies and Stonecutter macro boundaries."
+    description = "Checks source package dependencies, Stonecutter macro boundaries, and Mixin injector constraints."
 
     val sourceRoot = layout.projectDirectory.dir("src/main/java")
     val javaSources = fileTree(sourceRoot) { include("**/*.java") }
@@ -30,13 +30,20 @@ val checkArchitecture by tasks.registering {
             listOf(apiPackage, bridgePackage, implPackage, logicPackage, platformPackage)
         val violations = mutableListOf<String>()
 
+        // Recognizes imports in active code and inside Stonecutter comment blocks, where the
+        // prefix before `import` consists only of comment marker characters.
         fun importedType(line: String): String? {
-            val declaration = line.trim().removePrefix("/*").trim()
-            if (!declaration.startsWith("import ")) return null
-            return declaration
-                .removePrefix("import ")
-                .removePrefix("static ")
+            val importIndex = line.indexOf("import ")
+            if (importIndex < 0
+                || !line.substring(0, importIndex).all {
+                    it.isWhitespace() || it == '/' || it == '*' || it == '^'
+                }
+                || !line.substring(importIndex).contains(';')
+            ) return null
+            return line
+                .substring(importIndex + "import ".length)
                 .substringBefore(';')
+                .removePrefix("static ")
                 .trim()
         }
 
@@ -53,6 +60,16 @@ val checkArchitecture by tasks.registering {
                 val location = "$relativePath:${index + 1}"
                 if ((isApi || isLogic) && (line.contains("/*?") || line.contains("/^?"))) {
                     violations += "$location: Stonecutter macro is forbidden in api and logic"
+                }
+
+                if (line.contains("@Redirect") || line.contains(".injection.Redirect")) {
+                    violations += "$location: Mixin @Redirect is forbidden; use a composable injector"
+                }
+                if (line.contains("@ModifyArgs")
+                    || line.contains(".injection.ModifyArgs")
+                    || line.contains(".injection.invoke.arg.Args")
+                ) {
+                    violations += "$location: Mixin @ModifyArgs is incompatible with Forge 1.20.1; use an injector that does not generate synthetic Args classes"
                 }
 
                 val importedName = importedType(line) ?: return@forEachIndexed
