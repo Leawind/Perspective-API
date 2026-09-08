@@ -163,7 +163,7 @@ public record PerspectiveInfo(
     /// ### Recommended Format
     ///
     /// ```
-    /// perspective_api.<id>.name
+    /// perspective.<id>.name
     /// ```
     ///
     /// @see PerspectiveInfo#name()
