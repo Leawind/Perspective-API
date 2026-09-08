@@ -1,3 +1,25 @@
+# AI Tools
+/.ai/
+.agents/
+.claude/
+.clinerules/
+.codebuddy/
+.codex/
+.cursorrules/
+.devin/
+.kilo/
+.kilocode/
+.lingma/
+.marscode/
+.mimocode/
+.opencode/
+.qoder/
+.trae/
+.windsurf/
+.zcode/
+
+AGENTS-*.md
+
 # eclipse
 eclipse
 *.launch
@@ -41,24 +63,6 @@ forge*changelog.txt
 # JFR
 .profileconfig.json
 *.jfr
-
-# AI tools
-/.ai/
-.claude/
-.clinerules/
-.codebuddy/
-.codex/
-.cursorrules/
-.kilo/
-.kilocode/
-.lingma/
-.marscode/
-.mimocode/
-.opencode/
-.qoder/
-.trae/
-
-AGENTS-*.md
 
 # stonecutter
 /versions/*-*/*
