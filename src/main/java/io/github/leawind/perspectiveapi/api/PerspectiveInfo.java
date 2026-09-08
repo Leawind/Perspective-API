@@ -141,9 +141,9 @@ public record PerspectiveInfo(
   public @interface Declaration {
     /// The non-empty identifier for this perspective.
     ///
-    /// If multiple behaviors use the same ID, the behavior with the lower {@link #order()} value is
-    /// registered. Ties are resolved by the lexicographically earlier fully qualified behavior
-    /// class name.
+    /// If multiple behaviors use the same ID, the behavior with the higher {@link #precedence()}
+    /// value is registered. Ties are resolved by the lexicographically earlier fully qualified
+    /// behavior class name.
     ///
     /// ### Recommended Format
     ///
@@ -195,12 +195,20 @@ public record PerspectiveInfo(
     /// @see PerspectiveInfo#icon()
     @NonNull String icon() default "";
 
-    /// The sorting order within the built-in perspective switcher and duplicate-ID resolution.
+    /// The sorting order within the built-in perspective switcher.
     ///
-    /// Lower values appear earlier in the selector and take precedence over a duplicate ID.
-    /// Selector ordering is effective only when the `switchable` trait is declared, but
-    /// duplicate-ID resolution always uses this value.
+    /// Lower values appear earlier in the selector. Selector ordering is effective only when the
+    /// `switchable` trait is declared. This value does not resolve duplicate IDs; see {@link
+    /// #precedence()}.
     int order() default 0;
+
+    /// The precedence that resolves duplicate service-discovered IDs.
+    ///
+    /// When multiple behaviors declare the same {@link #id()}, the behavior with the higher value
+    /// is registered. Ties are resolved by the lexicographically earlier fully qualified behavior
+    /// class name. Runtime registrations reject duplicate IDs instead, so they never use this
+    /// value. This value does not affect display order.
+    int precedence() default 0;
 
     /// Stable traits of this perspective.
     ///

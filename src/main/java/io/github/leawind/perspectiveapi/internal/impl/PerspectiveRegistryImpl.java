@@ -36,15 +36,18 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
   private static final class RegisteredPerspective implements Perspective {
     private final PerspectiveBehavior behavior;
     private final @Nullable Integer defaultPriority;
+    private final int servicePrecedence;
     private final PerspectiveInfo info;
     private volatile boolean initialized;
 
     private RegisteredPerspective(
         @NonNull PerspectiveInfo info,
         @Nullable Integer defaultPriority,
+        int servicePrecedence,
         @NonNull PerspectiveBehavior behavior) {
       this.behavior = behavior;
       this.defaultPriority = defaultPriority;
+      this.servicePrecedence = servicePrecedence;
       this.info = info;
     }
 
@@ -55,7 +58,8 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       PerspectiveInfo.Default defaultAnnotation =
           behavior.getClass().getAnnotation(PerspectiveInfo.Default.class);
       Integer defaultPriority = defaultAnnotation == null ? null : defaultAnnotation.priority();
-      return new RegisteredPerspective(createInfo(declaration), defaultPriority, behavior);
+      return new RegisteredPerspective(
+          createInfo(declaration), defaultPriority, declaration.precedence(), behavior);
     }
 
     private static @NonNull PerspectiveInfo createInfo(
@@ -225,7 +229,7 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
       @NonNull PerspectiveBehavior behavior) {
     Objects.requireNonNull(info);
     Objects.requireNonNull(behavior);
-    RegisteredPerspective entry = new RegisteredPerspective(info, defaultPriority, behavior);
+    RegisteredPerspective entry = new RegisteredPerspective(info, defaultPriority, 0, behavior);
     String id = info.id();
     synchronized (this) {
       rejectDuplicateBehavior(behavior);
@@ -272,11 +276,11 @@ public final class PerspectiveRegistryImpl implements PerspectiveRegistry {
     }
   }
 
-  /// Orders duplicate service registrations by their documented precedence.
+  /// Orders duplicate service registrations by their declared precedence.
   private static int compareRegistration(
       @NonNull RegisteredPerspective left, @NonNull RegisteredPerspective right) {
-    int order = Integer.compare(left.info.order(), right.info.order());
-    if (order != 0) return order;
+    int precedence = Integer.compare(right.servicePrecedence, left.servicePrecedence);
+    if (precedence != 0) return precedence;
     return left.behavior.getClass().getName().compareTo(right.behavior.getClass().getName());
   }
 

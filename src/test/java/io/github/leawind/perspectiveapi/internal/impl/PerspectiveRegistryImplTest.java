@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 class PerspectiveRegistryImplTest {
 
-  private static final String ORDER_ID = "test.registry_duplicate_order";
+  private static final String PRECEDENCE_ID = "test.registry_duplicate_precedence";
   private static final String CLASS_NAME_ID = "test.registry_duplicate_class_name";
   private static final String AVAILABILITY_ID = "test.registry_availability";
   private static final String ROLLBACK_ID = "test.registry_rollback";
@@ -53,11 +53,13 @@ class PerspectiveRegistryImplTest {
   @PerspectiveInfo.Declaration(id = "", order = 0)
   private static final class EmptyIdPerspective implements FixedBaseTypeBehavior {}
 
-  @PerspectiveInfo.Declaration(id = ORDER_ID, order = 10)
-  private static final class EarlierPerspective implements FixedBaseTypeBehavior {}
+  /// The differing `order` values identify the winner while proving display order never affects
+  /// duplicate resolution.
+  @PerspectiveInfo.Declaration(id = PRECEDENCE_ID, order = 1, precedence = 10)
+  private static final class LowerPrecedencePerspective implements FixedBaseTypeBehavior {}
 
-  @PerspectiveInfo.Declaration(id = ORDER_ID, order = 20)
-  private static final class LaterPerspective implements FixedBaseTypeBehavior {}
+  @PerspectiveInfo.Declaration(id = PRECEDENCE_ID, order = 2, precedence = 20)
+  private static final class HigherPrecedencePerspective implements FixedBaseTypeBehavior {}
 
   @PerspectiveInfo.Declaration(id = CLASS_NAME_ID, order = 0)
   private static final class AlphaPerspective implements FixedBaseTypeBehavior {}
@@ -140,16 +142,25 @@ class PerspectiveRegistryImplTest {
   }
 
   @Test
-  void keepEarlierDuplicate() {
+  void displaceDuplicateByHigherPrecedence() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
-    registry.registerSilent(new LaterPerspective());
-    registry.registerSilent(new EarlierPerspective());
+    registry.registerSilent(new LowerPrecedencePerspective());
+    registry.registerSilent(new HigherPrecedencePerspective());
 
-    assertEquals(10, registry.get(ORDER_ID).info().order());
+    assertEquals(2, registry.get(PRECEDENCE_ID).info().order());
   }
 
   @Test
-  void resolveEqualOrderByBehaviorClassName() {
+  void ignoreLowerPrecedenceDuplicate() {
+    PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
+    registry.registerSilent(new HigherPrecedencePerspective());
+    registry.registerSilent(new LowerPrecedencePerspective());
+
+    assertEquals(2, registry.get(PRECEDENCE_ID).info().order());
+  }
+
+  @Test
+  void resolveEqualPrecedenceByBehaviorClassName() {
     PerspectiveRegistryImpl registry = new PerspectiveRegistryImpl();
     AlphaPerspective alpha = new AlphaPerspective();
     registry.registerSilent(new BetaPerspective());
