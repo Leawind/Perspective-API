@@ -1,3 +1,9 @@
+> [!WARNING]
+>
+> This mod is experimental. Its API may change in ways that break compatibility at any time.
+>
+> 本模组处于实验阶段，接口随时可能发生破坏兼容性的变更。
+
 <div align="center">
 
 <img src="media/wheel.gif" width="40%"/>
