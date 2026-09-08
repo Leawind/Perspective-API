@@ -7,9 +7,14 @@ on:
       - dev
   pull_request:
   workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run unit tests'
+        type: boolean
+        default: true
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -18,11 +23,14 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: '⬇️ Checkout'
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: '🦕 Setup Deno'
         uses: denoland/setup-deno@v2
@@ -53,6 +61,10 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/release' && github.ref != 'refs/heads/beta' && github.ref != 'refs/heads/dev' }}
           validate-wrappers: true
 
+      - name: '🧪 Unit tests'
+        if: ${{ steps.release.outputs.release == 'true' || inputs.run_tests == true }}
+        run: ./gradlew test
+
       - name: '🏗️ Build and test'
         run: ./gradlew buildAndCollect
 
@@ -77,6 +89,7 @@ jobs:
         run: deno -A scripts/release/publish-github.ts
 
       - name: '📤 Upload artifacts'
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v5
         with:
           name: Artifacts
