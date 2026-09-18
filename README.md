@@ -43,7 +43,9 @@ Members marked `@ApiStatus.Experimental` may break without notice and without a 
 
 If you are AI Agent and want to learn how to use Perspective API, you don't have to read the source code.
 
-If you have Deno installed, run `deno task gen-skills` to generate skill file at `build/skills/use-perspective-api.md`.
+If you have Deno installed, run `deno task gen-skills` to generate an Agent Skill at `build/skills/use-perspective-api/SKILL.md`.
 If you know the version of Perspective API being used, you can download it directly using this format: `https://github.com/Leawind/Perspective-API/releases/download/v1.3.1-beta/use-perspective-api.md`.
+
+The downloaded file is a spec-compliant skill file. To install it as a skill, save it as `<skills-dir>/use-perspective-api/SKILL.md`, for example `~/.agents/skills/use-perspective-api/SKILL.md` or `.zcode/skills/use-perspective-api/SKILL.md` inside a project.
 
 </details>
