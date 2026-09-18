@@ -11,9 +11,9 @@ import io.github.leawind.perspectiveapi.api.PerspectiveModifierChain;
 import io.github.leawind.perspectiveapi.api.PerspectiveSelection;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
-import io.github.leawind.perspectiveapi.internal.bridge.Bridge;
+import io.github.leawind.perspectiveapi.internal.bridge.BridgeCameraOperations;
+import io.github.leawind.perspectiveapi.internal.bridge.CameraOperations;
 import io.github.leawind.perspectiveapi.internal.bridge.CameraSpace;
-import io.github.leawind.perspectiveapi.internal.bridge.access.CameraAccessor;
 import io.github.leawind.perspectiveapi.internal.bridge.events.ModifyProjectionContext;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveModifierChainImpl;
 import io.github.leawind.perspectiveapi.internal.impl.PerspectiveOverrideChainImpl;
@@ -27,6 +27,8 @@ import io.github.leawind.perspectiveapi.internal.logic.builtin.selection.Perspec
 import io.github.leawind.perspectiveapi.internal.utils.ExtensionInvoker;
 import io.github.leawind.perspectiveapi.internal.utils.Sanitizer;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CameraType;
 import net.minecraft.world.entity.Entity;
@@ -44,7 +46,13 @@ public final class PerspectiveManager {
   static {
     PerspectiveAPIRuntime.install(PerspectiveAPIRuntimeImpl.INSTANCE);
     try {
-      INSTANCE = new PerspectiveManager();
+      INSTANCE =
+          new PerspectiveManager(
+              PerspectiveRegistryImpl.INSTANCE,
+              PerspectiveSwitcher.INSTANCE,
+              BridgeCameraOperations.INSTANCE,
+              TransitionImpl::getTimeMs,
+              PerspectiveAPI::isEnabled);
     } catch (Throwable e) {
       LOGGER.error("Failed to initialize PerspectiveManager", e);
       throw e;
@@ -63,7 +71,11 @@ public final class PerspectiveManager {
   private final PerspectiveOverrideChainImpl overrides;
   private final PerspectiveSelectionImpl selection;
   private final PerspectiveChangeNotifier currentChangeNotifier = new PerspectiveChangeNotifier();
+  private final PerspectiveRegistryImpl registry;
   private final PerspectiveSwitcher perspectiveSwitcher;
+  private final CameraOperations cameraOperations;
+  private final DoubleSupplier clock;
+  private final BooleanSupplier enabled;
 
   public @NonNull TransitionImpl transition() {
     return transition;
@@ -113,12 +125,26 @@ public final class PerspectiveManager {
 
   // endregion
 
-  private PerspectiveManager() {
-    selection = new PerspectiveSelectionImpl();
-    perspectiveSwitcher = PerspectiveSwitcher.INSTANCE;
-    perspectiveSwitcher.init();
+  /// Constructs a manager with injectable collaborators.
+  ///
+  /// A null `perspectiveSwitcher` disables the built-in switcher integration, which is useful in
+  /// tests where the keybind and menu machinery must not initialize.
+  PerspectiveManager(
+      @NonNull PerspectiveRegistryImpl registry,
+      @Nullable PerspectiveSwitcher perspectiveSwitcher,
+      @NonNull CameraOperations cameraOperations,
+      @NonNull DoubleSupplier clock,
+      @NonNull BooleanSupplier enabled) {
+    this.registry = registry;
+    this.perspectiveSwitcher = perspectiveSwitcher;
+    this.cameraOperations = cameraOperations;
+    this.clock = clock;
+    this.enabled = enabled;
 
-    overrides = new PerspectiveOverrideChainImpl(PerspectiveRegistryImpl.INSTANCE);
+    selection = new PerspectiveSelectionImpl();
+    if (perspectiveSwitcher != null) perspectiveSwitcher.init();
+
+    overrides = new PerspectiveOverrideChainImpl(registry);
 
     modifiers = new PerspectiveModifierChainImpl(sanitizer);
 
@@ -145,7 +171,7 @@ public final class PerspectiveManager {
   public void onEnabledChanged(boolean enabled) {
     if (enabled) return;
 
-    perspectiveSwitcher.deactivate();
+    if (perspectiveSwitcher != null) perspectiveSwitcher.deactivate();
     Perspective deactivatedPerspective = current;
     PerspectiveBehavior deactivatedBehavior = currentBehavior;
     current = null;
@@ -176,8 +202,7 @@ public final class PerspectiveManager {
     String resolvedId = overrides.get();
     if (resolvedId == null) resolvedId = selection.get();
     Perspective resolved = resolveAvailableOrDefault(resolvedId);
-    PerspectiveBehavior resolvedBehavior =
-        PerspectiveRegistryImpl.INSTANCE.getBehaviorOrDefault(resolved.info().id());
+    PerspectiveBehavior resolvedBehavior = registry.getBehaviorOrDefault(resolved.info().id());
 
     // If the current perspective changed
     PerspectiveBehavior previousBehavior = currentBehavior;
@@ -216,14 +241,14 @@ public final class PerspectiveManager {
 
   private @NonNull Perspective resolveAvailableOrDefault(@Nullable String perspectiveId) {
     if (perspectiveId != null) {
-      Perspective perspective = PerspectiveRegistryImpl.INSTANCE.get(perspectiveId);
+      Perspective perspective = registry.get(perspectiveId);
       if (perspective != null && perspective.isAvailable()) return perspective;
     }
-    return PerspectiveRegistryImpl.INSTANCE.getDefault();
+    return registry.getDefault();
   }
 
-  private static void updateCameraType(@NonNull BaseType baseType) {
-    Bridge.updateCameraType(
+  private void updateCameraType(@NonNull BaseType baseType) {
+    cameraOperations.updateCameraType(
         switch (baseType) {
           case FIRST_PERSON -> CameraType.FIRST_PERSON;
           case THIRD_PERSON_BACK -> CameraType.THIRD_PERSON_BACK;
@@ -239,11 +264,29 @@ public final class PerspectiveManager {
 
   /// Updates the main camera's transform and projection settings based on the current perspective.
   ///
-  /// Calls for auxiliary cameras are ignored.
+  /// Calls for auxiliary cameras are ignored, as are cameras without an entity.
+  ///
+  /// @param partialTicks interpolation factor between ticks
+  /// @param camera the camera to update
+  public void updateCamera(float partialTicks, @NonNull Camera camera) {
+    Objects.requireNonNull(camera);
+    if (cameraOperations.getMainCamera() != camera) return;
+
+    Entity entity = cameraOperations.getCameraEntity(camera);
+    if (entity == null) {
+      LOGGER.warn("Somehow camera entity is null");
+      return;
+    }
+
+    runCameraPipeline(partialTicks, camera, entity);
+  }
+
+  /// The per-frame camera state pipeline body, separated from the entry guards in
+  /// {@link #updateCamera} so that tests can drive it headlessly.
   ///
   /// ### Steps
   ///
-  /// 1. Prepare the frame context and read the vanilla camera state
+  /// 1. Prepare the frame context
   /// 2. Apply the active perspective and sanitize its target state
   /// 3. Snapshot the perspective result for modifiers
   /// 4. Apply and sanitize modifiers
@@ -251,32 +294,19 @@ public final class PerspectiveManager {
   /// 6. Write the final state to the camera
   /// 7. Call {@link PerspectiveBehavior#afterCameraStateResolved}
   /// 8. Publish an independent source for previous-state snapshots and future transitions
-  ///
-  /// @param partialTicks interpolation factor between ticks
-  /// @param camera the camera to update
-  public void updateCamera(float partialTicks, @NonNull Camera camera) {
-    Objects.requireNonNull(camera);
-    if (Bridge.getMainCamera() != camera) return;
-
-    // Prepare and validate context
-    Entity entity;
+  void runCameraPipeline(float partialTicks, @NonNull Camera camera, @Nullable Entity entity) {
     Perspective current;
     PerspectiveBehavior currentBehavior;
     double now;
     boolean isTransitioning;
     {
-      entity = CameraAccessor.of(camera).getEntity();
-      if (entity == null) {
-        LOGGER.warn("Somehow camera entity is null");
-        return;
-      }
       current = this.current;
       currentBehavior = this.currentBehavior;
 
       if (current == null || currentBehavior == null) {
         return;
       }
-      now = TransitionImpl.getTimeMs();
+      now = clock.getAsDouble();
       isTransitioning = transitionAllowed && transition.isInTransition(now);
 
       renderTickContext.setup(partialTicks, entity, isTransitioning);
@@ -314,8 +344,9 @@ public final class PerspectiveManager {
     }
 
     // Write to camera
-    Bridge.setCameraPosition(camera, targetState.position());
-    Bridge.setCameraRotation(camera, CameraSpace.apiToMc(targetState.rotation(), tempMcQuat));
+    cameraOperations.setCameraPosition(camera, targetState.position());
+    cameraOperations.setCameraRotation(
+        camera, CameraSpace.apiToMc(targetState.rotation(), tempMcQuat));
 
     // Post-apply callback
     backupState.set(targetState);
@@ -324,7 +355,7 @@ public final class PerspectiveManager {
         "afterCameraStateResolved",
         () -> currentBehavior.afterCameraStateResolved(backupState, renderTickContext));
 
-    if (PerspectiveAPI.isEnabled()) {
+    if (enabled.getAsBoolean()) {
       lastAppliedState.set(targetState);
       isTransitionStartStateInitialized = true;
       hasPreviousCameraState = true;
@@ -353,7 +384,7 @@ public final class PerspectiveManager {
 
   private void startTransition() {
     if (!isTransitionStartStateInitialized) {
-      Camera camera = Bridge.getMainCamera();
+      Camera camera = cameraOperations.getMainCamera();
       if (camera != null) {
         captureVanillaState(camera, lastAppliedState);
       } else {
@@ -361,13 +392,13 @@ public final class PerspectiveManager {
       }
       isTransitionStartStateInitialized = true;
     }
-    transition.setStartState(TransitionImpl.getTimeMs(), lastAppliedState);
+    transition.setStartState(clock.getAsDouble(), lastAppliedState);
   }
 
   private void captureVanillaState(
       @NonNull Camera camera, @NonNull PerspectiveStateImpl destination) {
-    Bridge.getCameraPosition(camera, destination.position());
-    Bridge.getCameraRotation(camera, tempMcQuat);
+    cameraOperations.getCameraPosition(camera, destination.position());
+    cameraOperations.getCameraRotation(camera, tempMcQuat);
     CameraSpace.mcToApi(tempMcQuat, destination.rotation());
     destination.setFovDeg(cachedVanillaFovDeg);
     destination.setProjectionMode(ProjectionMode.PERSPECTIVE);

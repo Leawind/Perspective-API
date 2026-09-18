@@ -5,6 +5,7 @@ import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import java.util.Objects;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class PerspectiveContextImpl implements PerspectiveModifierContext {
 
@@ -35,7 +36,9 @@ public class PerspectiveContextImpl implements PerspectiveModifierContext {
     return Objects.requireNonNull(perspectiveBaseState, "Modifier context is not initialized");
   }
 
-  public void setup(float partialTicks, @NonNull Entity cameraEntity, boolean isTransitioning) {
+  /// Prepares the context for a frame. A null entity is only valid in entity-less contexts used
+  /// by headless tests; production callers always pass the camera entity.
+  public void setup(float partialTicks, @Nullable Entity cameraEntity, boolean isTransitioning) {
     this.partialTicks = partialTicks;
     this.cameraEntity = cameraEntity;
     this.isTransitioning = isTransitioning;
