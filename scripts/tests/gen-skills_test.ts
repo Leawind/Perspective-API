@@ -10,7 +10,7 @@ import { generatePerspectiveApiSkill } from '../gen-skills.ts'
 Deno.test('generates a single-file skill from public non-internal Javadoc', async () => {
   const root = await Deno.makeTempDir()
   const apiDir = `${root}/api`
-  const outputFile = `${root}/build/use-perspective-api.md`
+  const outputFile = `${root}/build/use-perspective-api/SKILL.md`
   await Deno.mkdir(apiDir)
 
   try {
@@ -57,7 +57,11 @@ final class Hidden {
     const content = await Deno.readTextFile(result)
 
     assertEquals(result, outputFile)
-    assertStringIncludes(content, '---\nname: use-perspective-api\n')
+    assertStringIncludes(
+      content,
+      '---\nname: use-perspective-api\ndescription: ',
+    )
+    assertStringIncludes(content, '\n---\n\n# Use Perspective API')
     assertStringIncludes(content, 'Package workflow.')
     assertStringIncludes(content, '## record `example.api.Example`')
     assertStringIncludes(content, 'public record Example(String value)')

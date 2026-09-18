@@ -17,7 +17,7 @@ Deno.test('creates the GitHub release and tag for the planned commit', () => {
       plan,
       [
         'versions/1.21-fabric/build/libs/mod.jar',
-        'build/skills/use-perspective-api.md',
+        'build/skills/use-perspective-api/SKILL.md#use-perspective-api.md',
       ],
       'build/release/notes.md',
     ),
@@ -33,7 +33,7 @@ Deno.test('creates the GitHub release and tag for the planned commit', () => {
       '1234567890abcdef',
       '--prerelease',
       'versions/1.21-fabric/build/libs/mod.jar',
-      'build/skills/use-perspective-api.md',
+      'build/skills/use-perspective-api/SKILL.md#use-perspective-api.md',
     ],
   )
 })

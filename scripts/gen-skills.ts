@@ -5,16 +5,18 @@
  * workflow. Public API types and members under the `api` package contribute their Javadoc as
  * reference material. Internal and package-private declarations are excluded.
  *
- * The generated Markdown file is written to `build/skills/use-perspective-api.md`, which is
+ * The generated Markdown file is written to `build/skills/use-perspective-api/SKILL.md`, a
+ * spec-compliant Agent Skill whose directory name matches the frontmatter `name`. It is
  * intentionally ignored by Git. The GitHub Release publishing script invokes this generator and
- * uploads that uncompressed `.md` file as a release asset alongside the mod JARs.
+ * uploads the file as a release asset under the label `use-perspective-api.md`, alongside the mod
+ * JARs.
  * @module gen-skills
  */
 import { parse } from 'npm:java-parser@3.0.1'
 
 export const DEFAULT_API_DIR =
   'src/main/java/io/github/leawind/perspectiveapi/api'
-export const DEFAULT_OUTPUT_FILE = 'build/skills/use-perspective-api.md'
+export const DEFAULT_OUTPUT_FILE = 'build/skills/use-perspective-api/SKILL.md'
 
 // deno-lint-ignore no-explicit-any
 type N = any
