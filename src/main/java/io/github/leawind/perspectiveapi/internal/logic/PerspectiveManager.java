@@ -222,7 +222,8 @@ public final class PerspectiveManager {
       boolean incomingAllowsTransition =
           previousBehavior != null
               && allowsTransition(resolved.info().id(), resolvedBehavior, true);
-      transitionAllowed = outgoingAllowsTransition && incomingAllowsTransition;
+      transitionAllowed =
+          transition.isEnabled() && outgoingAllowsTransition && incomingAllowsTransition;
       startTransition();
       currentChangeNotifier.notifyChanged(previous, resolved);
     }
@@ -307,7 +308,7 @@ public final class PerspectiveManager {
         return;
       }
       now = clock.getAsDouble();
-      isTransitioning = transitionAllowed && transition.isInTransition(now);
+      isTransitioning = transitionAllowed && transition.isEnabled() && transition.isInTransition(now);
 
       renderTickContext.setup(partialTicks, entity, isTransitioning);
     }

@@ -91,6 +91,7 @@ class StateManagerImplTest {
   @AfterEach
   void afterEach() throws IOException {
     PerspectiveAPI.setEnabled(true);
+    PerspectiveManager.INSTANCE.transition().setEnabled(false);
     PerspectiveAPI.getTransition().setDurationMs(260.0);
     PerspectiveManager.INSTANCE
         .transition()
@@ -176,6 +177,19 @@ class StateManagerImplTest {
     manager.tryLoadAndApply();
 
     assertEquals(450.0, PerspectiveAPI.getTransition().getDurationMs());
+  }
+
+  @Test
+  void roundTripPersistsTransitionEnabledSwitch() {
+    Path filePath = tempDir.resolve("transition-enabled.json");
+    StateManager manager = new StateManagerImpl(filePath);
+    PerspectiveManager.INSTANCE.transition().setEnabled(true);
+
+    manager.tryExtractAndSave();
+    PerspectiveManager.INSTANCE.transition().setEnabled(false);
+    manager.tryLoadAndApply();
+
+    assertTrue(PerspectiveManager.INSTANCE.transition().isEnabled());
   }
 
   @Test

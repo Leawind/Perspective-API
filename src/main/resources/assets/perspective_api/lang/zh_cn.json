@@ -13,6 +13,8 @@
   "perspective_api.config_screen.group.perspective_switcher": "视角切换器",
   "perspective_api.config_screen.option.mod_enabled": "启用模组",
   "perspective_api.config_screen.option.mod_enabled.desc": "控制是否启用所有视角 API 功能的总开关。关闭后将完全恢复原版行为。",
+  "perspective_api.config_screen.option.transition_enabled": "启用视角过渡",
+  "perspective_api.config_screen.option.transition_enabled.desc": "禁用（默认）时，切换视角立即采用新的相机状态，不进行插值。启用后，相机按照下方的时长平滑过渡。",
   "perspective_api.config_screen.option.transition_duration": "过渡时长（毫秒）",
   "perspective_api.config_screen.option.transition_duration.desc": "切换视角时平滑相机过渡的持续时间，单位为毫秒。设为 0 可禁用过渡。",
   "perspective_api.config_screen.option.transition_algorithm.desc": "选择用于运行时比较的内存中算法。此选项不会被持久化。",

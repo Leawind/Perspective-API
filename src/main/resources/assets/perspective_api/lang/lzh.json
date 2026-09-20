@@ -13,6 +13,8 @@
   "perspective_api.config_screen.group.perspective_switcher": "視角切換器",
   "perspective_api.config_screen.option.mod_enabled": "啟用模組",
   "perspective_api.config_screen.option.mod_enabled.desc": "主開關，掌視角卯口諸用之啓閉。閉之則復原制之行。",
+  "perspective_api.config_screen.option.transition_enabled": "啟用視角過渡",
+  "perspective_api.config_screen.option.transition_enabled.desc": "預設不用。不用時，易視角則即刻從新相機之狀，不施插值。既用，則依下方時長平滑過渡。",
   "perspective_api.config_screen.option.transition_duration": "過渡時長（毫秒）",
   "perspective_api.config_screen.option.transition_duration.desc": "換視角時平滑相機過渡之時長，以毫秒計。設為零則禁過渡。",
   "perspective_api.config_screen.option.transition_algorithm.desc": "擇運行時比較所用之法。此擇不存。",

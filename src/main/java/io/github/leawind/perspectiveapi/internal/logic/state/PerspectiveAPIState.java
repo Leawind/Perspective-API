@@ -50,7 +50,7 @@ public final class PerspectiveAPIState {
       Codec.unboundedMap(Codec.STRING, Codec.PASSTHROUGH);
   private static final Map<String, Section<?>> REGISTERED_SECTIONS = new TreeMap<>();
 
-  private static final Codec<PerspectiveAPIState> CODEC =
+  static final Codec<PerspectiveAPIState> CODEC =
       RecordCodecBuilder.create(
           inst ->
               inst.group(
@@ -58,6 +58,9 @@ public final class PerspectiveAPIState {
                       Codec.STRING
                           .optionalFieldOf("selection.current")
                           .forGetter(s -> Optional.ofNullable(s.currentSelection)),
+                      Codec.BOOL
+                          .optionalFieldOf("transition.enabled", false)
+                          .forGetter(s -> s.transitionEnabled),
                       Codec.DOUBLE
                           .optionalFieldOf("transition.duration_ms", 300.0)
                           .forGetter(s -> s.transitionDurationMs),
@@ -68,6 +71,7 @@ public final class PerspectiveAPIState {
 
   private final boolean enabled;
   private final @Nullable String currentSelection;
+  private final boolean transitionEnabled;
   private final double transitionDurationMs;
   private final Map<String, Dynamic<?>> sections;
 
@@ -75,10 +79,12 @@ public final class PerspectiveAPIState {
   private PerspectiveAPIState(
       boolean enabled,
       Optional<String> currentSelection,
+      boolean transitionEnabled,
       double transitionDurationMs,
       Map<String, Dynamic<?>> sections) {
     this.enabled = enabled;
     this.currentSelection = currentSelection.orElse(null);
+    this.transitionEnabled = transitionEnabled;
     this.transitionDurationMs = transitionDurationMs;
     this.sections = Collections.unmodifiableMap(new TreeMap<>(sections));
   }
@@ -88,6 +94,7 @@ public final class PerspectiveAPIState {
     if (this == o) return true;
     if (!(o instanceof PerspectiveAPIState that)) return false;
     return enabled == that.enabled
+        && transitionEnabled == that.transitionEnabled
         && Double.compare(that.transitionDurationMs, transitionDurationMs) == 0
         && Objects.equals(currentSelection, that.currentSelection)
         && sections.equals(that.sections);
@@ -95,7 +102,7 @@ public final class PerspectiveAPIState {
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, currentSelection, transitionDurationMs, sections);
+    return Objects.hash(enabled, currentSelection, transitionEnabled, transitionDurationMs, sections);
   }
 
   public void apply() {
@@ -105,6 +112,7 @@ public final class PerspectiveAPIState {
     PerspectiveAPI.setEnabled(enabled);
 
     PerspectiveManager.INSTANCE.restoreSelection(currentSelection);
+    PerspectiveManager.INSTANCE.transition().setEnabled(transitionEnabled);
     PerspectiveAPI.getTransition().setDurationMs(transitionDurationMs);
     applySections(sections);
   }
@@ -114,6 +122,7 @@ public final class PerspectiveAPIState {
     return new PerspectiveAPIState(
         PerspectiveAPI.isEnabled(),
         Optional.ofNullable(PerspectiveManager.INSTANCE.getSelected()),
+        PerspectiveManager.INSTANCE.transition().isEnabled(),
         PerspectiveAPI.getTransition().getDurationMs(),
         extractSections(existingSections));
   }

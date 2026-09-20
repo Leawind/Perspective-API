@@ -139,6 +139,17 @@ public final class YaclConfigScreenBuilder {
         OptionGroup.createBuilder()
             .name(text("config_screen.group.transition"))
             .option(
+                Option.<Boolean>createBuilder()
+                    .name(text("config_screen.option.transition_enabled"))
+                    .description(
+                        OptionDescription.of(text("config_screen.option.transition_enabled.desc")))
+                    .binding(
+                        false,
+                        PerspectiveManager.INSTANCE.transition()::isEnabled,
+                        PerspectiveManager.INSTANCE.transition()::setEnabled)
+                    .controller(TickBoxControllerBuilder::create)
+                    .build())
+            .option(
                 Option.<Double>createBuilder()
                     .name(text("config_screen.option.transition_duration"))
                     .description(

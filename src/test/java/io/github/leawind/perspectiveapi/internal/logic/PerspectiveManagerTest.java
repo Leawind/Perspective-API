@@ -440,7 +440,43 @@ class PerspectiveManagerTest {
   // region transition
 
   @Test
+  void transitionsDisabledByDefaultApplyTargetStateImmediately() {
+    FakeBehavior target = new FakeBehavior("test.target");
+    target.position = TARGET_POSITION;
+    registerBehavior(target);
+
+    runFrame();
+
+    manager.restoreSelection("test.target");
+    runFrame();
+    TestUtils.assertVectorEquals(TARGET_POSITION, lastWrittenPosition());
+
+    clock.advance(130);
+    runFrame();
+    TestUtils.assertVectorEquals(TARGET_POSITION, lastWrittenPosition());
+  }
+
+  @Test
+  void disablingTransitionsMidFlightAppliesTargetStateImmediately() {
+    manager.transition().setEnabled(true);
+    FakeBehavior target = new FakeBehavior("test.target");
+    target.position = TARGET_POSITION;
+    registerBehavior(target);
+
+    runFrame();
+
+    manager.restoreSelection("test.target");
+    runFrame();
+    assertTrue(lastWrittenPosition().distance(new Vector3d(TARGET_POSITION)) > 1.0);
+
+    manager.transition().setEnabled(false);
+    runFrame();
+    TestUtils.assertVectorEquals(TARGET_POSITION, lastWrittenPosition());
+  }
+
+  @Test
   void transitionInterpolatesWithinWindowAndSettlesAfterIt() {
+    manager.transition().setEnabled(true);
     FakeBehavior target = new FakeBehavior("test.target");
     target.position = TARGET_POSITION;
     registerBehavior(target);
@@ -472,6 +508,7 @@ class PerspectiveManagerTest {
 
   @Test
   void transitionSkippedWhenIncomingPerspectiveDisallowsIt() {
+    manager.transition().setEnabled(true);
     FakeBehavior target = new FakeBehavior("test.target");
     target.position = TARGET_POSITION;
     target.allowTransitionIn = false;

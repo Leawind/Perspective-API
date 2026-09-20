@@ -34,6 +34,7 @@ public final class TransitionImpl implements Transition {
 
   private double durationMs = DEFAULT_DURATION_MS;
   private Easing easing = EasingFunctions::easeOut;
+  private boolean enabled;
   private double startTimeMs;
   private final PerspectiveStateImpl startState = new PerspectiveStateImpl();
   private boolean hasStartState;
@@ -50,6 +51,19 @@ public final class TransitionImpl implements Transition {
   /// Returns `true` if a transition is currently in progress at the given timestamp.
   public boolean isInTransition(double currentTimeMs) {
     return currentTimeMs - startTimeMs < durationMs;
+  }
+
+  /// Whether perspective-switch transitions are enabled.
+  ///
+  /// Disabled by default. While disabled, the camera state pipeline applies perspective switches
+  /// immediately without interpolation; duration, easing, and per-perspective transition
+  /// permissions stay persisted but take no effect until re-enabled.
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
   }
 
   @Override
