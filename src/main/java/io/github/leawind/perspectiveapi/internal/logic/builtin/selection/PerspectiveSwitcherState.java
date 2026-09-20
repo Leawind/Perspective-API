@@ -13,7 +13,8 @@ public record PerspectiveSwitcherState(
     @NonNull Set<@NonNull String> disabled,
     int holdTicks,
     boolean wheelHintCompleted,
-    boolean editorHintCompleted) {
+    boolean editorHintCompleted,
+    boolean menuEnabled) {
   private static final Codec<Set<String>> STRING_SET_CODEC =
       Codec.STRING.listOf().xmap(Set::copyOf, values -> values.stream().sorted().toList());
 
@@ -39,7 +40,10 @@ public record PerspectiveSwitcherState(
                           .forGetter(PerspectiveSwitcherState::wheelHintCompleted),
                       Codec.BOOL
                           .optionalFieldOf("editor_hint_completed", false)
-                          .forGetter(PerspectiveSwitcherState::editorHintCompleted))
+                          .forGetter(PerspectiveSwitcherState::editorHintCompleted),
+                      Codec.BOOL
+                          .optionalFieldOf("menu_enabled", false)
+                          .forGetter(PerspectiveSwitcherState::menuEnabled))
                   .apply(instance, PerspectiveSwitcherState::new));
 
   public PerspectiveSwitcherState {

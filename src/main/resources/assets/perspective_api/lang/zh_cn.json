@@ -25,6 +25,8 @@
   "perspective_api.config_screen.option.fov_transition_algorithm": "FOV 过渡算法",
   "perspective_api.config_screen.option.orthographic_height_transition_algorithm": "正交视野高度过渡算法",
   "perspective_api.config_screen.option.scalar_transition_algorithm.fixed_start": "固定起点",
+  "perspective_api.config_screen.option.orbit_menu_enabled": "启用轮盘菜单",
+  "perspective_api.config_screen.option.orbit_menu_enabled.desc": "禁用（默认）时，视角切换键像原版一样按下即切换视角，轮盘菜单无法打开。启用后，轻点按键循环切换视角，长按打开轮盘菜单。",
   "perspective_api.config_screen.option.perspective_switcher_hold_ticks": "轮盘菜单长按刻数",
   "perspective_api.config_screen.option.perspective_switcher_hold_ticks.desc": "按住视角切换键多少刻后打开轮盘菜单。设为 0 时立即打开。",
   "perspective_api.config_screen.option.perspective_switcher_hold_ticks.value": "%s 刻",

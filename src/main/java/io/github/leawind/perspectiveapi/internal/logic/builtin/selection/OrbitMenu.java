@@ -115,6 +115,7 @@ final class OrbitMenu {
 
   void open() {
     if (!initialized || opened || hasOpenScreen() || !isOwnerActive()) return;
+    if (!owner.isMenuEnabled()) return;
     opened = true;
     mode = Mode.SELECTING;
     grabbedActor = null;

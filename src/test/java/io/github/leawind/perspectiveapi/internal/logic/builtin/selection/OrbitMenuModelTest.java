@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
@@ -128,13 +129,14 @@ class OrbitMenuModelTest {
 
     try {
       switcher.applyState(
-          new PerspectiveSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false));
+          new PerspectiveSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false, true));
 
       assertEquals(List.of("c", "b"), switcher.model().selected());
       assertEquals(Set.of("a"), switcher.model().disabled());
       assertEquals(12, switcher.getHoldTicks());
+      assertTrue(switcher.isMenuEnabled());
       assertEquals(
-          new PerspectiveSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false),
+          new PerspectiveSwitcherState(List.of("c", "b"), Set.of("a"), 12, true, false, true),
           switcher.extractState());
     } finally {
       switcher.applyState(previousState);
@@ -145,10 +147,10 @@ class OrbitMenuModelTest {
   void holdTicksMustStayWithinConfigRange() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new PerspectiveSwitcherState(List.of(), Set.of(), -1, false, false));
+        () -> new PerspectiveSwitcherState(List.of(), Set.of(), -1, false, false, false));
     assertThrows(
         IllegalArgumentException.class,
-        () -> new PerspectiveSwitcherState(List.of(), Set.of(), 21, false, false));
+        () -> new PerspectiveSwitcherState(List.of(), Set.of(), 21, false, false, false));
   }
 
   @Test
@@ -161,8 +163,26 @@ class OrbitMenuModelTest {
 
     assertEquals(
         new PerspectiveSwitcherState(
-            List.of(), Set.of(), PerspectiveSwitcher.DEFAULT_HOLD_TICKS, false, false),
+            List.of(), Set.of(), PerspectiveSwitcher.DEFAULT_HOLD_TICKS, false, false, false),
         state);
+  }
+
+  @Test
+  void menuEnabledRoundTripsThroughTheCodec() {
+    JsonObject json = new JsonObject();
+    json.addProperty("menu_enabled", true);
+
+    PerspectiveSwitcherState state =
+        PerspectiveSwitcherState.CODEC.parse(JsonOps.INSTANCE, json).result().orElseThrow();
+    assertTrue(state.menuEnabled());
+
+    var encoded =
+        PerspectiveSwitcherState.CODEC.encodeStart(JsonOps.INSTANCE, state).result().orElseThrow();
+    assertTrue(encoded.getAsJsonObject().get("menu_enabled").getAsBoolean());
+
+    PerspectiveSwitcherState reparsed =
+        PerspectiveSwitcherState.CODEC.parse(JsonOps.INSTANCE, encoded).result().orElseThrow();
+    assertTrue(reparsed.menuEnabled());
   }
 
   private static Perspective perspective(String id, int order, boolean available) {

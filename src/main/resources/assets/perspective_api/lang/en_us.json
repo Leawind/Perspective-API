@@ -25,6 +25,8 @@
   "perspective_api.config_screen.option.fov_transition_algorithm": "FOV Transition Algorithm",
   "perspective_api.config_screen.option.orthographic_height_transition_algorithm": "Orthographic Height Transition Algorithm",
   "perspective_api.config_screen.option.scalar_transition_algorithm.fixed_start": "Fixed Start",
+  "perspective_api.config_screen.option.orbit_menu_enabled": "Enable Wheel Menu",
+  "perspective_api.config_screen.option.orbit_menu_enabled.desc": "When disabled (default), the perspective key cycles perspectives directly on press, like vanilla, and the wheel menu cannot be opened. When enabled, tap the key to cycle and hold it to open the wheel menu.",
   "perspective_api.config_screen.option.perspective_switcher_hold_ticks": "Wheel Menu Hold Ticks",
   "perspective_api.config_screen.option.perspective_switcher_hold_ticks.desc": "Number of ticks the perspective key must be held before the wheel menu opens. Set to 0 to open it immediately.",
   "perspective_api.config_screen.option.perspective_switcher_hold_ticks.value": "%s ticks",

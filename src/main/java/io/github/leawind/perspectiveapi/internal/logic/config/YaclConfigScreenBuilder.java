@@ -162,6 +162,17 @@ public final class YaclConfigScreenBuilder {
     return OptionGroup.createBuilder()
         .name(text("config_screen.group.perspective_switcher"))
         .option(
+            Option.<Boolean>createBuilder()
+                .name(text("config_screen.option.orbit_menu_enabled"))
+                .description(
+                    OptionDescription.of(text("config_screen.option.orbit_menu_enabled.desc")))
+                .binding(
+                    false,
+                    PerspectiveSwitcher.INSTANCE::isMenuEnabled,
+                    PerspectiveSwitcher.INSTANCE::setMenuEnabled)
+                .controller(TickBoxControllerBuilder::create)
+                .build())
+        .option(
             Option.<Integer>createBuilder()
                 .name(text("config_screen.option.perspective_switcher_hold_ticks"))
                 .description(
