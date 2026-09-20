@@ -3,6 +3,7 @@ package io.github.leawind.perspectiveapi.internal.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -14,7 +15,7 @@ class AtomicFileWriterTest {
 
   @Test
   void writeStringCreatesParentsAndReplacesExistingContent() throws IOException {
-    try (FileSystem fs = Jimfs.newFileSystem()) {
+    try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
       Path path = fs.getPath("/config/nested/state.json");
 
       AtomicFileWriter.writeString(path, "first");
@@ -29,7 +30,7 @@ class AtomicFileWriterTest {
 
   @Test
   void writeStringCleansUpTemporaryFileAfterFailure() throws IOException {
-    try (FileSystem fs = Jimfs.newFileSystem()) {
+    try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
       Path parent = fs.getPath("/config");
       Path target = parent.resolve("state.json");
       Files.createDirectories(target.resolve("child"));

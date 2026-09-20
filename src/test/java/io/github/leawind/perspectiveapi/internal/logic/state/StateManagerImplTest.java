@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
@@ -81,7 +82,7 @@ class StateManagerImplTest {
 
   @BeforeEach
   void beforeEach() {
-    fs = Jimfs.newFileSystem();
+    fs = Jimfs.newFileSystem(Configuration.unix());
     tempDir = fs.getPath("/tmp");
     if (!PerspectiveRegistryImpl.INSTANCE.contains("perspective_api.first_person")) {
       PerspectiveRegistryImpl.INSTANCE.registerSilent(TestPerspective.INSTANCE);
