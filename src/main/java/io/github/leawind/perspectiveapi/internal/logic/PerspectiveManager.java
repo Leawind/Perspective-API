@@ -135,11 +135,11 @@ public final class PerspectiveManager {
       @NonNull CameraOperations cameraOperations,
       @NonNull DoubleSupplier clock,
       @NonNull BooleanSupplier enabled) {
-    this.registry = registry;
+    this.registry = Objects.requireNonNull(registry);
     this.perspectiveSwitcher = perspectiveSwitcher;
-    this.cameraOperations = cameraOperations;
-    this.clock = clock;
-    this.enabled = enabled;
+    this.cameraOperations = Objects.requireNonNull(cameraOperations);
+    this.clock = Objects.requireNonNull(clock);
+    this.enabled = Objects.requireNonNull(enabled);
 
     selection = new PerspectiveSelectionImpl();
     if (perspectiveSwitcher != null) perspectiveSwitcher.init();

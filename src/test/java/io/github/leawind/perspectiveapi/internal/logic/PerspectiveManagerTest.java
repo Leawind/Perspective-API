@@ -92,6 +92,26 @@ class PerspectiveManagerTest {
     return CameraSpace.apiToMc(api, new Quaternionf());
   }
 
+  // region construction
+
+  @Test
+  void constructorRejectsNullCollaborators() {
+    assertThrows(
+        NullPointerException.class,
+        () -> new PerspectiveManager(null, null, cameraOps, clock, () -> apiEnabled));
+    assertThrows(
+        NullPointerException.class,
+        () -> new PerspectiveManager(registry, null, null, clock, () -> apiEnabled));
+    assertThrows(
+        NullPointerException.class,
+        () -> new PerspectiveManager(registry, null, cameraOps, null, () -> apiEnabled));
+    assertThrows(
+        NullPointerException.class,
+        () -> new PerspectiveManager(registry, null, cameraOps, clock, null));
+  }
+
+  // endregion
+
   // region resolution
 
   @Test
