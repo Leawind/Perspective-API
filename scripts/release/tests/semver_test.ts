@@ -7,13 +7,20 @@ import {
   parseVersionTag,
 } from '../internal/semver.ts'
 
-Deno.test('parses stable, prerelease, and legacy tags', () => {
+Deno.test('parses stable, prerelease, and sequenced tags', () => {
   assertEquals(parseVersionTag('v1.0.0-beta.13'), {
     major: 1,
     minor: 0,
     patch: 0,
     prerelease: 'beta',
-    legacySequence: 13,
+    sequence: 13,
+  })
+  assertEquals(parseVersionTag('v1.5.1-alpha.3'), {
+    major: 1,
+    minor: 5,
+    patch: 1,
+    prerelease: 'alpha',
+    sequence: 3,
   })
   assertEquals(parseVersionTag('v2.3.4'), {
     major: 2,
@@ -23,10 +30,21 @@ Deno.test('parses stable, prerelease, and legacy tags', () => {
   assertEquals(parseVersionTag('unrelated'), undefined)
 })
 
-Deno.test('compares semantic core and legacy prerelease sequences', () => {
-  const legacy = parseVersionTag('v1.0.0-beta.13')!
-  const nextPatch = parseVersionTag('v1.0.1-beta')!
-  assertEquals(compareVersions(nextPatch, legacy) > 0, true)
+Deno.test('compares cores, labels, and sequences', () => {
+  const at = (tag: string) => parseVersionTag(tag)!
+  assertEquals(
+    compareVersions(at('v1.0.1-beta'), at('v1.0.0-beta.13')) > 0,
+    true,
+  )
+  assertEquals(
+    compareVersions(at('v1.5.1-alpha.9'), at('v1.5.1-alpha.10')) < 0,
+    true,
+  )
+  assertEquals(
+    compareVersions(at('v1.5.1-alpha.10'), at('v1.5.1-beta')) < 0,
+    true,
+  )
+  assertEquals(compareVersions(at('v1.5.1-beta'), at('v1.5.1')) < 0, true)
 })
 
 Deno.test('increments and formats semantic versions', () => {
@@ -34,4 +52,14 @@ Deno.test('increments and formats semantic versions', () => {
   assertEquals(formatVersion(incrementVersion(current, 'patch')!), '1.2.5')
   assertEquals(formatVersion(incrementVersion(current, 'minor')!), '1.3.0')
   assertEquals(formatVersion(incrementVersion(current, 'major')!), '2.0.0')
+  assertEquals(
+    formatVersion({
+      major: 1,
+      minor: 5,
+      patch: 1,
+      prerelease: 'alpha',
+      sequence: 3,
+    }),
+    '1.5.1-alpha.3',
+  )
 })

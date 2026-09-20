@@ -2,11 +2,22 @@ name: CI
 on:
   push:
     branches:
-      - release
-      - beta
+      - main
   pull_request:
   workflow_dispatch:
     inputs:
+      channel:
+        description: 'Release channel'
+        type: choice
+        options:
+          - beta
+          - alpha
+          - release
+        required: true
+      dry_run:
+        description: 'Dry run (build and plan only, publish nothing)'
+        type: boolean
+        default: true
       run_tests:
         description: 'Run unit tests'
         type: boolean
@@ -16,7 +27,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -42,6 +53,9 @@ jobs:
 
       - name: '🔎 Plan release'
         id: release
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          RELEASE_CHANNEL: ${{ inputs.channel }}
         run: deno -A scripts/release/plan.ts
 
       - name: '🏷️ Apply release version'
@@ -57,11 +71,11 @@ jobs:
       - name: '🛂 Setup Gradle'
         uses: gradle/actions/setup-gradle@v5
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/release' && github.ref != 'refs/heads/beta' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
           validate-wrappers: true
 
       - name: '🧪 Unit tests'
-        if: ${{ steps.release.outputs.release == 'true' || inputs.run_tests == true || github.event_name == 'pull_request' }}
+        if: ${{ inputs.run_tests != false }}
         run: ./gradlew test
 
       - name: '🏗️ Build and test'
@@ -70,7 +84,7 @@ jobs:
       - name: '📦 Publish Modrinth and CurseForge'
         if: ${{ steps.release.outputs.release == 'true' }}
         env:
-          DRY_RUN: ${{ vars.DRY_RUN }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && (inputs.dry_run && 'true' || 'false') || vars.DRY_RUN }}
           RELEASE_NOTES_FILE: build/release/notes.md
           MODRINTH_ID: ${{ vars.MODRINTH_ID }}
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
@@ -81,9 +95,10 @@ jobs:
       - name: '🚀 Publish GitHub release'
         if: >-
           ${{ steps.release.outputs.release == 'true' &&
-              vars.DRY_RUN == 'false' }}
+              inputs.dry_run == false }}
         env:
-          DRY_RUN: ${{ vars.DRY_RUN }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && (inputs.dry_run && 'true' || 'false') || vars.DRY_RUN }}
+          RELEASE_CHANNEL: ${{ inputs.channel }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: deno -A scripts/release/publish-github.ts
 

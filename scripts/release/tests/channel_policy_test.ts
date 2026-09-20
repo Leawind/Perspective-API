@@ -1,38 +1,34 @@
 import { assertEquals } from '@std/assert'
 
 import {
-  calculateVersion,
-  type ReleaseChange,
-  type VersionBump,
+  extractChangeFromCommits,
+  type ReleaseCommit,
 } from '../internal/release.ts'
 
-const mainBumps: Readonly<Record<ReleaseChange, VersionBump>> = {
-  none: 'none',
-  breaking: 'major',
-  feature: 'minor',
-  fix: 'patch',
-}
-const betaBumps: Readonly<Record<ReleaseChange, VersionBump>> = {
-  none: 'none',
-  breaking: 'minor',
-  feature: 'patch',
-  fix: 'patch',
-}
-const previous = {
-  tag: 'v1.2.3-beta',
-  version: { major: 1, minor: 2, patch: 3, prerelease: 'beta' },
-  isPromotion: false,
+function commit(type: string, breaking = false): ReleaseCommit {
+  return {
+    sha: '1234567890abcdef',
+    type,
+    summary: `${type} change`,
+    breaking,
+    breakingDescriptions: [],
+  }
 }
 
-Deno.test('maps the same change differently for Beta and stable releases', () => {
+const changes = {
+  feat: 'feature',
+  fix: 'fix',
+} as const
+
+Deno.test('extracts the highest release change from commits', () => {
+  assertEquals(extractChangeFromCommits([commit('docs')], changes), 'none')
+  assertEquals(extractChangeFromCommits([commit('fix')], changes), 'fix')
   assertEquals(
-    calculateVersion(previous, 'feature', betaBumps, 'beta'),
-    '1.2.4-beta',
+    extractChangeFromCommits([commit('fix'), commit('feat')], changes),
+    'feature',
   )
-  assertEquals(calculateVersion(previous, 'feature', mainBumps), '1.3.0')
   assertEquals(
-    calculateVersion(previous, 'breaking', betaBumps, 'beta'),
-    '1.3.0-beta',
+    extractChangeFromCommits([commit('feat'), commit('docs', true)], changes),
+    'breaking',
   )
-  assertEquals(calculateVersion(previous, 'breaking', mainBumps), '2.0.0')
 })

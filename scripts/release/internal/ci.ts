@@ -2,20 +2,27 @@ import { generateReleaseNotes, parseCommit } from './commits.ts'
 import {
   calculateVersion,
   extractChangeFromCommits,
-  selectPreviousRelease,
-} from './release.ts'
-import type {
-  PlannedRelease,
-  PreviousRelease,
-  ReleaseChange,
-  ReleaseCommit,
-  ReleasePlan,
-  StoredReleasePlan,
-  VersionBump,
+  type PlannedRelease,
+  type PreviousRelease,
+  type ReleaseChange,
+  type ReleaseChannel,
+  type ReleaseCommit,
+  type ReleasePlan,
+  selectLastAlpha,
+  selectMaxTag,
+  selectReleaseBase,
+  type StoredReleasePlan,
+  type TagRef,
+  type VersionBump,
 } from './release.ts'
 import { formatVersion, parseVersionTag } from './semver.ts'
 
-export type { ReleaseChange, ReleasePlan, VersionBump } from './release.ts'
+export type {
+  ReleaseChange,
+  ReleaseChannel,
+  ReleasePlan,
+  VersionBump,
+} from './release.ts'
 
 const decoder = new TextDecoder()
 
@@ -29,9 +36,13 @@ interface CommandResult {
 }
 
 interface ReleaseHistory {
+  channel: ReleaseChannel
   head: string
-  previous: PreviousRelease
-  commits: ReleaseCommit[]
+  base: PreviousRelease
+  lastAlpha: TagRef | undefined
+  maxTag: TagRef
+  tierCommits: ReleaseCommit[]
+  notesCommits: ReleaseCommit[]
 }
 
 let history: ReleaseHistory | undefined
@@ -159,8 +170,38 @@ function git(...args: string[]): string {
   return captureSync('git', args).stdout.trim()
 }
 
-export function currentBranch(): string {
-  return Deno.env.get('GITHUB_REF_NAME') ?? git('branch', '--show-current')
+const RELEASE_CHANNELS: ReadonlySet<string> = new Set([
+  'release',
+  'beta',
+  'alpha',
+])
+
+export function releaseChannel(): ReleaseChannel | undefined {
+  const value = Deno.env.get('RELEASE_CHANNEL')
+  if (value === undefined || value === '') { return undefined }
+  if (!RELEASE_CHANNELS.has(value)) {
+    throw new Error(
+      `Invalid RELEASE_CHANNEL '${value}': expected release, beta, or alpha.`,
+    )
+  }
+  return value as ReleaseChannel
+}
+
+// Publishing only happens on manual dispatches (and locally); pushes and
+// pull requests merely build and test.
+export function canPublish(): boolean {
+  const event = Deno.env.get('GITHUB_EVENT_NAME')
+  return event === undefined || event === 'workflow_dispatch'
+}
+
+function isAncestor(ancestor: string, descendant: string): boolean {
+  return captureSync('git', [
+    'merge-base',
+    '--is-ancestor',
+    ancestor,
+    descendant,
+  ])
+    .code === 0
 }
 
 function readCommits(range: string): ReleaseCommit[] {
@@ -178,54 +219,71 @@ function readCommits(range: string): ReleaseCommit[] {
   return commits
 }
 
-function readReleaseHistory(prerelease?: string): ReleaseHistory {
+function readReleaseHistory(channel: ReleaseChannel): ReleaseHistory {
   const tags = git('tag', '--merged', 'HEAD')
     .split('\n')
     .map((tag) => tag.trim())
     .filter(Boolean)
-  const previous = selectPreviousRelease(tags, prerelease)
-  if (!previous) {
-    const kind = prerelease === undefined ? 'stable or prerelease' : prerelease
-    throw new Error(`No reachable ${kind} release tag was found.`)
+  const base = selectReleaseBase(tags, channel)
+  if (!base) {
+    throw new Error(
+      channel === 'release'
+        ? 'No reachable release tag was found.'
+        : 'No reachable beta or stable release tag was found.',
+    )
   }
+  const lastAlpha = selectLastAlpha(tags)
+  // Alpha counts new commits from its own latest tag whenever that tag is
+  // newer than the core base, so sequences only advance with real changes.
+  const notesTag = channel === 'alpha' && lastAlpha
+      && isAncestor(base.tag, lastAlpha.tag)
+    ? lastAlpha.tag
+    : base.tag
   return {
+    channel,
     head: git('rev-parse', 'HEAD'),
-    previous,
-    commits: readCommits(`${previous.tag}..HEAD`),
+    base,
+    lastAlpha,
+    maxTag: selectMaxTag(tags) ?? base,
+    tierCommits: readCommits(`${base.tag}..HEAD`),
+    notesCommits: readCommits(`${notesTag}..HEAD`),
   }
 }
 
-function expectedPrerelease(): string | undefined {
-  return currentBranch() === 'beta' ? 'beta' : undefined
-}
-
-export function extractChange(
-  map: Readonly<Record<string, ReleaseChange>>,
-): ReleaseChange {
-  changeByCommitType = map
-  history = readReleaseHistory(expectedPrerelease())
-  return extractChangeFromCommits(history.commits, map)
-}
-
-function canPublish(): boolean {
-  const event = Deno.env.get('GITHUB_EVENT_NAME')
-  return event === undefined || event === 'push'
-}
-
-export function bumpVersion(
-  change: ReleaseChange,
-  map: Readonly<Record<ReleaseChange, VersionBump>>,
-  options: { prerelease: string } | undefined = undefined,
-): string | null {
-  if (!canPublish()) { return null }
-  const releaseHistory = readReleaseHistory(options?.prerelease)
+export function planRelease(options: {
+  channel: ReleaseChannel
+  changeByType: Readonly<Record<string, ReleaseChange>>
+  bumpByChange: Readonly<Record<ReleaseChange, VersionBump>>
+}): void {
+  const releaseHistory = readReleaseHistory(options.channel)
   history = releaseHistory
-  return calculateVersion(
-    releaseHistory.previous,
-    change,
-    map,
-    options?.prerelease,
+  changeByCommitType = options.changeByType
+  const change = extractChangeFromCommits(
+    releaseHistory.tierCommits,
+    options.changeByType,
   )
+  const hasTriggerCommits = extractChangeFromCommits(
+    releaseHistory.notesCommits,
+    options.changeByType,
+  ) !== 'none'
+  const version = calculateVersion({
+    channel: options.channel,
+    base: releaseHistory.base,
+    change,
+    bumpByChange: options.bumpByChange,
+    lastAlpha: releaseHistory.lastAlpha,
+    maxTag: releaseHistory.maxTag,
+    hasTriggerCommits,
+  })
+  if (version === null) {
+    writePlan({ version: null })
+    return
+  }
+  writePlan({
+    version,
+    tag: `v${version}`,
+    isPrerelease: options.channel !== 'release',
+  })
 }
 
 function appendGithubOutputSync(values: object): void {
@@ -241,6 +299,7 @@ function validateReleaseVersion(plan: {
   version: string
   tag: string
   isPrerelease: boolean
+  channel: ReleaseChannel
 }): void {
   const version = parseVersionTag(plan.tag)
   if (!version || formatVersion(version) !== plan.version) {
@@ -249,6 +308,19 @@ function validateReleaseVersion(plan: {
   if ((version.prerelease !== undefined) !== plan.isPrerelease) {
     throw new Error(
       `Release prerelease flag does not match version: ${plan.version}`,
+    )
+  }
+  const label = version.prerelease
+  if (
+    (plan.channel === 'release'
+      && (label !== undefined || version.sequence !== undefined))
+    || (plan.channel === 'beta'
+      && (label !== 'beta' || version.sequence !== undefined))
+    || (plan.channel === 'alpha'
+      && (label !== 'alpha' || version.sequence === undefined))
+  ) {
+    throw new Error(
+      `Version ${plan.version} does not match the ${plan.channel} channel.`,
     )
   }
 }
@@ -266,26 +338,26 @@ export function writePlan(plan: ReleasePlan): void {
   }
 
   if (plan.tag !== `v${plan.version}`) {
-    throw new Error(`Release tag does not match version: ${plan.tag}`)
+    throw new Error(`Release tag does not match version: ${plan.version}`)
   }
-  validateReleaseVersion(plan)
   if (!history) {
-    throw new Error('Release history not found: call extractChange first.')
+    throw new Error('Release history not found: call planRelease first.')
   }
   const releaseHistory = history
   const storedPlan: PlannedRelease = {
     ...plan,
     head: releaseHistory.head,
-    branch: currentBranch(),
+    channel: releaseHistory.channel,
   }
+  validateReleaseVersion(storedPlan)
   saveJsonSync(PLAN_FILE, storedPlan)
 
-  const commits = releaseHistory.commits.filter((commit) =>
+  const commits = releaseHistory.notesCommits.filter((commit) =>
     commit.breaking || (changeByCommitType[commit.type] ?? 'none') !== 'none'
   )
-  const notes = releaseHistory.previous.isPromotion && commits.length === 0
+  const notes = releaseHistory.base.isPromotion && commits.length === 0
     ? `# ${plan.version}\n\nPromoted from ${
-      releaseHistory.previous.tag.slice(1)
+      releaseHistory.base.tag.slice(1)
     }.\n`
     : generateReleaseNotes(plan.version, commits)
   Deno.writeTextFileSync(NOTES_FILE, notes)
@@ -298,7 +370,8 @@ function isPlannedRelease(plan: StoredReleasePlan): plan is PlannedRelease {
     && typeof plan.tag === 'string'
     && typeof plan.isPrerelease === 'boolean'
     && typeof plan.head === 'string'
-    && typeof plan.branch === 'string'
+    && typeof plan.channel === 'string'
+    && RELEASE_CHANNELS.has(plan.channel)
 }
 
 export async function loadPlannedRelease(): Promise<PlannedRelease> {
@@ -310,7 +383,7 @@ export async function loadPlannedRelease(): Promise<PlannedRelease> {
     throw new Error('The release plan does not contain a release.')
   }
   if (plan.tag !== `v${plan.version}`) {
-    throw new Error(`Release tag does not match version: ${plan.tag}`)
+    throw new Error(`Release tag does not match version: ${plan.version}`)
   }
   validateReleaseVersion(plan)
   await verifyPlannedHead(plan.head)
@@ -319,7 +392,7 @@ export async function loadPlannedRelease(): Promise<PlannedRelease> {
 
 export async function loadPublishableRelease(): Promise<PlannedRelease> {
   const plan = await loadPlannedRelease()
-  await assertReleaseBranch(plan.branch)
+  await assertReleaseChannel(plan.channel)
   return plan
 }
 
@@ -332,14 +405,15 @@ export async function verifyPlannedHead(expectedHead: string): Promise<void> {
   }
 }
 
-export async function assertReleaseBranch(
-  expectedBranch: string,
+export async function assertReleaseChannel(
+  expectedChannel: ReleaseChannel,
 ): Promise<void> {
-  const branch = Deno.env.get('GITHUB_REF_NAME')
-    ?? (await capture('git', ['branch', '--show-current'])).stdout.trim()
-  if (branch !== expectedBranch) {
+  const channel = releaseChannel()
+  if (channel !== expectedChannel) {
     throw new Error(
-      `Release plan targets ${expectedBranch}, but the current branch is ${branch}.`,
+      `Release plan targets the ${expectedChannel} channel, but the current channel is ${
+        channel ?? 'unset'
+      }.`,
     )
   }
 }

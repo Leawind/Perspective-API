@@ -3,7 +3,7 @@ export interface SemVersion {
   minor: number
   patch: number
   prerelease?: string
-  legacySequence?: number
+  sequence?: number
 }
 
 const TAG_PATTERN =
@@ -18,7 +18,7 @@ export function parseVersionTag(tag: string): SemVersion | undefined {
     minor: Number(match[2]),
     patch: Number(match[3]),
     ...(match[4] === undefined ? {} : { prerelease: match[4] }),
-    ...(match[5] === undefined ? {} : { legacySequence: Number(match[5]) }),
+    ...(match[5] === undefined ? {} : { sequence: Number(match[5]) }),
   }
 }
 
@@ -31,7 +31,7 @@ export function compareVersions(a: SemVersion, b: SemVersion): number {
     if (b.prerelease === undefined) { return -1 }
     return a.prerelease.localeCompare(b.prerelease)
   }
-  return (a.legacySequence ?? -1) - (b.legacySequence ?? -1)
+  return (a.sequence ?? -1) - (b.sequence ?? -1)
 }
 
 export function incrementVersion(
@@ -54,5 +54,8 @@ export function incrementVersion(
 
 export function formatVersion(version: SemVersion): string {
   const core = `${version.major}.${version.minor}.${version.patch}`
-  return version.prerelease ? `${core}-${version.prerelease}` : core
+  if (!version.prerelease) { return core }
+  return version.sequence === undefined
+    ? `${core}-${version.prerelease}`
+    : `${core}-${version.prerelease}.${version.sequence}`
 }
