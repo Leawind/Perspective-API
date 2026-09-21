@@ -293,7 +293,11 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             artifactId = modIdValue
-            version = "$modVersionString+$loader-$mcVersion"
+            // Version-last so snapshot versions end with '-SNAPSHOT' and Gradle
+            // treats them as changing modules; see docs/guides/MAVEN.md. Jar and
+            // platform versions keep the '<modVersion>+<loader>-<mcVersion>' form
+            // because dependency constraints must compare the mod version first.
+            version = "$loader-$mcVersion-$modVersionString"
             from(components["java"])
             pom {
                 name.set(modNameValue)
@@ -304,6 +308,15 @@ publishing {
 
     repositories {
         mavenLocal()
+        // Staging repo assembled into the GitHub Pages snapshot channel; only
+        // enabled when the CI passes SNAPSHOT_STAGING.
+        if (System.getenv("SNAPSHOT_STAGING") != null) {
+            maven {
+                name = "SnapshotStaging"
+                url = rootProject.layout.buildDirectory.dir("snapshot-site/maven")
+                    .get().asFile.toURI()
+            }
+        }
     }
 }
 // endregion
