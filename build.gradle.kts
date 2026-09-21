@@ -293,11 +293,13 @@ publishing {
     publications {
         create<MavenPublication>("maven") {
             artifactId = modIdValue
-            // Version-last so snapshot versions end with '-SNAPSHOT' and Gradle
-            // treats them as changing modules; see docs/guides/MAVEN.md. Jar and
-            // platform versions keep the '<modVersion>+<loader>-<mcVersion>' form
-            // because dependency constraints must compare the mod version first.
-            version = "$loader-$mcVersion-$modVersionString"
+            // Release versions equal the platform version exactly; snapshots
+            // append '-SNAPSHOT' so Gradle resolves them as changing modules.
+            // The '+<loader>-<mcVersion>' segment is build metadata, keeping the
+            // mod version first for semver precedence; see MAVEN.md.
+            val snapshot = modVersionString.endsWith("-SNAPSHOT")
+            version = "${modVersionString.removeSuffix("-SNAPSHOT")}+$loader-$mcVersion" +
+                (if (snapshot) "-SNAPSHOT" else "")
             from(components["java"])
             pom {
                 name.set(modNameValue)
