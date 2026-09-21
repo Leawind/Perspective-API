@@ -30,6 +30,7 @@
 | docs/DESIGN.md                           | 任何实现任务（注意状态标注）             | 实现前先更新       |
 | docs/guides/BRIDGE.md                    | 动 bridge / Mixin / 条件编译             | 随内容演进         |
 | docs/guides/COMMIT.md                    | 写提交信息                               | 随规范演进         |
+| docs/guides/MAVEN.md                     | 动 Maven 坐标 / 快照通道                 | 随内容演进         |
 | docs/USE_CASES.md、docs/DESIGN_REVIEW.md | 验证设计变更影响时                       | 修改前请示         |
 | docs/SPECS/                              | 进行中 feature 的 spec                   | 随 feature 生灭    |
 | docs/gotchas.md                          | 收坑时                                   | 仅追加，按规则淘汰 |
@@ -56,9 +57,10 @@
 
 ## Git 工作流
 
-- 提交信息格式 `<type>(<scope>): <summary>`，完整规范见 [docs/guides/COMMIT.md](docs/guides/COMMIT.md)——发布脚本按此解析版本号
-- 分支：`dev` 日常开发；`beta`、`release` 发布；`feat/`、`fix/`、`chore/`、`test/` 功能分支
-- push 到 `dev` 不触发 CI；PR、手动触发和发布分支会构建与测试，日常开发在本地自行运行测试
+- 提交信息格式 `<type>(<scope>): <summary>`，完整规范见 [docs/guides/COMMIT.md](docs/guides/COMMIT.md)；提交类型只影响发布说明的分组
+- 分支：`main` 唯一开发分支；`feat/`、`fix/`、`chore/`、`test/` 功能分支经 PR 合入
+- push 到 `main` 触发构建、测试，并部署最新 Maven 快照到 GitHub Pages（见 [docs/guides/MAVEN.md](docs/guides/MAVEN.md)）；PR 同样构建与测试
+- 发布通过手动触发 CI 工作流完成，填写版本号（通道由版本号格式决定），dry run 默认开启；日常开发在本地自行运行测试
 
 ## 内联踩坑
 
