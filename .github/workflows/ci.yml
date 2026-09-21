@@ -31,6 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
+      id-token: write
     steps:
       - name: '⬇️ Checkout'
         uses: actions/checkout@v5
@@ -76,6 +78,26 @@ jobs:
 
       - name: '🏗️ Build and test'
         run: ./gradlew buildAndCollect
+
+      - name: '📸 Stage snapshot maven repository'
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        env:
+          SNAPSHOT_STAGING: '1'
+        run: ./gradlew publishMavenPublicationToSnapshotStagingRepository
+
+      - name: '⚙️ Configure Pages'
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/configure-pages@v5
+
+      - name: '📤 Upload snapshot site'
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/snapshot-site
+
+      - name: '🚀 Deploy snapshot site'
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/deploy-pages@v4
 
       - name: '📦 Publish Modrinth and CurseForge'
         if: ${{ steps.release.outputs.release == 'true' }}
