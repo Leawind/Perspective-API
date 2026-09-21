@@ -6,13 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      channel:
-        description: 'Release channel'
-        type: choice
-        options:
-          - beta
-          - alpha
-          - release
+      version:
+        description: 'Release version (e.g. 1.5.1-beta, 1.5.1-alpha.3, 1.5.1)'
+        type: string
         required: true
       dry_run:
         description: 'Dry run (build and plan only, publish nothing)'
@@ -55,7 +51,7 @@ jobs:
         id: release
         if: ${{ github.event_name == 'workflow_dispatch' }}
         env:
-          RELEASE_CHANNEL: ${{ inputs.channel }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: deno -A scripts/release/plan.ts
 
       - name: '🏷️ Apply release version'
@@ -98,7 +94,7 @@ jobs:
               inputs.dry_run == false }}
         env:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && (inputs.dry_run && 'true' || 'false') || vars.DRY_RUN }}
-          RELEASE_CHANNEL: ${{ inputs.channel }}
+          RELEASE_VERSION: ${{ inputs.version }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: deno -A scripts/release/publish-github.ts
 

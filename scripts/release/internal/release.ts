@@ -1,13 +1,11 @@
 import {
   compareVersions,
   formatVersion,
-  incrementVersion,
   parseVersionTag,
   type SemVersion,
 } from './semver.ts'
 
 export type ReleaseChange = 'none' | 'fix' | 'feature' | 'breaking'
-export type VersionBump = 'none' | 'patch' | 'minor' | 'major'
 export type ReleaseChannel = 'release' | 'beta' | 'alpha'
 
 export interface ReleaseCommit {
@@ -53,6 +51,9 @@ const CHANGE_PRIORITY: Readonly<Record<ReleaseChange, number>> = {
   breaking: 3,
 }
 
+// Advisory only: the release version is entered by the person dispatching the
+// workflow; this classification just logs what the commits suggest so the
+// entered version can be double-checked against the COMMIT.md guidance.
 export function extractChangeFromCommits(
   commits: Iterable<ReleaseCommit>,
   changeByCommitType: Readonly<Record<string, ReleaseChange>>,
@@ -72,7 +73,7 @@ export function extractChangeFromCommits(
     }
   }
   console.log(`------------------------`)
-  console.log(`Final result: '${result}'`)
+  console.log(`Strongest detected change: '${result}'`)
   return result
 }
 
@@ -94,9 +95,8 @@ function latestTag(
   return latest
 }
 
-// The release channel counts commits from the latest stable tag, or from the
-// latest prerelease tag while no stable release exists (a promotion). Beta and
-// alpha both derive their core from the latest non-alpha tag.
+// Release notes cover commits since the latest tag of the released channel;
+// the first stable release falls back to the latest prerelease (a promotion).
 export function selectReleaseBase(
   tags: Iterable<string>,
   channel: ReleaseChannel,
@@ -125,65 +125,49 @@ export function selectMaxTag(tags: Iterable<string>): TagRef | undefined {
   return latestTag(tags, () => true)
 }
 
-function coreOf(version: SemVersion): SemVersion {
-  return { major: version.major, minor: version.minor, patch: version.patch }
-}
-
-// Keeps a produced version above the highest reachable tag by adopting its
-// core; when the channel label ranks below the ceiling at that core (for
-// example a Beta below a stable release), advance one more patch.
-function raiseAbove(version: SemVersion, ceiling: SemVersion): SemVersion {
-  if (compareVersions(version, ceiling) > 0) { return version }
-  const raised: SemVersion = { ...version, ...coreOf(ceiling) }
-  return compareVersions(raised, ceiling) > 0
-    ? raised
-    : { ...raised, patch: raised.patch + 1 }
-}
-
-interface CalculateOptions {
-  channel: ReleaseChannel
-  base: PreviousRelease
-  change: ReleaseChange
-  bumpByChange: Readonly<Record<ReleaseChange, VersionBump>>
-  lastAlpha?: TagRef
-  maxTag: TagRef
-  hasTriggerCommits: boolean
-}
-
-export function calculateVersion(options: CalculateOptions): string | null {
-  const bump = options.bumpByChange[options.change]
-  if (bump === 'none') {
-    // Only the first stable release promotes a prerelease core as-is.
-    if (options.channel !== 'release' || !options.base.isPromotion) {
-      return null
-    }
-    const promoted = coreOf(options.base.version)
-    return formatVersion(raiseAbove(promoted, options.maxTag.version))
+export function channelOfVersion(
+  version: SemVersion,
+): ReleaseChannel | undefined {
+  if (version.prerelease === undefined) {
+    return version.sequence === undefined ? 'release' : undefined
   }
-  if (options.channel === 'alpha') { return planAlpha(options, bump) }
-
-  const core = incrementVersion(options.base.version, bump)
-  const version: SemVersion = options.channel === 'beta'
-    ? { ...core, prerelease: 'beta' }
-    : core
-  return formatVersion(raiseAbove(version, options.maxTag.version))
+  if (version.prerelease === 'beta') {
+    return version.sequence === undefined ? 'beta' : undefined
+  }
+  if (version.prerelease === 'alpha') {
+    return version.sequence === undefined ? undefined : 'alpha'
+  }
+  return undefined
 }
 
-function planAlpha(
-  options: CalculateOptions,
-  bump: 'patch' | 'minor' | 'major',
-): string | null {
-  if (!options.hasTriggerCommits) { return null }
-  const next = incrementVersion(coreOf(options.base.version), bump)
-  let core = next
-  let sequence = 1
-  const last = options.lastAlpha
-  if (last && compareVersions(core, coreOf(last.version)) <= 0) {
-    // Stay on the last alpha line: the same or a floored core only
-    // advances the sequence.
-    core = coreOf(last.version)
-    sequence = (last.version.sequence ?? 0) + 1
+export function parseReleaseVersion(
+  input: string,
+): { version: SemVersion; channel: ReleaseChannel } {
+  // Manual input carries no leading 'v'; the tag pattern does.
+  const version = parseVersionTag(`v${input}`)
+  if (!version || formatVersion(version) !== input) {
+    throw new Error(
+      `Invalid version '${input}': expected <core>, <core>-beta, or <core>-alpha.<N> without a leading 'v'.`,
+    )
   }
-  let version: SemVersion = { ...core, prerelease: 'alpha', sequence }
-  return formatVersion(raiseAbove(version, options.maxTag.version))
+  const channel = channelOfVersion(version)
+  if (!channel) {
+    throw new Error(
+      `Invalid version '${input}': only alpha and beta labels are allowed; alpha requires a sequence (X-alpha.N) while beta and release must not carry one.`,
+    )
+  }
+  return { version, channel }
+}
+
+export function assertAboveReachable(
+  version: SemVersion,
+  maxTag: TagRef,
+): void {
+  if (compareVersions(version, maxTag.version) <= 0) {
+    throw new Error(
+      `Version ${
+        formatVersion(version)
+      } must be greater than the reachable tag ${maxTag.tag}.`,
+    )
+  }
 }

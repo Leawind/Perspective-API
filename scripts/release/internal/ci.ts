@@ -1,7 +1,8 @@
 import { generateReleaseNotes, parseCommit } from './commits.ts'
 import {
-  calculateVersion,
+  assertAboveReachable,
   extractChangeFromCommits,
+  parseReleaseVersion,
   type PlannedRelease,
   type PreviousRelease,
   type ReleaseChange,
@@ -13,16 +14,10 @@ import {
   selectReleaseBase,
   type StoredReleasePlan,
   type TagRef,
-  type VersionBump,
 } from './release.ts'
 import { formatVersion, parseVersionTag } from './semver.ts'
 
-export type {
-  ReleaseChange,
-  ReleaseChannel,
-  ReleasePlan,
-  VersionBump,
-} from './release.ts'
+export type { ReleaseChange, ReleaseChannel, ReleasePlan } from './release.ts'
 
 const decoder = new TextDecoder()
 
@@ -39,10 +34,8 @@ interface ReleaseHistory {
   channel: ReleaseChannel
   head: string
   base: PreviousRelease
-  lastAlpha: TagRef | undefined
   maxTag: TagRef
-  tierCommits: ReleaseCommit[]
-  notesCommits: ReleaseCommit[]
+  commits: ReleaseCommit[]
 }
 
 let history: ReleaseHistory | undefined
@@ -176,15 +169,9 @@ const RELEASE_CHANNELS: ReadonlySet<string> = new Set([
   'alpha',
 ])
 
-export function releaseChannel(): ReleaseChannel | undefined {
-  const value = Deno.env.get('RELEASE_CHANNEL')
-  if (value === undefined || value === '') { return undefined }
-  if (!RELEASE_CHANNELS.has(value)) {
-    throw new Error(
-      `Invalid RELEASE_CHANNEL '${value}': expected release, beta, or alpha.`,
-    )
-  }
-  return value as ReleaseChannel
+export function requestedVersion(): string | undefined {
+  const value = Deno.env.get('RELEASE_VERSION')?.trim()
+  return value === undefined || value === '' ? undefined : value
 }
 
 // Publishing only happens on manual dispatches (and locally); pushes and
@@ -200,8 +187,7 @@ function isAncestor(ancestor: string, descendant: string): boolean {
     '--is-ancestor',
     ancestor,
     descendant,
-  ])
-    .code === 0
+  ]).code === 0
 }
 
 function readCommits(range: string): ReleaseCommit[] {
@@ -232,9 +218,9 @@ function readReleaseHistory(channel: ReleaseChannel): ReleaseHistory {
         : 'No reachable beta or stable release tag was found.',
     )
   }
+  // Alpha notes cover commits since its own latest tag when that tag is
+  // newer than the core base.
   const lastAlpha = selectLastAlpha(tags)
-  // Alpha counts new commits from its own latest tag whenever that tag is
-  // newer than the core base, so sequences only advance with real changes.
   const notesTag = channel === 'alpha' && lastAlpha
       && isAncestor(base.tag, lastAlpha.tag)
     ? lastAlpha.tag
@@ -243,46 +229,27 @@ function readReleaseHistory(channel: ReleaseChannel): ReleaseHistory {
     channel,
     head: git('rev-parse', 'HEAD'),
     base,
-    lastAlpha,
     maxTag: selectMaxTag(tags) ?? base,
-    tierCommits: readCommits(`${base.tag}..HEAD`),
-    notesCommits: readCommits(`${notesTag}..HEAD`),
+    commits: readCommits(`${notesTag}..HEAD`),
   }
 }
 
 export function planRelease(options: {
-  channel: ReleaseChannel
+  versionInput: string
   changeByType: Readonly<Record<string, ReleaseChange>>
-  bumpByChange: Readonly<Record<ReleaseChange, VersionBump>>
 }): void {
-  const releaseHistory = readReleaseHistory(options.channel)
+  const requested = parseReleaseVersion(options.versionInput)
+  const releaseHistory = readReleaseHistory(requested.channel)
   history = releaseHistory
   changeByCommitType = options.changeByType
-  const change = extractChangeFromCommits(
-    releaseHistory.tierCommits,
-    options.changeByType,
-  )
-  const hasTriggerCommits = extractChangeFromCommits(
-    releaseHistory.notesCommits,
-    options.changeByType,
-  ) !== 'none'
-  const version = calculateVersion({
-    channel: options.channel,
-    base: releaseHistory.base,
-    change,
-    bumpByChange: options.bumpByChange,
-    lastAlpha: releaseHistory.lastAlpha,
-    maxTag: releaseHistory.maxTag,
-    hasTriggerCommits,
-  })
-  if (version === null) {
-    writePlan({ version: null })
-    return
-  }
+  assertAboveReachable(requested.version, releaseHistory.maxTag)
+  extractChangeFromCommits(releaseHistory.commits, options.changeByType)
+
+  const version = formatVersion(requested.version)
   writePlan({
     version,
     tag: `v${version}`,
-    isPrerelease: options.channel !== 'release',
+    isPrerelease: requested.channel !== 'release',
   })
 }
 
@@ -352,7 +319,7 @@ export function writePlan(plan: ReleasePlan): void {
   validateReleaseVersion(storedPlan)
   saveJsonSync(PLAN_FILE, storedPlan)
 
-  const commits = releaseHistory.notesCommits.filter((commit) =>
+  const commits = releaseHistory.commits.filter((commit) =>
     commit.breaking || (changeByCommitType[commit.type] ?? 'none') !== 'none'
   )
   const notes = releaseHistory.base.isPromotion && commits.length === 0
@@ -392,7 +359,14 @@ export async function loadPlannedRelease(): Promise<PlannedRelease> {
 
 export async function loadPublishableRelease(): Promise<PlannedRelease> {
   const plan = await loadPlannedRelease()
-  await assertReleaseChannel(plan.channel)
+  const requested = requestedVersion()
+  if (requested !== plan.version) {
+    throw new Error(
+      `Release plan targets ${plan.version}, but RELEASE_VERSION is ${
+        requested ?? 'unset'
+      }.`,
+    )
+  }
   return plan
 }
 
@@ -401,19 +375,6 @@ export async function verifyPlannedHead(expectedHead: string): Promise<void> {
   if (head !== expectedHead) {
     throw new Error(
       `HEAD changed after planning: expected ${expectedHead}, found ${head}.`,
-    )
-  }
-}
-
-export async function assertReleaseChannel(
-  expectedChannel: ReleaseChannel,
-): Promise<void> {
-  const channel = releaseChannel()
-  if (channel !== expectedChannel) {
-    throw new Error(
-      `Release plan targets the ${expectedChannel} channel, but the current channel is ${
-        channel ?? 'unset'
-      }.`,
     )
   }
 }

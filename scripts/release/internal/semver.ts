@@ -34,24 +34,6 @@ export function compareVersions(a: SemVersion, b: SemVersion): number {
   return (a.sequence ?? -1) - (b.sequence ?? -1)
 }
 
-export function incrementVersion(
-  current: SemVersion,
-  bump: 'patch' | 'minor' | 'major',
-): SemVersion {
-  switch (bump) {
-    case 'major':
-      return { major: current.major + 1, minor: 0, patch: 0 }
-    case 'minor':
-      return { major: current.major, minor: current.minor + 1, patch: 0 }
-    case 'patch':
-      return {
-        major: current.major,
-        minor: current.minor,
-        patch: current.patch + 1,
-      }
-  }
-}
-
 export function formatVersion(version: SemVersion): string {
   const core = `${version.major}.${version.minor}.${version.patch}`
   if (!version.prerelease) { return core }

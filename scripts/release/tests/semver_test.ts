@@ -3,7 +3,6 @@ import { assertEquals } from '@std/assert'
 import {
   compareVersions,
   formatVersion,
-  incrementVersion,
   parseVersionTag,
 } from '../internal/semver.ts'
 
@@ -47,19 +46,11 @@ Deno.test('compares cores, labels, and sequences', () => {
   assertEquals(compareVersions(at('v1.5.1-beta'), at('v1.5.1')) < 0, true)
 })
 
-Deno.test('increments and formats semantic versions', () => {
-  const current = parseVersionTag('v1.2.4-beta')!
-  assertEquals(formatVersion(incrementVersion(current, 'patch')!), '1.2.5')
-  assertEquals(formatVersion(incrementVersion(current, 'minor')!), '1.3.0')
-  assertEquals(formatVersion(incrementVersion(current, 'major')!), '2.0.0')
+Deno.test('formats stable, labeled, and sequenced versions', () => {
+  assertEquals(formatVersion(parseVersionTag('v1.2.4')!), '1.2.4')
+  assertEquals(formatVersion(parseVersionTag('v1.2.4-beta')!), '1.2.4-beta')
   assertEquals(
-    formatVersion({
-      major: 1,
-      minor: 5,
-      patch: 1,
-      prerelease: 'alpha',
-      sequence: 3,
-    }),
+    formatVersion(parseVersionTag('v1.5.1-alpha.3')!),
     '1.5.1-alpha.3',
   )
 })
