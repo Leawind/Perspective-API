@@ -1,5 +1,6 @@
 package io.github.leawind.perspectiveapi.internal.impl;
 
+import com.mojang.blaze3d.Blaze3D;
 import io.github.leawind.perspectiveapi.api.PerspectiveState;
 import io.github.leawind.perspectiveapi.api.ProjectionMode;
 import io.github.leawind.perspectiveapi.api.Transition;
@@ -15,7 +16,6 @@ import io.github.leawind.perspectiveapi.internal.utils.Utils;
 import io.github.leawind.perspectiveapi.internal.utils.smooth.EasingFunctions;
 import java.util.Objects;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.glfw.GLFW;
 
 /// Controls smooth camera transitions between perspectives.
 ///
@@ -44,8 +44,12 @@ public final class TransitionImpl implements Transition {
   private OrthographicHeightTransitionAlgorithm orthographicHeightAlgorithm =
       DEFAULT_ORTHOGRAPHIC_HEIGHT_ALGORITHM;
 
+  /// Returns the current time from the vanilla monotonic clock, in milliseconds.
+  ///
+  /// The clock is backed by whichever windowing backend the running Minecraft version uses, so it
+  /// is safe to call on every supported version.
   public static double getTimeMs() {
-    return GLFW.glfwGetTime() * 1000;
+    return Blaze3D.getTime() * 1000;
   }
 
   /// Returns `true` if a transition is currently in progress at the given timestamp.
