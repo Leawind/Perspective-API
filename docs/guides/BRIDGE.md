@@ -121,3 +121,7 @@ return currentVersion().dataVersion().version();
 ### stonecutter 的 replacements.string 是双向替换（2026-09-20）
 
 `replacements.string` 是双向替换：条件为 true 时按 `replace(from, to)` 正向替换，为 false 时反向替换。因此源代码写任意一侧的名称都会被替换为正确值，旧版本条件分支中出现的旧类名（或看似未导入的类）不是错误，不要"修复"。建议共享源码统一使用新版本名称（如 `Identifier`、`GuiGraphicsExtractor`）：当前最高版本无需替换，旧版本自动反向替换；两个条件编译块的唯一区别是被替换的类型名时，可以合并为一个块。
+
+### 26.3 起原版窗口后端由 GLFW 换成 SDL（2026-09-22）
+
+Minecraft 26.3 不再依赖 `lwjgl-glfw`，改用 `lwjgl-sdl`：`org.lwjgl.glfw.*` 在 26.3 的编译期和运行期类路径上都不存在，同时原始输入码的含义整体改变（`MOUSE_BUTTON_LEFT` 由 0 变为 1、`MOUSE_BUTTON_RIGHT` 由 1 变为 3、`REPEAT` 由 2 变为 -1）。共享源码不得直接使用任何窗口后端的 API 或常量，应改用原版提供的、与后端无关的入口：时间取 `Blaze3D.getTime()`，鼠标按键与动作码在 bridge 层用 `InputConstants` 的常量翻译成自定义枚举后再交给 logic（见 `MouseInputContext`）。26.3 还把 `Util.getPlatform().openUri` 换成了 `Blaze3D.openUri`。
