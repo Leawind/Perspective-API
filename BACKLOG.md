@@ -23,3 +23,7 @@ DESIGN.md 已引入状态标注体系，但尚未逐节审查内容是否混有"
 ### B-003 评估 Maven 快照发布管道（2026-09-20，发现于发布工作流调研）
 
 调研同类项目（YACL）发现其每次 push 向自建 Maven 发布快照构建，供依赖方持续对接测试。本项目 `mod.version=0.0-SNAPSHOT` 的本地构建形态与此契合，可与 alpha 通道互补（快照不发 Modrinth/CurseForge，不污染平台版本列表）。需要人决定：是否引入（需要可写 Maven 仓库，自建或 GitHub Packages）及触发频率。
+
+### B-004 跟进 Modstitch / ModDevGradle 的 NeoForm runtime 版本（2026-09-22，发现于 Minecraft 26.3 支持）
+
+`build.gradle.kts` 为 26.3 及以上的 neoforge 变体固定了 NeoForm runtime 2.0.31，以绕开 Modstitch 0.8.5 携带的 ModDevGradle 默认版本 2.0.18 在 26.3 源码上不均匀放宽访问转换器、导致 `createMinecraftArtifacts` 失败的问题（见 [docs/gotchas.md](docs/gotchas.md) 的 G-001）。需要人决定：何时升级 Modstitch / ModDevGradle，以及升级后如何验证并移除该固定。
