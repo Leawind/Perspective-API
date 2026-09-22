@@ -27,3 +27,7 @@ DESIGN.md 已引入状态标注体系，但尚未逐节审查内容是否混有"
 ### B-004 跟进 Modstitch / ModDevGradle 的 NeoForm runtime 版本（2026-09-22，发现于 Minecraft 26.3 支持）
 
 `build.gradle.kts` 为 26.3 及以上的 neoforge 变体固定了 NeoForm runtime 2.0.31，以绕开 Modstitch 0.8.5 携带的 ModDevGradle 默认版本 2.0.18 在 26.3 源码上不均匀放宽访问转换器、导致 `createMinecraftArtifacts` 失败的问题（见 [docs/gotchas.md](docs/gotchas.md) 的 G-001）。需要人决定：何时升级 Modstitch / ModDevGradle，以及升级后如何验证并移除该固定。
+
+### B-005 为各版本变体固定运行客户端所用 JDK（2026-09-22，发现于 Minecraft 26.3 runClient 验证）
+
+`runClient` 目前跟随本机 `JAVA_HOME`；在高于目标版本的 JDK 上（本机 jdk-26.0.1 跑 26.3），客户端会在资源加载阶段直接 `0xC0000005` 段错误，没有任何 Java 侧诊断。CI 用 setup-java 25 不受影响，但各 MC 版本要求的 Java 版本不同（1.20.1 需 17、26.x 需 25）。需要人决定：是否在构建里按版本配置 Java toolchain 或 run 任务的 JVM，避免依赖开发者本机环境。

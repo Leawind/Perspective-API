@@ -124,4 +124,4 @@ return currentVersion().dataVersion().version();
 
 ### 26.3 起原版窗口后端由 GLFW 换成 SDL（2026-09-22）
 
-Minecraft 26.3 不再依赖 `lwjgl-glfw`，改用 `lwjgl-sdl`：`org.lwjgl.glfw.*` 在 26.3 的编译期和运行期类路径上都不存在，同时原始输入码的含义整体改变（`MOUSE_BUTTON_LEFT` 由 0 变为 1、`MOUSE_BUTTON_RIGHT` 由 1 变为 3、`REPEAT` 由 2 变为 -1）。共享源码不得直接使用任何窗口后端的 API 或常量，应改用原版提供的、与后端无关的入口：时间取 `Blaze3D.getTime()`，鼠标按键与动作码在 bridge 层用 `InputConstants` 的常量翻译成自定义枚举后再交给 logic（见 `MouseInputContext`）。26.3 还把 `Util.getPlatform().openUri` 换成了 `Blaze3D.openUri`。
+Minecraft 26.3 不再依赖 `lwjgl-glfw`，改用 `lwjgl-sdl`：`org.lwjgl.glfw.*` 在 26.3 的编译期和运行期类路径上都不存在，同时原始输入码的含义整体改变（`MOUSE_BUTTON_LEFT` 由 0 变为 1、`MOUSE_BUTTON_RIGHT` 由 1 变为 3、`REPEAT` 由 2 变为 -1）。共享源码不得直接使用任何窗口后端的 API 或常量，应改用原版提供的、与后端无关的入口：时间取 `Blaze3D.getTime()`，鼠标按键与动作码在 bridge 层用 `InputConstants` 的常量翻译成自定义枚举后再交给 logic（见 `MouseInputContext`）。26.3 还把 `Util.getPlatform().openUri` 换成了 `Blaze3D.openUri`，并把渲染缓冲类（如 `GpuBufferSlice`）挪进了 `com.mojang.renderpearl` 包，字符串型 `@At` 目标里的 descriptor 随之改变——这类目标编译期不校验，升级版本后要用 `javap` 对照实际的 named jar 逐个核对。

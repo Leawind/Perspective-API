@@ -10,6 +10,7 @@ import io.github.leawind.perspectiveapi.internal.bridge.access.CameraProjectionA
 import net.minecraft.client.Camera;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 /*? } else {*/
@@ -39,6 +40,16 @@ import com.mojang.blaze3d.vertex.VertexSorting;
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
   /*? if >=26.1 {*/
+  /// `GpuBufferSlice` moved from `com.mojang.blaze3d.buffers` to
+  /// `com.mojang.renderpearl.api.buffers` in 26.3, so the invocation descriptor differs per
+  /// version.
+  @Unique private static final String SET_PROJECTION_MATRIX_TARGET =
+      /*? if >=26.3 {*/
+      "Lcom/mojang/blaze3d/systems/RenderSystem;setProjectionMatrix(Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V";
+      /*? } else {*/
+      /*"Lcom/mojang/blaze3d/systems/RenderSystem;setProjectionMatrix(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V";
+      *//*? }*/
+
   @Shadow @Final private Camera mainCamera;
 
   @ModifyArg(
@@ -46,8 +57,7 @@ public abstract class GameRendererMixin {
       at =
           @At(
               value = "INVOKE",
-              target =
-                  "Lcom/mojang/blaze3d/systems/RenderSystem;setProjectionMatrix(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;Lcom/mojang/blaze3d/ProjectionType;)V",
+              target = SET_PROJECTION_MATRIX_TARGET,
               ordinal = 0),
       index = 1)
   private ProjectionType perspective_api$modifyWorldProjectionType(ProjectionType original) {
