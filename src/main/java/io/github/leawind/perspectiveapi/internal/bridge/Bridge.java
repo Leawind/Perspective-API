@@ -56,9 +56,11 @@ public final class Bridge {
 
   public static void openUri(@NonNull String uri) {
     Objects.requireNonNull(uri);
-    /*? if >=1.21.11 {*/
-    net.minecraft.util.Util.getPlatform().openUri(uri);
-    /*? } else {*/
+    /*? if >=26.3 {*/
+    com.mojang.blaze3d.Blaze3D.openUri(java.net.URI.create(uri));
+    /*? } else if >=1.21.11 {*/
+    /*net.minecraft.util.Util.getPlatform().openUri(uri);
+    *//*? } else {*/
     /*net.minecraft.Util.getPlatform().openUri(uri);
     *//*? }*/
   }

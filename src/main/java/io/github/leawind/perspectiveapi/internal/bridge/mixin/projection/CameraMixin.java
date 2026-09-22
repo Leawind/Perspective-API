@@ -67,7 +67,13 @@ public abstract class CameraMixin
 
   @Inject(method = "extractRenderState", at = @At("RETURN"))
   private void perspective_api$modifyExtractedProjection(
-      CameraRenderState cameraState, float cameraEntityPartialTicks, CallbackInfo ci) {
+      CameraRenderState cameraState,
+      /*? if >=26.3 {*/
+      net.minecraft.client.DeltaTracker deltaTracker,
+      /*? } else {*/
+      /*float cameraEntityPartialTicks,
+      *//*? }*/
+      CallbackInfo ci) {
     if (!perspective_api$orthographic) return;
 
     ProjectionBridge.setCenteredOrthographic(

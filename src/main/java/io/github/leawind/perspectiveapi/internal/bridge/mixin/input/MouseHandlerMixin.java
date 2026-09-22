@@ -62,7 +62,15 @@ public abstract class MouseHandlerMixin {
 
   @SuppressWarnings("ConstantConditions")
   @Inject(method = "onMove", at = @At("HEAD"), cancellable = true)
-  private void perspectiveApi$onMove(long handle, double xpos, double ypos, CallbackInfo ci) {
+  private void perspectiveApi$onMove(
+      long handle,
+      double xpos,
+      double ypos,
+      /*? if >=26.3 {*/
+      double xrel,
+      double yrel,
+      /*? }*/
+      CallbackInfo ci) {
     Minecraft minecraft = Minecraft.getInstance();
     if (minecraft.getWindow() != null) {
       double scale = minecraft.getWindow().getGuiScale();

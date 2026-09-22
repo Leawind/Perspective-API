@@ -113,6 +113,15 @@ modstitch {
     }
 }
 
+// NeoForm runtime 2.0.18, the default of the ModDevGradle version bundled with Modstitch 0.8.5,
+// widens an access-transformed method on `HolderSet.Named` without widening the anonymous
+// subclass that overrides it, so the patched 26.3 sources do not recompile.
+if (isNeoforge && stonecutter.current.parsed >= "26.3") {
+    extensions.configure<net.neoforged.nfrtgradle.NeoFormRuntimeExtension>("neoFormRuntime") {
+        version.set("2.0.31")
+    }
+}
+
 stonecutter {
     constants {
         put("fabric", isFabric)

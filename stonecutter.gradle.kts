@@ -6,7 +6,7 @@ plugins {
     id("net.fabricmc.fabric-loom") version "1.15-SNAPSHOT" apply false
 }
 
-stonecutter active "26.2-fabric"
+stonecutter active "26.3-fabric"
 
 val checkArchitecture by tasks.registering {
     group = "verification"

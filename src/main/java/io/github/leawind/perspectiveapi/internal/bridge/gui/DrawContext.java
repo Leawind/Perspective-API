@@ -37,25 +37,29 @@ public final class DrawContext {
 
   /// Renders a tooltip using Minecraft's native tooltip renderer.
   public void tooltip(Font font, List<Component> lines, int mouseX, int mouseY) {
-    /*? if >=26.1 {*/
+    /*? if >=26.3 {*/
     graphics.nextStratum();
     graphics.tooltip(
         font,
-        lines.stream()
-            .map(Component::getVisualOrderText)
-            .map(net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent::create)
-            .toList(),
+        vanillaTooltipLines(lines),
+        mouseX,
+        mouseY,
+        net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner.INSTANCE,
+        null,
+        true);
+    /*? } else if >=26.1 {*/
+    /*graphics.nextStratum();
+    graphics.tooltip(
+        font,
+        vanillaTooltipLines(lines),
         mouseX,
         mouseY,
         net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner.INSTANCE,
         null);
-    /*? } else if >=1.21.11 {*/
+    *//*? } else if >=1.21.11 {*/
     /*graphics.renderTooltip(
         font,
-        lines.stream()
-            .map(Component::getVisualOrderText)
-            .map(net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent::create)
-            .toList(),
+        vanillaTooltipLines(lines),
         mouseX,
         mouseY,
         net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner.INSTANCE,
@@ -63,6 +67,14 @@ public final class DrawContext {
     *//*? } else {*/
     /*graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
      *//*? }*/
+  }
+
+  private static List<net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent>
+      vanillaTooltipLines(List<Component> lines) {
+    return lines.stream()
+        .map(Component::getVisualOrderText)
+        .map(net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent::create)
+        .toList();
   }
 
   public void blit(
