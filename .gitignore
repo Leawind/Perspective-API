@@ -17,6 +17,7 @@
 .trae/
 .windsurf/
 .zcode/
+.zcodeignore
 
 AGENTS-*.md
 
